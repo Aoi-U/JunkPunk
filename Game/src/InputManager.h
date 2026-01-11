@@ -1,0 +1,40 @@
+#pragma once
+
+#include <functional>
+
+#include <iostream>
+#include <GLFW/glfw3.h>
+#include <unordered_map>
+#include "glm/glm.hpp"
+
+class InputManager
+{
+public:
+	using ResizeCallback = std::function<void(int width, int height)>;
+
+	InputManager(ResizeCallback resizeCallback);
+
+	~InputManager() = default;
+
+	bool IsKeyboardButtonDown(int keyboardButton) const;
+
+	bool IsMouseButtonDown(int mouseButton) const;
+
+	glm::dvec2 const& CursorPosition() const;
+
+  void keyCallback(int key, int scancode, int action, int mods);
+
+  void windowSizeCallback(int width, int height);
+
+  void mouseButtonCallback(int button, int action, int mods);
+
+  void cursorPosCallback(double xpos, double ypos);
+
+  // add support for controller
+
+private:
+  std::unordered_map<int, bool> mKeyStatusMap{};
+  std::unordered_map<int, bool> mMouseStatusMap{};
+  glm::dvec2 mCursorPosition{};
+  ResizeCallback mResizeCallback;
+};
