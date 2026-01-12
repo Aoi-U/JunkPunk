@@ -27,6 +27,10 @@ private:
 	std::shared_ptr<Shader> lightShader;
 	std::shared_ptr<Shader> skyboxShader;
 
+	// list of all game objects and its model matrices (maybe think of a better solution)
+	std::vector<std::pair<std::shared_ptr<Model>, glm::mat4>> gameObjects;
+
+	void DrawGameObjects(const glm::mat4& projView);
 
 	// add game related stuff 
 

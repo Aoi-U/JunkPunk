@@ -54,14 +54,14 @@ void Game::Run()
 	defaultShader->setVec3("u_lightPos", &lightPos.x);
 	defaultShader->setVec4("u_lightColor", &(lightColor.r));
 
+	// setup light shader
 	lightShader->use();
 	lightShader->setVec3("u_lightPos", &lightPos.x);
 	lightShader->setVec4("u_lightColor", &lightColor.r);
 
+	// setup skybox shader
 	skyboxShader->use();
 	skyboxShader->setInt("u_skybox", 0);
-
-
 
 	// test unit cube mesh
 	std::vector<Vertex> cubeVertices;
@@ -99,6 +99,10 @@ void Game::Run()
 
 	// test car model
 	std::shared_ptr<Model> carModel = std::make_shared<Model>("assets/models/old_rusty_car/scene.gltf");
+	// to load any other model, just add the model file to assets/models/ and create a model class with the path to the model file
+
+	gameObjects.push_back(std::make_pair(carModel, glm::mat4(1.0f)));
+	
 
 	// ImGui for testing
 	ImGuiTest gui(window);
@@ -123,9 +127,8 @@ void Game::Run()
 		// set up camera matrices 
 		glm::mat4 projection = glm::perspective(glm::radians(90.0f), width / height, 0.1f, 100.0f);
 		view = camera->GetViewMatrix();
-		view = glm::rotate(view, (float)glfwGetTime() * 0.1f, glm::vec3(0.0f, 1.0f, 0.0f)); // slowly rotate view for demo purposes
+		view = glm::rotate(view, (float)glfwGetTime() * 0.1f, glm::vec3(0.0f, 1.0f, 0.0f)); 
 		projView = projection * view;
-
 		// set light and camera info in renderer
 		renderer->SetCamera(camera->GetPosition());
 
@@ -134,8 +137,8 @@ void Game::Run()
 		// rotating cube model
 		model = glm::scale(model, glm::vec3(0.5f));
 		model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.5f, 1.0f, 0.0f));
-
-		renderer->DrawMesh(model, projView, defaultShader, cubeMesh); // draw rotating cube
+		renderer->DrawMesh(model, projView, defaultShader, cubeMesh); // example draw rotating cube
+		// dont use the DrawMesh function, ill probably remove it later. its just here for drawing a simple manually created mesh
 
 		
 		model = glm::mat4(1.0f);
@@ -145,8 +148,10 @@ void Game::Run()
 		model = glm::scale(model, glm::vec3(0.005f)); 
 		model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
 		model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 1.0f, 0.0f));
-		renderer->DrawModel(model, projView, defaultShader, carModel); // draw car model
-
+		gameObjects[0].second = model; // update car model matrix in gameObjects vector
+		//renderer->DrawModel(model, projView, defaultShader, carModel); // example draw car model
+		
+		DrawGameObjects(projView); // draw all game objects in the gameObjects vector
 
 		// render light as small cube
 		renderer->DrawMesh(lightModel, projView, lightShader, cubeMesh);
@@ -166,4 +171,12 @@ void Game::Run()
 	defaultShader->Delete();
 	lightShader->Delete();
 	skyboxShader->Delete();
+}
+
+void Game::DrawGameObjects(const glm::mat4& projView)
+{
+	for (const auto& obj : gameObjects)
+	{
+		renderer->DrawModel(obj.second, projView, defaultShader, obj.first);
+	}
 }
