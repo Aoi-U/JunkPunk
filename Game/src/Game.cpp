@@ -24,6 +24,7 @@ Game::Game()
 	camera = std::make_unique<Camera>(cameraTarget, Camera::Params{}); // replace with actual values later
 
 	defaultShader = std::make_shared<Shader>("assets/shaders/default.vert", "assets/shaders/default.frag");
+	lightShader = std::make_shared<Shader>("assets/shaders/light.vert", "assets/shaders/light.frag");
 }
 
 //Game::~Game()
@@ -40,6 +41,14 @@ void Game::Run()
 	glm::mat4 view;
 	glm::mat4 projView;
 
+	// light
+	glm::vec3 lightPos = glm::vec3(2.0f, 2.0f, -5.0f);
+	glm::vec4 lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+	glm::mat4 lightModel = glm::mat4(1.0f);
+	lightModel = glm::translate(lightModel, lightPos);
+	lightModel = glm::scale(lightModel, glm::vec3(0.2f)); // small cube for light representation
+	renderer->SetLightColor(lightColor);
+
 	// test unit cube mesh
 	std::vector<Vertex> cubeVertices;
 	
@@ -52,6 +61,7 @@ void Game::Run()
 				Vertex vertex;
 				vertex.position = glm::vec3(x, y, z);
 				vertex.color = glm::vec3((x + 0.5f), (y + 0.5f), (z + 0.5f)); // color based on position
+				vertex.normal = glm::normalize(vertex.position); // normal pointing outwards
 				cubeVertices.push_back(vertex);
 			}
 		}
@@ -75,7 +85,6 @@ void Game::Run()
 
 	// test car model
 	std::shared_ptr<Model> carModel = std::make_shared<Model>("assets/models/old_rusty_car/scene.gltf");
-
 
 	// ImGui for testing
 	ImGuiTest gui(window);
@@ -117,6 +126,10 @@ void Game::Run()
 		model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
 		model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 		renderer->DrawModel(model, projView, defaultShader, carModel);
+
+
+		// render light as small cube
+		renderer->DrawMesh(lightModel, projView, lightShader, cubeMesh);
 
 		
 		gui.Render();

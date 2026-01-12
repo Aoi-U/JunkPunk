@@ -21,7 +21,8 @@ private:
 	glm::mat4 cameraTarget{ 0.0f }; // change to car position later
 	std::unique_ptr<Camera> camera;
 
-	std::shared_ptr<Shader> defaultShader; // add shader management later
+	std::shared_ptr<Shader> defaultShader; 
+	std::shared_ptr<Shader> lightShader;
 
 
 	// add game related stuff 

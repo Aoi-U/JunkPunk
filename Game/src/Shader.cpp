@@ -44,6 +44,11 @@ void Shader::setMat4(const std::string& name, const float* mat) const
 	glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, mat);
 }
 
+void Shader::setVec4(const std::string& name, const float* vec) const
+{
+	glUniform4fv(glGetUniformLocation(ID, name.c_str()), 1, vec);
+}
+
 std::string Shader::readFile(const char* filePath)
 {
 	std::ifstream in(filePath, std::ios::binary);

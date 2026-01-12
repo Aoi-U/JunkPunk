@@ -5,7 +5,9 @@ in vec3 color;
 in vec3 normal;
 in vec3 texCord;
 
+uniform vec4 u_lightColor;
+
 void main()
 {
-    FragColor = vec4(color, 1.0);
+    FragColor = vec4(color, 1.0) * u_lightColor;
 } 

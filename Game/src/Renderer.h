@@ -18,6 +18,7 @@ public:
 
 	void Init(); 
 	void Clear(float r, float g, float b, float a); // clears screen and buffers
+	void SetLightColor(glm::vec4 color) { lightColor = color; } // set light color for rendering
 
 	void Draw(const glm::mat4& model, const glm::mat4& projView, std::shared_ptr<Shader> shader); // main draw function for rendering objects
 
@@ -27,4 +28,6 @@ public:
 
 private:
 	std::shared_ptr<InputManager> inputManager; // not used but maybe useful later idk
+
+	glm::vec4 lightColor{}; // probably not ideal for renderer to see light color, change to a better solution later
 };
