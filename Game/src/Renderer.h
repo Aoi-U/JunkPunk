@@ -18,7 +18,8 @@ public:
 
 	void Init(); 
 	void Clear(float r, float g, float b, float a); // clears screen and buffers
-	void SetLightColor(glm::vec4 color) { lightColor = color; } // set light color for rendering
+	void SetCamera(glm::vec3 pos) { cameraPos = pos; } // set camera position
+	void SetLight(glm::vec3 pos, glm::vec4 color) { lightPos = pos; lightColor = color; } // set light properties
 
 	void Draw(const glm::mat4& model, const glm::mat4& projView, std::shared_ptr<Shader> shader); // main draw function for rendering objects
 
@@ -29,5 +30,11 @@ public:
 private:
 	std::shared_ptr<InputManager> inputManager; // not used but maybe useful later idk
 
-	glm::vec4 lightColor{}; // probably not ideal for renderer to see light color, change to a better solution later
+	// probably not ideal for renderer to see camera and light info, change to better solution later
+	// camera
+	glm::vec3 cameraPos{}; 
+	// light properties
+	glm::vec3 lightPos{}; 
+	glm::vec4 lightColor{}; 
+
 };

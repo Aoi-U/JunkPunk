@@ -47,7 +47,6 @@ void Game::Run()
 	glm::mat4 lightModel = glm::mat4(1.0f);
 	lightModel = glm::translate(lightModel, lightPos);
 	lightModel = glm::scale(lightModel, glm::vec3(0.2f)); // small cube for light representation
-	renderer->SetLightColor(lightColor);
 
 	// test unit cube mesh
 	std::vector<Vertex> cubeVertices;
@@ -106,33 +105,39 @@ void Game::Run()
 		float width = static_cast<float>(windowSize.x);
 		float height = static_cast<float>(windowSize.y);
 
-		// set up matrices for 3D rendering
+		// set up camera matrices 
 		glm::mat4 projection = glm::perspective(glm::radians(45.0f), width / height, 0.1f, 100.0f);
 		view = camera->GetViewMatrix();
 		projView = projection * view;
 
+		// set light and camera info in renderer
+		renderer->SetLight(lightPos, lightColor);
+		renderer->SetCamera(camera->GetPosition());
+
 		glm::mat4 model = glm::mat4(1.0f); // identity matrix for model
 
+		// rotating cube model
 		model = glm::scale(model, glm::vec3(0.5f));
 		model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.5f, 1.0f, 0.0f));
 
-		renderer->DrawMesh(model, projView, defaultShader, cubeMesh);
+		renderer->DrawMesh(model, projView, defaultShader, cubeMesh); // draw rotating cube
 
-		// draw car model
+		
 		model = glm::mat4(1.0f);
 
+		// car model 
 		model = glm::translate(model, glm::vec3(5.0f, 0.0f, -10.0f));
-		model = glm::scale(model, glm::vec3(0.005f)); // scale down car model
+		model = glm::scale(model, glm::vec3(0.005f)); 
 		model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
 		model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-		renderer->DrawModel(model, projView, defaultShader, carModel);
+		renderer->DrawModel(model, projView, defaultShader, carModel); // draw car model
 
 
 		// render light as small cube
 		renderer->DrawMesh(lightModel, projView, lightShader, cubeMesh);
 
 		
-		gui.Render();
+		gui.Render(); // render imgui test window
 
 		window->swapBuffers();
 	}
