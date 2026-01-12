@@ -8,9 +8,6 @@
 3. Add "$(ProjectDir)thirdparty\lib in Linker -> General -> Additional Library Directories
 <img width="802" height="545" alt="image" src="https://github.com/user-attachments/assets/dc2ceed3-7396-4cce-8108-53998939debf" />
 
-4. Add "glfw3.lib;assimp-vc143-mt.lib;%(AdditionalDependencies)" in Linker -> Input -> Additional Dependencies
-<img width="799" height="547" alt="image" src="https://github.com/user-attachments/assets/b6c49eda-19b9-4169-bfc1-ee121ec0960e" />
-
 4. Add glfw3.lib, assimp-vc143-mt.lib in Linker -> Input -> Additional Dependencies dropdown menu
 <img width="799" height="547" alt="image" src="https://github.com/user-attachments/assets/ac722239-fcdd-41b7-8895-0df0927fea72" />
 
