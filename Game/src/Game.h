@@ -15,7 +15,7 @@ public:
 
 private:
 	std::shared_ptr<InputManager> inputManager; 
-	std::unique_ptr<Window> window;
+	std::shared_ptr<Window> window;
 	std::unique_ptr<Renderer> renderer;
 
 	glm::mat4 cameraTarget{ 0.0f }; // change to car position later

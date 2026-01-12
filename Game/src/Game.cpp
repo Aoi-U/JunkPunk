@@ -2,6 +2,8 @@
 
 #include "glm/glm.hpp"
 
+#include "ImGuiTest.h"
+
 Game::Game()
 {
 	glfwWindowHint(GLFW_SAMPLES, 32);
@@ -12,7 +14,10 @@ Game::Game()
 		}
 	); 
 
-	window = std::make_unique<Window>(1280, 720, "JunkPunk", inputManager); 
+	//window = std::make_unique<Window>(1280, 720, "JunkPunk", inputManager); 
+	window = std::make_shared<Window>(1280, 720, "JunkPunk", inputManager);
+
+	glfwSwapInterval(1); // Enable vsync to limit fps
 
 	renderer = std::make_unique<Renderer>(inputManager); 
 
@@ -72,6 +77,9 @@ void Game::Run()
 	std::shared_ptr<Model> carModel = std::make_shared<Model>("assets/models/old_rusty_car/scene.gltf");
 
 
+	// ImGui for testing
+	ImGuiTest gui(window);
+
 	// main loop
 	while (!window->shouldClose())
 	{
@@ -111,7 +119,10 @@ void Game::Run()
 		renderer->DrawModel(model, projView, defaultShader, carModel);
 
 		
+		gui.Render();
 
 		window->swapBuffers();
 	}
+
+	gui.Shutdown(); 
 }

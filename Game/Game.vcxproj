@@ -143,6 +143,7 @@
     <ClCompile Include="src\EBO.cpp" />
     <ClCompile Include="src\Game.cpp" />
     <ClCompile Include="src\glad.c" />
+    <ClCompile Include="src\ImGuiTest.cpp" />
     <ClCompile Include="src\InputManager.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Mesh.cpp" />
@@ -152,11 +153,19 @@
     <ClCompile Include="src\VAO.cpp" />
     <ClCompile Include="src\VBO.cpp" />
     <ClCompile Include="src\Window.cpp" />
+    <ClCompile Include="thirdparty\include\imgui\imgui.cpp" />
+    <ClCompile Include="thirdparty\include\imgui\imgui_demo.cpp" />
+    <ClCompile Include="thirdparty\include\imgui\imgui_draw.cpp" />
+    <ClCompile Include="thirdparty\include\imgui\imgui_impl_glfw.cpp" />
+    <ClCompile Include="thirdparty\include\imgui\imgui_impl_opengl3.cpp" />
+    <ClCompile Include="thirdparty\include\imgui\imgui_tables.cpp" />
+    <ClCompile Include="thirdparty\include\imgui\imgui_widgets.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\EBO.h" />
     <ClInclude Include="src\Camera.h" />
     <ClInclude Include="src\Game.h" />
+    <ClInclude Include="src\ImGuiTest.h" />
     <ClInclude Include="src\InputManager.h" />
     <ClInclude Include="src\Mesh.h" />
     <ClInclude Include="src\Model.h" />
@@ -166,6 +175,15 @@
     <ClInclude Include="src\VAO.h" />
     <ClInclude Include="src\VBO.h" />
     <ClInclude Include="src\Window.h" />
+    <ClInclude Include="thirdparty\include\imgui\imconfig.h" />
+    <ClInclude Include="thirdparty\include\imgui\imgui.h" />
+    <ClInclude Include="thirdparty\include\imgui\imgui_impl_glfw.h" />
+    <ClInclude Include="thirdparty\include\imgui\imgui_impl_opengl3.h" />
+    <ClInclude Include="thirdparty\include\imgui\imgui_impl_opengl3_loader.h" />
+    <ClInclude Include="thirdparty\include\imgui\imgui_internal.h" />
+    <ClInclude Include="thirdparty\include\imgui\imstb_rectpack.h" />
+    <ClInclude Include="thirdparty\include\imgui\imstb_textedit.h" />
+    <ClInclude Include="thirdparty\include\imgui\imstb_truetype.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\shaders\default.frag" />
