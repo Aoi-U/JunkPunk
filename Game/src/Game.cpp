@@ -22,9 +22,11 @@ Game::Game()
 	renderer = std::make_unique<Renderer>(inputManager); 
 
 	camera = std::make_unique<Camera>(cameraTarget, Camera::Params{}); // replace with actual values later
+	skybox = std::make_shared<Skybox>();
 
 	defaultShader = std::make_shared<Shader>("assets/shaders/default.vert", "assets/shaders/default.frag");
 	lightShader = std::make_shared<Shader>("assets/shaders/light.vert", "assets/shaders/light.frag");
+	skyboxShader = std::make_shared<Shader>("assets/shaders/skybox.vert", "assets/shaders/skybox.frag");
 }
 
 //Game::~Game()
@@ -36,17 +38,30 @@ Game::Game()
 void Game::Run()
 {
 	//renderer->Init();
+	skybox->Init();
 
 	
 	glm::mat4 view;
 	glm::mat4 projView;
 
 	// light
-	glm::vec3 lightPos = glm::vec3(2.0f, 2.0f, -5.0f);
+	glm::vec3 lightPos = glm::vec3(-5.0f, 2.0f, -5.0f);
 	glm::vec4 lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 	glm::mat4 lightModel = glm::mat4(1.0f);
 	lightModel = glm::translate(lightModel, lightPos);
 	lightModel = glm::scale(lightModel, glm::vec3(0.2f)); // small cube for light representation
+	defaultShader->use();
+	defaultShader->setVec3("u_lightPos", &lightPos.x);
+	defaultShader->setVec4("u_lightColor", &(lightColor.r));
+
+	lightShader->use();
+	lightShader->setVec3("u_lightPos", &lightPos.x);
+	lightShader->setVec4("u_lightColor", &lightColor.r);
+
+	skyboxShader->use();
+	skyboxShader->setInt("u_skybox", 0);
+
+
 
 	// test unit cube mesh
 	std::vector<Vertex> cubeVertices;
@@ -106,12 +121,12 @@ void Game::Run()
 		float height = static_cast<float>(windowSize.y);
 
 		// set up camera matrices 
-		glm::mat4 projection = glm::perspective(glm::radians(45.0f), width / height, 0.1f, 100.0f);
+		glm::mat4 projection = glm::perspective(glm::radians(90.0f), width / height, 0.1f, 100.0f);
 		view = camera->GetViewMatrix();
+		view = glm::rotate(view, (float)glfwGetTime() * 0.1f, glm::vec3(0.0f, 1.0f, 0.0f)); // slowly rotate view for demo purposes
 		projView = projection * view;
 
 		// set light and camera info in renderer
-		renderer->SetLight(lightPos, lightColor);
 		renderer->SetCamera(camera->GetPosition());
 
 		glm::mat4 model = glm::mat4(1.0f); // identity matrix for model
@@ -129,12 +144,17 @@ void Game::Run()
 		model = glm::translate(model, glm::vec3(5.0f, 0.0f, -10.0f));
 		model = glm::scale(model, glm::vec3(0.005f)); 
 		model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
-		model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 1.0f, 0.0f));
 		renderer->DrawModel(model, projView, defaultShader, carModel); // draw car model
 
 
 		// render light as small cube
 		renderer->DrawMesh(lightModel, projView, lightShader, cubeMesh);
+
+		// skybox rendering
+		view = glm::mat4(glm::mat3(view)); // remove translation from the view matrix for skybox
+		projView = projection * view;
+		renderer->DrawSkybox(projView, skyboxShader, skybox); // draw skybox
 
 		
 		gui.Render(); // render imgui test window
@@ -143,4 +163,7 @@ void Game::Run()
 	}
 
 	gui.Shutdown(); 
+	defaultShader->Delete();
+	lightShader->Delete();
+	skyboxShader->Delete();
 }

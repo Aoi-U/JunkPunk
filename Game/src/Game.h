@@ -5,6 +5,7 @@
 #include "Camera.h"
 #include "Mesh.h"
 #include "Model.h"
+#include "SkyBox.h"
 
 class Game
 {
@@ -20,9 +21,11 @@ private:
 
 	glm::mat4 cameraTarget{ 0.0f }; // change to car position later
 	std::unique_ptr<Camera> camera;
+	std::shared_ptr<Skybox> skybox;
 
 	std::shared_ptr<Shader> defaultShader; 
 	std::shared_ptr<Shader> lightShader;
+	std::shared_ptr<Shader> skyboxShader;
 
 
 	// add game related stuff 
