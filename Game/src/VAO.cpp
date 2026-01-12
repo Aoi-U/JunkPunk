@@ -13,7 +13,7 @@ void VAO::LinkAttributes(VBO& VBO, GLuint layout, GLuint numComponents, GLenum t
 	VBO.Unbind();
 }
 
-void VAO::Bind()
+void VAO::Bind() const
 {
 	glBindVertexArray(ID);
 }

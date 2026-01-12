@@ -31,12 +31,7 @@ void Game::Run()
 {
 	//renderer->Init();
 
-	glm::ivec2 windowSize = window->getWindowSize();
-	float width = static_cast<float>(windowSize.x);
-	float height = static_cast<float>(windowSize.y);
-
-	// set up matrices for 3D rendering
-	glm::mat4 projection = glm::perspective(glm::radians(45.0f), width / height, 0.1f, 100.0f);
+	
 	glm::mat4 view;
 	glm::mat4 projView;
 
@@ -73,6 +68,10 @@ void Game::Run()
 	};
 	std::shared_ptr<Mesh> cubeMesh = std::make_shared<Mesh>(cubeVertices, cubeIndices);
 
+	// test car model
+	std::shared_ptr<Model> carModel = std::make_shared<Model>("assets/models/old_rusty_car/scene.gltf");
+
+
 	// main loop
 	while (!window->shouldClose())
 	{
@@ -86,6 +85,12 @@ void Game::Run()
 			break;
 		}
 
+		glm::ivec2 windowSize = window->getWindowSize();
+		float width = static_cast<float>(windowSize.x);
+		float height = static_cast<float>(windowSize.y);
+
+		// set up matrices for 3D rendering
+		glm::mat4 projection = glm::perspective(glm::radians(45.0f), width / height, 0.1f, 100.0f);
 		view = camera->GetViewMatrix();
 		projView = projection * view;
 
@@ -95,6 +100,17 @@ void Game::Run()
 		model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.5f, 1.0f, 0.0f));
 
 		renderer->DrawMesh(model, projView, defaultShader, cubeMesh);
+
+		// draw car model
+		model = glm::mat4(1.0f);
+
+		model = glm::translate(model, glm::vec3(5.0f, 0.0f, -10.0f));
+		model = glm::scale(model, glm::vec3(0.005f)); // scale down car model
+		model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		renderer->DrawModel(model, projView, defaultShader, carModel);
+
+		
 
 		window->swapBuffers();
 	}

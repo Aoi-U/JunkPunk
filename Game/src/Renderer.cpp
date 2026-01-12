@@ -40,3 +40,19 @@ void Renderer::DrawMesh(const glm::mat4& model, const glm::mat4& projView, std::
 	glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(mesh->getIndices().size()), GL_UNSIGNED_INT, 0);
 }
 
+void Renderer::DrawModel(const glm::mat4& model, const glm::mat4& projView, std::shared_ptr<Shader> shader, std::shared_ptr<Model> modelObj)
+{
+	// support for textures not added yet, just draws meshes with hard coded color
+
+	shader->use();
+	shader->setMat4("u_model", &model[0][0]);
+	shader->setMat4("u_projView", &projView[0][0]);
+	
+	// draw each mesh in the model
+	for (const Mesh& mesh : modelObj->getMeshes())
+	{
+		mesh.BindVao();
+		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(mesh.getIndices().size()), GL_UNSIGNED_INT, 0);
+	}
+}
+

@@ -8,6 +8,7 @@
 #include "InputManager.h"
 #include "Shader.h"
 #include "Mesh.h"
+#include "Model.h"
 
 class Renderer
 {
@@ -22,7 +23,7 @@ public:
 
 	void DrawMesh(const glm::mat4& model, const glm::mat4& projView, std::shared_ptr<Shader> shader, std::shared_ptr<Mesh> mesh); // draw function for rendering meshes
 
-
+	void DrawModel(const glm::mat4& model, const glm::mat4& projView, std::shared_ptr<Shader> shader, std::shared_ptr<Model> modelObj); // draw function for rendering models
 
 private:
 	std::shared_ptr<InputManager> inputManager; // not used but maybe useful later idk
