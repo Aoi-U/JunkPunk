@@ -21,6 +21,21 @@ glm::vec3 Camera::GetPosition()
 	UpdateViewMatrix();
 	return position;
 }
+float Camera::GetDistance()
+{
+	UpdateViewMatrix();
+	return distance;
+}
+float Camera::GetTheta()
+{
+	UpdateViewMatrix();
+	return theta;
+}
+float Camera::GetPhi()
+{
+	UpdateViewMatrix();
+	return phi;
+}
 
 void Camera::UpdateViewMatrix()
 {
@@ -62,6 +77,15 @@ void Camera::ChangePhi(float const deltaPhi)
 void Camera::ChangeRadius(float const deltaRadius)
 {
 	float const newDistance = glm::clamp(distance + deltaRadius, minDistance, maxDistance);
+	if (newDistance != distance)
+	{
+		isDirty = true;
+		distance = newDistance;
+	}
+}
+void Camera::SetRadius(float const newRadius)
+{
+	float const newDistance = glm::clamp(newRadius, minDistance, maxDistance);
 	if (newDistance != distance)
 	{
 		isDirty = true;

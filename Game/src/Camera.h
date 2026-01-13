@@ -29,6 +29,8 @@ public:
 
 	void ChangeRadius(float deltaRadius);
 
+	void SetRadius(float newRadius);
+
 	// probably need some function to lerp between current and new position for smooth camera movement
 
 	void Reset();
@@ -37,15 +39,21 @@ public:
 
 	glm::vec3 GetPosition();
 
+	float GetDistance();
+
+	float GetTheta();
+
+	float GetPhi();
+
 private:
 
 	void UpdateViewMatrix();
 
 	glm::mat4* target;
 
-	float distance;
 	float minDistance;
 	float maxDistance;
+	float distance;
 
 	float theta;
 	float phi;

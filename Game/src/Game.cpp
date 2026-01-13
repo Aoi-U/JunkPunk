@@ -3,6 +3,32 @@
 #include "glm/glm.hpp"
 
 #include "ImGuiTest.h"
+#include "ImGuiPanel.h"
+
+
+
+// Setup ImGui panel for camera, putting it here to access 
+class CameraEditorPanelRenderer : public ImGuiPanelRendererInterface {
+public:
+	CameraEditorPanelRenderer(){}
+	CameraEditorPanelRenderer(std::shared_ptr<Camera> mainCamera) : mainCamera_ptr(mainCamera) {}
+	virtual void render() override {
+		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+		//ImGui::Text("Position: (%f,%f,%f)", mainCamera->position.x, mainCamera->position.y, main_camera->position.z);
+		ImGui::Text("Distance: %f", mainCamera_ptr->GetDistance());
+		ImGui::Text("Phi: %f deg", glm::degrees(mainCamera_ptr->GetPhi()));
+		ImGui::Text("Theta: %f deg", glm::degrees(mainCamera_ptr->GetTheta()));
+		//ImGui::Text("FOV: %f", mainCamera->fov);
+		//static float f1 = 1.00f;
+		//ImGui::DragFloat("drag cam radius", &mainCamera_ptr->distance, 0.005f); //using a reference instead of the Change function because it's a slider
+		//ImGui::SameLine(); HelpMarker(
+		//	"Click and drag to edit value.\n"
+		//	"Hold Shift/Alt for faster/slower edit.\n"
+		//	"Double-Click or Ctrl+Click to input value.");
+	}
+private:
+	std::shared_ptr<Camera> mainCamera_ptr = nullptr;
+};
 
 Game::Game()
 {
@@ -21,7 +47,7 @@ Game::Game()
 
 	renderer = std::make_unique<Renderer>(inputManager); 
 
-	camera = std::make_unique<Camera>(cameraTarget, Camera::Params{}); // replace with actual values later
+	camera = std::make_shared<Camera>(cameraTarget, Camera::Params{}); // replace with actual values later
 
 	defaultShader = std::make_shared<Shader>("assets/shaders/default.vert", "assets/shaders/default.frag");
 	lightShader = std::make_shared<Shader>("assets/shaders/light.vert", "assets/shaders/light.frag");
@@ -86,7 +112,14 @@ void Game::Run()
 	std::shared_ptr<Model> carModel = std::make_shared<Model>("assets/models/old_rusty_car/scene.gltf");
 
 	// ImGui for testing
-	ImGuiTest gui(window);
+	//ImGuiTest gui(window);
+
+	
+	ImGuiPanel camera_debug_panel(window);
+	auto camera_editor_panel_renderer = std::make_shared<CameraEditorPanelRenderer>(camera);
+	camera_debug_panel.setPanelRenderer(camera_editor_panel_renderer);
+	
+
 
 	// main loop
 	while (!window->shouldClose())
@@ -99,6 +132,10 @@ void Game::Run()
 		{
 			std::cout << "Escape pressed, exiting." << std::endl;
 			break;
+		}
+		int scroll_changed = inputManager->ScrollValueChanged();
+		if (scroll_changed != 0) {
+			camera->ChangeRadius(scroll_changed * 0.1f);
 		}
 
 		glm::ivec2 windowSize = window->getWindowSize();
@@ -137,10 +174,11 @@ void Game::Run()
 		renderer->DrawMesh(lightModel, projView, lightShader, cubeMesh);
 
 		
-		gui.Render(); // render imgui test window
+		//gui.Render(); // render imgui test window
+		camera_debug_panel.render();// render imgui camera debugger
 
 		window->swapBuffers();
 	}
 
-	gui.Shutdown(); 
+	//gui.Shutdown(); 
 }

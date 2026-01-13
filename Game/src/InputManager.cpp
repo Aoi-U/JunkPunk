@@ -3,7 +3,7 @@
 //#include <utility>
 
 InputManager::InputManager(ResizeCallback resizeCallback)
-  : mResizeCallback(std::move(resizeCallback))
+  : mResizeCallback(std::move(resizeCallback)), dirty_scroll_value(0), current_scroll_value(0)
 {
 }
 
@@ -38,6 +38,12 @@ void InputManager::cursorPosCallback(double const xpos, double const ypos)
   mCursorPosition.y = ypos;
 }
 
+void InputManager::scrollCallback(double const xoffset, double const yoffset)
+{
+    dirty_scroll_value += yoffset;
+}
+
+
 bool InputManager::IsKeyboardButtonDown(int const keyboardButton) const
 {
   bool isButtonDown = false;
@@ -63,4 +69,11 @@ bool InputManager::IsMouseButtonDown(int const mouseButton) const
 glm::dvec2 const& InputManager::CursorPosition() const
 {
   return mCursorPosition;
+}
+
+int InputManager::ScrollValueChanged()
+{
+    int changed = current_scroll_value - dirty_scroll_value;
+    current_scroll_value = dirty_scroll_value;
+    return changed;
 }

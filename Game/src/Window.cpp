@@ -59,6 +59,22 @@ void Window::windowSizeMetaCallback(GLFWwindow* window, int width, int height) {
 	}
 }
 
+void Window::scrollMetaCallback(GLFWwindow* window, double xoffset, double yoffset) {
+	InputManager* callbacks = static_cast<InputManager*>(glfwGetWindowUserPointer(window));
+
+	bool forward_to_user_callback = true;
+	// Forward the scroll event to ImGui
+	//if (ImGui::GetCurrentContext()) {
+	//	ImGui_ImplGlfw_ScrollCallback(window, xoffset, yoffset);
+	//	forward_to_user_callback = !ImGui::GetIO().WantCaptureMouse;
+	//}
+
+	// If ImGui isn't capturing scroll input, call the user-defined scroll callback
+	if (forward_to_user_callback && callbacks) {
+		callbacks->scrollCallback(xoffset, yoffset);
+	}
+}
+
 Window::Window(int width, int height, const char* title, std::shared_ptr<InputManager> im)
 	: window(nullptr), inputManager(im)
 {
@@ -109,5 +125,6 @@ void Window::setCallbacks()
 	glfwSetWindowSizeCallback(window.get(), windowSizeMetaCallback);
 	glfwSetMouseButtonCallback(window.get(), mouseButtonMetaCallback);
 	glfwSetCursorPosCallback(window.get(), cursorPosMetaCallback);
+	glfwSetScrollCallback(window.get(), scrollMetaCallback);
 }
 
