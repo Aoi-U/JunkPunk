@@ -6,7 +6,8 @@
 #include "ImGuiPanel.h"
 
 
-
+static int camera_scroll_type = 0;
+static float camera_fov = 45.0f;
 // Setup ImGui panel for camera, putting it here to access 
 class CameraEditorPanelRenderer : public ImGuiPanelRendererInterface {
 public:
@@ -14,17 +15,16 @@ public:
 	CameraEditorPanelRenderer(std::shared_ptr<Camera> mainCamera) : mainCamera_ptr(mainCamera) {}
 	virtual void render() override {
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-		//ImGui::Text("Position: (%f,%f,%f)", mainCamera->position.x, mainCamera->position.y, main_camera->position.z);
+		ImGui::Text("Position: (%f,%f,%f)", mainCamera_ptr->GetPosition().x, mainCamera_ptr->GetPosition().y, mainCamera_ptr->GetPosition().z);
 		ImGui::Text("Distance: %f", mainCamera_ptr->GetDistance());
 		ImGui::Text("Phi: %f deg", glm::degrees(mainCamera_ptr->GetPhi()));
 		ImGui::Text("Theta: %f deg", glm::degrees(mainCamera_ptr->GetTheta()));
-		//ImGui::Text("FOV: %f", mainCamera->fov);
-		//static float f1 = 1.00f;
-		//ImGui::DragFloat("drag cam radius", &mainCamera_ptr->distance, 0.005f); //using a reference instead of the Change function because it's a slider
-		//ImGui::SameLine(); HelpMarker(
-		//	"Click and drag to edit value.\n"
-		//	"Hold Shift/Alt for faster/slower edit.\n"
-		//	"Double-Click or Ctrl+Click to input value.");
+		ImGui::Text("FOV: %f deg", camera_fov);
+		
+		ImGui::RadioButton("scroll distance", &camera_scroll_type, 0);
+		ImGui::RadioButton("scroll phi", &camera_scroll_type, 1);
+		ImGui::RadioButton("scroll theta", &camera_scroll_type, 2);
+		ImGui::RadioButton("scroll fov", &camera_scroll_type, 3);
 	}
 private:
 	std::shared_ptr<Camera> mainCamera_ptr = nullptr;
@@ -135,7 +135,18 @@ void Game::Run()
 		}
 		int scroll_changed = inputManager->ScrollValueChanged();
 		if (scroll_changed != 0) {
-			camera->ChangeRadius(scroll_changed * 0.1f);
+			if (camera_scroll_type == 0) {
+				camera->ChangeRadius(scroll_changed * 0.1f);
+			}
+			else if (camera_scroll_type == 1) {
+				camera->ChangePhi(scroll_changed * 0.01f);
+			}
+			else if (camera_scroll_type == 2) {
+				camera->ChangeTheta(scroll_changed * 0.01f);
+			}
+			else if (camera_scroll_type == 3) {
+				camera_fov += scroll_changed * 0.5f;
+			}
 		}
 
 		glm::ivec2 windowSize = window->getWindowSize();
@@ -143,7 +154,7 @@ void Game::Run()
 		float height = static_cast<float>(windowSize.y);
 
 		// set up camera matrices 
-		glm::mat4 projection = glm::perspective(glm::radians(45.0f), width / height, 0.1f, 100.0f);
+		glm::mat4 projection = glm::perspective(glm::radians(camera_fov), width / height, 0.1f, 100.0f);
 		view = camera->GetViewMatrix();
 		projView = projection * view;
 

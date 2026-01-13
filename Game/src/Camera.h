@@ -29,8 +29,6 @@ public:
 
 	void ChangeRadius(float deltaRadius);
 
-	void SetRadius(float newRadius);
-
 	// probably need some function to lerp between current and new position for smooth camera movement
 
 	void Reset();

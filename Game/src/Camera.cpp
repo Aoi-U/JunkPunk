@@ -83,16 +83,6 @@ void Camera::ChangeRadius(float const deltaRadius)
 		distance = newDistance;
 	}
 }
-void Camera::SetRadius(float const newRadius)
-{
-	float const newDistance = glm::clamp(newRadius, minDistance, maxDistance);
-	if (newDistance != distance)
-	{
-		isDirty = true;
-		distance = newDistance;
-	}
-}
-
 void Camera::Reset()
 {
 	Params params{};
