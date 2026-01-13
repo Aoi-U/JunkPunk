@@ -7,7 +7,7 @@
 
 
 static int camera_scroll_type = 0;
-static float camera_fov = 45.0f;
+static float camera_fov = 90.0f;
 // Setup ImGui panel for camera, putting it here to access 
 class CameraEditorPanelRenderer : public ImGuiPanelRendererInterface {
 public:
@@ -30,6 +30,7 @@ private:
 	std::shared_ptr<Camera> mainCamera_ptr = nullptr;
 };
 
+
 Game::Game()
 {
 	glfwWindowHint(GLFW_SAMPLES, 32);
@@ -47,10 +48,12 @@ Game::Game()
 
 	renderer = std::make_unique<Renderer>(inputManager); 
 
-	camera = std::make_shared<Camera>(cameraTarget, Camera::Params{}); // replace with actual values later
+	camera = std::make_unique<Camera>(cameraTarget, Camera::Params{}); // replace with actual values later
+	skybox = std::make_shared<Skybox>();
 
 	defaultShader = std::make_shared<Shader>("assets/shaders/default.vert", "assets/shaders/default.frag");
 	lightShader = std::make_shared<Shader>("assets/shaders/light.vert", "assets/shaders/light.frag");
+	skyboxShader = std::make_shared<Shader>("assets/shaders/skybox.vert", "assets/shaders/skybox.frag");
 }
 
 //Game::~Game()
@@ -62,17 +65,30 @@ Game::Game()
 void Game::Run()
 {
 	//renderer->Init();
+	skybox->Init();
 
 	
 	glm::mat4 view;
 	glm::mat4 projView;
 
 	// light
-	glm::vec3 lightPos = glm::vec3(2.0f, 2.0f, -5.0f);
+	glm::vec3 lightPos = glm::vec3(-5.0f, 2.0f, -5.0f);
 	glm::vec4 lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 	glm::mat4 lightModel = glm::mat4(1.0f);
 	lightModel = glm::translate(lightModel, lightPos);
 	lightModel = glm::scale(lightModel, glm::vec3(0.2f)); // small cube for light representation
+	defaultShader->use();
+	defaultShader->setVec3("u_lightPos", &lightPos.x);
+	defaultShader->setVec4("u_lightColor", &(lightColor.r));
+
+	// setup light shader
+	lightShader->use();
+	lightShader->setVec3("u_lightPos", &lightPos.x);
+	lightShader->setVec4("u_lightColor", &lightColor.r);
+
+	// setup skybox shader
+	skyboxShader->use();
+	skyboxShader->setInt("u_skybox", 0);
 
 	// test unit cube mesh
 	std::vector<Vertex> cubeVertices;
@@ -110,6 +126,10 @@ void Game::Run()
 
 	// test car model
 	std::shared_ptr<Model> carModel = std::make_shared<Model>("assets/models/old_rusty_car/scene.gltf");
+	// to load any other model, just add the model file to assets/models/ and create a model class with the path to the model file
+
+	gameObjects.push_back(std::make_pair(carModel, glm::mat4(1.0f)));
+	
 
 	// ImGui for testing
 	//ImGuiTest gui(window);
@@ -156,10 +176,9 @@ void Game::Run()
 		// set up camera matrices 
 		glm::mat4 projection = glm::perspective(glm::radians(camera_fov), width / height, 0.1f, 100.0f);
 		view = camera->GetViewMatrix();
+		view = glm::rotate(view, (float)glfwGetTime() * 0.1f, glm::vec3(0.0f, 1.0f, 0.0f)); 
 		projView = projection * view;
-
 		// set light and camera info in renderer
-		renderer->SetLight(lightPos, lightColor);
 		renderer->SetCamera(camera->GetPosition());
 
 		glm::mat4 model = glm::mat4(1.0f); // identity matrix for model
@@ -167,8 +186,8 @@ void Game::Run()
 		// rotating cube model
 		model = glm::scale(model, glm::vec3(0.5f));
 		model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.5f, 1.0f, 0.0f));
-
-		renderer->DrawMesh(model, projView, defaultShader, cubeMesh); // draw rotating cube
+		renderer->DrawMesh(model, projView, defaultShader, cubeMesh); // example draw rotating cube
+		// dont use the DrawMesh function, ill probably remove it later. its just here for drawing a simple manually created mesh
 
 		
 		model = glm::mat4(1.0f);
@@ -177,12 +196,19 @@ void Game::Run()
 		model = glm::translate(model, glm::vec3(5.0f, 0.0f, -10.0f));
 		model = glm::scale(model, glm::vec3(0.005f)); 
 		model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
-		model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-		renderer->DrawModel(model, projView, defaultShader, carModel); // draw car model
-
+		model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 1.0f, 0.0f));
+		gameObjects[0].second = model; // update car model matrix in gameObjects vector
+		//renderer->DrawModel(model, projView, defaultShader, carModel); // example draw car model
+		
+		DrawGameObjects(projView); // draw all game objects in the gameObjects vector
 
 		// render light as small cube
 		renderer->DrawMesh(lightModel, projView, lightShader, cubeMesh);
+
+		// skybox rendering
+		view = glm::mat4(glm::mat3(view)); // remove translation from the view matrix for skybox
+		projView = projection * view;
+		renderer->DrawSkybox(projView, skyboxShader, skybox); // draw skybox
 
 		
 		//gui.Render(); // render imgui test window
@@ -192,4 +218,15 @@ void Game::Run()
 	}
 
 	//gui.Shutdown(); 
+	defaultShader->Delete();
+	lightShader->Delete();
+	skyboxShader->Delete();
+}
+
+void Game::DrawGameObjects(const glm::mat4& projView)
+{
+	for (const auto& obj : gameObjects)
+	{
+		renderer->DrawModel(obj.second, projView, defaultShader, obj.first);
+	}
 }

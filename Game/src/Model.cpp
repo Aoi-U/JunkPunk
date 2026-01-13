@@ -12,6 +12,15 @@ Model::Model(const std::string& filePath)
 	}
 
 	ProcessNode(scene->mRootNode, scene);
+
+	if (ProcessMaterials(scene, filePath))
+	{
+		std::cout << "Textures loaded successfully." << std::endl;
+	}
+	else
+	{
+		std::cout << "Some textures failed to load." << std::endl;
+	}
 }
 
 void Model::ProcessNode(aiNode* node, const aiScene* scene)
@@ -49,6 +58,21 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
 			mesh->mVertices[i].z
 		);
 
+		// colors
+		if (mesh->HasVertexColors(0))
+		{ 
+			vertex.color = glm::vec3(
+				mesh->mColors[0][i].r,
+				mesh->mColors[0][i].g,
+				mesh->mColors[0][i].b
+			);
+		}
+		else
+		{
+			// fill with white
+			vertex.color = glm::vec3(1.0f, 1.0f, 1.0f);
+		}
+
 		// normals
 		if (mesh->HasNormals())
 		{
@@ -76,19 +100,6 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
 			vertex.texCoord = glm::vec2(0.0f, 0.0f);
 		}
 
-		if (mesh->HasVertexColors(0))
-		{ 
-			vertex.color = glm::vec3(
-				mesh->mColors[0][i].r,
-				mesh->mColors[0][i].g,
-				mesh->mColors[0][i].b
-			);
-		}
-		else
-		{
-			// fill with white
-			vertex.color = glm::vec3(1.0f, 1.0f, 1.0f);
-		}
 
 		vertices.push_back(vertex);
 	}
@@ -103,7 +114,70 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
 		}
 	}
 
-	return Mesh(vertices, indices);
+	Mesh mMesh = Mesh(vertices, indices);
+	mMesh.setMaterialIndex(mesh->mMaterialIndex);
+
+	return mMesh;
+}
+
+bool Model::ProcessMaterials(const aiScene* scene, const std::string& filePath)
+{
+	std::string::size_type slashIndex = filePath.find_last_of("/");
+	std::string directory;
+
+	if (slashIndex == std::string::npos)
+	{
+		directory = ".";
+	}
+	else if (slashIndex == 0)
+	{
+		directory = "/";
+	}
+	else
+	{
+		directory = filePath.substr(0, slashIndex);
+	}
+
+	bool success = true;
+
+	// process materials
+	for (size_t i = 0; i < scene->mNumMaterials; i++)
+	{
+		aiMaterial* mat = scene->mMaterials[i];
+
+		if (mat->GetTextureCount(aiTextureType_DIFFUSE) > 0)
+		{
+			aiString str;
+
+			if (mat->GetTexture(aiTextureType_DIFFUSE, 0, &str, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS)
+			{
+				std::string texturePath(str.data);
+				if (texturePath.substr(0, 2) == ".\\")
+				{
+					texturePath = texturePath.substr(2, texturePath.size() - 2);
+				}
+
+				std::cout << "Loading texture: " << texturePath << std::endl;
+				
+				std::string fullPath = directory + "/" + texturePath;
+
+				std::cout << "Full texture path: " << fullPath << std::endl;
+
+				Texture texture(fullPath);
+
+				if (texture.Load())
+				{
+					textures.push_back(texture);
+				}
+				else
+				{
+					std::cout << "Failed to load texture at: " << fullPath << std::endl;
+					success = false;
+				}
+			}
+		}
+	}
+	return success;
 }
 
 
