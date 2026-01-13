@@ -22,7 +22,7 @@ private:
 	std::unique_ptr<Renderer> renderer;
 
 	glm::mat4 cameraTarget{ 0.0f }; // change to car position later
-	std::unique_ptr<Camera> camera;
+	std::shared_ptr<Camera> camera;
 	std::shared_ptr<Skybox> skybox;
 
 	std::shared_ptr<Shader> defaultShader; 
@@ -35,5 +35,5 @@ private:
 	void DrawGameObjects(const glm::mat4& projView);
 
 	// add game related stuff 
-
+	void CalculateCameraPanning(float current_xpos, float current_ypos);
 };

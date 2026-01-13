@@ -8,10 +8,13 @@
 
 static int camera_scroll_type = 0;
 static float camera_fov = 90.0f;
-// Setup ImGui panel for camera, putting it here to access 
+static bool split_camera = false;
+static glm::dvec2 previous_mouse_position;
+static bool first_time_held_right_click = false;
+// Setup ImGui panel for camera, putting it here to quick access 
 class CameraEditorPanelRenderer : public ImGuiPanelRendererInterface {
 public:
-	CameraEditorPanelRenderer(){}
+	//CameraEditorPanelRenderer(){}
 	CameraEditorPanelRenderer(std::shared_ptr<Camera> mainCamera) : mainCamera_ptr(mainCamera) {}
 	virtual void render() override {
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
@@ -22,14 +25,52 @@ public:
 		ImGui::Text("FOV: %f deg", camera_fov);
 		
 		ImGui::RadioButton("scroll distance", &camera_scroll_type, 0);
-		ImGui::RadioButton("scroll phi", &camera_scroll_type, 1);
+		ImGui::RadioButton("scroll fov", &camera_scroll_type, 1);
 		ImGui::RadioButton("scroll theta", &camera_scroll_type, 2);
-		ImGui::RadioButton("scroll fov", &camera_scroll_type, 3);
+		ImGui::RadioButton("scroll phi", &camera_scroll_type, 3);
+
+
+		ImGui::Checkbox("split camera", &split_camera);
 	}
 private:
 	std::shared_ptr<Camera> mainCamera_ptr = nullptr;
 };
 
+//might have to move to Camera.cpp to declutter later
+void Game::CalculateCameraPanning(float current_xpos, float current_ypos) {
+	//right now it snaps since the input manager only records the final mouse position rather than delta change
+	float screen_width = window->getWindowSize().x;
+	float screen_height = window->getWindowSize().y;
+	float aspect_ratio = screen_width / screen_height;
+	//get relative position based on center of screen
+	float xscreen = (current_xpos / (screen_width / 2)) - 1;
+	float yscreen = (current_ypos / (screen_height / 2)) - 1;
+
+	float cam_distance = camera->GetDistance();
+
+	//apply some aspect ratio to the movement
+	if (screen_width > screen_height) {
+		xscreen = ((xscreen) * aspect_ratio) / cam_distance;
+		yscreen = (yscreen) / cam_distance;
+	}
+	else {
+		xscreen = (xscreen) / cam_distance;
+		yscreen = ((yscreen) * aspect_ratio) / cam_distance;
+	}
+	if (first_time_held_right_click == false) {
+		first_time_held_right_click = true;
+		previous_mouse_position = glm::dvec2(xscreen, -yscreen);
+	}
+
+	float deltaX = (xscreen - previous_mouse_position.x) * cam_distance;
+	float deltaY = (yscreen + previous_mouse_position.y) * cam_distance;
+
+	previous_mouse_position = glm::dvec2(xscreen, -yscreen);
+
+	//apply to camera
+	camera->ChangeTheta(deltaX);
+	camera->ChangePhi(deltaY);
+}
 
 Game::Game()
 {
@@ -48,7 +89,7 @@ Game::Game()
 
 	renderer = std::make_unique<Renderer>(inputManager); 
 
-	camera = std::make_unique<Camera>(cameraTarget, Camera::Params{}); // replace with actual values later
+	camera = std::make_shared<Camera>(cameraTarget, Camera::Params{}); // replace with actual values later
 	skybox = std::make_shared<Skybox>();
 
 	defaultShader = std::make_shared<Shader>("assets/shaders/default.vert", "assets/shaders/default.frag");
@@ -159,19 +200,31 @@ void Game::Run()
 				camera->ChangeRadius(scroll_changed * 0.1f);
 			}
 			else if (camera_scroll_type == 1) {
-				camera->ChangePhi(scroll_changed * 0.01f);
+				camera_fov += scroll_changed * 0.5f;
 			}
 			else if (camera_scroll_type == 2) {
 				camera->ChangeTheta(scroll_changed * 0.01f);
 			}
 			else if (camera_scroll_type == 3) {
-				camera_fov += scroll_changed * 0.5f;
+				camera->ChangePhi(scroll_changed * 0.01f);
 			}
 		}
+		if (inputManager->IsMouseButtonDown(1)) {
+			glm::dvec2 mouse_movement = inputManager->CursorPosition();
+			CalculateCameraPanning(mouse_movement.x, mouse_movement.y);
+		}
+		else {
+			first_time_held_right_click = false;
+		}
+		
 
 		glm::ivec2 windowSize = window->getWindowSize();
 		float width = static_cast<float>(windowSize.x);
 		float height = static_cast<float>(windowSize.y);
+
+		if (split_camera) {
+			height /= 2;//temporary testing for split camera
+		}
 
 		// set up camera matrices 
 		glm::mat4 projection = glm::perspective(glm::radians(camera_fov), width / height, 0.1f, 100.0f);
@@ -180,6 +233,8 @@ void Game::Run()
 		projView = projection * view;
 		// set light and camera info in renderer
 		renderer->SetCamera(camera->GetPosition());
+
+		glViewport(0, 0, width, height); //temporary testing for split camera
 
 		glm::mat4 model = glm::mat4(1.0f); // identity matrix for model
 
@@ -201,6 +256,8 @@ void Game::Run()
 		//renderer->DrawModel(model, projView, defaultShader, carModel); // example draw car model
 		
 		DrawGameObjects(projView); // draw all game objects in the gameObjects vector
+
+
 
 		// render light as small cube
 		renderer->DrawMesh(lightModel, projView, lightShader, cubeMesh);
