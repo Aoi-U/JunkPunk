@@ -143,6 +143,7 @@
     <ClCompile Include="src\EBO.cpp" />
     <ClCompile Include="src\Game.cpp" />
     <ClCompile Include="src\glad.c" />
+    <ClCompile Include="src\ImGuiPanel.cpp" />
     <ClCompile Include="src\ImGuiTest.cpp" />
     <ClCompile Include="src\InputManager.cpp" />
     <ClCompile Include="src\main.cpp" />
@@ -169,6 +170,7 @@
     <ClInclude Include="src\EBO.h" />
     <ClInclude Include="src\Camera.h" />
     <ClInclude Include="src\Game.h" />
+    <ClInclude Include="src\ImGuiPanel.h" />
     <ClInclude Include="src\ImGuiTest.h" />
     <ClInclude Include="src\InputManager.h" />
     <ClInclude Include="src\Mesh.h" />

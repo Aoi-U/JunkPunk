@@ -87,6 +87,9 @@
     <ClCompile Include="src\ImGuiTest.cpp">
       <Filter>Source Files\imgui</Filter>
     </ClCompile>
+    <ClCompile Include="src\ImGuiPanel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="src\VAO.cpp">
       <Filter>Source Files\Rendering</Filter>
     </ClCompile>
@@ -186,6 +189,9 @@
       <Filter>Header Files\Rendering</Filter>
     </ClInclude>
     <ClInclude Include="src\PVDDebugger.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ImGuiPanel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

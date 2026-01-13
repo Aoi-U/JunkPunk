@@ -40,4 +40,5 @@ private:
 	static void mouseButtonMetaCallback(GLFWwindow* window, int button, int action, int mods);
 	static void cursorPosMetaCallback(GLFWwindow* window, double xpos, double ypos);
 	static void windowSizeMetaCallback(GLFWwindow* window, int width, int height);
+	static void scrollMetaCallback(GLFWwindow* window, double xoffset, double yoffset);
 };
