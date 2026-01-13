@@ -1,6 +1,6 @@
 #include "Model.h"
 
-Model::Model(const std::string& filePath)
+Model::Model(std::string filePath)
 {
 	Assimp::Importer importer;
 
@@ -10,17 +10,11 @@ Model::Model(const std::string& filePath)
 			std::cerr << "ERROR::ASSIMP::" << importer.GetErrorString() << std::endl;
 			return;
 	}
+	directory = filePath.substr(0, filePath.find_last_of('/'));
+	std::cout << "directory: " << directory << std::endl;
+
 
 	ProcessNode(scene->mRootNode, scene);
-
-	if (ProcessMaterials(scene, filePath))
-	{
-		std::cout << "Textures loaded successfully." << std::endl;
-	}
-	else
-	{
-		std::cout << "Some textures failed to load." << std::endl;
-	}
 }
 
 void Model::ProcessNode(aiNode* node, const aiScene* scene)
@@ -43,6 +37,7 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
 {
 	std::vector<Vertex> vertices;
 	std::vector<GLuint> indices;
+	std::vector<Texture> textures;
 
 	vertices.reserve(mesh->mNumVertices);
 
@@ -115,69 +110,51 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
 	}
 
 	Mesh mMesh = Mesh(vertices, indices);
-	mMesh.setMaterialIndex(mesh->mMaterialIndex);
 
-	return mMesh;
+	aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+
+	std::vector<Texture> diffuseMaps = LoadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
+	std::vector<Texture> specularMaps = LoadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
+	std::vector<Texture> normalMaps = LoadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal");
+	std::vector<Texture> heightMaps = LoadMaterialTextures(material, aiTextureType_AMBIENT, "texture_height");
+
+	textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
+	textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
+	textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
+	textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
+
+	return Mesh(vertices, indices, textures);
 }
 
-bool Model::ProcessMaterials(const aiScene* scene, const std::string& filePath)
+std::vector<Texture> Model::LoadMaterialTextures(aiMaterial* mat, aiTextureType type, const std::string& typeName)
 {
-	std::string::size_type slashIndex = filePath.find_last_of("/");
-	std::string directory;
-
-	if (slashIndex == std::string::npos)
+	std::vector<Texture> textures;
+	
+	for (unsigned int i = 0; i < mat->GetTextureCount(type); i++)
 	{
-		directory = ".";
-	}
-	else if (slashIndex == 0)
-	{
-		directory = "/";
-	}
-	else
-	{
-		directory = filePath.substr(0, slashIndex);
-	}
-
-	bool success = true;
-
-	// process materials
-	for (size_t i = 0; i < scene->mNumMaterials; i++)
-	{
-		aiMaterial* mat = scene->mMaterials[i];
-
-		if (mat->GetTextureCount(aiTextureType_DIFFUSE) > 0)
+		aiString str;
+		mat->GetTexture(type, i, &str);
+		// check if texture was loaded before and if so, continue to next iteration: skip loading a new texture
+		bool skip = false;
+		for (unsigned int j = 0; j < texturesLoaded.size(); j++)
 		{
-			aiString str;
-
-			if (mat->GetTexture(aiTextureType_DIFFUSE, 0, &str, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS)
+			if (std::strcmp(texturesLoaded[j].getPath().data(), str.C_Str()) == 0)
 			{
-				std::string texturePath(str.data);
-				if (texturePath.substr(0, 2) == ".\\")
-				{
-					texturePath = texturePath.substr(2, texturePath.size() - 2);
-				}
-
-				std::cout << "Loading texture: " << texturePath << std::endl;
-				
-				std::string fullPath = directory + "/" + texturePath;
-
-				std::cout << "Full texture path: " << fullPath << std::endl;
-
-				Texture texture(fullPath);
-
-				if (texture.Load())
-				{
-					textures.push_back(texture);
-				}
-				else
-				{
-					std::cout << "Failed to load texture at: " << fullPath << std::endl;
-					success = false;
-				}
+				textures.push_back(texturesLoaded[j]);
+				skip = true; // a texture with the same filepath has already been loaded, continue to next one. (optimization)
+				break;
 			}
 		}
+		if (!skip)
+		{   // if texture hasn't been loaded already, load it
+			Texture texture(str.C_Str(), typeName);
+			texture.Load(directory);
+			textures.push_back(texture);
+			texturesLoaded.push_back(texture);
+		}
 	}
-	return success;
+
+	return textures;
 }
 
 

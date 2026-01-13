@@ -3,15 +3,22 @@
 #include "Mesh.h"
 
 Mesh::Mesh(std::vector <Vertex>& vertices, std::vector <GLuint>& indices)
+	: vertices(vertices), indices(indices), vbo(vertices), ebo(indices)
 {
-	Mesh::vertices = vertices;
-	Mesh::indices = indices;
+	SetupMesh();
+}
 
+Mesh::Mesh(std::vector<Vertex>& vertices, std::vector<GLuint>& indices, std::vector<Texture>& textures)
+	: vertices(vertices), indices(indices), textures(textures), vbo(vertices), ebo(indices)
+{
+	SetupMesh();
+}
+
+void Mesh::SetupMesh()
+{
 	vao.Bind();
-
-	VBO vbo(vertices);
-
-	EBO ebo(indices);
+	vbo.Bind();
+	ebo.Bind();
 
 	// Links VBO attributes such as coordinates and colors to VAO
 	vao.LinkAttributes(vbo, 0, 3, GL_FLOAT, sizeof(Vertex), (void*)0); // position

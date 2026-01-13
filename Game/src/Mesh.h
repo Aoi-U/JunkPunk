@@ -14,6 +14,7 @@ class Mesh
 {
 public:
 	Mesh(std::vector<Vertex>& vertices, std::vector<GLuint>& indices);
+	Mesh(std::vector<Vertex>& vertices, std::vector<GLuint>& indices, std::vector<Texture>& textures);
 
 
 	const std::vector<Vertex>& getVertices() const { return vertices; }
@@ -22,13 +23,16 @@ public:
 	void BindVao() const { vao.Bind(); }
 	void UnbindVao() { vao.Unbind(); }
 
-	void setMaterialIndex(unsigned int index) { materialIndex = index; }
-	unsigned int getMaterialIndex() const { return materialIndex; }
+	std::vector<Texture>& getTextures() { return textures; }
 
 private:
 	std::vector<Vertex> vertices;
 	std::vector<GLuint> indices;
-	unsigned int materialIndex{};
+	std::vector<Texture> textures;
 
 	VAO vao;
+	VBO vbo;
+	EBO ebo;
+
+	void SetupMesh();
 };

@@ -10,23 +10,16 @@ uniform vec3 u_cameraPos;
 uniform vec3 u_lightPos;
 uniform vec4 u_lightColor;
 
-uniform sampler2D u_tex0;
-uniform int u_useTexture;
+uniform sampler2D texture_diffuse1;
+uniform sampler2D texture_diffuse2;
+uniform sampler2D texture_diffuse3;
+uniform sampler2D texture_specular1;
+uniform sampler2D texture_specular2;
 
 void main()
-{
-	vec3 baseColor;
-	if (u_useTexture == 1)
-	{
-		vec4 sampledColor = texture(u_tex0, texCoord);
-		baseColor = sampledColor.rgb;
-	}
-	else
-	{
-		baseColor = color;
-	}
-	
-	vec4 sampledColor = texture(u_tex0, texCoord);
+{	
+	vec4 sampledColor = texture(texture_diffuse1, texCoord);
+	vec3 baseColor = sampledColor.rgb;
 
     vec3 norm = normalize(normal);
     vec3 lightDir = normalize(u_lightPos - fragPos);

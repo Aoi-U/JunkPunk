@@ -113,54 +113,18 @@ void Game::Run()
 {
 	//renderer->Init();
 	skybox->Init(); // load and process skybox 
-	ShaderSetup(); // set up shaders with initial values
+	ShaderSetup(); // set up shaders
 	
-
-	// test unit cube mesh (DELETE LATER)
-	std::vector<Vertex> cubeVertices;
-	
-	for (float x = -0.5f; x <= 0.5f; x += 1.0f)
-	{
-		for (float y = -0.5f; y <= 0.5f; y += 1.0f)
-		{
-			for (float z = -0.5f; z <= 0.5f; z += 1.0f)
-			{
-				Vertex vertex;
-				vertex.position = glm::vec3(x, y, z);
-				vertex.color = glm::vec3((x + 0.5f), (y + 0.5f), (z + 0.5f)); // color based on position
-				vertex.normal = glm::normalize(vertex.position); // normal pointing outwards
-				cubeVertices.push_back(vertex);
-			}
-		}
-	}
-	
-	std::vector<GLuint> cubeIndices = {
-		// Left face (x = -0.5)
-		0, 1, 3, 3, 2, 0,
-		// Right face (x = 0.5)
-		4, 6, 7, 7, 5, 4,
-		// Bottom face (y = -0.5)
-		0, 4, 5, 5, 1, 0,
-		// Top face (y = 0.5)
-		2, 3, 7, 7, 6, 2,
-		// Back face (z = -0.5)
-		0, 2, 6, 6, 4, 0,
-		// Front face (z = 0.5)
-		1, 5, 7, 7, 3, 1
-	};
-	std::shared_ptr<Mesh> cubeMesh = std::make_shared<Mesh>(cubeVertices, cubeIndices);
-	// end test cube mesh
-
 	// test car model 
 	std::shared_ptr<Model> carModel = std::make_shared<Model>("assets/models/old_rusty_car/scene.gltf");
-	// to load any other model, just add the model file to assets/models/ and create a model class with the path to the model file
-
 	gameObjects.push_back(std::make_pair(carModel, glm::mat4(1.0f)));
+	// end test car model
 	
-	/*
 	std::shared_ptr<Model> classroom = std::make_shared<Model>("assets/models/classroom/scene.gltf");
 	gameObjects.push_back(std::make_pair(classroom, glm::mat4(1.0f)));
-	*/
+	// test classroom model
+	
+	// to load any other model, just add the model file to assets/models/ and create a model class with the path to the model file
 	
 
 	// ImGui for testing
@@ -170,8 +134,6 @@ void Game::Run()
 	ImGuiPanel camera_debug_panel(window);
 	auto camera_editor_panel_renderer = std::make_shared<CameraEditorPanelRenderer>(camera);
 	camera_debug_panel.setPanelRenderer(camera_editor_panel_renderer);
-	
-
 
 	// main loop
 	while (!window->shouldClose())
@@ -230,45 +192,28 @@ void Game::Run()
 
 		glm::mat4 model = glm::mat4(1.0f); // identity matrix for model
 
-		// rotating cube model
-		model = glm::scale(model, glm::vec3(0.5f));
-		model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.5f, 1.0f, 0.0f));
-		renderer->DrawMesh(model, projView, defaultShader, cubeMesh); // example draw rotating cube
-		// dont use the DrawMesh function, ill probably remove it later. its just here for drawing a simple manually created mesh
-
+		// car model 
+		model = glm::translate(model, glm::vec3(5.0f, 0.0f, -10.0f));
+		model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 1.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.005f)); 
+		gameObjects[0].second = model; // update car model matrix in gameObjects 
 		
 		model = glm::mat4(1.0f);
 
-		// car model 
-		model = glm::translate(model, glm::vec3(5.0f, 0.0f, -10.0f));
-		model = glm::scale(model, glm::vec3(0.005f)); 
-		model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
-		model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 1.0f, 0.0f));
-		gameObjects[0].second = model; // update car model matrix in gameObjects vector
-		//renderer->DrawModel(model, projView, defaultShader, carModel); // example draw car model
-
-		/*
-		model = glm::mat4(1.0f);
 		// classroom model
-		model = glm::scale(model, glm::vec3(1.0f));
-		model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 		model = glm::translate(model, glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(1.0f));
 		gameObjects[1].second = model; // update classroom model matrix in gameObjects vector
-		*/
 		
 		DrawGameObjects(projView); // draw all game objects in the gameObjects vector
 
-
-
-		// render light as small cube
-		renderer->DrawMesh(lightModel, projView, lightShader, cubeMesh);
-
 		// skybox rendering
-		view = glm::mat4(glm::mat3(view)); // remove translation from the view matrix for skybox
-		projView = projection * view;
+		glm::mat4 skyView = glm::mat4(glm::mat3(view)); // remove translation from the view matrix for skybox
+		projView = projection * skyView;
 		renderer->DrawSkybox(projView, skyboxShader, skybox); // draw skybox
 
-		
 		//gui.Render(); // render imgui test window
 		camera_debug_panel.render();// render imgui camera debugger
 
@@ -281,6 +226,7 @@ void Game::Run()
 	skyboxShader->Delete();
 }
 
+// sets shader uniforms for light and skybox (since they are static)
 void Game::ShaderSetup()
 {
 	// light
@@ -300,6 +246,7 @@ void Game::ShaderSetup()
 	skyboxShader->setInt("u_skybox", 0);
 }
 
+// sends render calls for all game objects
 void Game::DrawGameObjects(const glm::mat4& projView)
 {
 	for (const auto& obj : gameObjects)

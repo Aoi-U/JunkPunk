@@ -23,7 +23,7 @@ public:
 
 	void Draw(const glm::mat4& model, const glm::mat4& projView, std::shared_ptr<Shader> shader); // main draw function for rendering objects
 
-	void DrawMesh(const glm::mat4& model, const glm::mat4& projView, std::shared_ptr<Shader> shader, std::shared_ptr<Mesh> mesh); // draw function for rendering meshes
+	void DrawMesh(const glm::mat4& model, const glm::mat4& projView, std::shared_ptr<Shader> shader, Mesh& mesh); // draw function for rendering meshes
 
 	void DrawModel(const glm::mat4& model, const glm::mat4& projView, std::shared_ptr<Shader> shader, std::shared_ptr<Model> modelObj); // draw function for rendering models
 

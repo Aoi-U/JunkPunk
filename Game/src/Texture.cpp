@@ -3,30 +3,47 @@
 Texture::Texture(const std::string& path)
 	: path(path)
 {
+	
 }
 
-bool Texture::Load()
+Texture::Texture(const std::string& path, const std::string& type)
+	: path(path), type(type)
+{
+}
+
+bool Texture::Load(const std::string& directory)
 {
 	glGenTextures(1, &ID);
-	glActiveTexture(GL_TEXTURE0);
 
-	glBindTexture(GL_TEXTURE_2D, ID);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	
 	int width, height, nrChannels;
 	//stbi_set_flip_vertically_on_load(true);
-	unsigned char* data = stbi_load(path.c_str(), &width, &height, &nrChannels, 0);
+	std::string filename = std::string(path);
+	filename = directory + '/' + filename;
+
+	unsigned char* data = stbi_load(filename.c_str(), &width, &height, &nrChannels, 0);
 
 	if (data)
 	{
-		GLenum imageFormat = (nrChannels == 4) ? GL_RGBA : (nrChannels == 3) ? GL_RGB : GL_RED;
+		GLenum imageFormat;
+		if (nrChannels == 1)
+			imageFormat = GL_RED;
+		else if (nrChannels == 3)
+			imageFormat = GL_RGB;
+		else if (nrChannels == 4)
+			imageFormat = GL_RGBA;
 
+		glBindTexture(GL_TEXTURE_2D, ID);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, imageFormat, GL_UNSIGNED_BYTE, data);
-
 		glGenerateMipmap(GL_TEXTURE_2D);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		stbi_image_free(data);
+
+		std::cout << "Successfully loaded texture at path: " << path << std::endl;
 	}
 	else
 	{
@@ -34,7 +51,6 @@ bool Texture::Load()
 		stbi_image_free(data);
 		return false;
 	}
-	stbi_image_free(data);
 
 	glBindTexture(GL_TEXTURE_2D, 0);
 

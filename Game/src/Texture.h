@@ -11,12 +11,17 @@ class Texture
 {
 	public:
 		Texture(const std::string& path);
-		bool Load(); // loads the texture from file
+		Texture(const std::string& path, const std::string& type);
+		bool Load(const std::string& directory); // loads the texture from file
 		void Bind(GLenum unit) const;
 		void Unbind();
 		void Delete();
+
+		const std::string& getPath() { return path; }
+		const std::string& getType() { return type; }
 		GLuint getID() const { return ID; }
 private:
-	const std::string path;
-	GLuint ID;
+	std::string path;
+	std::string type;
+	GLuint ID{};
 };
