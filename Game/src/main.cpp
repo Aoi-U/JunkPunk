@@ -14,6 +14,6 @@ int main()
 	}
 	glfwTerminate();
 
-	PVDDebugger pvdDebugger;
-	pvdDebugger.Run();
+	//PVDDebugger pvdDebugger;
+	//pvdDebugger.Run();
 }
