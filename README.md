@@ -1,17 +1,11 @@
-#Setup
-1. Open the Game project properties
-<img width="447" height="806" alt="image" src="https://github.com/user-attachments/assets/90475b9e-9121-479c-89a0-18e6c4849549" />
+Setup:
 
-2. In the window that pops up, add "$(ProjectDir)thirdparty\include folder" in C/C++ -> General -> Additional Include Directories
-<img width="800" height="542" alt="image" src="https://github.com/user-attachments/assets/06036dc5-379b-4ac7-bb9b-46677c7e2396" />
+1. Download the Debug and Release folders from this drive
+https://drive.google.com/drive/folders/1Xi6scrCqUiQR3kno5-xt33z2yFq9ZRjy?usp=sharing
 
-3. Add "$(ProjectDir)thirdparty\lib in Linker -> General -> Additional Library Directories
-<img width="802" height="545" alt="image" src="https://github.com/user-attachments/assets/dc2ceed3-7396-4cce-8108-53998939debf" />
+2. Add the contents into x64/Release and x64/Debug respectively (Use the x64 folder in the root directory, not Game/x64)
+<img width="675" height="394" alt="image" src="https://github.com/user-attachments/assets/c433e388-d72e-40d0-a563-97c74b8f633f" />
 
-4. Add glfw3.lib, assimp-vc143-mt.lib in Linker -> Input -> Additional Dependencies dropdown menu
-<img width="799" height="547" alt="image" src="https://github.com/user-attachments/assets/ac722239-fcdd-41b7-8895-0df0927fea72" />
+<img width="638" height="375" alt="image" src="https://github.com/user-attachments/assets/b0b9f814-4673-47e5-9a8d-c97a792cadcc" />
 
-5. Apply and exit
-  
-6. Make sure you are on Release or Debug and on x64
-<img width="389" height="55" alt="image" src="https://github.com/user-attachments/assets/b83b87e6-0314-4a9f-9829-8dfd97857903" />
+The visual studio configurations should all be set, but if you get errors let me know - Aoi
