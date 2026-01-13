@@ -108,6 +108,9 @@
     <ClCompile Include="src\stb.cpp">
       <Filter>Source Files\stb</Filter>
     </ClCompile>
+    <ClCompile Include="src\PVDtest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Camera.h">
@@ -181,6 +184,9 @@
     </ClInclude>
     <ClInclude Include="src\SkyBox.h">
       <Filter>Header Files\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\PVDDebugger.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
