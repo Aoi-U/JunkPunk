@@ -6,6 +6,7 @@
 #include "Mesh.h"
 #include "Model.h"
 #include "SkyBox.h"
+#include "Time.h"
 
 class Game
 {
@@ -20,10 +21,15 @@ private:
 	std::shared_ptr<InputManager> inputManager; 
 	std::shared_ptr<Window> window;
 	std::unique_ptr<Renderer> renderer;
+	std::unique_ptr<Time> time;
 
 	glm::mat4 cameraTarget{ 0.0f }; // change to car position later
 	std::shared_ptr<Camera> camera;
 	std::shared_ptr<Skybox> skybox;
+
+	glm::vec3 lightPos;
+	glm::vec4 lightColor;
+	glm::mat4 lightModel;
 
 	std::shared_ptr<Shader> defaultShader; 
 	std::shared_ptr<Shader> lightShader;
@@ -32,6 +38,7 @@ private:
 	// list of all game objects and its model matrices (maybe think of a better solution)
 	std::vector<std::pair<std::shared_ptr<Model>, glm::mat4>> gameObjects;
 
+	void ShaderSetup();
 	void DrawGameObjects(const glm::mat4& projView);
 
 	// add game related stuff 

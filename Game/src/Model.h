@@ -13,6 +13,7 @@
 class Model
 {
 public:
+	// loads and processes a model from a file
 	Model(const std::string& filePath);
 
 	const std::vector<Mesh>& getMeshes() { return meshes; }
@@ -20,7 +21,6 @@ public:
 
 private:
 	std::vector<Mesh> meshes;
-	// texture array
 	std::vector<Texture> textures;
 	
 

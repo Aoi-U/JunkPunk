@@ -87,10 +87,16 @@ Game::Game()
 
 	glfwSwapInterval(1); // Enable vsync to limit fps
 
-	renderer = std::make_unique<Renderer>(inputManager); 
+	renderer = std::make_unique<Renderer>(inputManager);
+
+	time = std::make_unique<Time>();
 
 	camera = std::make_shared<Camera>(cameraTarget, Camera::Params{}); // replace with actual values later
 	skybox = std::make_shared<Skybox>();
+
+	lightPos = glm::vec3(-5.0f, 2.0f, -5.0f);
+	lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+	lightModel = glm::mat4(1.0f);
 
 	defaultShader = std::make_shared<Shader>("assets/shaders/default.vert", "assets/shaders/default.frag");
 	lightShader = std::make_shared<Shader>("assets/shaders/light.vert", "assets/shaders/light.frag");
@@ -106,32 +112,11 @@ Game::Game()
 void Game::Run()
 {
 	//renderer->Init();
-	skybox->Init();
-
+	skybox->Init(); // load and process skybox 
+	ShaderSetup(); // set up shaders with initial values
 	
-	glm::mat4 view;
-	glm::mat4 projView;
 
-	// light
-	glm::vec3 lightPos = glm::vec3(-5.0f, 2.0f, -5.0f);
-	glm::vec4 lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-	glm::mat4 lightModel = glm::mat4(1.0f);
-	lightModel = glm::translate(lightModel, lightPos);
-	lightModel = glm::scale(lightModel, glm::vec3(0.2f)); // small cube for light representation
-	defaultShader->use();
-	defaultShader->setVec3("u_lightPos", &lightPos.x);
-	defaultShader->setVec4("u_lightColor", &(lightColor.r));
-
-	// setup light shader
-	lightShader->use();
-	lightShader->setVec3("u_lightPos", &lightPos.x);
-	lightShader->setVec4("u_lightColor", &lightColor.r);
-
-	// setup skybox shader
-	skyboxShader->use();
-	skyboxShader->setInt("u_skybox", 0);
-
-	// test unit cube mesh
+	// test unit cube mesh (DELETE LATER)
 	std::vector<Vertex> cubeVertices;
 	
 	for (float x = -0.5f; x <= 0.5f; x += 1.0f)
@@ -164,12 +149,18 @@ void Game::Run()
 		1, 5, 7, 7, 3, 1
 	};
 	std::shared_ptr<Mesh> cubeMesh = std::make_shared<Mesh>(cubeVertices, cubeIndices);
+	// end test cube mesh
 
-	// test car model
+	// test car model 
 	std::shared_ptr<Model> carModel = std::make_shared<Model>("assets/models/old_rusty_car/scene.gltf");
 	// to load any other model, just add the model file to assets/models/ and create a model class with the path to the model file
 
 	gameObjects.push_back(std::make_pair(carModel, glm::mat4(1.0f)));
+	
+	/*
+	std::shared_ptr<Model> classroom = std::make_shared<Model>("assets/models/classroom/scene.gltf");
+	gameObjects.push_back(std::make_pair(classroom, glm::mat4(1.0f)));
+	*/
 	
 
 	// ImGui for testing
@@ -187,6 +178,7 @@ void Game::Run()
 	{
 		glfwPollEvents();
 		renderer->Clear(0.0f, 0.3f, 0.3f, 1.0f); 
+		time->Update();
 
 		// example input handling, probably move to InputManager or some other class for readability later
 		if (inputManager->IsKeyboardButtonDown(GLFW_KEY_ESCAPE))
@@ -228,10 +220,10 @@ void Game::Run()
 
 		// set up camera matrices 
 		glm::mat4 projection = glm::perspective(glm::radians(camera_fov), width / height, 0.1f, 100.0f);
-		view = camera->GetViewMatrix();
-		view = glm::rotate(view, (float)glfwGetTime() * 0.1f, glm::vec3(0.0f, 1.0f, 0.0f)); 
-		projView = projection * view;
-		// set light and camera info in renderer
+		glm::mat4 view = camera->GetViewMatrix(); 
+		glm::mat4 projView = projection * view;
+
+		// set camera info in renderer
 		renderer->SetCamera(camera->GetPosition());
 
 		glViewport(0, 0, width, height); //temporary testing for split camera
@@ -254,6 +246,15 @@ void Game::Run()
 		model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 1.0f, 0.0f));
 		gameObjects[0].second = model; // update car model matrix in gameObjects vector
 		//renderer->DrawModel(model, projView, defaultShader, carModel); // example draw car model
+
+		/*
+		model = glm::mat4(1.0f);
+		// classroom model
+		model = glm::scale(model, glm::vec3(1.0f));
+		model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		model = glm::translate(model, glm::vec3(0.0f, 1.0f, 0.0f));
+		gameObjects[1].second = model; // update classroom model matrix in gameObjects vector
+		*/
 		
 		DrawGameObjects(projView); // draw all game objects in the gameObjects vector
 
@@ -278,6 +279,25 @@ void Game::Run()
 	defaultShader->Delete();
 	lightShader->Delete();
 	skyboxShader->Delete();
+}
+
+void Game::ShaderSetup()
+{
+	// light
+	lightModel = glm::translate(lightModel, lightPos);
+	lightModel = glm::scale(lightModel, glm::vec3(0.2f)); // small cube for light representation
+	defaultShader->use();
+	defaultShader->setVec3("u_lightPos", &lightPos.x);
+	defaultShader->setVec4("u_lightColor", &(lightColor.r));
+
+	// setup light shader
+	lightShader->use();
+	lightShader->setVec3("u_lightPos", &lightPos.x);
+	lightShader->setVec4("u_lightColor", &lightColor.r);
+
+	// setup skybox shader
+	skyboxShader->use();
+	skyboxShader->setInt("u_skybox", 0);
 }
 
 void Game::DrawGameObjects(const glm::mat4& projView)
