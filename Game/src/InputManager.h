@@ -22,6 +22,8 @@ public:
 
 	glm::dvec2 const& CursorPosition() const;
 
+	int ScrollValueChanged();
+
   void keyCallback(int key, int scancode, int action, int mods);
 
   void windowSizeCallback(int width, int height);
@@ -30,9 +32,16 @@ public:
 
   void cursorPosCallback(double xpos, double ypos);
 
+  void scrollCallback(double xoffset, double yoffset);
+
+
+
   // add support for controller
 
+  
 private:
+  float dirty_scroll_value = 0;
+  float current_scroll_value = 0;
   std::unordered_map<int, bool> mKeyStatusMap{};
   std::unordered_map<int, bool> mMouseStatusMap{};
   glm::dvec2 mCursorPosition{};

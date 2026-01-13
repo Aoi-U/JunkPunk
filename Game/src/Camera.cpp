@@ -21,6 +21,21 @@ glm::vec3 Camera::GetPosition()
 	UpdateViewMatrix();
 	return position;
 }
+float Camera::GetDistance()
+{
+	UpdateViewMatrix();
+	return distance;
+}
+float Camera::GetTheta()
+{
+	UpdateViewMatrix();
+	return theta;
+}
+float Camera::GetPhi()
+{
+	UpdateViewMatrix();
+	return phi;
+}
 
 void Camera::UpdateViewMatrix()
 {
@@ -68,7 +83,6 @@ void Camera::ChangeRadius(float const deltaRadius)
 		distance = newDistance;
 	}
 }
-
 void Camera::Reset()
 {
 	Params params{};

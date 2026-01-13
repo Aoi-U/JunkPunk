@@ -16,7 +16,7 @@ void main()
 {
     fragPos = vec3(u_model * vec4(aPos, 1.0));
     color = aColor;
-    normal = mat3(transpose(inverse(u_model))) * aNormal; // calculate the normal matrix
+    normal = mat3(transpose(inverse(u_model))) * aNormal; // transform normal to world space
     texCoord = aTexCoord;
     
     gl_Position = u_projView * u_model * vec4(aPos, 1.0);

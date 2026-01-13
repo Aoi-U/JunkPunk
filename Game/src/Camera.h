@@ -37,15 +37,21 @@ public:
 
 	glm::vec3 GetPosition();
 
+	float GetDistance();
+
+	float GetTheta();
+
+	float GetPhi();
+
 private:
 
 	void UpdateViewMatrix();
 
 	glm::mat4* target;
 
-	float distance;
 	float minDistance;
 	float maxDistance;
+	float distance;
 
 	float theta;
 	float phi;
