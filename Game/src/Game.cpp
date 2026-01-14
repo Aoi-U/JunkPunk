@@ -115,15 +115,17 @@ void Game::Run()
 	skybox->Init(); // load and process skybox 
 	ShaderSetup(); // set up shaders
 	
+	
 	// test car model 
 	std::shared_ptr<Model> carModel = std::make_shared<Model>("assets/models/old_rusty_car/scene.gltf");
 	gameObjects.push_back(std::make_pair(carModel, glm::mat4(1.0f)));
 	// end test car model
 	
+	
 	std::shared_ptr<Model> classroom = std::make_shared<Model>("assets/models/classroom/scene.gltf");
 	gameObjects.push_back(std::make_pair(classroom, glm::mat4(1.0f)));
 	// test classroom model
-	
+
 	// to load any other model, just add the model file to assets/models/ and create a model class with the path to the model file
 	
 
@@ -192,6 +194,7 @@ void Game::Run()
 
 		glm::mat4 model = glm::mat4(1.0f); // identity matrix for model
 
+		
 		// car model 
 		model = glm::translate(model, glm::vec3(5.0f, 0.0f, -10.0f));
 		model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -199,13 +202,16 @@ void Game::Run()
 		model = glm::scale(model, glm::vec3(0.005f)); 
 		gameObjects[0].second = model; // update car model matrix in gameObjects 
 		
+		
 		model = glm::mat4(1.0f);
 
 		// classroom model
 		model = glm::translate(model, glm::vec3(0.0f, 1.0f, 0.0f));
-		model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-		model = glm::scale(model, glm::vec3(1.0f));
-		gameObjects[1].second = model; // update classroom model matrix in gameObjects vector
+		model = glm::scale(model, glm::vec3(0.005f));
+		//gameObjects[1].second = model; // update classroom model matrix in gameObjects vector
+		gameObjects[1].second = model;
+
+		
 		
 		DrawGameObjects(projView); // draw all game objects in the gameObjects vector
 
