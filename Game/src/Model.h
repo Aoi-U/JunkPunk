@@ -16,6 +16,8 @@ public:
 	// loads and processes a model from a file
 	Model(std::string filePath);
 
+	void Cleanup();
+
 	std::vector<Mesh>& getMeshes() { return meshes; }
 	Texture& getTexture(unsigned int index) { return texturesLoaded[index]; }
 

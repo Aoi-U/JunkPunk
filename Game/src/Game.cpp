@@ -5,7 +5,6 @@
 #include "ImGuiTest.h"
 #include "ImGuiPanel.h"
 
-
 static int camera_scroll_type = 0;
 static float camera_fov = 90.0f;
 static bool split_camera = false;
@@ -222,10 +221,7 @@ void Game::Run()
 		window->swapBuffers();
 	}
 
-	//gui.Shutdown(); 
-	defaultShader->Delete();
-	lightShader->Delete();
-	skyboxShader->Delete();
+	Cleanup();
 }
 
 // sets shader uniforms for light and skybox (since they are static)
@@ -248,6 +244,20 @@ void Game::ShaderSetup()
 	// setup skybox shader
 	skyboxShader->use();
 	skyboxShader->setInt("u_skybox", 0);
+}
+
+void Game::Cleanup()
+{
+	for (Entity& entity : gameObjects)
+	{
+		entity.Cleanup();
+	}
+	defaultShader->Delete();
+	lightShader->Delete();
+	skyboxShader->Delete();
+	skybox->Delete();
+
+	std::cout << "Game cleaned up and exited successfully." << std::endl;
 }
 
 // sends render calls for all game objects

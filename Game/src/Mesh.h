@@ -16,6 +16,7 @@ public:
 	Mesh(std::vector<Vertex>& vertices, std::vector<GLuint>& indices);
 	Mesh(std::vector<Vertex>& vertices, std::vector<GLuint>& indices, std::vector<Texture>& textures);
 
+	void Cleanup();
 
 	const std::vector<Vertex>& getVertices() const { return vertices; }
 	const std::vector<GLuint>& getIndices() const { return indices; }

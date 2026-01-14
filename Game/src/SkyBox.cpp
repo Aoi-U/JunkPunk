@@ -105,4 +105,6 @@ void Skybox::Unbind()
 void Skybox::Delete()
 {
 	vao->Delete();
+	vbo->Delete();
+	ebo->Delete();
 }

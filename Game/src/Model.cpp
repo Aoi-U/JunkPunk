@@ -29,6 +29,19 @@ Model::Model(std::string filePath)
 	ProcessNode(scene->mRootNode, scene, glm::mat4(1.0f));
 }
 
+void Model::Cleanup()
+{
+	for (auto& mesh : meshes)
+	{
+		mesh.Cleanup();
+	}
+
+	for (auto& texture : texturesLoaded)
+	{
+		texture.Delete();
+	}
+}
+
 void Model::ProcessNode(aiNode* node, const aiScene* scene, const glm::mat4& parentTransform)
 {
 	glm::mat4 nodeTransform = aiMatrix4v4ToGlmMat4Helper(node->mTransformation);

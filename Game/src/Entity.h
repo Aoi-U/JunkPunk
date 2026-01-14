@@ -19,6 +19,8 @@ public:
 
 	void setModelMatrix(const glm::mat4& matrix) { modelMatrix = matrix; }
 
+	void Cleanup();
+
 private:
 	std::shared_ptr<Model> model;
 	glm::mat4 modelMatrix{};

@@ -14,6 +14,8 @@ class Game
 public:
 	Game();
 	~Game() = default;
+
+
 	void Run();
 
 private:
@@ -39,9 +41,8 @@ private:
 
 	Vehicle vehicle{};
 
-
-
 	void ShaderSetup();
+	void Cleanup();
 	void DrawGameObjects(const glm::mat4& projView);
 
 	// add game related stuff 

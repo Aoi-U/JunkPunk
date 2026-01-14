@@ -14,6 +14,18 @@ Mesh::Mesh(std::vector<Vertex>& vertices, std::vector<GLuint>& indices, std::vec
 	SetupMesh();
 }
 
+void Mesh::Cleanup()
+{
+	vbo.Delete();
+	ebo.Delete();
+	vao.Delete();
+
+	for (auto& texture : textures)
+	{
+		texture.Delete();
+	}
+}
+
 void Mesh::SetupMesh()
 {
 	vao.Bind();
