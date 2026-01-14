@@ -141,6 +141,7 @@
   <ItemGroup>
     <ClCompile Include="src\Camera.cpp" />
     <ClCompile Include="src\EBO.cpp" />
+    <ClCompile Include="src\Entity.cpp" />
     <ClCompile Include="src\Game.cpp" />
     <ClCompile Include="src\glad.c" />
     <ClCompile Include="src\ImGuiPanel.cpp" />
@@ -170,6 +171,7 @@
   <ItemGroup>
     <ClInclude Include="src\EBO.h" />
     <ClInclude Include="src\Camera.h" />
+    <ClInclude Include="src\Entity.h" />
     <ClInclude Include="src\Game.h" />
     <ClInclude Include="src\ImGuiPanel.h" />
     <ClInclude Include="src\ImGuiTest.h" />

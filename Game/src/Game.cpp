@@ -117,17 +117,11 @@ void Game::Run()
 	
 	
 	// test car model 
-	std::shared_ptr<Model> carModel = std::make_shared<Model>("assets/models/old_rusty_car/scene.gltf");
-	gameObjects.push_back(std::make_pair(carModel, glm::mat4(1.0f)));
+	gameObjects.push_back(Entity(Model("assets/models/old_rusty_car/scene.gltf"), glm::mat4(1.0f))); // add car model to gameObjects 
 	// end test car model
 	
-	
-	std::shared_ptr<Model> classroom = std::make_shared<Model>("assets/models/classroom/scene.gltf");
-	gameObjects.push_back(std::make_pair(classroom, glm::mat4(1.0f)));
+	gameObjects.push_back(Entity(Model("assets/models/classroom/scene.gltf"), glm::mat4(1.0f)));
 	// test classroom model
-
-	// to load any other model, just add the model file to assets/models/ and create a model class with the path to the model file
-	
 
 	// ImGui for testing
 	//ImGuiTest gui(window);
@@ -141,7 +135,7 @@ void Game::Run()
 	while (!window->shouldClose())
 	{
 		glfwPollEvents();
-		renderer->Clear(0.0f, 0.3f, 0.3f, 1.0f); 
+		renderer->Clear(0.0f, 0.0f, 0.0f, 0.0f); 
 		time->Update();
 
 		// example input handling, probably move to InputManager or some other class for readability later
@@ -193,26 +187,21 @@ void Game::Run()
 		glViewport(0, 0, width, height); //temporary testing for split camera
 
 		glm::mat4 model = glm::mat4(1.0f); // identity matrix for model
-
 		
 		// car model 
 		model = glm::translate(model, glm::vec3(5.0f, 0.0f, -10.0f));
 		model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
 		model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 1.0f, 0.0f));
 		model = glm::scale(model, glm::vec3(0.005f)); 
-		gameObjects[0].second = model; // update car model matrix in gameObjects 
-		
+		gameObjects[0].setModelMatrix(model);
 		
 		model = glm::mat4(1.0f);
 
 		// classroom model
 		model = glm::translate(model, glm::vec3(0.0f, 1.0f, 0.0f));
 		model = glm::scale(model, glm::vec3(0.005f));
-		//gameObjects[1].second = model; // update classroom model matrix in gameObjects vector
-		gameObjects[1].second = model;
+		gameObjects[1].setModelMatrix(model);
 
-		
-		
 		DrawGameObjects(projView); // draw all game objects in the gameObjects vector
 
 		// skybox rendering
@@ -255,8 +244,8 @@ void Game::ShaderSetup()
 // sends render calls for all game objects
 void Game::DrawGameObjects(const glm::mat4& projView)
 {
-	for (const auto& obj : gameObjects)
+	for (Entity& entity : gameObjects)
 	{
-		renderer->DrawModel(obj.second, projView, defaultShader, obj.first);
+		renderer->DrawEntity(projView, defaultShader, entity);
 	}
 }

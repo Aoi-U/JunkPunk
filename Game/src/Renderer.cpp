@@ -22,23 +22,8 @@ void Renderer::Clear(float r, float g, float b, float a)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-void Renderer::Draw(const glm::mat4& model, const glm::mat4& projView, std::shared_ptr<Shader> shader)
+void Renderer::DrawMesh(const glm::mat4& model, Mesh& mesh, const glm::mat4& projView, std::shared_ptr<Shader> shader)
 {
-	shader->use();
-	shader->setMat4("u_model", model);
-	shader->setMat4("u_projView", projView);
-	shader->setVec3("u_cameraPos", &cameraPos.x);
-	
-	glDrawArrays(GL_TRIANGLES, 0, 3);
-}
-
-void Renderer::DrawMesh(const glm::mat4& model, const glm::mat4& projView, std::shared_ptr<Shader> shader, Mesh& mesh)
-{
-	shader->use();
-	shader->setMat4("u_model", model);
-	shader->setMat4("u_projView", projView);
-	shader->setVec3("u_cameraPos", &cameraPos.x);
-
 	unsigned int diffuseNr = 1;
 	unsigned int specularNr = 1;
 	unsigned int normalNr = 1;
@@ -73,12 +58,17 @@ void Renderer::DrawMesh(const glm::mat4& model, const glm::mat4& projView, std::
 	glActiveTexture(GL_TEXTURE0);
 }
 
-void Renderer::DrawModel(const glm::mat4& model, const glm::mat4& projView, std::shared_ptr<Shader> shader, std::shared_ptr<Model> modelObj)
+
+void Renderer::DrawEntity(const glm::mat4& projView, std::shared_ptr<Shader> shader, Entity& entity)
 {
-	// draw each mesh in the model
-	for (Mesh& mesh : modelObj->getMeshes())
+	shader->use();
+	shader->setMat4("u_model", entity.getModelMatrix());
+	shader->setMat4("u_projView", projView);
+	shader->setVec3("u_cameraPos", &cameraPos.x);
+	// draw each mesh in the entity's model
+	for (Mesh& mesh : entity.getModel()->getMeshes())
 	{
-		DrawMesh(model, projView, shader, mesh);
+		DrawMesh(entity.getModelMatrix(), mesh, projView, shader);
 	}
 }
 
