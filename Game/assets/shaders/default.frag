@@ -25,7 +25,7 @@ void main()
     vec3 lightDir = normalize(u_lightPos - fragPos);
 
     // caclulate the ambient light on the fragment
-	float ambientStrength = 0.2;
+	float ambientStrength = 0.3;
 	vec3 ambient = ambientStrength * u_lightColor.rgb;
 
 	// calculate the diffusion of light on the fragment
@@ -33,7 +33,7 @@ void main()
 	vec3 diffuse = diff * u_lightColor.rgb;
 	
 	// calculate the specular reflection
-	float specularStrength = 0.5;
+	float specularStrength = 0.3;
 	vec3 viewDir = normalize(u_cameraPos - fragPos); // calculate the direction of the camera to the fragment
 	vec3 reflectDir = reflect(-lightDir, norm);
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 16);

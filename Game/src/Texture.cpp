@@ -24,7 +24,7 @@ bool Texture::Load(const std::string& directory)
 
 	if (data)
 	{
-		GLenum imageFormat;
+		GLenum imageFormat{};
 		if (nrChannels == 1)
 			imageFormat = GL_RED;
 		else if (nrChannels == 3)

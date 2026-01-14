@@ -94,7 +94,7 @@ Game::Game()
 	camera = std::make_shared<Camera>(cameraTarget, Camera::Params{}); // replace with actual values later
 	skybox = std::make_shared<Skybox>();
 
-	lightPos = glm::vec3(-5.0f, 2.0f, -5.0f);
+	lightPos = glm::vec3(0.0f, -4.0f, 0.0f);
 	lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 	lightModel = glm::mat4(1.0f);
 
@@ -121,6 +121,11 @@ void Game::Run()
 	// end test car model
 	
 	gameObjects.push_back(Entity(Model("assets/models/classroom/scene.gltf"), glm::mat4(1.0f)));
+
+	gameObjects.push_back(Entity(Model("assets/models/snowy_mountain_-_terrain/scene.gltf"), glm::mat4(1.0f)));
+	glm::mat4 model = glm::mat4(1.0f);
+	model = glm::scale(model, glm::vec3(50.0f));
+	gameObjects[2].setModelMatrix(model);
 	// test classroom model
 
 	// ImGui for testing
@@ -137,6 +142,8 @@ void Game::Run()
 		glfwPollEvents();
 		renderer->Clear(0.0f, 0.0f, 0.0f, 0.0f); 
 		time->Update();
+
+		vehicle.Simulate(static_cast<float>(time->getDeltaTime()));
 
 		// example input handling, probably move to InputManager or some other class for readability later
 		if (inputManager->IsKeyboardButtonDown(GLFW_KEY_ESCAPE))
@@ -199,7 +206,7 @@ void Game::Run()
 
 		// classroom model
 		model = glm::translate(model, glm::vec3(0.0f, 1.0f, 0.0f));
-		model = glm::scale(model, glm::vec3(0.005f));
+		model = glm::scale(model, glm::vec3(0.0005f));
 		gameObjects[1].setModelMatrix(model);
 
 		DrawGameObjects(projView); // draw all game objects in the gameObjects vector
@@ -226,10 +233,12 @@ void Game::ShaderSetup()
 {
 	// light
 	lightModel = glm::translate(lightModel, lightPos);
-	lightModel = glm::scale(lightModel, glm::vec3(0.2f)); // small cube for light representation
+	lightModel = glm::scale(lightModel, glm::vec3(1.0f)); 
+		
+	// setup default shader
 	defaultShader->use();
 	defaultShader->setVec3("u_lightPos", &lightPos.x);
-	defaultShader->setVec4("u_lightColor", &(lightColor.r));
+	defaultShader->setVec4("u_lightColor", &lightColor.r);
 
 	// setup light shader
 	lightShader->use();

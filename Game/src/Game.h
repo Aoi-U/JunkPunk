@@ -7,6 +7,8 @@
 #include "Time.h"
 #include "Entity.h"
 
+#include "Vehicle.h"
+
 class Game
 {
 public:
@@ -34,6 +36,10 @@ private:
 
 	// list of all static game objects (map objects that dont move)
 	std::vector<Entity> gameObjects;
+
+	Vehicle vehicle{};
+
+
 
 	void ShaderSetup();
 	void DrawGameObjects(const glm::mat4& projView);
