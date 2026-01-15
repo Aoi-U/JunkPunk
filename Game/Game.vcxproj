@@ -202,6 +202,8 @@
   <ItemGroup>
     <None Include="assets\shaders\default.frag" />
     <None Include="assets\shaders\default.vert" />
+    <None Include="assets\shaders\defaultInstanced.frag" />
+    <None Include="assets\shaders\defaultInstanced.vert" />
     <None Include="assets\shaders\light.frag" />
     <None Include="assets\shaders\light.vert" />
     <None Include="assets\shaders\skybox.frag" />

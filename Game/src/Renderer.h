@@ -23,6 +23,8 @@ public:
 
 	void DrawEntity(const glm::mat4& projView, std::shared_ptr<Shader> shader, Entity& entity); // draw function for rendering entities
 
+	void DrawEntityInstanced(const glm::mat4& projView, std::shared_ptr<Shader> shader, Entity& entity, const std::vector<glm::mat4>& translations); // draw function for rendering instanced entities
+
 	void DrawSkybox(const glm::mat4& projView, std::shared_ptr<Shader> shader, std::shared_ptr<Skybox> skybox); // draw function for rendering skybox
 
 private:
@@ -31,6 +33,6 @@ private:
 	// probably not ideal for renderer to see camera, change to better solution later
 	glm::vec3 cameraPos{}; 
 
-	void DrawMesh(const glm::mat4& model, Mesh& mesh, const glm::mat4& projView, std::shared_ptr<Shader> shader); // draw function for rendering meshes
-
+	void DrawMesh(Mesh& mesh, const glm::mat4& projView, std::shared_ptr<Shader> shader); // draw function for rendering meshes
+	void BindTextures(Mesh& mesh, std::shared_ptr<Shader> shader); // bind textures for a mesh
 };

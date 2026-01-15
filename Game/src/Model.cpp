@@ -144,8 +144,6 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& tra
 		}
 	}
 
-	Mesh mMesh = Mesh(vertices, indices);
-
 	aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
 
 	std::vector<Texture> diffuseMaps = LoadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
@@ -157,8 +155,11 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& tra
 	textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
 	textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
 	textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
+	
+	Mesh mMesh = Mesh(vertices, indices, textures);
+	mMesh.SetupMesh();
 
-	return Mesh(vertices, indices, textures);
+	return mMesh;
 }
 
 std::vector<Texture> Model::LoadMaterialTextures(aiMaterial* mat, aiTextureType type, const std::string& typeName)

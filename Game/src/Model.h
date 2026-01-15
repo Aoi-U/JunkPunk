@@ -26,7 +26,6 @@ private:
 	std::vector<Mesh> meshes;
 	std::vector<Texture> texturesLoaded;
 
-
 	void ProcessNode(aiNode* node, const aiScene* scene, const glm::mat4& parentTransform = glm::mat4(1.0f)); // processes a node in the scene
 	Mesh ProcessMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& transform); // creates a mesh from an aiMesh
 

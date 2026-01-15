@@ -5,6 +5,8 @@ Renderer::Renderer(std::shared_ptr<InputManager> inputMgr)
 {
 	glEnable(GL_DEPTH_TEST); // enable depth testing for 3D
 	glEnable(GL_CULL_FACE);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 //Renderer::~Renderer()
@@ -23,7 +25,66 @@ void Renderer::Clear(float r, float g, float b, float a)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-void Renderer::DrawMesh(const glm::mat4& model, Mesh& mesh, const glm::mat4& projView, std::shared_ptr<Shader> shader)
+void Renderer::DrawEntity(const glm::mat4& projView, std::shared_ptr<Shader> shader, Entity& entity)
+{
+	shader->use();
+	shader->setMat4("u_model", entity.getModelMatrix());
+	shader->setMat4("u_projView", projView);
+	shader->setVec3("u_cameraPos", &cameraPos.x);
+	// draw each mesh in the entity's model
+	for (Mesh& mesh : entity.getModel()->getMeshes())
+	{
+		DrawMesh(mesh, projView, shader);
+	}
+}
+
+void Renderer::DrawEntityInstanced(const glm::mat4& projView, std::shared_ptr<Shader> shader, Entity& entity, const std::vector<glm::mat4>& translations)
+{
+	shader->use();
+	shader->setMat4("u_projView", projView);
+	shader->setVec3("u_cameraPos", &cameraPos.x);
+	// draw each mesh in the entity's model
+	for (Mesh& mesh : entity.getModel()->getMeshes())
+	{
+		BindTextures(mesh, shader);
+
+		mesh.BindVao();
+		glDrawElementsInstanced(GL_TRIANGLES, static_cast<GLsizei>(mesh.getIndices().size()), GL_UNSIGNED_INT, 0, static_cast<GLsizei>(translations.size()));
+
+		mesh.UnbindVao();
+		glActiveTexture(GL_TEXTURE0);
+	}
+}
+
+void Renderer::DrawSkybox(const glm::mat4& projView, std::shared_ptr<Shader> shader, std::shared_ptr<Skybox> skybox)
+{
+	glDepthFunc(GL_LEQUAL); // change depth function for skybox
+
+	shader->use();
+	shader->setMat4("u_projView", projView);
+
+	// bind skybox VAO and cubemap texture
+	skybox->Bind();
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, skybox->GetCubemapTexture());
+	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+	skybox->Unbind();
+
+	glDepthFunc(GL_LESS); // reset depth function
+}
+
+void Renderer::DrawMesh(Mesh& mesh, const glm::mat4& projView, std::shared_ptr<Shader> shader)
+{
+	BindTextures(mesh, shader);
+
+	mesh.BindVao();
+	glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(mesh.getIndices().size()), GL_UNSIGNED_INT, 0);
+
+	mesh.UnbindVao();
+	glActiveTexture(GL_TEXTURE0);
+}
+
+void Renderer::BindTextures(Mesh& mesh, std::shared_ptr<Shader> shader)
 {
 	unsigned int diffuseNr = 1;
 	unsigned int specularNr = 1;
@@ -51,42 +112,7 @@ void Renderer::DrawMesh(const glm::mat4& model, Mesh& mesh, const glm::mat4& pro
 		shader->setInt((name + number).c_str(), i); // set the texture unit in the shader
 		mesh.getTextures()[i].Bind(GL_TEXTURE0 + i);
 	}
-
-	mesh.BindVao();
-	glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(mesh.getIndices().size()), GL_UNSIGNED_INT, 0);
-
-	mesh.UnbindVao();
-	glActiveTexture(GL_TEXTURE0);
 }
 
 
-void Renderer::DrawEntity(const glm::mat4& projView, std::shared_ptr<Shader> shader, Entity& entity)
-{
-	shader->use();
-	shader->setMat4("u_model", entity.getModelMatrix());
-	shader->setMat4("u_projView", projView);
-	shader->setVec3("u_cameraPos", &cameraPos.x);
-	// draw each mesh in the entity's model
-	for (Mesh& mesh : entity.getModel()->getMeshes())
-	{
-		DrawMesh(entity.getModelMatrix(), mesh, projView, shader);
-	}
-}
-
-void Renderer::DrawSkybox(const glm::mat4& projView, std::shared_ptr<Shader> shader, std::shared_ptr<Skybox> skybox)
-{
-	glDepthFunc(GL_LEQUAL); // change depth function for skybox
-
-	shader->use();
-	shader->setMat4("u_projView", projView);
-
-	// bind skybox VAO and cubemap texture
-	skybox->Bind();
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, skybox->GetCubemapTexture());
-	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-	skybox->Unbind();
-
-	glDepthFunc(GL_LESS); // reset depth function
-}
 

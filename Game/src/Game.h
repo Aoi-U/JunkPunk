@@ -33,17 +33,21 @@ private:
 	glm::mat4 lightModel;
 
 	std::shared_ptr<Shader> defaultShader; 
+	std::shared_ptr<Shader> defaultInstanceShader; // may be used for particle rendering
 	std::shared_ptr<Shader> lightShader;
 	std::shared_ptr<Shader> skyboxShader;
 
 	// list of all static game objects (map objects that dont move)
 	std::vector<Entity> gameObjects;
+	Entity grass;
 
 	Vehicle vehicle{};
 
 	void ShaderSetup();
 	void Cleanup();
 	void DrawGameObjects(const glm::mat4& projView);
+	void DrawGameObjectsInstanced(const glm::mat4& projView, const std::vector<glm::mat4> modelMatrices, Entity entity);
+	void DrawSkybox(glm::mat4 proj, glm::mat4 view);
 
 	// add game related stuff 
 

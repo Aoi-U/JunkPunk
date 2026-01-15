@@ -15,6 +15,10 @@ class Mesh
 public:
 	Mesh(std::vector<Vertex>& vertices, std::vector<GLuint>& indices);
 	Mesh(std::vector<Vertex>& vertices, std::vector<GLuint>& indices, std::vector<Texture>& textures);
+	Mesh(std::vector<glm::mat4>& matrices, std::vector<GLuint>& indices, std::vector<Texture>& textures);
+
+	void SetupMesh();
+	void SetupInstanceMesh();
 
 	void Cleanup();
 
@@ -35,5 +39,4 @@ private:
 	VBO vbo;
 	EBO ebo;
 
-	void SetupMesh();
 };

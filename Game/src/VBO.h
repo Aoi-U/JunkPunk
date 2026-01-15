@@ -17,6 +17,7 @@ class VBO
 public:
 	GLuint ID;
 	VBO(std::vector<Vertex>& vertices);
+	VBO(std::vector<glm::mat4>& matrices);
 	void Bind();
 	void Unbind();
 	void Delete();

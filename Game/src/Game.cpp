@@ -1,4 +1,4 @@
-#include "Game.h"
+﻿#include "Game.h"
 
 #include "glm/glm.hpp"
 
@@ -98,6 +98,7 @@ Game::Game()
 	lightModel = glm::mat4(1.0f);
 
 	defaultShader = std::make_shared<Shader>("assets/shaders/default.vert", "assets/shaders/default.frag");
+	defaultInstanceShader = std::make_shared<Shader>("assets/shaders/defaultInstanced.vert", "assets/shaders/defaultInstanced.frag");
 	lightShader = std::make_shared<Shader>("assets/shaders/light.vert", "assets/shaders/light.frag");
 	skyboxShader = std::make_shared<Shader>("assets/shaders/skybox.vert", "assets/shaders/skybox.frag");
 }
@@ -123,9 +124,11 @@ void Game::Run()
 
 	gameObjects.push_back(Entity(Model("assets/models/snowy_mountain_-_terrain/scene.gltf"), glm::mat4(1.0f)));
 	glm::mat4 model = glm::mat4(1.0f);
-	model = glm::scale(model, glm::vec3(50.0f));
+	model = glm::scale(model, glm::vec3(100.0f));
 	gameObjects[2].setModelMatrix(model);
 	// test classroom model
+
+	grass = Entity(Model("assets/models/single_grass/scene.gltf"), glm::mat4(1.0f));
 
 	// ImGui for testing
 	//ImGuiTest gui(window);
@@ -134,6 +137,50 @@ void Game::Run()
 	ImGuiPanel camera_debug_panel(window);
 	auto camera_editor_panel_renderer = std::make_shared<CameraEditorPanelRenderer>(camera);
 	camera_debug_panel.setPanelRenderer(camera_editor_panel_renderer);
+
+	// test instance translations
+	unsigned int amount = 5000;
+	std::vector<glm::mat4> modelMatrices(amount);
+	srand(glfwGetTime()); // initialize random seed	
+	float maxRadius = 15.0; // maximum radius of the circular area
+	for (unsigned int i = 0; i < amount; i++)
+	{
+		glm::mat4 model = glm::mat4(1.0f);
+
+		// random position in a circle
+		float randomRadius = sqrt((float)rand() / RAND_MAX) * maxRadius;
+		float randomAngle = ((float)rand() / RAND_MAX) * glm::two_pi<float>(); // 0 to 2π
+
+		float x = cos(randomAngle) * randomRadius;
+		float z = sin(randomAngle) * randomRadius;
+
+		// Small random height variation
+		float y = ((float)(rand() % 100) / 100.0f - 0.5f) * 0.4f;
+		y = y - 5.0f; // lower to somewhat level with ground
+
+		model = glm::translate(model, glm::vec3(x, y, z));
+
+		// rotate to stand upright with semirandom angle variation
+		float yawAngle = glm::radians((float)(rand() % 360));
+		model = glm::rotate(model, yawAngle, glm::vec3(0.0f, 1.0f, 0.0f));
+
+
+		// scale between 0.005 and 0.015f
+		float scale = (rand() % 10) / 1000.0f + 0.005f;
+		model = glm::scale(model, glm::vec3(scale));
+
+		modelMatrices[i] = model;
+	}
+
+	VBO instanceVBO(modelMatrices); 
+
+	for (unsigned int i = 0; i < grass.getModel()->getMeshes().size(); i++)
+	{
+		Mesh& mesh = grass.getModel()->getMeshes()[i];
+		mesh.SetupInstanceMesh();
+	}
+	// end instance translations 
+
 
 	// main loop
 	while (!window->shouldClose())
@@ -210,10 +257,10 @@ void Game::Run()
 
 		DrawGameObjects(projView); // draw all game objects in the gameObjects vector
 
-		// skybox rendering
-		glm::mat4 skyView = glm::mat4(glm::mat3(view)); // remove translation from the view matrix for skybox
-		projView = projection * skyView;
-		renderer->DrawSkybox(projView, skyboxShader, skybox); // draw skybox
+		DrawGameObjectsInstanced(projView, modelMatrices, grass); // draw instanced grass 
+
+		DrawSkybox(projection, view); // draw skybox (make sure to draw last for optimization)
+
 
 		//gui.Render(); // render imgui test window
 		camera_debug_panel.render();// render imgui camera debugger
@@ -252,7 +299,11 @@ void Game::Cleanup()
 	{
 		entity.Cleanup();
 	}
+
+	grass.Cleanup();
+
 	defaultShader->Delete();
+	defaultInstanceShader->Delete();
 	lightShader->Delete();
 	skyboxShader->Delete();
 	skybox->Delete();
@@ -267,4 +318,17 @@ void Game::DrawGameObjects(const glm::mat4& projView)
 	{
 		renderer->DrawEntity(projView, defaultShader, entity);
 	}
+}
+
+void Game::DrawGameObjectsInstanced(const glm::mat4& projView, const std::vector<glm::mat4> modelMatrices, Entity entity)
+{
+	renderer->DrawEntityInstanced(projView, defaultInstanceShader, entity, modelMatrices);
+}
+
+void Game::DrawSkybox(glm::mat4 projection, glm::mat4 view)
+{
+	glm::mat4 skyView = glm::mat4(glm::mat3(view)); // remove translation from the view matrix for skybox
+	glm::mat4 projView = projection * skyView;
+
+	renderer->DrawSkybox(projView, skyboxShader, skybox);
 }
