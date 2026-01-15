@@ -73,6 +73,14 @@ void Renderer::DrawSkybox(const glm::mat4& projView, std::shared_ptr<Shader> sha
 	glDepthFunc(GL_LESS); // reset depth function
 }
 
+void Renderer::DrawQuad(std::shared_ptr<Shader> shader, std::shared_ptr<PostProcessor> postProcessor)
+{
+	shader->use();
+	postProcessor->BindVAO();
+	postProcessor->BindTexture();
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+}
+
 void Renderer::DrawMesh(Mesh& mesh, const glm::mat4& projView, std::shared_ptr<Shader> shader)
 {
 	BindTextures(mesh, shader);

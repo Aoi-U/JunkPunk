@@ -14,6 +14,12 @@ VBO::VBO(std::vector<glm::mat4>& matrices)
 	glBufferData(GL_ARRAY_BUFFER, matrices.size() * sizeof(glm::mat4), matrices.data(), GL_STATIC_DRAW);
 }
 
+VBO::VBO(std::vector<PostProcessVertex>& vertices)
+{
+	glGenBuffers(1, &ID);
+	glBindBuffer(GL_ARRAY_BUFFER, ID);
+	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(PostProcessVertex), vertices.data(), GL_STATIC_DRAW);
+}
 
 void VBO::Bind()
 {

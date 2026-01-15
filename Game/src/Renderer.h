@@ -10,6 +10,7 @@
 #include "Mesh.h"
 #include "Skybox.h"
 #include "Entity.h"
+#include "PostProcessor.h"
 
 class Renderer
 {
@@ -26,6 +27,8 @@ public:
 	void DrawEntityInstanced(const glm::mat4& projView, std::shared_ptr<Shader> shader, Entity& entity, const std::vector<glm::mat4>& translations); // draw function for rendering instanced entities
 
 	void DrawSkybox(const glm::mat4& projView, std::shared_ptr<Shader> shader, std::shared_ptr<Skybox> skybox); // draw function for rendering skybox
+
+	void DrawQuad(std::shared_ptr<Shader> shader, std::shared_ptr<PostProcessor> postProcessor); // draw function for rendering a quad (used for post processing)
 
 private:
 	std::shared_ptr<InputManager> inputManager; // not used but maybe useful later idk

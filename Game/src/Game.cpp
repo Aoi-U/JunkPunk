@@ -76,13 +76,15 @@ Game::Game()
 	glfwWindowHint(GLFW_SAMPLES, 32);
 
 	inputManager = std::make_shared<InputManager>(
-		[](int width, int height) {
+		[this](int width, int height) {
 			glViewport(0, 0, width, height);
+			postProcessor->Resize(width, height);
 		}
 	); 
 
 	//window = std::make_unique<Window>(1280, 720, "JunkPunk", inputManager); 
 	window = std::make_shared<Window>(1280, 720, "JunkPunk", inputManager);
+	postProcessor = std::make_shared<PostProcessor>(1280, 720);
 
 	glfwSwapInterval(1); // Enable vsync to limit fps
 
@@ -97,6 +99,7 @@ Game::Game()
 	lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 	lightModel = glm::mat4(1.0f);
 
+	postProcessShader = std::make_shared<Shader>("assets/shaders/postProcess.vert", "assets/shaders/postProcess.frag");
 	defaultShader = std::make_shared<Shader>("assets/shaders/default.vert", "assets/shaders/default.frag");
 	defaultInstanceShader = std::make_shared<Shader>("assets/shaders/defaultInstanced.vert", "assets/shaders/defaultInstanced.frag");
 	lightShader = std::make_shared<Shader>("assets/shaders/light.vert", "assets/shaders/light.frag");
@@ -181,12 +184,18 @@ void Game::Run()
 	}
 	// end instance translations 
 
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	// main loop
 	while (!window->shouldClose())
 	{
-		glfwPollEvents();
+		glm::ivec2 windowSize = window->getWindowSize();
+		float width = static_cast<float>(windowSize.x);
+		float height = static_cast<float>(windowSize.y);
+		//glViewport(0, 0, width, height);
+		postProcessor->BindFBO(); 
 		renderer->Clear(0.0f, 0.0f, 0.0f, 0.0f); 
+
 		time->Update();
 
 		vehicle.Simulate(static_cast<float>(time->getDeltaTime()));
@@ -221,9 +230,6 @@ void Game::Run()
 		}
 		
 
-		glm::ivec2 windowSize = window->getWindowSize();
-		float width = static_cast<float>(windowSize.x);
-		float height = static_cast<float>(windowSize.y);
 
 		if (split_camera) {
 			height /= 2;//temporary testing for split camera
@@ -237,7 +243,7 @@ void Game::Run()
 		// set camera info in renderer
 		renderer->SetCamera(camera->GetPosition());
 
-		glViewport(0, 0, width, height); //temporary testing for split camera
+		//glViewport(0, 0, width, height); //temporary testing for split camera
 
 		glm::mat4 model = glm::mat4(1.0f); // identity matrix for model
 		
@@ -257,15 +263,20 @@ void Game::Run()
 
 		DrawGameObjects(projView); // draw all game objects in the gameObjects vector
 
-		DrawGameObjectsInstanced(projView, modelMatrices, grass); // draw instanced grass 
+		//DrawGameObjectsInstanced(projView, modelMatrices, grass); // draw instanced grass 
 
 		DrawSkybox(projection, view); // draw skybox (make sure to draw last for optimization)
 
 
 		//gui.Render(); // render imgui test window
-		camera_debug_panel.render();// render imgui camera debugger
 
+		postProcessor->Unbind();
+		renderer->Clear(1.0f, 1.0f, 1.0f, 1.0f);
+		renderer->DrawQuad(postProcessShader, postProcessor);
+
+		camera_debug_panel.render();// render imgui camera debugger
 		window->swapBuffers();
+		glfwPollEvents();
 	}
 
 	Cleanup();
@@ -274,6 +285,10 @@ void Game::Run()
 // sets shader uniforms for light and skybox (since they are static)
 void Game::ShaderSetup()
 {
+	// post processor
+	postProcessShader->use();
+	postProcessShader->setInt("screenTexture", 0);
+
 	// light
 	lightModel = glm::translate(lightModel, lightPos);
 	lightModel = glm::scale(lightModel, glm::vec3(1.0f)); 
@@ -302,6 +317,9 @@ void Game::Cleanup()
 
 	grass.Cleanup();
 
+	postProcessor->Cleanup();
+
+	postProcessShader->Delete();
 	defaultShader->Delete();
 	defaultInstanceShader->Delete();
 	lightShader->Delete();

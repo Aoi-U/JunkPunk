@@ -6,7 +6,7 @@
 #include "SkyBox.h"
 #include "Time.h"
 #include "Entity.h"
-
+#include "PostProcessor.h"
 #include "Vehicle.h"
 
 class Game
@@ -32,6 +32,8 @@ private:
 	glm::vec4 lightColor;
 	glm::mat4 lightModel;
 
+	std::shared_ptr<PostProcessor> postProcessor; // default size, will be updated in Run()	
+	std::shared_ptr<Shader> postProcessShader;
 	std::shared_ptr<Shader> defaultShader; 
 	std::shared_ptr<Shader> defaultInstanceShader; // may be used for particle rendering
 	std::shared_ptr<Shader> lightShader;

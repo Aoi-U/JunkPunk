@@ -123,6 +123,9 @@
     <ClCompile Include="src\Texture.cpp">
       <Filter>Source Files\Rendering</Filter>
     </ClCompile>
+    <ClCompile Include="src\PostProcessor.cpp">
+      <Filter>Source Files\Rendering</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Camera.h">
@@ -209,6 +212,9 @@
     <ClInclude Include="src\Texture.h">
       <Filter>Header Files\Rendering</Filter>
     </ClInclude>
+    <ClInclude Include="src\PostProcessor.h">
+      <Filter>Header Files\Rendering</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\shaders\default.vert">
@@ -233,6 +239,12 @@
       <Filter>Resource Files\shaders</Filter>
     </None>
     <None Include="assets\shaders\defaultInstanced.frag">
+      <Filter>Resource Files\shaders</Filter>
+    </None>
+    <None Include="assets\shaders\postProcess.frag">
+      <Filter>Resource Files\shaders</Filter>
+    </None>
+    <None Include="assets\shaders\postProcess.vert">
       <Filter>Resource Files\shaders</Filter>
     </None>
   </ItemGroup>
