@@ -217,6 +217,11 @@ void Game::Run()
 				camera->ChangePhi(deltaY);
 			}
 
+			// Need to figure out how to snap camera back when stick is released
+			if (gamepad->RStick_InDeadzone()) {
+				camera->Reset();
+			}
+
 			// Test triggers
 			float leftTrigger = gamepad->LeftTrigger();
 			float rightTrigger = gamepad->RightTrigger();
@@ -339,7 +344,7 @@ void Game::Run()
 		// set up camera matrices 
 		glm::mat4 projection = glm::perspective(glm::radians(camera_fov), width / height, 0.1f, 100.0f);
 		view = camera->GetViewMatrix();
-		view = glm::rotate(view, (float)glfwGetTime() * 0.1f, glm::vec3(0.0f, 1.0f, 0.0f)); 
+		//view = glm::rotate(view, (float)glfwGetTime() * 0.1f, glm::vec3(0.0f, 1.0f, 0.0f)); 
 		projView = projection * view;
 		// set light and camera info in renderer
 		renderer->SetCamera(camera->GetPosition());

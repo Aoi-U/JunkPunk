@@ -53,6 +53,10 @@ private:
 	float maxDistance;
 	float distance;
 
+	float defaultTheta;
+	float defaultPhi;
+	float defaultDistance;
+
 	float theta;
 	float phi;
 

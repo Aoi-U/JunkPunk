@@ -8,6 +8,9 @@ Camera::Camera(glm::mat4& target, Params const& params)
 	, theta(params.defaultTheta)
 	, phi(params.defaultPhi)
 {
+	defaultTheta = params.defaultTheta;
+	defaultPhi = params.defaultPhi;
+	defaultDistance = params.defaultDistance;
 }
 
 glm::mat4 Camera::GetViewMatrix()
@@ -89,4 +92,9 @@ void Camera::Reset()
 	distance = params.defaultDistance;
 	minDistance = params.minDistance;
 	maxDistance = params.maxDistance;
+	float lerpFactor = 0.1f; // adjust for faster/slower reset
+	theta = glm::mix(theta, defaultTheta, lerpFactor);
+	phi = glm::mix(phi, defaultPhi, lerpFactor);
+	distance = glm::mix(distance, defaultDistance, lerpFactor);
+	isDirty = true;
 }
