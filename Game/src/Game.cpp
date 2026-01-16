@@ -209,6 +209,12 @@ void Game::Run()
 			if (!gamepad->RStick_InDeadzone())
 			{
 				printf("Right Stick: X=%.2f, Y=%.2f\n", rightX, rightY);
+				float camera_sensitivity = 0.05f;
+				float deltaX = rightX * camera_sensitivity;
+				float deltaY = -rightY * camera_sensitivity; //invert y axis
+
+				camera->ChangeTheta(deltaX);
+				camera->ChangePhi(deltaY);
 			}
 
 			// Test triggers
