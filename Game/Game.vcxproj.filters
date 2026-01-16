@@ -34,6 +34,12 @@
     <Filter Include="Source Files\stb">
       <UniqueIdentifier>{5e1a055d-9bdd-4d2b-b95e-78b2fae0539d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Vehicle">
+      <UniqueIdentifier>{e371fad8-037f-4a39-b2d9-f2b77c00a6b4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Vehicle">
+      <UniqueIdentifier>{2f6e2777-c0e8-457b-8517-5dfb3a3b8677}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Camera.cpp">
@@ -108,9 +114,6 @@
     <ClCompile Include="src\Time.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Vehicle.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\Mesh.cpp">
       <Filter>Source Files\Rendering</Filter>
     </ClCompile>
@@ -125,6 +128,18 @@
     </ClCompile>
     <ClCompile Include="src\PostProcessor.cpp">
       <Filter>Source Files\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\BaseVehicle.cpp">
+      <Filter>Source Files\Vehicle</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Vehicle.cpp">
+      <Filter>Source Files\Vehicle</Filter>
+    </ClCompile>
+    <ClCompile Include="src\EngineDriveTrain.cpp">
+      <Filter>Source Files\Vehicle</Filter>
+    </ClCompile>
+    <ClCompile Include="src\PhysXIntegration.cpp">
+      <Filter>Source Files\Vehicle</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -197,9 +212,6 @@
     <ClInclude Include="src\Entity.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Vehicle.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\Model.h">
       <Filter>Header Files\Rendering</Filter>
     </ClInclude>
@@ -214,6 +226,18 @@
     </ClInclude>
     <ClInclude Include="src\PostProcessor.h">
       <Filter>Header Files\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\BaseVehicle.h">
+      <Filter>Header Files\Vehicle</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Vehicle.h">
+      <Filter>Header Files\Vehicle</Filter>
+    </ClInclude>
+    <ClInclude Include="src\EngineDriveTrain.h">
+      <Filter>Header Files\Vehicle</Filter>
+    </ClInclude>
+    <ClInclude Include="src\PhysXIntegration.h">
+      <Filter>Header Files\Vehicle</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

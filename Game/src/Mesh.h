@@ -22,7 +22,7 @@ public:
 
 	void Cleanup();
 
-	const std::vector<Vertex>& getVertices() const { return vertices; }
+	std::vector<Vertex>& getVertices() { return vertices; }
 	const std::vector<GLuint>& getIndices() const { return indices; }
 
 	void BindVao() const { vao.Bind(); }

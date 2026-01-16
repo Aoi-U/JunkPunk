@@ -43,7 +43,7 @@ private:
 	std::vector<Entity> gameObjects;
 	Entity grass;
 
-	Vehicle vehicle{};
+	Vehicle vehicle;
 
 	void ShaderSetup();
 	void Cleanup();

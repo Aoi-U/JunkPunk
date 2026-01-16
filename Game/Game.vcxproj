@@ -139,8 +139,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\BaseVehicle.cpp" />
     <ClCompile Include="src\Camera.cpp" />
     <ClCompile Include="src\EBO.cpp" />
+    <ClCompile Include="src\EngineDriveTrain.cpp" />
     <ClCompile Include="src\Entity.cpp" />
     <ClCompile Include="src\Game.cpp" />
     <ClCompile Include="src\glad.c" />
@@ -150,6 +152,7 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Mesh.cpp" />
     <ClCompile Include="src\Model.cpp" />
+    <ClCompile Include="src\PhysXIntegration.cpp" />
     <ClCompile Include="src\PostProcessor.cpp" />
     <ClCompile Include="src\PVDtest.cpp" />
     <ClCompile Include="src\Renderer.cpp" />
@@ -171,8 +174,10 @@
     <ClCompile Include="thirdparty\include\imgui\imgui_widgets.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\BaseVehicle.h" />
     <ClInclude Include="src\EBO.h" />
     <ClInclude Include="src\Camera.h" />
+    <ClInclude Include="src\EngineDriveTrain.h" />
     <ClInclude Include="src\Entity.h" />
     <ClInclude Include="src\Game.h" />
     <ClInclude Include="src\ImGuiPanel.h" />
@@ -180,6 +185,7 @@
     <ClInclude Include="src\InputManager.h" />
     <ClInclude Include="src\Mesh.h" />
     <ClInclude Include="src\Model.h" />
+    <ClInclude Include="src\PhysXIntegration.h" />
     <ClInclude Include="src\PostProcessor.h" />
     <ClInclude Include="src\PVDDebugger.h" />
     <ClInclude Include="src\Renderer.h" />

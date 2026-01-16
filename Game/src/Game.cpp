@@ -117,6 +117,7 @@ void Game::Run()
 	//renderer->Init();
 	skybox->Init(); // load and process skybox 
 	ShaderSetup(); // set up shaders
+	vehicle.InitPhysics(); // initialize vehicle physics
 	
 	
 	// test car model 
@@ -127,7 +128,7 @@ void Game::Run()
 
 	gameObjects.push_back(Entity(Model("assets/models/snowy_mountain_-_terrain/scene.gltf"), glm::mat4(1.0f)));
 	glm::mat4 model = glm::mat4(1.0f);
-	model = glm::scale(model, glm::vec3(100.0f));
+	model = glm::scale(model, glm::vec3(10.0f));
 	gameObjects[2].setModelMatrix(model);
 	// test classroom model
 
@@ -189,16 +190,13 @@ void Game::Run()
 	// main loop
 	while (!window->shouldClose())
 	{
-		glm::ivec2 windowSize = window->getWindowSize();
-		float width = static_cast<float>(windowSize.x);
-		float height = static_cast<float>(windowSize.y);
-		//glViewport(0, 0, width, height);
 		postProcessor->BindFBO(); 
 		renderer->Clear(0.0f, 0.0f, 0.0f, 0.0f); 
 
 		time->Update();
 
-		vehicle.Simulate(static_cast<float>(time->getDeltaTime()));
+		//vehicle.Simulate(static_cast<float>(time->getDeltaTime()));
+		vehicle.stepPhysics();
 
 		// example input handling, probably move to InputManager or some other class for readability later
 		if (inputManager->IsKeyboardButtonDown(GLFW_KEY_ESCAPE))
@@ -229,7 +227,9 @@ void Game::Run()
 			first_time_held_right_click = false;
 		}
 		
-
+		glm::ivec2 windowSize = window->getWindowSize();
+		float width = static_cast<float>(windowSize.x);
+		float height = static_cast<float>(windowSize.y);
 
 		if (split_camera) {
 			height /= 2;//temporary testing for split camera
@@ -325,6 +325,8 @@ void Game::Cleanup()
 	lightShader->Delete();
 	skyboxShader->Delete();
 	skybox->Delete();
+
+	vehicle.Cleanup();
 
 	std::cout << "Game cleaned up and exited successfully." << std::endl;
 }
