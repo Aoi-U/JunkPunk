@@ -1,23 +1,23 @@
 #include "Vehicle.h"
-struct Cmd
-{
-	PxF32 brake;
-	PxF32 throttle;
-	PxF32 steer;
-	PxF32 duration;
-};
-const PxU32 gTargetGearCommand = PxVehicleEngineDriveTransmissionCommandState::eAUTOMATIC_GEAR;
-Cmd gCommands[5] =
-{
-	{0.5f, 0.0f, 0.0f, 2.0f},		//brake on and come to rest for 2 seconds
-		{0.0f, 0.5f, 0.0f, 5.0f},		//throttle for 5 seconds
-		{0.5f, 0.0f, 0.0f, 5.0f},		//brake for 5 seconds
-	{0.0f, 0.5f, 0.0f, 5.0f},		//throttle for 5 seconds
-		{0.0f, 0.1f, 0.5f, 5.0f}		//light throttle and steer for 5 seconds.
-};
-const PxU32 gNbCommands = sizeof(gCommands) / sizeof(Cmd);
-PxReal gCommandTime = 0.0f;			//Time spent on current command
-PxU32 gCommandProgress = 0;			//The id of the current command.
+//struct Cmd
+//{
+//	PxF32 brake;
+//	PxF32 throttle;
+//	PxF32 steer;
+//	PxF32 duration;
+//};
+//const PxU32 gTargetGearCommand = PxVehicleEngineDriveTransmissionCommandState::eAUTOMATIC_GEAR;
+//Cmd gCommands[5] =
+//{
+//	{0.5f, 0.0f, 0.0f, 2.0f},		//brake on and come to rest for 2 seconds
+//		{0.0f, 0.5f, 0.0f, 5.0f},		//throttle for 5 seconds
+//		{0.5f, 0.0f, 0.0f, 5.0f},		//brake for 5 seconds
+//	{0.0f, 0.5f, 0.0f, 5.0f},		//throttle for 5 seconds
+//		{0.0f, 0.1f, 0.5f, 5.0f}		//light throttle and steer for 5 seconds.
+//};
+//const PxU32 gNbCommands = sizeof(gCommands) / sizeof(Cmd);
+//PxReal gCommandTime = 0.0f;			//Time spent on current command
+//PxU32 gCommandProgress = 0;			//The id of the current command.
 
 Vehicle::Vehicle()
 {
@@ -73,18 +73,15 @@ void Vehicle::step(float deltaTime)
 
 	gVehicle.step(1 / 60.0f, gVehicleSimulationContext);*/
 
-	if (gNbCommands == gCommandProgress)
-		return;
-
 	const PxF32 timestep = 0.0166667f;
 
 	//Apply the brake, throttle and steer to the command state of the direct drive vehicle.
-	const Cmd& command = gCommands[gCommandProgress];
-	gVehicle.mCommandState.brakes[0] = command.brake;
+	gVehicle.mCommandState.brakes[0] = gCommand.brake;
 	gVehicle.mCommandState.nbBrakes = 1;
-	gVehicle.mCommandState.throttle = command.throttle;
-	gVehicle.mCommandState.steer = command.steer;
+	gVehicle.mCommandState.throttle = gCommand.throttle;
+	gVehicle.mCommandState.steer = gCommand.steer;
 
+	std::cout << "Initiating commands: brake=" << gVehicle.mCommandState.brakes[0] << " throttle=" << gVehicle.mCommandState.throttle << " steer=" << gVehicle.mCommandState.steer << std::endl;
 	//Forward integrate the vehicle by a single timestep.
 	gVehicle.step(timestep, gVehicleSimulationContext);
 
@@ -92,14 +89,7 @@ void Vehicle::step(float deltaTime)
 	/*gScene->simulate(timestep);
 	gScene->fetchResults(true);*/
 
-	//Increment the time spent on the current command.
-	//Move to the next command in the list if enough time has lapsed.
-	gCommandTime += timestep;
-	if (gCommandTime > gCommands[gCommandProgress].duration)
-	{
-		gCommandProgress++;
-		gCommandTime = 0.0f;
-	}
+
 }
 
 void Vehicle::cleanup()

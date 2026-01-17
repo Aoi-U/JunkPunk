@@ -195,21 +195,44 @@ void Game::Run()
 
 		time->Update();
 
+		Command command;
+
 		if (inputManager->IsKeyboardButtonDown(GLFW_KEY_W))
 		{
-			Command command;
 			command.throttle = 1.0f;
 			scene.getVehicle().setCommand(command);
-		} else if (inputManager->IsKeyboardButtonDown(GLFW_KEY_S))
+		}
+		else
 		{
-			Command command;
+			command.throttle = 0.0f;
+		}
+
+		if (inputManager->IsKeyboardButtonDown(GLFW_KEY_S))
+		{
 			command.brake = 1.0f;
 			scene.getVehicle().setCommand(command);
 		}
-		else {
-			Command command;
+		else
+		{
+			command.brake = 0.0f;
+		}
+
+		if (inputManager->IsKeyboardButtonDown(GLFW_KEY_A))
+		{
+			command.steer = -0.5f;
 			scene.getVehicle().setCommand(command);
 		}
+		else if (inputManager->IsKeyboardButtonDown(GLFW_KEY_D))
+		{
+			command.steer = 0.5f;
+			scene.getVehicle().setCommand(command);
+		}
+		else
+		{
+			command.steer = 0.0f;
+		}
+
+
 		
 		scene.Simulate(static_cast<float>(time->getDeltaTime()));
 		

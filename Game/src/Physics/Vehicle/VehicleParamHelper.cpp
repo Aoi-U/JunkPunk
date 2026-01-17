@@ -5,6 +5,7 @@
 void VehicleParamHelper::setBaseParams(BaseVehicleParams& baseParams)
 {
 	bp = &baseParams;
+
 	setAxleDescription();
 	setFrame();
 	setScale();
@@ -17,6 +18,7 @@ void VehicleParamHelper::setBaseParams(BaseVehicleParams& baseParams)
 	setSuspensionParams();
 	setSuspensionComplianceParams();
 	setSuspensionForceParams();
+	setTireForceParams();
 	setWheelParams();
 }
 
@@ -72,7 +74,7 @@ void VehicleParamHelper::setSuspensionStateCalculationParams()
 
 void VehicleParamHelper::setBrakeResponseParams()
 {
-	const PxU32 MaxResponse = 0.0f;
+	const PxU32 MaxResponse = 1500.0f;
 	std::array<PxReal, 4> WheelResponseMultiplier = { 0.0f, 0.0f, 1.0f, 1.0f };
 
 	bp->brakeResponseParams[0].maxResponse = MaxResponse;
