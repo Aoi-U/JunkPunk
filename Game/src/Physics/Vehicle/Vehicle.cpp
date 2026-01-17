@@ -21,7 +21,6 @@
 
 Vehicle::Vehicle()
 {
-	
 }
 
 void Vehicle::initMaterialFrictionTable(PxMaterial* gMaterial)
@@ -86,3 +85,14 @@ void Vehicle::setCommand(Command commands)
 	gCommand = commands;
 }
 
+glm::mat4 Vehicle::getTransform() const
+{
+	PxTransform t = gVehicle.mPhysXState.physxActor.rigidBody->getGlobalPose();
+
+	glm::quat rotation(t.q.w, t.q.x, t.q.y, t.q.z);
+	glm::vec3 position(t.p.x, t.p.y, t.p.z);
+
+	glm::mat4 transform = glm::translate(glm::mat4(1.0f), position);
+	transform *= glm::mat4_cast(rotation);
+	return transform;
+}

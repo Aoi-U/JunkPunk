@@ -4,12 +4,19 @@
 #include <PxPhysicsAPI.h>
 #include <vector>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 #include "directdrivetrain/DirectDrivetrain.h"
 //#include "serialization/BaseSerialization.h"
 //#include "serialization/DirectDrivetrainSerialization.h"
 #include "SnippetVehicleHelpers.h"
 
 #include "VehicleParamHelper.h"
+
+#include "glad/glad.h"
+
 
 using namespace physx;
 using namespace physx::vehicle2;
@@ -36,6 +43,8 @@ public:
 	void cleanup();
 
 	void setCommand(Command command);
+
+	glm::mat4 getTransform() const;
 
 private:
 	DirectDriveVehicle gVehicle;

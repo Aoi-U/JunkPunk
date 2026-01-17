@@ -1,16 +1,59 @@
 #include "Camera.h"
 
-Camera::Camera(glm::mat4& target, Params const& params) 
+Camera::Camera(glm::mat4& target, Params const& params, float fov, float aspectRatio) 
 	: target(&target)
 	, distance(params.defaultDistance)
 	, minDistance(params.minDistance)
 	, maxDistance(params.maxDistance)
 	, theta(params.defaultTheta)
 	, phi(params.defaultPhi)
+	, lerpSpeed(params.lerpSpeed)
+	, lookSpeed(params.lookSpeed)
+	, fov(fov)
+	, aspectRatio(aspectRatio)
 {
 	defaultTheta = params.defaultTheta;
 	defaultPhi = params.defaultPhi;
 	defaultDistance = params.defaultDistance;
+}
+
+void Camera::Update(float deltaTime, glm::mat4& newTarget)
+{
+	target = &newTarget;
+
+	glm::vec3 forward = glm::normalize(glm::vec3((*target)[2]));
+	float targetTheta = atan2f(forward.x, forward.z); 
+
+	float deltaTheta = targetTheta - theta; 
+	deltaTheta = glm::mod(deltaTheta + glm::pi<float>(), glm::two_pi<float>()) - glm::pi<float>(); 
+
+	// lerp the camera for smooth rotation
+	float lerpFactor = glm::clamp(lerpSpeed * deltaTime, 0.0f, 1.0f);
+	theta = theta + glm::mix(0.0f, deltaTheta, lerpFactor);
+
+	// make sure theta is clamped between -pi and pi
+	theta = glm::mod(theta + glm::pi<float>(), glm::two_pi<float>()) - glm::pi<float>();
+
+	isDirty = true;
+}
+
+
+void Camera::ChangeAspectRatio(float newAspectRatio)
+{
+	aspectRatio = newAspectRatio; 
+	isDirty = true;
+}
+
+void Camera::ChangeFov(float newFov)
+{
+	fov = newFov;
+	isDirty = true;
+}
+
+glm::mat4 Camera::GetProjectionMatrix()
+{
+	projectionMatrix = glm::perspective(glm::radians(fov), aspectRatio, 0.1f, 100.0f);
+	return projectionMatrix;
 }
 
 glm::mat4 Camera::GetViewMatrix()
@@ -46,19 +89,24 @@ void Camera::UpdateViewMatrix()
 	{
 		isDirty = false;
 
-		auto const hRot = glm::rotate(glm::mat4(1.0f), theta, glm::vec3(0.0f, 1.0f, 0.0f));
-		auto const vRot = glm::rotate(glm::mat4(1.0f), phi, glm::vec3(1.0f, 0.0f, 0.0f ));
+		glm::vec3 targetPosition = glm::vec3((*target)[3]);
+		targetPosition.y += 2.0f; // adjust height of camera target
 
-		//_position = glm::vec3(hRot * vRot * glm::vec4{ Math::ForwardVec3, 0.0f }) * _distance;
-		position = glm::vec3(hRot * vRot * glm::vec4{glm::vec3(0.0f, 0.0f, 1.0f), 0.0f }) * distance + glm::vec3((*target)[3]);
+		glm::vec3 localOffset = glm::vec3(0.0f, distance * glm::sin(phi), -distance * glm::cos(phi));
+		localOffset.z -= 1.0f; // move camera back a bit
+		glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), theta, glm::vec3(0.0f, 1.0f, 0.0f));
+		glm::vec3 offset = glm::vec3(rotation * glm::vec4(localOffset, 0.0f));
+		glm::vec3 targetCameraPosition = targetPosition + offset;
 
-		auto center = glm::vec3((*target)[3]);
-		viewMatrix = glm::lookAt(position, center, glm::vec3(0.0f, 1.0f, 0.0f));
+		position = targetCameraPosition;
+
+		viewMatrix = glm::lookAt(position, targetPosition, glm::vec3(0.0f, 1.0f, 0.0f));
 	}
 }
 
-void Camera::ChangeTheta(float const deltaTheta)
+void Camera::ChangeTheta(float deltaTheta)
 {
+	deltaTheta *= lookSpeed;
 	auto newTheta = theta + deltaTheta;
 	if (newTheta != theta)
 	{
@@ -67,8 +115,9 @@ void Camera::ChangeTheta(float const deltaTheta)
 	}
 }
 
-void Camera::ChangePhi(float const deltaPhi)
+void Camera::ChangePhi(float deltaPhi)
 {
+	deltaPhi *= lookSpeed;
 	float const newPhi = glm::clamp(phi + deltaPhi, -glm::pi<float>() * 0.49f, glm::pi<float>() * 0.49f);
 	if (newPhi != phi)
 	{
@@ -97,4 +146,9 @@ void Camera::Reset()
 	phi = glm::mix(phi, defaultPhi, lerpFactor);
 	distance = glm::mix(distance, defaultDistance, lerpFactor);
 	isDirty = true;
+}
+
+glm::mat4 Camera::GetViewProjectionMatrix()
+{
+	return GetProjectionMatrix() * GetViewMatrix();
 }

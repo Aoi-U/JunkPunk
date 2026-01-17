@@ -44,7 +44,9 @@ public:
 
   // add support for controller
   bool IsControllerConnected() const;
-  float GetTurnValue() const;
+  float GetLStickTurnValue() const;
+  float GetRStickTurnValueX() const;
+	float GetRStickTurnValueY() const;
   float GetThrottleValue() const;
   float GetBrakeValue() const;
   

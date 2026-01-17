@@ -18,10 +18,19 @@ public:
 		float defaultDistance = 2.0f;
 		float minDistance = 2.0f; // distance the camera is at when the car is idle
 		float maxDistance = 10.0f; // distance the camera is at when the car is at max speed
+
+		float lerpSpeed = 2.5f; // how fast the camera returns to default position
+		float lookSpeed = 6.0f; // how fast the camera rotates based on input
 	};
 
 	// Angles are in radians
-	Camera(glm::mat4& target, const Params& params);
+	Camera(glm::mat4& target, const Params& params, float fov, float aspectRatio);
+
+	void Update(float deltaTime, glm::mat4& newTarget);
+
+	void ChangeAspectRatio(float newAspectRatio);
+
+	void ChangeFov(float newFov);
 
 	void ChangeTheta(float deltaTheta);
 
@@ -32,6 +41,10 @@ public:
 	// probably need some function to lerp between current and new position for smooth camera movement
 
 	void Reset();
+
+	glm::mat4 GetViewProjectionMatrix();
+
+	glm::mat4 GetProjectionMatrix();
 
 	glm::mat4 GetViewMatrix();
 
@@ -47,6 +60,8 @@ private:
 
 	void UpdateViewMatrix();
 
+	float aspectRatio;
+
 	glm::mat4* target;
 
 	float minDistance;
@@ -57,11 +72,16 @@ private:
 	float defaultPhi;
 	float defaultDistance;
 
+	float fov;
 	float theta;
 	float phi;
+
+	float lerpSpeed;
+	float lookSpeed;
 
 	bool isDirty = true;
 
 	glm::mat4 viewMatrix{};
+	glm::mat4 projectionMatrix{};
 	glm::vec3 position{};
 };

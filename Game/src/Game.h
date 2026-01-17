@@ -26,7 +26,7 @@ private:
 	std::unique_ptr<Renderer> renderer;
 	std::unique_ptr<Time> time;
 
-	glm::mat4 cameraTarget{ 0.0f }; // change to car position later
+	glm::mat4 cameraTarget{ 0.0 }; // change to car position later
 	std::shared_ptr<Camera> camera;
 	std::shared_ptr<Skybox> skybox;
 
@@ -51,7 +51,7 @@ private:
 	void Cleanup();
 	void DrawGameObjects(const glm::mat4& projView);
 	void DrawGameObjectsInstanced(const glm::mat4& projView, const std::vector<glm::mat4> modelMatrices, Entity entity);
-	void DrawSkybox(glm::mat4 proj, glm::mat4 view);
+	void DrawSkybox();
 
 	// add game related stuff 
 

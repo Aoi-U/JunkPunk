@@ -87,9 +87,19 @@ bool InputManager::IsControllerConnected() const
   return gamepad->Connected();
 }
 
-float InputManager::GetTurnValue() const
+float InputManager::GetLStickTurnValue() const
 {
   return gamepad->LStick_InDeadzone() ? 0.0f : -gamepad->LeftStick_X();
+}
+
+float InputManager::GetRStickTurnValueX() const
+{
+  return gamepad->RStick_InDeadzone() ? 0.0f : -gamepad->RightStick_X();
+}
+
+float InputManager::GetRStickTurnValueY() const
+{
+  return gamepad->RStick_InDeadzone() ? 0.0f : -gamepad->RightStick_Y();
 }
 
 float InputManager::GetThrottleValue() const

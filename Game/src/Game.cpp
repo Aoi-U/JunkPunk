@@ -79,6 +79,7 @@ Game::Game()
 		[this](int width, int height) {
 			glViewport(0, 0, width, height);
 			postProcessor->Resize(width, height);
+			camera->ChangeAspectRatio((float)width / (float)height);
 		}
 	); 
 
@@ -92,20 +93,21 @@ Game::Game()
 
 	time = std::make_unique<Time>();
 
-	camera = std::make_shared<Camera>(cameraTarget, Camera::Params{}); // replace with actual values later
+	camera = std::make_shared<Camera>(cameraTarget, Camera::Params{}, camera_fov, 1280 / 720.0f); // replace with actual values later
+
 	skybox = std::make_shared<Skybox>();
 
+	// initialize light properties
 	lightPos = glm::vec3(0.0f, -4.0f, 0.0f);
 	lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 	lightModel = glm::mat4(1.0f);
 
+	// initialize shaders
 	postProcessShader = std::make_shared<Shader>("assets/shaders/postProcess.vert", "assets/shaders/postProcess.frag");
 	defaultShader = std::make_shared<Shader>("assets/shaders/default.vert", "assets/shaders/default.frag");
 	defaultInstanceShader = std::make_shared<Shader>("assets/shaders/defaultInstanced.vert", "assets/shaders/defaultInstanced.frag");
 	lightShader = std::make_shared<Shader>("assets/shaders/light.vert", "assets/shaders/light.frag");
 	skyboxShader = std::make_shared<Shader>("assets/shaders/skybox.vert", "assets/shaders/skybox.frag");
-
-	//gamepad = std::make_unique<Gamepad>(1);
 }
 
 //Game::~Game()
@@ -120,13 +122,12 @@ void Game::Run()
 	skybox->Init(); // load and process skybox 
 	ShaderSetup(); // set up shaders
 
-	glm::mat4 view;
-	glm::mat4 projView;
+	scene.InitPhysics(); // initialize physics scene
 
-	scene.InitPhysics();
+	
 	
 	// test car model 
-	gameObjects.push_back(Entity(Model("assets/models/old_rusty_car/scene.gltf"), glm::mat4(1.0f))); // add car model to gameObjects 
+	gameObjects.push_back(Entity(Model("assets/models/2003_peugeot_hoggar_concept/scene.gltf"), glm::mat4(1.0f))); // add car model to gameObjects 
 	// end test car model
 	
 	gameObjects.push_back(Entity(Model("assets/models/classroom/scene.gltf"), glm::mat4(1.0f)));
@@ -190,13 +191,13 @@ void Game::Run()
 	}
 	// end instance translations 
 
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
 	// main loop
 	while (!window->shouldClose())
 	{
+		// ----------- rendering code setup ---------
 		postProcessor->BindFBO(); 
 		renderer->Clear(0.0f, 0.0f, 0.0f, 0.0f); 
+		// ------------------------------------------
 
 		time->Update();
 
@@ -208,16 +209,23 @@ void Game::Run()
 		{
 			command.throttle = inputManager->GetThrottleValue();
 			command.brake = inputManager->GetBrakeValue();
-			command.steer = inputManager->GetTurnValue();
+			command.steer = inputManager->GetLStickTurnValue();
+
+			// camera adjustment
+			camera->ChangeTheta(inputManager->GetRStickTurnValueX() * time->getDeltaTime());
+			camera->ChangePhi(inputManager->GetRStickTurnValueY() * time->getDeltaTime());
 		}
 		
 		// send commands to vehicle
 		scene.getVehicle().setCommand(command);
-
 		// simulate physics scene
-		scene.Simulate(time->getDeltaTime());
+		scene.Simulate(time->getDeltaTime());		
+	
+		// update camera
+		glm::mat4 playerTransform = scene.getVehicle().getTransform();
+		camera->Update(time->getDeltaTime(), playerTransform);
 		
-		
+
 		// example input handling, probably move to InputManager or some other class for readability later
 		if (inputManager->IsKeyboardButtonDown(GLFW_KEY_ESCAPE))
 		{
@@ -231,6 +239,7 @@ void Game::Run()
 			}
 			else if (camera_scroll_type == 1) {
 				camera_fov += scroll_changed * 0.5f;
+				camera->ChangeFov(camera_fov);
 			}
 			else if (camera_scroll_type == 2) {
 				camera->ChangeTheta(scroll_changed * 0.01f);
@@ -247,20 +256,16 @@ void Game::Run()
 			first_time_held_right_click = false;
 		}
 		
-		glm::ivec2 windowSize = window->getWindowSize();
-		float width = static_cast<float>(windowSize.x);
-		float height = static_cast<float>(windowSize.y);
 
 		if (split_camera) {
+			glm::ivec2 windowSize = window->getWindowSize();
+			float width = static_cast<float>(windowSize.x);
+			float height = static_cast<float>(windowSize.y);
 			height /= 2;//temporary testing for split camera
 		}
 
-		// set up camera matrices 
-		glm::mat4 projection = glm::perspective(glm::radians(camera_fov), width / height, 0.1f, 100.0f);
-		view = camera->GetViewMatrix();
-		//view = glm::rotate(view, (float)glfwGetTime() * 0.1f, glm::vec3(0.0f, 1.0f, 0.0f)); 
-		projView = projection * view;
-		// set light and camera info in renderer
+
+		// ---------------- rendering code ----------------
 		renderer->SetCamera(camera->GetPosition());
 
 		//glViewport(0, 0, width, height); //temporary testing for split camera
@@ -268,10 +273,8 @@ void Game::Run()
 		glm::mat4 model = glm::mat4(1.0f); // identity matrix for model
 		
 		// car model 
-		model = glm::translate(model, glm::vec3(5.0f, 0.0f, -10.0f));
-		model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
-		model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 1.0f, 0.0f));
-		model = glm::scale(model, glm::vec3(0.005f)); 
+		model = scene.getVehicle().getTransform();
+		model = glm::scale(model, glm::vec3(40.0f)); 
 		gameObjects[0].setModelMatrix(model);
 		
 		model = glm::mat4(1.0f);
@@ -281,11 +284,9 @@ void Game::Run()
 		model = glm::scale(model, glm::vec3(0.0005f));
 		gameObjects[1].setModelMatrix(model);
 
-		DrawGameObjects(projView); // draw all game objects in the gameObjects vector
-
+		DrawGameObjects(camera->GetViewProjectionMatrix()); // draw all game objects in the gameObjects vector
 		//DrawGameObjectsInstanced(projView, modelMatrices, grass); // draw instanced grass 
-
-		DrawSkybox(projection, view); // draw skybox (make sure to draw last for optimization)
+		DrawSkybox(); // draw skybox (make sure to draw last for optimization)
 
 
 		//gui.Render(); // render imgui test window
@@ -365,10 +366,10 @@ void Game::DrawGameObjectsInstanced(const glm::mat4& projView, const std::vector
 	renderer->DrawEntityInstanced(projView, defaultInstanceShader, entity, modelMatrices);
 }
 
-void Game::DrawSkybox(glm::mat4 projection, glm::mat4 view)
+void Game::DrawSkybox()
 {
-	glm::mat4 skyView = glm::mat4(glm::mat3(view)); // remove translation from the view matrix for skybox
-	glm::mat4 projView = projection * skyView;
+	// remove translation from the view matrix
+	glm::mat4 projView = camera->GetProjectionMatrix() * glm::mat4(glm::mat3(camera->GetViewMatrix())); 
 
 	renderer->DrawSkybox(projView, skyboxShader, skybox);
 }

@@ -53,7 +53,7 @@ void Scene::PrepPVD()
 void Scene::Plane()
 {
 	gMaterial = gPhysics->createMaterial(0.5f, 0.5f, 0.6f);
-	gGroundPlane = PxCreatePlane(*gPhysics, PxPlane(0, 1, 0, 50), *gMaterial);
+	gGroundPlane = PxCreatePlane(*gPhysics, PxPlane(0, 1, 0, 0), *gMaterial);
 	for (PxU32 i = 0; i < gGroundPlane->getNbShapes(); i++)
 	{
 		PxShape* shape = NULL;
@@ -122,3 +122,4 @@ void Scene::Cleanup()
 	}
 	gFoundation->release();
 }
+
