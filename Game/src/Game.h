@@ -8,6 +8,7 @@
 #include "Entity.h"
 #include "PostProcessor.h"
 #include "Physics/Scene.h"
+#include "../Gamepad.h"
 
 class Game
 {
@@ -55,4 +56,6 @@ private:
 
 	void CalculateCameraPanning(float current_xpos, float current_ypos);
 
+	// Gamepad support
+	std::shared_ptr<Gamepad> gamepad;
 };

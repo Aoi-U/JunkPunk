@@ -189,6 +189,9 @@
     <ClCompile Include="src\Physics\Vehicle\VehicleParamHelper.cpp">
       <Filter>Source Files\Physics\Vehicle</Filter>
     </ClCompile>
+    <ClCompile Include="Gamepad.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Camera.h">
@@ -298,6 +301,9 @@
     </ClInclude>
     <ClInclude Include="src\Physics\Vehicle\VehicleParamHelper.h">
       <Filter>Header Files\Physics\Vehicle</Filter>
+    </ClInclude>
+    <ClInclude Include="Gamepad.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
