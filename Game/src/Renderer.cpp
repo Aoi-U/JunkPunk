@@ -81,6 +81,85 @@ void Renderer::DrawQuad(std::shared_ptr<Shader> shader, std::shared_ptr<PostProc
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
+void Renderer::DrawCollisionDebug(const glm::mat4& projView, std::shared_ptr<Shader> shader, const PxRenderBuffer& renderBuffer, glm::mat4 model)
+{
+	shader->use();
+	shader->setMat4("u_projView", projView);
+	for (PxU32 i = 0; i < renderBuffer.getNbLines(); i++)
+	{
+		const PxDebugLine& line = renderBuffer.getLines()[i];
+		
+		glm::vec3 col0 = glm::vec3(
+			((line.color0 >> 16) & 0xFF) / 255.0f,
+			((line.color0 >> 8) & 0xFF) / 255.0f,
+			(line.color0 & 0xFF) / 255.0f
+		);
+		glm::vec3 col1 = glm::vec3(
+			((line.color1 >> 16) & 0xFF) / 255.0f,
+			((line.color1 >> 8) & 0xFF) / 255.0f,
+			(line.color1 & 0xFF) / 255.0f
+		);
+
+		GLfloat lineVertices[] = {
+			line.pos0.x, line.pos0.y, line.pos0.z, col0.x, col0.y, col0.z,
+			line.pos1.x, line.pos1.y, line.pos1.z, col1.x, col1.y, col1.z
+		};
+
+		GLuint lineIndices[] = {
+			0, 1
+		};
+
+		GLuint lineVAO, lineVBO, lineEBO;
+		glGenVertexArrays(1, &lineVAO);
+		glGenBuffers(1, &lineVBO);
+		glGenBuffers(1, &lineEBO);
+
+		glBindVertexArray(lineVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, lineVBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(lineVertices), lineVertices, GL_STATIC_DRAW);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, lineEBO);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(lineIndices), lineIndices, GL_STATIC_DRAW);
+
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)0);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+		glEnableVertexAttribArray(0);
+		glEnableVertexAttribArray(1);
+		glDrawElements(GL_LINES, 2, GL_UNSIGNED_INT, 0);
+
+		glBindVertexArray(0);
+		glDeleteVertexArrays(1, &lineVAO);
+		glDeleteBuffers(1, &lineVBO);
+		glDeleteBuffers(1, &lineEBO);	
+	}
+
+	// test single vertical line at player
+
+	/*GLfloat lineVertices[] = {
+		0.0f, 0.0f, 0.0f,
+		0.0f, 5.0f, 0.0f
+	};
+	GLuint lineIndices[] = {
+		0, 1
+	};
+	GLuint lineVAO, lineVBO, lineEBO;
+	glGenVertexArrays(1, &lineVAO);
+	glGenBuffers(1, &lineVBO);
+	glGenBuffers(1, &lineEBO);
+	glBindVertexArray(lineVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, lineVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(lineVertices), lineVertices, GL_STATIC_DRAW);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, lineEBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(lineIndices), lineIndices, GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+
+	glEnableVertexAttribArray(0);
+	glDrawElements(GL_LINES, 2, GL_UNSIGNED_INT, 0);
+	glBindVertexArray(0);
+	glDeleteVertexArrays(1, &lineVAO);
+	glDeleteBuffers(1, &lineVBO);
+	glDeleteBuffers(1, &lineEBO);*/
+}
+
 void Renderer::DrawMesh(Mesh& mesh, const glm::mat4& projView, std::shared_ptr<Shader> shader)
 {
 	BindTextures(mesh, shader);

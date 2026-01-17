@@ -12,6 +12,9 @@
 #include "Entity.h"
 #include "PostProcessor.h"
 
+#include "PxPhysicsAPI.h"
+using namespace physx;
+
 class Renderer
 {
 public:
@@ -29,6 +32,8 @@ public:
 	void DrawSkybox(const glm::mat4& projView, std::shared_ptr<Shader> shader, std::shared_ptr<Skybox> skybox); // draw function for rendering skybox
 
 	void DrawQuad(std::shared_ptr<Shader> shader, std::shared_ptr<PostProcessor> postProcessor); // draw function for rendering a quad (used for post processing)
+
+	void DrawCollisionDebug(const glm::mat4& projView, std::shared_ptr<Shader> shader, const PxRenderBuffer& renderBuffer, glm::mat4 model);
 
 private:
 	std::shared_ptr<InputManager> inputManager; // not used but maybe useful later idk

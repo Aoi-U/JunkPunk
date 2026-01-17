@@ -108,6 +108,7 @@ Game::Game()
 	defaultInstanceShader = std::make_shared<Shader>("assets/shaders/defaultInstanced.vert", "assets/shaders/defaultInstanced.frag");
 	lightShader = std::make_shared<Shader>("assets/shaders/light.vert", "assets/shaders/light.frag");
 	skyboxShader = std::make_shared<Shader>("assets/shaders/skybox.vert", "assets/shaders/skybox.frag");
+	physicsShader = std::make_shared<Shader>("assets/shaders/colliders.vert", "assets/shaders/colliders.frag");
 }
 
 //Game::~Game()
@@ -122,23 +123,25 @@ void Game::Run()
 	skybox->Init(); // load and process skybox 
 	ShaderSetup(); // set up shaders
 
-	scene.InitPhysics(); // initialize physics scene
 
 	
 	
 	// test car model 
-	gameObjects.push_back(Entity(Model("assets/models/2003_peugeot_hoggar_concept/scene.gltf"), glm::mat4(1.0f))); // add car model to gameObjects 
+	player = Entity(Model("assets/models/2003_peugeot_hoggar_concept/scene.gltf"), glm::mat4(1.0f)); // add car model to gameObjects
 	// end test car model
 	
-	gameObjects.push_back(Entity(Model("assets/models/classroom/scene.gltf"), glm::mat4(1.0f)));
+	//staticGameObjects.push_back(Entity(Model("assets/models/classroom/scene.gltf"), glm::mat4(1.0f)));
 
-	gameObjects.push_back(Entity(Model("assets/models/snowy_mountain_-_terrain/scene.gltf"), glm::mat4(1.0f)));
+	staticGameObjects.push_back(Entity(Model("assets/models/snowy_mountain_-_terrain/scene.gltf"), glm::mat4(1.0f)));
 	glm::mat4 model = glm::mat4(1.0f);
-	model = glm::scale(model, glm::vec3(10.0f));
-	gameObjects[2].setModelMatrix(model);
+	model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+	model = glm::scale(model, glm::vec3(1000.0f));
+	staticGameObjects[0].setModelMatrix(model);
 	// test classroom model
 
 	grass = Entity(Model("assets/models/single_grass/scene.gltf"), glm::mat4(1.0f));
+
+	scene.InitPhysics(staticGameObjects); // initialize physics scene
 
 	// ImGui for testing
 	//ImGuiTest gui(window);
@@ -275,19 +278,18 @@ void Game::Run()
 		// car model 
 		model = scene.getVehicle().getTransform();
 		model = glm::scale(model, glm::vec3(40.0f)); 
-		gameObjects[0].setModelMatrix(model);
+		player.setModelMatrix(model);
+
 		
 		model = glm::mat4(1.0f);
 
-		// classroom model
-		model = glm::translate(model, glm::vec3(0.0f, 1.0f, 0.0f));
-		model = glm::scale(model, glm::vec3(0.0005f));
-		gameObjects[1].setModelMatrix(model);
+		
 
 		DrawGameObjects(camera->GetViewProjectionMatrix()); // draw all game objects in the gameObjects vector
 		//DrawGameObjectsInstanced(projView, modelMatrices, grass); // draw instanced grass 
 		DrawSkybox(); // draw skybox (make sure to draw last for optimization)
 
+		renderer->DrawCollisionDebug(camera->GetViewProjectionMatrix(), physicsShader, scene.GetRenderBuffer(), player.getModelMatrix());
 
 		//gui.Render(); // render imgui test window
 
@@ -331,7 +333,7 @@ void Game::ShaderSetup()
 
 void Game::Cleanup()
 {
-	for (Entity& entity : gameObjects)
+	for (Entity& entity : staticGameObjects)
 	{
 		entity.Cleanup();
 	}
@@ -355,10 +357,12 @@ void Game::Cleanup()
 // sends render calls for all game objects
 void Game::DrawGameObjects(const glm::mat4& projView)
 {
-	for (Entity& entity : gameObjects)
+	for (Entity& entity : staticGameObjects)
 	{
 		renderer->DrawEntity(projView, defaultShader, entity);
 	}
+
+	renderer->DrawEntity(projView, defaultShader, player);
 }
 
 void Game::DrawGameObjectsInstanced(const glm::mat4& projView, const std::vector<glm::mat4> modelMatrices, Entity entity)

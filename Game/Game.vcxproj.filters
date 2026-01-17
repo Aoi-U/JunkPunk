@@ -305,6 +305,9 @@
     <ClInclude Include="Gamepad.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="assets\shaders\colliders.vert">
+      <Filter>Resource Files\shaders</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\shaders\default.vert">
@@ -335,6 +338,9 @@
       <Filter>Resource Files\shaders</Filter>
     </None>
     <None Include="assets\shaders\postProcess.vert">
+      <Filter>Resource Files\shaders</Filter>
+    </None>
+    <None Include="assets\shaders\colliders.frag">
       <Filter>Resource Files\shaders</Filter>
     </None>
   </ItemGroup>

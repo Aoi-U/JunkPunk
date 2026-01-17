@@ -4,6 +4,7 @@
 #include <PxPhysicsAPI.h>
 
 #include "Vehicle/Vehicle.h"
+#include "../Entity.h"
 
 using namespace physx;
 class Scene
@@ -19,15 +20,19 @@ public:
 
 	void Plane();
 
+	void Map(std::vector<Entity>& entities);
+
 	void Box(float halfLen, PxU32 size, PxVec3 position); // test
 
-	void InitPhysics();
+	void InitPhysics(std::vector<Entity>& entities);
 
 	void Simulate(float deltaTime);
 
 	void Cleanup();
 
 	Vehicle& getVehicle() { return gVehicle; }
+
+	const PxRenderBuffer& GetRenderBuffer();
 
 private:
 	PxDefaultAllocator gAllocator;
@@ -41,4 +46,7 @@ private:
 
 	PxRigidStatic* gGroundPlane = NULL;
 	Vehicle gVehicle;
+
+
+	PxTriangleMesh* CreateTriangleMesh(Mesh& mesh);
 };

@@ -1,23 +1,4 @@
 #include "Vehicle.h"
-//struct Cmd
-//{
-//	PxF32 brake;
-//	PxF32 throttle;
-//	PxF32 steer;
-//	PxF32 duration;
-//};
-//const PxU32 gTargetGearCommand = PxVehicleEngineDriveTransmissionCommandState::eAUTOMATIC_GEAR;
-//Cmd gCommands[5] =
-//{
-//	{0.5f, 0.0f, 0.0f, 2.0f},		//brake on and come to rest for 2 seconds
-//		{0.0f, 0.5f, 0.0f, 5.0f},		//throttle for 5 seconds
-//		{0.5f, 0.0f, 0.0f, 5.0f},		//brake for 5 seconds
-//	{0.0f, 0.5f, 0.0f, 5.0f},		//throttle for 5 seconds
-//		{0.0f, 0.1f, 0.5f, 5.0f}		//light throttle and steer for 5 seconds.
-//};
-//const PxU32 gNbCommands = sizeof(gCommands) / sizeof(Cmd);
-//PxReal gCommandTime = 0.0f;			//Time spent on current command
-//PxU32 gCommandProgress = 0;			//The id of the current command.
 
 Vehicle::Vehicle()
 {
@@ -48,8 +29,13 @@ bool Vehicle::initVehicles(PxScene* gScene, PxPhysics* gPhysics, PxMaterial* gMa
 	gVehicle.mTransmissionCommandState.gear = PxVehicleDirectDriveTransmissionCommandState::eFORWARD;
 
 	// Apply a start pose to the physx actor and add it to the physx scene
-	PxTransform pose(PxVec3(-5.0f, 0.5f, 0.0f), PxQuat(PxIdentity));
+	PxTransform pose(PxVec3(0.0f, 2.0f, 0.0f), PxQuat(PxIdentity));
 	gVehicle.setUpActor(*gScene, pose, gVehicleName);
+
+	PxShape* chassisShape = gPhysics->createShape(PxBoxGeometry(vph.physxActorBoxShapeHalfExtents), *gMaterial);
+	chassisShape->setLocalPose(vph.physxActorCMassLocalPose);
+	gVehicle.mPhysXState.physxActor.rigidBody->attachShape(*chassisShape);
+	chassisShape->release();
 
 	gVehicleSimulationContext.setToDefault();
 	gVehicleSimulationContext.frame.lngAxis = PxVehicleAxes::ePosZ;
@@ -60,6 +46,8 @@ bool Vehicle::initVehicles(PxScene* gScene, PxPhysics* gPhysics, PxMaterial* gMa
 	gVehicleSimulationContext.physxScene = gScene;
 	gVehicleSimulationContext.physxActorUpdateMode = PxVehiclePhysXActorUpdateMode::eAPPLY_ACCELERATION;
 
+	gVehicle.mPhysXState.physxActor.rigidBody->setActorFlag(PxActorFlag::eVISUALIZATION, true);
+	
 	return true;
 }
 
@@ -96,3 +84,4 @@ glm::mat4 Vehicle::getTransform() const
 	transform *= glm::mat4_cast(rotation);
 	return transform;
 }
+

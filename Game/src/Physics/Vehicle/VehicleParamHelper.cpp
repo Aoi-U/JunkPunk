@@ -287,11 +287,11 @@ void VehicleParamHelper::setPhysXIntegrationParams(const PxVehicleAxleDescriptio
 	PxReal physXDefaultMaterialFriction, PhysXIntegrationParams& physXParams)
 {
 	//The physx integration params are hardcoded rather than loaded from file.
-	const PxQueryFilterData queryFilterData(PxFilterData(0, 0, 0, 0), PxQueryFlag::eSTATIC);
+	/*const PxQueryFilterData queryFilterData(PxFilterData(0, 0, 0, 0), PxQueryFlag::eSTATIC);
 	PxQueryFilterCallback* queryFilterCallback = NULL;
 	const PxTransform physxActorCMassLocalPose(PxVec3(0.0f, 0.55f, 1.594f), PxQuat(PxIdentity));
-	const PxVec3 physxActorBoxShapeHalfExtents(0.84097f, 0.65458f, 2.46971f);
-	const PxTransform physxActorBoxShapeLocalPose(PxVec3(0.0f, 0.830066f, 1.37003f), PxQuat(PxIdentity));
+	const PxVec3 physxActorBoxShapeHalfExtents(0.44097f, 0.65458f, 1.46971f);
+	const PxTransform physxActorBoxShapeLocalPose(PxVec3(0.0f, 0.830066f, 1.37003f), PxQuat(PxIdentity));*/
 
 	physXParams.create(
 		axleDescription,

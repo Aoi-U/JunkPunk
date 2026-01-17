@@ -46,6 +46,8 @@ public:
 
 	glm::mat4 getTransform() const;
 
+	// get the wireframe mesh for rendering
+
 private:
 	DirectDriveVehicle gVehicle;
 

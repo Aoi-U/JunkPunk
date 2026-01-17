@@ -40,9 +40,11 @@ private:
 	std::shared_ptr<Shader> defaultInstanceShader; // may be used for particle rendering
 	std::shared_ptr<Shader> lightShader;
 	std::shared_ptr<Shader> skyboxShader;
+	std::shared_ptr<Shader> physicsShader;
 
 	// list of all static game objects (map objects that dont move)
-	std::vector<Entity> gameObjects;
+	std::vector<Entity> staticGameObjects;
+	Entity player;
 	Entity grass;
 
 	Scene scene;

@@ -37,6 +37,17 @@ void Scene::InitScene()
 	//sceneDesc.filterShader = PxDefaultSimulationFilterShader;
 	sceneDesc.filterShader = VehicleFilterShader;
 	gScene = gPhysics->createScene(sceneDesc);
+
+	// https://nvidia-omniverse.github.io/PhysX/physx/5.6.1/docs/DebugVisualization.html
+	gScene->setVisualizationParameter(PxVisualizationParameter::eSCALE, 1.0f);
+	gScene->setVisualizationParameter(PxVisualizationParameter::eCOLLISION_SHAPES, 1.0f);
+	//gScene->setVisualizationParameter(PxVisualizationParameter::eBODY_AXES, 1.0f);
+	gScene->setVisualizationParameter(PxVisualizationParameter::eBODY_MASS_AXES, 1.0f);
+	// vehicle specific visualizations
+
+	// ---------------------------------------------------------------------------------
+
+	gMaterial = gPhysics->createMaterial(0.5f, 0.5f, 0.6f);
 }
 
 void Scene::PrepPVD()
@@ -52,7 +63,6 @@ void Scene::PrepPVD()
 
 void Scene::Plane()
 {
-	gMaterial = gPhysics->createMaterial(0.5f, 0.5f, 0.6f);
 	gGroundPlane = PxCreatePlane(*gPhysics, PxPlane(0, 1, 0, 0), *gMaterial);
 	for (PxU32 i = 0; i < gGroundPlane->getNbShapes(); i++)
 	{
@@ -64,6 +74,42 @@ void Scene::Plane()
 	}
 
 	gScene->addActor(*gGroundPlane);
+}
+
+void Scene::Map(std::vector<Entity>& entities)
+{
+	for (size_t i = 0; i < entities.size(); i++)
+	{
+		for (size_t j = 0; j < entities[i].getModel()->getMeshes().size(); j++)
+		{
+			Mesh& mesh = entities[i].getModel()->getMeshes()[j];
+			PxTriangleMesh* triangleMesh = CreateTriangleMesh(mesh);
+			if (!triangleMesh)
+			{
+				std::cout << "Failed to create triangle mesh for entity " + i << std::endl;
+				return;
+			}
+			PxShape* shape = gPhysics->createShape(PxTriangleMeshGeometry(triangleMesh), *gMaterial);
+			PxTransform tran(PxVec3(0.0f, 0.0f, 0.0f));
+			glm::mat4 modelMatrix = entities[i].getModelMatrix();
+
+			// set the mesh position
+			glm::vec3 position = modelMatrix[3];
+			tran.p = PxVec3(position.x, position.y, position.z);
+
+			// set the mesh scale
+			glm::vec3 scale = glm::vec3(modelMatrix[0][0], modelMatrix[1][1], modelMatrix[2][2]);
+			PxMeshScale meshScale(PxVec3(scale.x, scale.y, scale.z), PxQuat(PxIdentity));
+			shape->setGeometry(PxTriangleMeshGeometry(triangleMesh, meshScale));
+
+			PxRigidStatic* staticBody = gPhysics->createRigidStatic(tran);
+			staticBody->attachShape(*shape);
+			staticBody->setActorFlag(PxActorFlag::eVISUALIZATION, false);
+			gScene->addActor(*staticBody);
+			shape->release();
+			triangleMesh->release();
+		}
+	}
 }
 
 void Scene::Box(float halfLen, PxU32 size, PxVec3 position)
@@ -86,12 +132,13 @@ void Scene::Box(float halfLen, PxU32 size, PxVec3 position)
 	shape->release();
 }
 
-void Scene::InitPhysics()
+void Scene::InitPhysics(std::vector<Entity>& entities)
 {
 	InitPVD();
 	InitScene();
 	PrepPVD();
-	Plane();
+	//Plane();
+	Map(entities);
 	gVehicle.initMaterialFrictionTable(gMaterial);
 	if (!gVehicle.initVehicles(gScene, gPhysics, gMaterial))
 	{
@@ -105,7 +152,6 @@ void Scene::Simulate(float deltaTime)
 	gVehicle.step(deltaTime);
 	gScene->simulate(1 / 60.0f);
 	gScene->fetchResults(true);
-
 }
 
 void Scene::Cleanup()
@@ -123,3 +169,37 @@ void Scene::Cleanup()
 	gFoundation->release();
 }
 
+const PxRenderBuffer& Scene::GetRenderBuffer()
+{
+	return gScene->getRenderBuffer();
+}
+
+
+
+PxTriangleMesh* Scene::CreateTriangleMesh(Mesh& mesh)
+{
+	// https://nvidia-omniverse.github.io/PhysX/physx/5.6.1/docs/Geometry.html
+	PxTriangleMeshDesc meshDesc;
+	meshDesc.points.count = static_cast<PxU32>(mesh.getVertices().size());
+	meshDesc.points.stride = sizeof(Vertex);
+	meshDesc.points.data = mesh.getVertices().data();
+
+	meshDesc.triangles.count = static_cast<PxU32>(mesh.getIndices().size() / 3);
+	meshDesc.triangles.stride = 3 * sizeof(GLuint);
+	meshDesc.triangles.data = mesh.getIndices().data();
+
+	PxTolerancesScale scale;
+	PxCookingParams params(scale);
+
+	PxDefaultMemoryOutputStream writeBuffer;
+	PxTriangleMeshCookingResult::Enum result;
+	bool status = PxCookTriangleMesh(params, meshDesc, writeBuffer, &result);
+	if (!status)
+	{
+		std::cout << "Failed to cook triangle mesh" << std::endl;
+		return NULL;
+	}
+	PxDefaultMemoryInputData readBuffer(writeBuffer.getData(), writeBuffer.getSize());
+
+	return gPhysics->createTriangleMesh(readBuffer);
+}
