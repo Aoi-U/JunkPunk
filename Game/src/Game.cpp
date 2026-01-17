@@ -105,7 +105,7 @@ Game::Game()
 	lightShader = std::make_shared<Shader>("assets/shaders/light.vert", "assets/shaders/light.frag");
 	skyboxShader = std::make_shared<Shader>("assets/shaders/skybox.vert", "assets/shaders/skybox.frag");
 
-	gamepad = std::make_unique<Gamepad>(1);
+	//gamepad = std::make_unique<Gamepad>(1);
 }
 
 //Game::~Game()
@@ -119,6 +119,9 @@ void Game::Run()
 	//renderer->Init();
 	skybox->Init(); // load and process skybox 
 	ShaderSetup(); // set up shaders
+
+	glm::mat4 view;
+	glm::mat4 projView;
 
 	scene.InitPhysics();
 	
@@ -197,161 +200,24 @@ void Game::Run()
 
 		time->Update();
 
+		// set vehicle commands based on controller input
 		Command command;
 
-		if (inputManager->IsKeyboardButtonDown(GLFW_KEY_W))
+		// make sure window is focused and controller is connected
+		if (inputManager->IsWindowFocused() && inputManager->IsControllerConnected())
 		{
-			command.throttle = 1.0f;
-			scene.getVehicle().setCommand(command);
+			command.throttle = inputManager->GetThrottleValue();
+			command.brake = inputManager->GetBrakeValue();
+			command.steer = inputManager->GetTurnValue();
 		}
-		else
-		{
-			command.throttle = 0.0f;
-		}
-
-		if (inputManager->IsKeyboardButtonDown(GLFW_KEY_S))
-		{
-			command.brake = 1.0f;
-			scene.getVehicle().setCommand(command);
-		}
-		else
-		{
-			command.brake = 0.0f;
-		}
-
-		if (inputManager->IsKeyboardButtonDown(GLFW_KEY_A))
-		{
-			command.steer = -0.5f;
-			scene.getVehicle().setCommand(command);
-		}
-		else if (inputManager->IsKeyboardButtonDown(GLFW_KEY_D))
-		{
-			command.steer = 0.5f;
-			scene.getVehicle().setCommand(command);
-		}
-		else
-		{
-			command.steer = 0.0f;
-		}
-
-
 		
-		scene.Simulate(static_cast<float>(time->getDeltaTime()));
+		// send commands to vehicle
+		scene.getVehicle().setCommand(command);
+
+		// simulate physics scene
+		scene.Simulate(time->getDeltaTime());
 		
 		
-		// Update and test gamepad
-		if (gamepad->Connected())
-		{
-			gamepad->Update();
-
-			// Test joystick positions
-			float leftX = gamepad->LeftStick_X();
-			float leftY = gamepad->LeftStick_Y();
-			float rightX = gamepad->RightStick_X();
-			float rightY = gamepad->RightStick_Y();
-
-			if (!gamepad->LStick_InDeadzone())
-			{
-				printf("Left Stick: X=%.2f, Y=%.2f\n", leftX, leftY);
-			}
-
-			if (!gamepad->RStick_InDeadzone())
-			{
-				printf("Right Stick: X=%.2f, Y=%.2f\n", rightX, rightY);
-				float camera_sensitivity = 0.05f;
-				float deltaX = rightX * camera_sensitivity;
-				float deltaY = -rightY * camera_sensitivity; //invert y axis
-
-				camera->ChangeTheta(deltaX);
-				camera->ChangePhi(deltaY);
-			}
-
-			// Need to figure out how to snap camera back when stick is released
-			if (gamepad->RStick_InDeadzone()) {
-				camera->Reset();
-			}
-
-			// Test triggers
-			float leftTrigger = gamepad->LeftTrigger();
-			float rightTrigger = gamepad->RightTrigger();
-
-			if (leftTrigger > 0.0f)
-			{
-				printf("Left Trigger: %.2f\n", leftTrigger);
-			}
-
-			if (rightTrigger > 0.0f)
-			{
-				printf("Right Trigger: %.2f\n", rightTrigger);
-			}
-
-			// Test A, B, X, Y buttons
-			int A_Button = gamepad->GetButtonPressed(XButtons.A);
-			if (A_Button) {
-				printf("A Button Pressed\n");
-			}
-			int B_Button = gamepad->GetButtonPressed(XButtons.B);
-			if (B_Button) {
-				printf("B Button Pressed\n");
-			}
-			int X_Button = gamepad->GetButtonPressed(XButtons.X);
-			if (X_Button) {
-				printf("X Button Pressed\n");
-			}
-			int Y_Button = gamepad->GetButtonPressed(XButtons.Y);
-			if (Y_Button) {
-				printf("Y Button Pressed\n");
-			}
-			int Start_Button = gamepad->GetButtonPressed(XButtons.Start);
-			if (Start_Button) {
-				printf("Start Button Pressed\n");
-			}
-			int Select_Button = gamepad->GetButtonPressed(XButtons.Back);
-			if (Select_Button) {
-				printf("Select Button Pressed\n");
-			}
-			int DPad_Up_Button = gamepad->GetButtonPressed(XButtons.DPad_Up);
-			if (DPad_Up_Button) {
-				printf("DPad_Up Button Pressed\n");
-			}
-			int DPad_Down_Button = gamepad->GetButtonPressed(XButtons.DPad_Down);
-			if (DPad_Down_Button) {
-				printf("DPad_Down Button Pressed\n");
-			}
-			int DPad_Left_Button = gamepad->GetButtonPressed(XButtons.DPad_Left);
-			if (DPad_Left_Button) {
-				printf("DPad_Left Button Pressed\n");
-			}
-			int DPad_Right_Button = gamepad->GetButtonPressed(XButtons.DPad_Right);
-			if (DPad_Right_Button) {
-				printf("DPad_Right Button Pressed\n");
-			}
-			int L_Shoulder_Button = gamepad->GetButtonPressed(XButtons.L_Shoulder);
-			if (L_Shoulder_Button) {
-				printf("L_Shoulder Button Pressed\n");
-			}
-			int R_Shoulder_Button = gamepad->GetButtonPressed(XButtons.R_Shoulder);
-			if (R_Shoulder_Button) {
-				printf("R_Shoulder Button Pressed\n");
-			}
-			int L_Thumbstick_Button = gamepad->GetButtonPressed(XButtons.L_Thumbstick);
-			if (L_Thumbstick_Button) {
-				printf("L_Thumbstick Button Pressed\n");
-			}
-			int R_Thumbstick_Button = gamepad->GetButtonPressed(XButtons.R_Thumbstick);
-			if (R_Thumbstick_Button) {
-				printf("R_Thumbstick Button Pressed\n");
-			}
-
-			// Update the gamepad for next frame
-			gamepad->RefreshState();
-		}
-		else
-		{
-			// Print once when disconnected (you may want to add a flag to only print once)
-			printf("Gamepad not connected\n");
-		}
-
 		// example input handling, probably move to InputManager or some other class for readability later
 		if (inputManager->IsKeyboardButtonDown(GLFW_KEY_ESCAPE))
 		{

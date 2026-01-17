@@ -1,11 +1,14 @@
 #pragma once
 
 #include <functional>
+#include<memory>
 
 #include <iostream>
 #include <GLFW/glfw3.h>
 #include <unordered_map>
 #include "glm/glm.hpp"
+
+class Gamepad;
 
 class InputManager
 {
@@ -14,7 +17,7 @@ public:
 
 	InputManager(ResizeCallback resizeCallback);
 
-	~InputManager() = default;
+  ~InputManager();
 
 	bool IsKeyboardButtonDown(int keyboardButton) const;
 
@@ -34,10 +37,16 @@ public:
 
   void scrollCallback(double xoffset, double yoffset);
 
-
+  bool IsWindowFocused() const { 
+      GLFWwindow* window = glfwGetCurrentContext();
+      return glfwGetWindowAttrib(window, GLFW_FOCUSED); 
+	}
 
   // add support for controller
-
+  bool IsControllerConnected() const;
+  float GetTurnValue() const;
+  float GetThrottleValue() const;
+  float GetBrakeValue() const;
   
 private:
   float dirty_scroll_value = 0;
@@ -46,4 +55,6 @@ private:
   std::unordered_map<int, bool> mMouseStatusMap{};
   glm::dvec2 mCursorPosition{};
   ResizeCallback mResizeCallback;
+
+  std::unique_ptr<Gamepad> gamepad;
 };

@@ -9,8 +9,8 @@ public:
 
 	void Update();
 
-	double getDeltaTime() const { return deltaTime;  }
-
+	float getDeltaTime() const { return (float)deltaTime;  }
+	
 private:
 	double deltaTime;
 	double lastFrameTime;

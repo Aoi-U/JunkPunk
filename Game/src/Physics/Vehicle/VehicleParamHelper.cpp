@@ -97,7 +97,7 @@ void VehicleParamHelper::setHandbrakeResponseParams()
 
 void VehicleParamHelper::setSteerResponseParams()
 {
-	const PxU32 MaxResponse = 0.5235990285873413f;
+	const PxU32 MaxResponse = 1.0f;
 	std::array<PxU32, 4> WheelResponseMultiplier = { 1, 1, 0, 0 };
 	bp->steerResponseParams.maxResponse = MaxResponse;
 	for (PxU32 i = 0; i < WheelResponseMultiplier.size(); i++)

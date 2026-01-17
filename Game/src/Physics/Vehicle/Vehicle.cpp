@@ -66,30 +66,14 @@ bool Vehicle::initVehicles(PxScene* gScene, PxPhysics* gPhysics, PxMaterial* gMa
 
 void Vehicle::step(float deltaTime)
 {
-	/*std::cout << "Executing command: brake=" << gCommand.brake << " throttle=" << gCommand.throttle << " steer=" << gCommand.steer << std::endl;
-	gVehicle.mCommandState.brakes[0] = gCommand.brake;
-	gVehicle.mCommandState.throttle = gCommand.throttle;
-	gVehicle.mCommandState.steer = gCommand.steer;
-
-	gVehicle.step(1 / 60.0f, gVehicleSimulationContext);*/
-
-	const PxF32 timestep = 0.0166667f;
-
 	//Apply the brake, throttle and steer to the command state of the direct drive vehicle.
 	gVehicle.mCommandState.brakes[0] = gCommand.brake;
 	gVehicle.mCommandState.nbBrakes = 1;
 	gVehicle.mCommandState.throttle = gCommand.throttle;
 	gVehicle.mCommandState.steer = gCommand.steer;
 
-	std::cout << "Initiating commands: brake=" << gVehicle.mCommandState.brakes[0] << " throttle=" << gVehicle.mCommandState.throttle << " steer=" << gVehicle.mCommandState.steer << std::endl;
 	//Forward integrate the vehicle by a single timestep.
-	gVehicle.step(timestep, gVehicleSimulationContext);
-
-	//Forward integrate the phsyx scene by a single timestep.
-	/*gScene->simulate(timestep);
-	gScene->fetchResults(true);*/
-
-
+	gVehicle.step(1 / 60.0f, gVehicleSimulationContext);
 }
 
 void Vehicle::cleanup()
