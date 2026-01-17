@@ -139,10 +139,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\BaseVehicle.cpp" />
     <ClCompile Include="src\Camera.cpp" />
     <ClCompile Include="src\EBO.cpp" />
-    <ClCompile Include="src\EngineDriveTrain.cpp" />
     <ClCompile Include="src\Entity.cpp" />
     <ClCompile Include="src\Game.cpp" />
     <ClCompile Include="src\glad.c" />
@@ -152,7 +150,15 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Mesh.cpp" />
     <ClCompile Include="src\Model.cpp" />
-    <ClCompile Include="src\PhysXIntegration.cpp" />
+    <ClCompile Include="src\Physics\Scene.cpp" />
+    <ClCompile Include="src\Physics\Vehicle\base\Base.cpp" />
+    <ClCompile Include="src\Physics\Vehicle\directdrivetrain\DirectDrivetrain.cpp" />
+    <ClCompile Include="src\Physics\Vehicle\enginedrivetrain\EngineDrivetrain.cpp" />
+    <ClCompile Include="src\Physics\Vehicle\physxintegration\PhysXIntegration.cpp" />
+    <ClCompile Include="src\Physics\Vehicle\SnippetVehicleHelpers.cpp" />
+    <ClCompile Include="src\Physics\Vehicle\SnippetVehicleRender.cpp" />
+    <ClCompile Include="src\Physics\Vehicle\Vehicle.cpp" />
+    <ClCompile Include="src\Physics\Vehicle\VehicleParamHelper.cpp" />
     <ClCompile Include="src\PostProcessor.cpp" />
     <ClCompile Include="src\PVDtest.cpp" />
     <ClCompile Include="src\Renderer.cpp" />
@@ -163,7 +169,6 @@
     <ClCompile Include="src\Time.cpp" />
     <ClCompile Include="src\VAO.cpp" />
     <ClCompile Include="src\VBO.cpp" />
-    <ClCompile Include="src\Vehicle.cpp" />
     <ClCompile Include="src\Window.cpp" />
     <ClCompile Include="thirdparty\include\imgui\imgui.cpp" />
     <ClCompile Include="thirdparty\include\imgui\imgui_demo.cpp" />
@@ -174,10 +179,8 @@
     <ClCompile Include="thirdparty\include\imgui\imgui_widgets.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\BaseVehicle.h" />
     <ClInclude Include="src\EBO.h" />
     <ClInclude Include="src\Camera.h" />
-    <ClInclude Include="src\EngineDriveTrain.h" />
     <ClInclude Include="src\Entity.h" />
     <ClInclude Include="src\Game.h" />
     <ClInclude Include="src\ImGuiPanel.h" />
@@ -185,7 +188,14 @@
     <ClInclude Include="src\InputManager.h" />
     <ClInclude Include="src\Mesh.h" />
     <ClInclude Include="src\Model.h" />
-    <ClInclude Include="src\PhysXIntegration.h" />
+    <ClInclude Include="src\Physics\Scene.h" />
+    <ClInclude Include="src\Physics\Vehicle\base\Base.h" />
+    <ClInclude Include="src\Physics\Vehicle\directdrivetrain\DirectDrivetrain.h" />
+    <ClInclude Include="src\Physics\Vehicle\enginedrivetrain\EngineDrivetrain.h" />
+    <ClInclude Include="src\Physics\Vehicle\physxintegration\PhysXIntegration.h" />
+    <ClInclude Include="src\Physics\Vehicle\SnippetVehicleHelpers.h" />
+    <ClInclude Include="src\Physics\Vehicle\Vehicle.h" />
+    <ClInclude Include="src\Physics\Vehicle\VehicleParamHelper.h" />
     <ClInclude Include="src\PostProcessor.h" />
     <ClInclude Include="src\PVDDebugger.h" />
     <ClInclude Include="src\Renderer.h" />
@@ -195,7 +205,6 @@
     <ClInclude Include="src\Time.h" />
     <ClInclude Include="src\VAO.h" />
     <ClInclude Include="src\VBO.h" />
-    <ClInclude Include="src\Vehicle.h" />
     <ClInclude Include="src\Window.h" />
     <ClInclude Include="thirdparty\include\imgui\imconfig.h" />
     <ClInclude Include="thirdparty\include\imgui\imgui.h" />

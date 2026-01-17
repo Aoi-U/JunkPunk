@@ -30,7 +30,7 @@
 
 #include "PxScene.h"
 #include "vehicle2/PxVehicleAPI.h"
-#include "BaseVehicle.h"
+#include "../base/Base.h"
 
 namespace snippetvehicle
 {

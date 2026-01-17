@@ -7,7 +7,7 @@
 #include "Time.h"
 #include "Entity.h"
 #include "PostProcessor.h"
-#include "Vehicle.h"
+#include "Physics/Scene.h"
 
 class Game
 {
@@ -43,7 +43,7 @@ private:
 	std::vector<Entity> gameObjects;
 	Entity grass;
 
-	Vehicle vehicle;
+	Scene scene;
 
 	void ShaderSetup();
 	void Cleanup();

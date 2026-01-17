@@ -34,11 +34,44 @@
     <Filter Include="Source Files\stb">
       <UniqueIdentifier>{5e1a055d-9bdd-4d2b-b95e-78b2fae0539d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Vehicle">
-      <UniqueIdentifier>{e371fad8-037f-4a39-b2d9-f2b77c00a6b4}</UniqueIdentifier>
+    <Filter Include="Physics">
+      <UniqueIdentifier>{85b24c75-9706-4c82-8911-428dce74d0e8}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Vehicle">
-      <UniqueIdentifier>{2f6e2777-c0e8-457b-8517-5dfb3a3b8677}</UniqueIdentifier>
+    <Filter Include="Header Files\Physics">
+      <UniqueIdentifier>{8b3ccae1-296b-4126-bea0-2a96bd842b03}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Physics\Vehicle">
+      <UniqueIdentifier>{6222f4d0-4a38-4bba-b57f-55dfc3debc18}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Physics">
+      <UniqueIdentifier>{7709078a-f700-440e-ab09-8cb1569cf5b4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Physics\Vehicle">
+      <UniqueIdentifier>{875a6de4-a7a3-4ab2-ba6c-82372a86d716}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Physics\Vehicle\physxintegration">
+      <UniqueIdentifier>{ff98f024-4f9c-490b-8c05-a1689d9b06cf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Physics\Vehicle\enginedrivetrain">
+      <UniqueIdentifier>{bcd294ad-1eee-4ddc-996f-8df2c772fad8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Physics\Vehicle\directdrivetrain">
+      <UniqueIdentifier>{459245d2-d8c4-4949-b215-93a57328673b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Physics\Vehicle\base">
+      <UniqueIdentifier>{24d5d414-64e8-4c10-b9ba-3739b2c09f75}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Physics\Vehicle\physxintegration">
+      <UniqueIdentifier>{79a23189-9c80-4026-b86d-c5c2b4696f43}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Physics\Vehicle\enginedrivetrain">
+      <UniqueIdentifier>{5e4b26d1-5457-4613-bb50-b0245bea1391}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Physics\Vehicle\directdrivetrain">
+      <UniqueIdentifier>{b2afa5fc-8f94-4761-91fa-90e9c067ad01}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Physics\Vehicle\base">
+      <UniqueIdentifier>{2c641929-ebef-4271-8c4b-f55aa1447e14}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -129,17 +162,32 @@
     <ClCompile Include="src\PostProcessor.cpp">
       <Filter>Source Files\Rendering</Filter>
     </ClCompile>
-    <ClCompile Include="src\BaseVehicle.cpp">
-      <Filter>Source Files\Vehicle</Filter>
+    <ClCompile Include="src\Physics\Vehicle\base\Base.cpp">
+      <Filter>Source Files\Physics\Vehicle\base</Filter>
     </ClCompile>
-    <ClCompile Include="src\Vehicle.cpp">
-      <Filter>Source Files\Vehicle</Filter>
+    <ClCompile Include="src\Physics\Vehicle\directdrivetrain\DirectDrivetrain.cpp">
+      <Filter>Source Files\Physics\Vehicle\directdrivetrain</Filter>
     </ClCompile>
-    <ClCompile Include="src\EngineDriveTrain.cpp">
-      <Filter>Source Files\Vehicle</Filter>
+    <ClCompile Include="src\Physics\Vehicle\physxintegration\PhysXIntegration.cpp">
+      <Filter>Source Files\Physics\Vehicle\physxintegration</Filter>
     </ClCompile>
-    <ClCompile Include="src\PhysXIntegration.cpp">
-      <Filter>Source Files\Vehicle</Filter>
+    <ClCompile Include="src\Physics\Vehicle\enginedrivetrain\EngineDrivetrain.cpp">
+      <Filter>Source Files\Physics\Vehicle\enginedrivetrain</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Physics\Vehicle\Vehicle.cpp">
+      <Filter>Source Files\Physics\Vehicle</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Physics\Scene.cpp">
+      <Filter>Source Files\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Physics\Vehicle\SnippetVehicleHelpers.cpp">
+      <Filter>Source Files\Physics\Vehicle</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Physics\Vehicle\SnippetVehicleRender.cpp">
+      <Filter>Source Files\Physics\Vehicle</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Physics\Vehicle\VehicleParamHelper.cpp">
+      <Filter>Source Files\Physics\Vehicle</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -227,17 +275,29 @@
     <ClInclude Include="src\PostProcessor.h">
       <Filter>Header Files\Rendering</Filter>
     </ClInclude>
-    <ClInclude Include="src\BaseVehicle.h">
-      <Filter>Header Files\Vehicle</Filter>
+    <ClInclude Include="src\Physics\Vehicle\Vehicle.h">
+      <Filter>Header Files\Physics\Vehicle</Filter>
     </ClInclude>
-    <ClInclude Include="src\Vehicle.h">
-      <Filter>Header Files\Vehicle</Filter>
+    <ClInclude Include="src\Physics\Vehicle\base\Base.h">
+      <Filter>Header Files\Physics\Vehicle\base</Filter>
     </ClInclude>
-    <ClInclude Include="src\EngineDriveTrain.h">
-      <Filter>Header Files\Vehicle</Filter>
+    <ClInclude Include="src\Physics\Vehicle\directdrivetrain\DirectDrivetrain.h">
+      <Filter>Header Files\Physics\Vehicle\directdrivetrain</Filter>
     </ClInclude>
-    <ClInclude Include="src\PhysXIntegration.h">
-      <Filter>Header Files\Vehicle</Filter>
+    <ClInclude Include="src\Physics\Vehicle\enginedrivetrain\EngineDrivetrain.h">
+      <Filter>Header Files\Physics\Vehicle\enginedrivetrain</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Physics\Vehicle\physxintegration\PhysXIntegration.h">
+      <Filter>Header Files\Physics\Vehicle\physxintegration</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Physics\Scene.h">
+      <Filter>Header Files\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Physics\Vehicle\SnippetVehicleHelpers.h">
+      <Filter>Header Files\Physics\Vehicle</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Physics\Vehicle\VehicleParamHelper.h">
+      <Filter>Header Files\Physics\Vehicle</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

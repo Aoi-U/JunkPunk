@@ -117,8 +117,8 @@ void Game::Run()
 	//renderer->Init();
 	skybox->Init(); // load and process skybox 
 	ShaderSetup(); // set up shaders
-	vehicle.InitPhysics(); // initialize vehicle physics
-	
+
+	scene.InitPhysics();
 	
 	// test car model 
 	gameObjects.push_back(Entity(Model("assets/models/old_rusty_car/scene.gltf"), glm::mat4(1.0f))); // add car model to gameObjects 
@@ -195,9 +195,25 @@ void Game::Run()
 
 		time->Update();
 
-		//vehicle.Simulate(static_cast<float>(time->getDeltaTime()));
-		vehicle.stepPhysics();
-
+		if (inputManager->IsKeyboardButtonDown(GLFW_KEY_W))
+		{
+			Command command;
+			command.throttle = 1.0f;
+			scene.getVehicle().setCommand(command);
+		} else if (inputManager->IsKeyboardButtonDown(GLFW_KEY_S))
+		{
+			Command command;
+			command.brake = 1.0f;
+			scene.getVehicle().setCommand(command);
+		}
+		else {
+			Command command;
+			scene.getVehicle().setCommand(command);
+		}
+		
+		scene.Simulate(static_cast<float>(time->getDeltaTime()));
+		
+		
 		// example input handling, probably move to InputManager or some other class for readability later
 		if (inputManager->IsKeyboardButtonDown(GLFW_KEY_ESCAPE))
 		{
@@ -326,7 +342,7 @@ void Game::Cleanup()
 	skyboxShader->Delete();
 	skybox->Delete();
 
-	vehicle.Cleanup();
+	scene.Cleanup();
 
 	std::cout << "Game cleaned up and exited successfully." << std::endl;
 }
