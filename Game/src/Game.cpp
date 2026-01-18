@@ -198,8 +198,9 @@ void Game::Run()
 	while (!window->shouldClose())
 	{
 		// ----------- rendering code setup ---------
+		renderer->Clear(0.0f, 0.0f, 0.0f, 1.0f); 
 		postProcessor->BindFBO(); 
-		renderer->Clear(0.0f, 0.0f, 0.0f, 0.0f); 
+		renderer->Clear(0.0f, 0.0f, 0.0f, 1.0f);
 		// ------------------------------------------
 
 		time->Update();
@@ -286,8 +287,10 @@ void Game::Run()
 
 		//gui.Render(); // render imgui test window
 
+		postProcessor->Blit();
 		postProcessor->Unbind();
-		renderer->Clear(1.0f, 1.0f, 1.0f, 1.0f);
+		glClearColor(1.0f, 0.0f, 1.0f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
 		renderer->DrawQuad(postProcessShader, postProcessor);
 
 		camera_debug_panel.render();// render imgui camera debugger

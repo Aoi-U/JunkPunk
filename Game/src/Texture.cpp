@@ -34,6 +34,7 @@ bool Texture::Load(const std::string& directory)
 
 		glBindTexture(GL_TEXTURE_2D, ID);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, imageFormat, GL_UNSIGNED_BYTE, data);
+		//glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 4, imageFormat, width, height, GL_TRUE);
 		glGenerateMipmap(GL_TEXTURE_2D);
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);

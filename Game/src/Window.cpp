@@ -85,6 +85,8 @@ Window::Window(int width, int height, const char* title, std::shared_ptr<InputMa
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); 
 	glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
 
+	glfwWindowHint(GLFW_SAMPLES, 4); // 4x MSAA
+
 	// create window
 	window = std::unique_ptr<GLFWwindow, WindowDeleter>(glfwCreateWindow(width, height, title, NULL, NULL));
 	if (window == nullptr) {
