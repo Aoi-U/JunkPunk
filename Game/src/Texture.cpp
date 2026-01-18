@@ -24,17 +24,23 @@ bool Texture::Load(const std::string& directory)
 
 	if (data)
 	{
+		GLenum internalFormat{};
 		GLenum imageFormat{};
 		if (nrChannels == 1)
-			imageFormat = GL_RED;
+			imageFormat = imageFormat = GL_RED;
 		else if (nrChannels == 3)
+		{
+			internalFormat = GL_SRGB;
 			imageFormat = GL_RGB;
+		}
 		else if (nrChannels == 4)
+		{
+			internalFormat = GL_SRGB_ALPHA;
 			imageFormat = GL_RGBA;
+		}
 
 		glBindTexture(GL_TEXTURE_2D, ID);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, imageFormat, GL_UNSIGNED_BYTE, data);
-		//glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 4, imageFormat, width, height, GL_TRUE);
+		glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, imageFormat, GL_UNSIGNED_BYTE, data);
 		glGenerateMipmap(GL_TEXTURE_2D);
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
