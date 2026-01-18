@@ -10,6 +10,7 @@ static float camera_fov = 90.0f;
 static bool split_camera = false;
 static glm::dvec2 previous_mouse_position;
 static bool first_time_held_right_click = false;
+static PxVec3 vehicleVelocity = PxVec3(0.0f, 0.0f, 0.0f);
 // Setup ImGui panel for camera, putting it here to quick access 
 class CameraEditorPanelRenderer : public ImGuiPanelRendererInterface {
 public:
@@ -28,8 +29,10 @@ public:
 		ImGui::RadioButton("scroll theta", &camera_scroll_type, 2);
 		ImGui::RadioButton("scroll phi", &camera_scroll_type, 3);
 
-
 		ImGui::Checkbox("split camera", &split_camera);
+
+		ImGui::Text("Vehicle velocity: (%f,%f,%f)", vehicleVelocity.x, vehicleVelocity.y, vehicleVelocity.z);
+
 	}
 private:
 	std::shared_ptr<Camera> mainCamera_ptr = nullptr;
@@ -123,25 +126,22 @@ void Game::Run()
 	skybox->Init(); // load and process skybox 
 	ShaderSetup(); // set up shaders
 
-
-	
-	
 	// test car model 
 	player = Entity(Model("assets/models/2003_peugeot_hoggar_concept/scene.gltf"), glm::mat4(1.0f)); // add car model to gameObjects
 	// end test car model
 	
 	//staticGameObjects.push_back(Entity(Model("assets/models/classroom/scene.gltf"), glm::mat4(1.0f)));
 
-	staticGameObjects.push_back(Entity(Model("assets/models/snowy_mountain_-_terrain/scene.gltf"), glm::mat4(1.0f)));
 	glm::mat4 model = glm::mat4(1.0f);
 	model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
 	model = glm::scale(model, glm::vec3(1000.0f));
-	staticGameObjects[0].setModelMatrix(model);
+	staticGameObjects.push_back(Entity(Model("assets/models/snowy_mountain_-_terrain/scene.gltf"), model));
+	//staticGameObjects[0].setModelMatrix(model);
 	// test classroom model
 
 	grass = Entity(Model("assets/models/single_grass/scene.gltf"), glm::mat4(1.0f));
 
-	scene.InitPhysics(staticGameObjects); // initialize physics scene
+	scene.InitPhysics(staticGameObjects); // initialize physics scene with static game objects
 
 	// ImGui for testing
 	//ImGuiTest gui(window);
@@ -152,6 +152,7 @@ void Game::Run()
 	camera_debug_panel.setPanelRenderer(camera_editor_panel_renderer);
 
 	// test instance translations
+	/*
 	unsigned int amount = 5000;
 	std::vector<glm::mat4> modelMatrices(amount);
 	srand(glfwGetTime()); // initialize random seed	
@@ -192,6 +193,7 @@ void Game::Run()
 		Mesh& mesh = grass.getModel()->getMeshes()[i];
 		mesh.SetupInstanceMesh();
 	}
+	*/
 	// end instance translations 
 
 	// main loop
@@ -203,13 +205,12 @@ void Game::Run()
 		// ------------------------------------------
 
 		time->Update();
-
-		// set vehicle commands based on controller input
+		
 		Command command;
-
 		// make sure window is focused and controller is connected
 		if (inputManager->IsWindowFocused() && inputManager->IsControllerConnected())
 		{
+			// set vehicle commands based on controller input
 			command.throttle = inputManager->GetThrottleValue();
 			command.brake = inputManager->GetBrakeValue();
 			command.steer = inputManager->GetLStickTurnValue();
@@ -259,13 +260,13 @@ void Game::Run()
 			first_time_held_right_click = false;
 		}
 		
-
 		if (split_camera) {
 			glm::ivec2 windowSize = window->getWindowSize();
 			float width = static_cast<float>(windowSize.x);
 			float height = static_cast<float>(windowSize.y);
 			height /= 2;//temporary testing for split camera
 		}
+		vehicleVelocity = scene.getVehicle().getVelocity();
 
 
 		// ---------------- rendering code ----------------
@@ -276,8 +277,7 @@ void Game::Run()
 		glm::mat4 model = glm::mat4(1.0f); // identity matrix for model
 		
 		// car model 
-		model = scene.getVehicle().getTransform();
-		model = glm::scale(model, glm::vec3(40.0f)); 
+		model = glm::scale(playerTransform, glm::vec3(40.0f)); // scale down car model
 		player.setModelMatrix(model);
 
 		DrawGameObjects(camera->GetViewProjectionMatrix()); // draw all game objects in the gameObjects vector

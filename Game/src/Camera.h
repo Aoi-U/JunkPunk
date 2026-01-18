@@ -19,7 +19,7 @@ public:
 		float minDistance = 2.0f; // distance the camera is at when the car is idle
 		float maxDistance = 10.0f; // distance the camera is at when the car is at max speed
 
-		float lerpSpeed = 2.5f; // how fast the camera returns to default position
+		float lerpSpeed = 4.0f; // how fast the camera returns to default position
 		float lookSpeed = 6.0f; // how fast the camera rotates based on input
 	};
 

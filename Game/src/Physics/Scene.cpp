@@ -41,8 +41,7 @@ void Scene::InitScene()
 	// https://nvidia-omniverse.github.io/PhysX/physx/5.6.1/docs/DebugVisualization.html
 	gScene->setVisualizationParameter(PxVisualizationParameter::eSCALE, 1.0f);
 	gScene->setVisualizationParameter(PxVisualizationParameter::eCOLLISION_SHAPES, 1.0f);
-	//gScene->setVisualizationParameter(PxVisualizationParameter::eBODY_AXES, 1.0f);
-	gScene->setVisualizationParameter(PxVisualizationParameter::eBODY_MASS_AXES, 1.0f);
+	gScene->setVisualizationParameter(PxVisualizationParameter::eBODY_AXES, 1.0f);
 	// vehicle specific visualizations
 
 	// ---------------------------------------------------------------------------------
@@ -145,10 +144,9 @@ void Scene::InitPhysics(std::vector<Entity>& entities)
 	//Plane();
 	Box(1.0f, 5, PxVec3(0.0f, 10.0f, 0.0f)); // test
 	Map(entities);
-	gVehicle.initMaterialFrictionTable(gMaterial);
-	if (!gVehicle.initVehicles(gScene, gPhysics, gMaterial))
+	if (!gVehicle.setup(gScene, gPhysics, gMaterial))
 	{
-		std::cout << "Failed to initialize vehicles!" << std::endl;
+		std::cout << "Vehicle failed to initialize!" << std::endl;
 		return;
 	}
 }
@@ -174,13 +172,6 @@ void Scene::Cleanup()
 	}
 	gFoundation->release();
 }
-
-const PxRenderBuffer& Scene::GetRenderBuffer()
-{
-	return gScene->getRenderBuffer();
-}
-
-
 
 PxTriangleMesh* Scene::CreateTriangleMesh(Mesh& mesh)
 {

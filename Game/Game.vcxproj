@@ -161,7 +161,6 @@
     <ClCompile Include="src\Physics\Vehicle\Vehicle.cpp" />
     <ClCompile Include="src\Physics\Vehicle\VehicleParamHelper.cpp" />
     <ClCompile Include="src\PostProcessor.cpp" />
-    <ClCompile Include="src\PVDtest.cpp" />
     <ClCompile Include="src\Renderer.cpp" />
     <ClCompile Include="src\Shader.cpp" />
     <ClCompile Include="src\SkyBox.cpp" />
@@ -200,7 +199,6 @@
     <ClInclude Include="src\Physics\Vehicle\Vehicle.h" />
     <ClInclude Include="src\Physics\Vehicle\VehicleParamHelper.h" />
     <ClInclude Include="src\PostProcessor.h" />
-    <ClInclude Include="src\PVDDebugger.h" />
     <ClInclude Include="src\Renderer.h" />
     <ClInclude Include="src\Shader.h" />
     <ClInclude Include="src\SkyBox.h" />

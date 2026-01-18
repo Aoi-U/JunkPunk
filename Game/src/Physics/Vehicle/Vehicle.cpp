@@ -4,6 +4,18 @@ Vehicle::Vehicle()
 {
 }
 
+bool Vehicle::setup(PxScene* scene, PxPhysics* physics, PxMaterial* material)
+{
+	initMaterialFrictionTable(material);
+
+	if (!initVehicles(scene, physics, material))
+	{
+		std::cout << "Failed to setup vehicle!" << std::endl;
+		return false;
+	}
+	return true;
+}
+
 void Vehicle::initMaterialFrictionTable(PxMaterial* gMaterial)
 {
 	gPhysXMaterialFrictions[0].friction = 3.0f;
@@ -73,7 +85,7 @@ void Vehicle::setCommand(Command commands)
 	gCommand = commands;
 }
 
-glm::mat4 Vehicle::getTransform() const
+const glm::mat4& Vehicle::getTransform() const
 {
 	PxTransform t = gVehicle.mPhysXState.physxActor.rigidBody->getGlobalPose();
 
@@ -83,5 +95,46 @@ glm::mat4 Vehicle::getTransform() const
 	glm::mat4 transform = glm::translate(glm::mat4(1.0f), position);
 	transform *= glm::mat4_cast(rotation);
 	return transform;
+}
+
+void Vehicle::resetTransform()
+{
+	PxTransform t = gVehicle.mPhysXState.physxActor.rigidBody->getGlobalPose();
+
+	glm::vec3 position(t.p.x, t.p.y + 1.0f, t.p.z); 
+	glm::vec3 rotation(0.0f, 0.0f, 0.0f);
+
+	setTransform(position, rotation);
+}
+
+void Vehicle::setTransform(const glm::vec3& position, const glm::vec3& rotation)
+{
+	glm::quat rotQuat = glm::quat(rotation);
+	PxQuat pxQuat(rotQuat.x, rotQuat.y, rotQuat.z, rotQuat.w);
+	PxVec3 pxPosition(position.x, position.y, position.z);
+	PxTransform transform(pxPosition, pxQuat);
+
+	gVehicle.mPhysXState.physxActor.rigidBody->setGlobalPose(transform);
+}
+
+void Vehicle::setCheckpoint(const glm::vec3& position, const glm::vec3& rotation)
+{
+	checkpointPosition = position;
+	checkpointRotation = rotation;
+}
+
+void Vehicle::respawnAtCheckpoint()
+{
+	setTransform(checkpointPosition, checkpointRotation);
+}
+
+const PxVec3 Vehicle::getVelocity() const
+{
+	return gVehicle.mPhysXState.physxActor.rigidBody->getLinearVelocity();
+}
+
+void Vehicle::jump()
+{
+	gVehicle.mPhysXState.physxActor.rigidBody->addForce(jumpForce, PxForceMode::eIMPULSE);
 }
 

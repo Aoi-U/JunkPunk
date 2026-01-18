@@ -34,7 +34,7 @@ class Vehicle
 public:
 	Vehicle();
 
-	void initMaterialFrictionTable(PxMaterial* gMaterial);
+	bool setup(PxScene* scene, PxPhysics* physics, PxMaterial* material);
 
 	bool initVehicles(PxScene* gScene, PxPhysics* gPhysics, PxMaterial* gMaterial);
 
@@ -44,9 +44,20 @@ public:
 
 	void setCommand(Command command);
 
-	glm::mat4 getTransform() const;
+	// ----------- game related functions -------------
 
-	// get the wireframe mesh for rendering
+	const glm::mat4& getTransform() const; // returns the vehicles transform matrix
+
+	void resetTransform(); // use when vehicle is stuck (maybe dont need because of checkpoints)
+	
+	void setCheckpoint(const glm::vec3& position, const glm::vec3& rotation); // sets a new checkpoint position
+
+	void respawnAtCheckpoint(); // respawns the vehicle at the last checkpoint position
+
+	const PxVec3 getVelocity() const;
+
+	void jump(); // makes the vehicle jump
+
 
 private:
 	DirectDriveVehicle gVehicle;
@@ -61,4 +72,17 @@ private:
 	const char gVehicleName[9] = "Vehicle";
 
 	Command gCommand;
+
+	void initMaterialFrictionTable(PxMaterial* gMaterial);
+
+	// game related methods and variables 
+
+	glm::mat4 gVehicleTransform = glm::mat4(1.0f);
+
+	glm::vec3 checkpointPosition = glm::vec3(0.0f);
+	glm::vec3 checkpointRotation = glm::vec3(0.0f);
+
+	PxVec3 jumpForce = PxVec3(0.0f, 1000.0f, 0.0f);
+
+	void setTransform(const glm::vec3& position, const glm::vec3& rotation); // set the position and rotation of the vehicle (use for checkpoints/respawning)
 };

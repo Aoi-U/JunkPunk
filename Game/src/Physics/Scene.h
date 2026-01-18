@@ -32,7 +32,7 @@ public:
 
 	Vehicle& getVehicle() { return gVehicle; }
 
-	const PxRenderBuffer& GetRenderBuffer();
+	const PxRenderBuffer& GetRenderBuffer() { return gScene->getRenderBuffer(); }
 
 private:
 	PxDefaultAllocator gAllocator;
@@ -48,5 +48,5 @@ private:
 	Vehicle gVehicle;
 
 
-	PxTriangleMesh* CreateTriangleMesh(Mesh& mesh);
+	PxTriangleMesh* CreateTriangleMesh(Mesh& mesh); // generate static triangle meshes from models
 };
