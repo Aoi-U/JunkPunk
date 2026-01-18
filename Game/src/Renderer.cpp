@@ -26,15 +26,23 @@ void Renderer::Clear(float r, float g, float b, float a)
 }
 
 void Renderer::DrawEntity(const glm::mat4& projView, std::shared_ptr<Shader> shader, Entity& entity)
-{
-	shader->use();
-	shader->setMat4("u_model", entity.getModelMatrix());
-	shader->setMat4("u_projView", projView);
-	shader->setVec3("u_cameraPos", &cameraPos.x);
+{	
 	// draw each mesh in the entity's model
 	for (Mesh& mesh : entity.getModel()->getMeshes())
 	{
 		DrawMesh(mesh, projView, shader);
+	}
+}
+
+void Renderer::DrawEntityShadow(Entity& entity)
+{	
+	// draw each mesh in the entity's model
+	for (Mesh& mesh : entity.getModel()->getMeshes())
+	{
+		mesh.BindVao();
+		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(mesh.getIndices().size()), GL_UNSIGNED_INT, 0);
+
+		mesh.UnbindVao();
 	}
 }
 
@@ -141,7 +149,7 @@ void Renderer::DrawMesh(Mesh& mesh, const glm::mat4& projView, std::shared_ptr<S
 	glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(mesh.getIndices().size()), GL_UNSIGNED_INT, 0);
 
 	mesh.UnbindVao();
-	glActiveTexture(GL_TEXTURE0);
+	//glActiveTexture(GL_TEXTURE0);
 }
 
 void Renderer::BindTextures(Mesh& mesh, std::shared_ptr<Shader> shader)
@@ -159,8 +167,6 @@ void Renderer::BindTextures(Mesh& mesh, std::shared_ptr<Shader> shader)
 	// bind each texture for the model
 	for (unsigned int i = 0; i < mesh.getTextures().size(); i++)
 	{
-		glActiveTexture(GL_TEXTURE0 + i); // activate proper texture unit before binding
-
 		std::string number;
 		std::string name = mesh.getTextures()[i].getType();
 
@@ -174,8 +180,11 @@ void Renderer::BindTextures(Mesh& mesh, std::shared_ptr<Shader> shader)
 			number = std::to_string(heightNr++); // transfer unsigned int to string
 
 		//shader->setInt(("material." + name + number).c_str(), i);
-		shader->setInt((name + number).c_str(), i); // set the texture unit in the shader
-		mesh.getTextures()[i].Bind(GL_TEXTURE0 + i);
+		if (shader)
+			shader->setInt((name + number).c_str(), i + 1); // set the texture unit in the shader
+
+		glActiveTexture(GL_TEXTURE1 + i); // activate proper texture unit before binding
+		mesh.getTextures()[i].Bind(GL_TEXTURE1 + i);
 	}
 }
 

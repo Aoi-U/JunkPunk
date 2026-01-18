@@ -27,6 +27,8 @@ public:
 
 	void DrawEntity(const glm::mat4& projView, std::shared_ptr<Shader> shader, Entity& entity); // draw function for rendering entities
 
+	void DrawEntityShadow(Entity& entity); // draw function for rendering entities to shadow map
+
 	void DrawEntityInstanced(const glm::mat4& projView, std::shared_ptr<Shader> shader, Entity& entity, const std::vector<glm::mat4>& translations); // draw function for rendering instanced entities
 
 	void DrawSkybox(const glm::mat4& projView, std::shared_ptr<Shader> shader, std::shared_ptr<Skybox> skybox); // draw function for rendering skybox

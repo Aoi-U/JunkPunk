@@ -8,9 +8,11 @@ out vec3 fragPos;
 out vec3 color;
 out vec3 normal;
 out vec2 texCoord;
+out vec4 fragPosLightSpace;
 
 uniform mat4 u_model;
 uniform mat4 u_projView;
+uniform mat4 u_lightSpaceMatrix;
 
 void main()
 {
@@ -18,6 +20,7 @@ void main()
     color = aColor;
     normal = mat3(transpose(inverse(u_model))) * aNormal; // transform normal to world space
     texCoord = aTexCoord;
+    fragPosLightSpace = u_lightSpaceMatrix * vec4(fragPos, 1.0);
     
     gl_Position = u_projView * u_model * vec4(aPos, 1.0);
 }

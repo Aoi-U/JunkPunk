@@ -146,14 +146,14 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& tra
 
 	aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
 
-	std::cout << "material texture counts" << std::endl;
+	/*std::cout << "material texture counts" << std::endl;
 	for (int i = aiTextureType_NONE; i <= aiTextureType_UNKNOWN; i++) {
 		aiTextureType type = static_cast<aiTextureType>(i);
 		unsigned int count = material->GetTextureCount(type);
 		if (count > 0) {
 			std::cout << "  Type " << i << ": " << count << " textures" << std::endl;
 		}
-	}
+	}*/
 
 	std::vector<Texture> diffuseMaps = LoadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
 	textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());

@@ -10,6 +10,7 @@
 #include "PostProcessor.h"
 #include "Physics/Scene.h"
 #include "Light.h"
+#include "ShadowMapper.h"
 
 class Game
 {
@@ -33,7 +34,10 @@ private:
 	std::unique_ptr<Light> light;
 
 	std::shared_ptr<PostProcessor> postProcessor; // default size, will be updated in Run()	
+	std::shared_ptr<ShadowMapper> shadowMapper;
+
 	std::shared_ptr<Shader> postProcessShader;
+	std::shared_ptr<Shader> shadowShader;
 	std::shared_ptr<Shader> defaultShader; 
 	std::shared_ptr<Shader> defaultInstanceShader; // may be used for particle rendering
 	std::shared_ptr<Shader> lightShader;
@@ -49,9 +53,10 @@ private:
 
 	void ShaderSetup();
 	void Cleanup();
-	void DrawGameObjects(const glm::mat4& projView);
-	void DrawGameObjectsInstanced(const glm::mat4& projView, const std::vector<glm::mat4> modelMatrices, Entity entity);
-	void DrawSkybox();
+
+	void RenderShadowScene();
+	void RenderScene();
+	void DrawGameObjectsInstanced(const std::vector<glm::mat4> modelMatrices, Entity entity);
 
 	// add game related stuff 
 

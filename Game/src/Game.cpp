@@ -89,6 +89,7 @@ Game::Game()
 	//window = std::make_unique<Window>(1280, 720, "JunkPunk", inputManager); 
 	window = std::make_shared<Window>(1280, 720, "JunkPunk", inputManager);
 	postProcessor = std::make_shared<PostProcessor>(1280, 720);
+	shadowMapper = std::make_shared<ShadowMapper>();
 
 	glfwSwapInterval(1); // Enable vsync to limit fps
 
@@ -105,6 +106,7 @@ Game::Game()
 
 	// initialize shaders
 	postProcessShader = std::make_shared<Shader>("assets/shaders/postProcess.vert", "assets/shaders/postProcess.frag");
+	shadowShader = std::make_shared<Shader>("assets/shaders/shadowMap.vert", "assets/shaders/shadowMap.frag");
 	defaultShader = std::make_shared<Shader>("assets/shaders/default.vert", "assets/shaders/default.frag");
 	defaultInstanceShader = std::make_shared<Shader>("assets/shaders/defaultInstanced.vert", "assets/shaders/defaultInstanced.frag");
 	lightShader = std::make_shared<Shader>("assets/shaders/light.vert", "assets/shaders/light.frag");
@@ -122,6 +124,7 @@ void Game::Run()
 {
 	//renderer->Init();
 	skybox->Init(); // load and process skybox 
+	shadowMapper->Init();
 	ShaderSetup(); // set up shaders
 
 	// test car model 
@@ -132,19 +135,21 @@ void Game::Run()
 
 	glm::mat4 model = glm::mat4(1.0f);
 	model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-	model = glm::scale(model, glm::vec3(1000.0f));
+	model = glm::scale(model, glm::vec3(400.0f));
 	staticGameObjects.push_back(Entity(Model("assets/models/snowy_mountain_-_terrain/scene.gltf"), model));
-	//staticGameObjects[0].setModelMatrix(model);
 	// test classroom model
+
+	// test rubix model
+	model = glm::mat4(1.0f);
+	model = glm::translate(model, glm::vec3(0.0f, -10.0f, 0.0f));
+	model = glm::scale(model, glm::vec3(10.0f));
+	staticGameObjects.push_back(Entity(Model("assets/models/rubix_2.0/scene.gltf"), model));
 
 	grass = Entity(Model("assets/models/single_grass/scene.gltf"), glm::mat4(1.0f));
 
 	scene.InitPhysics(staticGameObjects); // initialize physics scene with static game objects
 
-	// ImGui for testing
-	//ImGuiTest gui(window);
-
-	
+	// imgui panel for debugging
 	ImGuiPanel camera_debug_panel(window);
 	auto camera_editor_panel_renderer = std::make_shared<CameraEditorPanelRenderer>(camera);
 	camera_debug_panel.setPanelRenderer(camera_editor_panel_renderer);
@@ -197,12 +202,6 @@ void Game::Run()
 	// main loop
 	while (!window->shouldClose())
 	{
-		// ----------- rendering code setup ---------
-		renderer->Clear(0.0f, 0.0f, 0.0f, 1.0f); 
-		postProcessor->BindFBO(); 
-		renderer->Clear(0.0f, 0.0f, 0.0f, 1.0f);
-		// ------------------------------------------
-
 		time->Update();
 		
 		Command command;
@@ -268,7 +267,7 @@ void Game::Run()
 		vehicleVelocity = scene.getVehicle().getVelocity();
 
 
-		// ---------------- rendering code ----------------
+		// -------------------------- rendering code -----------------------------
 		renderer->SetCamera(camera->GetPosition());
 
 		//glViewport(0, 0, width, height); //temporary testing for split camera
@@ -276,22 +275,34 @@ void Game::Run()
 		glm::mat4 model = glm::mat4(1.0f); // identity matrix for model
 		
 		// car model 
-		model = glm::scale(playerTransform, glm::vec3(40.0f)); // scale down car model
+		model = glm::scale(playerTransform, glm::vec3(40.0f)); 
 		player.setModelMatrix(model);
 
-		DrawGameObjects(camera->GetViewProjectionMatrix()); // draw all game objects in the gameObjects vector
-		//DrawGameObjectsInstanced(projView, modelMatrices, grass); // draw instanced grass 
-		DrawSkybox(); // draw skybox (make sure to draw last for optimization)
+		// shadow pass
+		glEnable(GL_DEPTH_TEST);
+		glViewport(0, 0, shadowMapper->SHADOW_WIDTH, shadowMapper->SHADOW_HEIGHT);
+		shadowMapper->BindShadowMap();
+		glClear(GL_DEPTH_BUFFER_BIT);
+		RenderShadowScene();
+		shadowMapper->UnbindShadowMap();
+		// end shadow pass
 
+		// lighting pass
+		glViewport(0, 0, window->getWindowSize().x, window->getWindowSize().y);
+		postProcessor->BindFBO();
+		renderer->Clear(0.0f, 0.0f, 0.0f, 1.0f);
+		RenderScene();
+		// end lighting pass
+		
+		// draw physics colliders
 		renderer->DrawCollisionDebug(camera->GetViewProjectionMatrix(), physicsShader, scene.GetRenderBuffer());
 
-		//gui.Render(); // render imgui test window
-
+		// post processing pass
 		postProcessor->Blit();
 		postProcessor->Unbind();
-		glClearColor(1.0f, 0.0f, 1.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
+		renderer->Clear(0.0f, 0.0f, 0.0f, 1.0f);
 		renderer->DrawQuad(postProcessShader, postProcessor);
+		// end post processing
 
 		camera_debug_panel.render();// render imgui camera debugger
 		window->swapBuffers();
@@ -307,19 +318,21 @@ void Game::ShaderSetup()
 	// post processor
 	postProcessShader->use();
 	postProcessShader->setInt("screenTexture", 0);
-		
+
+	shadowShader->use();
+	shadowShader->setMat4("u_lightSpaceMatrix", light->getLightSpaceMatrix());
+
 	// setup default shader
 	defaultShader->use();
+	defaultShader->setMat4("u_lightSpaceMatrix", light->getLightSpaceMatrix());
 	defaultShader->setVec3("u_light.position", &light->getPosition().x);
 	defaultShader->setVec3("u_light.ambient", &light->getAmbient().r);
 	defaultShader->setVec3("u_light.diffuse", &light->getDiffuse().r);
 	defaultShader->setVec3("u_light.specular", &light->getSpecular().r);
-	//defaultShader->setVec4("u_lightColor", &lightColor.r);
 
 	// setup light shader
 	lightShader->use();
 	lightShader->setVec3("u_lightPos", &light->getPosition().x);
-	//lightShader->setVec4("u_lightColor", &lightColor.r);
 
 	// setup skybox shader
 	skyboxShader->use();
@@ -338,6 +351,7 @@ void Game::Cleanup()
 	postProcessor->Cleanup();
 
 	postProcessShader->Delete();
+	shadowShader->Delete();
 	defaultShader->Delete();
 	defaultInstanceShader->Delete();
 	lightShader->Delete();
@@ -350,26 +364,56 @@ void Game::Cleanup()
 	std::cout << "Game cleaned up and exited successfully." << std::endl;
 }
 
-// sends render calls for all game objects
-void Game::DrawGameObjects(const glm::mat4& projView)
+void Game::RenderShadowScene()
 {
+	glCullFace(GL_FRONT); // reduce peter panning
+	glm::mat4 lightSpaceMatrix = light->getLightSpaceMatrix();
+
+	shadowShader->use();
+	shadowShader->setMat4("u_lightSpaceMatrix", lightSpaceMatrix);
+
 	for (Entity& entity : staticGameObjects)
 	{
+		shadowShader->setMat4("u_model", entity.getModelMatrix());
+		renderer->DrawEntityShadow(entity);
+	}
+
+	shadowShader->setMat4("u_model", player.getModelMatrix());
+	renderer->DrawEntityShadow(player);
+	glCullFace(GL_BACK);
+}
+
+void Game::RenderScene()
+{
+
+	glm::mat4 projView = camera->GetViewProjectionMatrix();
+	glm::vec3 cameraPos = camera->GetPosition();
+	glActiveTexture(GL_TEXTURE0);
+	shadowMapper->BindDepthMapTexture();
+
+	defaultShader->use();
+	defaultShader->setInt("shadowMap", 0);
+	defaultShader->setVec3("u_cameraPos", &cameraPos.x);
+	defaultShader->setMat4("u_projView", projView);
+
+	for (Entity& entity : staticGameObjects)
+	{
+		defaultShader->setMat4("u_model", entity.getModelMatrix());
+
 		renderer->DrawEntity(projView, defaultShader, entity);
 	}
 
+	defaultShader->setMat4("u_model", player.getModelMatrix());
+
 	renderer->DrawEntity(projView, defaultShader, player);
-}
 
-void Game::DrawGameObjectsInstanced(const glm::mat4& projView, const std::vector<glm::mat4> modelMatrices, Entity entity)
-{
-	renderer->DrawEntityInstanced(projView, defaultInstanceShader, entity, modelMatrices);
-}
+	//renderer->DrawEntityInstanced(projView, defaultInstanceShader, entity, modelMatrices);
 
-void Game::DrawSkybox()
-{
-	// remove translation from the view matrix
-	glm::mat4 projView = camera->GetProjectionMatrix() * glm::mat4(glm::mat3(camera->GetViewMatrix())); 
-
+	projView = camera->GetProjectionMatrix() * glm::mat4(glm::mat3(camera->GetViewMatrix())); // remove translation from the view matrix)
 	renderer->DrawSkybox(projView, skyboxShader, skybox);
+}
+
+void Game::DrawGameObjectsInstanced(const std::vector<glm::mat4> modelMatrices, Entity entity)
+{
+	renderer->DrawEntityInstanced(camera->GetViewProjectionMatrix(), defaultInstanceShader, entity, modelMatrices);
 }
