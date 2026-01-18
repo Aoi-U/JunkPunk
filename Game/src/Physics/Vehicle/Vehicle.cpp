@@ -6,7 +6,7 @@ Vehicle::Vehicle()
 
 void Vehicle::initMaterialFrictionTable(PxMaterial* gMaterial)
 {
-	gPhysXMaterialFrictions[0].friction = 1.0f;
+	gPhysXMaterialFrictions[0].friction = 3.0f;
 	gPhysXMaterialFrictions[0].material = gMaterial;
 	gPhysXDefaultMaterialFriction = 1.0f;
 	gNbPhysXmaterialFrictions = 1;

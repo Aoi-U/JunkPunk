@@ -280,16 +280,11 @@ void Game::Run()
 		model = glm::scale(model, glm::vec3(40.0f)); 
 		player.setModelMatrix(model);
 
-		
-		model = glm::mat4(1.0f);
-
-		
-
 		DrawGameObjects(camera->GetViewProjectionMatrix()); // draw all game objects in the gameObjects vector
 		//DrawGameObjectsInstanced(projView, modelMatrices, grass); // draw instanced grass 
 		DrawSkybox(); // draw skybox (make sure to draw last for optimization)
 
-		renderer->DrawCollisionDebug(camera->GetViewProjectionMatrix(), physicsShader, scene.GetRenderBuffer(), player.getModelMatrix());
+		renderer->DrawCollisionDebug(camera->GetViewProjectionMatrix(), physicsShader, scene.GetRenderBuffer());
 
 		//gui.Render(); // render imgui test window
 

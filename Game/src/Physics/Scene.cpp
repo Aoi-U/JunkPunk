@@ -34,8 +34,8 @@ void Scene::InitScene()
 	sceneDesc.gravity = PxVec3(0.0f, -9.81f, 0.0f);
 	gDispatcher = PxDefaultCpuDispatcherCreate(2);
 	sceneDesc.cpuDispatcher = gDispatcher;
-	//sceneDesc.filterShader = PxDefaultSimulationFilterShader;
-	sceneDesc.filterShader = VehicleFilterShader;
+	sceneDesc.filterShader = PxDefaultSimulationFilterShader;
+	//sceneDesc.filterShader = VehicleFilterShader;
 	gScene = gPhysics->createScene(sceneDesc);
 
 	// https://nvidia-omniverse.github.io/PhysX/physx/5.6.1/docs/DebugVisualization.html
@@ -87,25 +87,30 @@ void Scene::Map(std::vector<Entity>& entities)
 			if (!triangleMesh)
 			{
 				std::cout << "Failed to create triangle mesh for entity " + i << std::endl;
-				return;
+				continue;
 			}
-			PxShape* shape = gPhysics->createShape(PxTriangleMeshGeometry(triangleMesh), *gMaterial);
-			PxTransform tran(PxVec3(0.0f, 0.0f, 0.0f));
+
 			glm::mat4 modelMatrix = entities[i].getModelMatrix();
+			glm::vec3 scale = glm::vec3(modelMatrix[0][0], modelMatrix[1][1], modelMatrix[2][2]);
+			PxMeshScale meshScale(PxVec3(scale.x, scale.y, scale.z), PxQuat(PxIdentity));
+
+			PxShape* shape = gPhysics->createShape(PxTriangleMeshGeometry(triangleMesh, meshScale), *gMaterial);
+
+			// collision flags 
+			shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, true);
+			shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, true);
+			shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, false);
 
 			// set the mesh position
 			glm::vec3 position = modelMatrix[3];
-			tran.p = PxVec3(position.x, position.y, position.z);
+			PxTransform tran(PxVec3(position.x, position.y, position.z));
 
-			// set the mesh scale
-			glm::vec3 scale = glm::vec3(modelMatrix[0][0], modelMatrix[1][1], modelMatrix[2][2]);
-			PxMeshScale meshScale(PxVec3(scale.x, scale.y, scale.z), PxQuat(PxIdentity));
-			shape->setGeometry(PxTriangleMeshGeometry(triangleMesh, meshScale));
 
 			PxRigidStatic* staticBody = gPhysics->createRigidStatic(tran);
 			staticBody->attachShape(*shape);
 			staticBody->setActorFlag(PxActorFlag::eVISUALIZATION, false);
 			gScene->addActor(*staticBody);
+
 			shape->release();
 			triangleMesh->release();
 		}
@@ -138,6 +143,7 @@ void Scene::InitPhysics(std::vector<Entity>& entities)
 	InitScene();
 	PrepPVD();
 	//Plane();
+	Box(1.0f, 5, PxVec3(0.0f, 10.0f, 0.0f)); // test
 	Map(entities);
 	gVehicle.initMaterialFrictionTable(gMaterial);
 	if (!gVehicle.initVehicles(gScene, gPhysics, gMaterial))
@@ -178,11 +184,18 @@ const PxRenderBuffer& Scene::GetRenderBuffer()
 
 PxTriangleMesh* Scene::CreateTriangleMesh(Mesh& mesh)
 {
+	std::vector<PxVec3> positions;
+	positions.reserve(mesh.getVertices().size());
+	for (const Vertex& v : mesh.getVertices())
+	{
+		positions.emplace_back(PxVec3(v.position.x, v.position.y, v.position.z));
+	}
+
 	// https://nvidia-omniverse.github.io/PhysX/physx/5.6.1/docs/Geometry.html
 	PxTriangleMeshDesc meshDesc;
-	meshDesc.points.count = static_cast<PxU32>(mesh.getVertices().size());
-	meshDesc.points.stride = sizeof(Vertex);
-	meshDesc.points.data = mesh.getVertices().data();
+	meshDesc.points.count = static_cast<PxU32>(positions.size());
+	meshDesc.points.stride = sizeof(PxVec3);
+	meshDesc.points.data = positions.data();
 
 	meshDesc.triangles.count = static_cast<PxU32>(mesh.getIndices().size() / 3);
 	meshDesc.triangles.stride = 3 * sizeof(GLuint);
@@ -190,6 +203,9 @@ PxTriangleMesh* Scene::CreateTriangleMesh(Mesh& mesh)
 
 	PxTolerancesScale scale;
 	PxCookingParams params(scale);
+
+	params.meshPreprocessParams = PxMeshPreprocessingFlags(PxMeshPreprocessingFlag::eWELD_VERTICES);
+	params.meshWeldTolerance = 0.001f;
 
 	PxDefaultMemoryOutputStream writeBuffer;
 	PxTriangleMeshCookingResult::Enum result;

@@ -33,7 +33,7 @@ public:
 
 	void DrawQuad(std::shared_ptr<Shader> shader, std::shared_ptr<PostProcessor> postProcessor); // draw function for rendering a quad (used for post processing)
 
-	void DrawCollisionDebug(const glm::mat4& projView, std::shared_ptr<Shader> shader, const PxRenderBuffer& renderBuffer, glm::mat4 model);
+	void DrawCollisionDebug(const glm::mat4& projView, std::shared_ptr<Shader> shader, const PxRenderBuffer& renderBuffer);
 
 private:
 	std::shared_ptr<InputManager> inputManager; // not used but maybe useful later idk
