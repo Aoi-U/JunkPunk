@@ -146,15 +146,27 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& tra
 
 	aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
 
-	std::vector<Texture> diffuseMaps = LoadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
-	std::vector<Texture> specularMaps = LoadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
-	std::vector<Texture> normalMaps = LoadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal");
-	std::vector<Texture> heightMaps = LoadMaterialTextures(material, aiTextureType_AMBIENT, "texture_height");
+	std::cout << "material texture counts" << std::endl;
+	for (int i = aiTextureType_NONE; i <= aiTextureType_UNKNOWN; i++) {
+		aiTextureType type = static_cast<aiTextureType>(i);
+		unsigned int count = material->GetTextureCount(type);
+		if (count > 0) {
+			std::cout << "  Type " << i << ": " << count << " textures" << std::endl;
+		}
+	}
 
+	std::vector<Texture> diffuseMaps = LoadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
 	textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
+
+	std::vector<Texture> specularMaps = LoadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
 	textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
+
+	std::vector<Texture> normalMaps = LoadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal");
 	textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
+
+	std::vector<Texture> heightMaps = LoadMaterialTextures(material, aiTextureType_AMBIENT, "texture_height");
 	textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
+	
 	
 	Mesh mMesh = Mesh(vertices, indices, textures);
 	mMesh.SetupMesh();
@@ -187,7 +199,7 @@ std::vector<Texture> Model::LoadMaterialTextures(aiMaterial* mat, aiTextureType 
 			Texture texture(str.C_Str(), typeName);
 			texture.Load(directory);
 			textures.push_back(texture);
-			texturesLoaded.push_back(texture);
+			texturesLoaded.push_back(texture);		
 		}
 	}
 

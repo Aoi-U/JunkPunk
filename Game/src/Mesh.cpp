@@ -41,6 +41,18 @@ void Mesh::SetupMesh()
 	vao.Unbind();
 	vbo.Unbind();
 	ebo.Unbind();
+
+	for (Texture& tex : textures)
+	{
+		if (tex.getType() == "texture_diffuse")
+			hasDiffuseTex = true;
+		else if (tex.getType() == "texture_specular")
+			hasSpecularTex = true;
+		else if (tex.getType() == "texture_normal")
+			hasNormalTex = true;
+		else if (tex.getType() == "texture_height")
+			hasHeightTex = true;
+	}
 }
 
 void Mesh::SetupInstanceMesh()

@@ -9,6 +9,7 @@
 #include "Entity.h"
 #include "PostProcessor.h"
 #include "Physics/Scene.h"
+#include "Light.h"
 
 class Game
 {
@@ -29,9 +30,7 @@ private:
 	std::shared_ptr<Camera> camera;
 	std::shared_ptr<Skybox> skybox;
 
-	glm::vec3 lightPos;
-	glm::vec4 lightColor;
-	glm::mat4 lightModel;
+	std::unique_ptr<Light> light;
 
 	std::shared_ptr<PostProcessor> postProcessor; // default size, will be updated in Run()	
 	std::shared_ptr<Shader> postProcessShader;

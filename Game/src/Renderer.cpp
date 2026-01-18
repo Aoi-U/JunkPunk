@@ -151,6 +151,11 @@ void Renderer::BindTextures(Mesh& mesh, std::shared_ptr<Shader> shader)
 	unsigned int normalNr = 1;
 	unsigned int heightNr = 1;
 
+	shader->setBool("hasDiffuseTex", mesh.hasDiffuseTexture());
+	shader->setBool("hasSpecularTex", mesh.hasSpecularTexture());
+	shader->setBool("hasNormalTex", mesh.hasNormalTexture());
+	shader->setBool("hasHeightTex", mesh.hasHeightTexture());
+
 	// bind each texture for the model
 	for (unsigned int i = 0; i < mesh.getTextures().size(); i++)
 	{

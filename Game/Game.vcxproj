@@ -188,6 +188,7 @@
     <ClInclude Include="src\ImGuiPanel.h" />
     <ClInclude Include="src\ImGuiTest.h" />
     <ClInclude Include="src\InputManager.h" />
+    <ClInclude Include="src\Light.h" />
     <ClInclude Include="src\Mesh.h" />
     <ClInclude Include="src\Model.h" />
     <ClInclude Include="src\Physics\Scene.h" />

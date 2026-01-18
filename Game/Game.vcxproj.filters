@@ -302,6 +302,9 @@
     <ClInclude Include="assets\shaders\colliders.vert">
       <Filter>Resource Files\shaders</Filter>
     </ClInclude>
+    <ClInclude Include="src\Light.h">
+      <Filter>Header Files\Rendering</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\shaders\default.vert">

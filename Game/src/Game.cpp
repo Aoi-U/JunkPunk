@@ -101,9 +101,7 @@ Game::Game()
 	skybox = std::make_shared<Skybox>();
 
 	// initialize light properties
-	lightPos = glm::vec3(0.0f, -4.0f, 0.0f);
-	lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-	lightModel = glm::mat4(1.0f);
+	light = std::make_unique<Light>();
 
 	// initialize shaders
 	postProcessShader = std::make_shared<Shader>("assets/shaders/postProcess.vert", "assets/shaders/postProcess.frag");
@@ -219,7 +217,7 @@ void Game::Run()
 			camera->ChangeTheta(inputManager->GetRStickTurnValueX() * time->getDeltaTime());
 			camera->ChangePhi(inputManager->GetRStickTurnValueY() * time->getDeltaTime());
 		}
-		
+
 		// send commands to vehicle
 		scene.getVehicle().setCommand(command);
 		// simulate physics scene
@@ -306,20 +304,19 @@ void Game::ShaderSetup()
 	// post processor
 	postProcessShader->use();
 	postProcessShader->setInt("screenTexture", 0);
-
-	// light
-	lightModel = glm::translate(lightModel, lightPos);
-	lightModel = glm::scale(lightModel, glm::vec3(1.0f)); 
 		
 	// setup default shader
 	defaultShader->use();
-	defaultShader->setVec3("u_lightPos", &lightPos.x);
-	defaultShader->setVec4("u_lightColor", &lightColor.r);
+	defaultShader->setVec3("u_light.position", &light->getPosition().x);
+	defaultShader->setVec3("u_light.ambient", &light->getAmbient().r);
+	defaultShader->setVec3("u_light.diffuse", &light->getDiffuse().r);
+	defaultShader->setVec3("u_light.specular", &light->getSpecular().r);
+	//defaultShader->setVec4("u_lightColor", &lightColor.r);
 
 	// setup light shader
 	lightShader->use();
-	lightShader->setVec3("u_lightPos", &lightPos.x);
-	lightShader->setVec4("u_lightColor", &lightColor.r);
+	lightShader->setVec3("u_lightPos", &light->getPosition().x);
+	//lightShader->setVec4("u_lightColor", &lightColor.r);
 
 	// setup skybox shader
 	skyboxShader->use();
@@ -343,6 +340,7 @@ void Game::Cleanup()
 	lightShader->Delete();
 	skyboxShader->Delete();
 	skybox->Delete();
+	physicsShader->Delete();
 
 	scene.Cleanup();
 

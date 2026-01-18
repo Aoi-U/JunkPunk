@@ -30,6 +30,11 @@ public:
 
 	std::vector<Texture>& getTextures() { return textures; }
 
+	bool hasDiffuseTexture() const { return hasDiffuseTex; }
+	bool hasSpecularTexture() const { return hasSpecularTex; }
+	bool hasNormalTexture() const { return hasNormalTex; }
+	bool hasHeightTexture() const { return hasHeightTex; }
+
 private:
 	std::vector<Vertex> vertices;
 	std::vector<GLuint> indices;
@@ -38,5 +43,10 @@ private:
 	VAO vao;
 	VBO vbo;
 	EBO ebo;
+
+	bool hasDiffuseTex = false;
+	bool hasSpecularTex = false;
+	bool hasNormalTex = false;
+	bool hasHeightTex = false;
 
 };
