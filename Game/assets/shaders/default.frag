@@ -31,63 +31,31 @@ uniform bool hasHeightTex;
 
 void main()
 {	
-	//vec4 sampledColor = texture(texture_diffuse1, texCoord);
-	//
-    //vec3 norm = normalize(normal);
-    //vec3 lightDir = normalize(u_lightPos - fragPos);
-	//
-    //// caclulate the ambient light on the fragment
-	//float ambientStrength = 0.5;
-	//vec3 ambient = ambientStrength * u_lightColor.rgb;
-	//
-	//// calculate the diffusion of light on the fragment
-	//float diff = max(dot(norm, lightDir), 0.0);
-	//vec3 diffuse = diff * u_lightColor.rgb;
-	//
-	//// calculate the specular reflection
-	//float specularStrength = 0.5;
-	//vec3 viewDir = normalize(u_cameraPos - fragPos); // calculate the direction of the camera to the fragment
-	//vec3 reflectDir = reflect(-lightDir, norm);
-	//float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
-	//vec3 specular = specularStrength * spec * u_lightColor.rgb;
-	
-	// calculate the final color of the fragment
+	vec3 color = u_light.ambient * vec3(texture(texture_diffuse1, texCoord));
 
 	// ambient
-	vec3 ambient = u_light.ambient * vec3(texture(texture_diffuse1, texCoord));
+	vec3 ambient = color;
 
 	// diffuse
-	vec3 norm = normalize(normal);
 	vec3 lightDir = normalize(u_light.position - fragPos);
-	float diff = max(dot(norm, lightDir), 0.0);
-	vec3 diffuse = u_light.diffuse * diff * vec3(texture(texture_diffuse1, texCoord));
+	vec3 norm = normalize(normal);
+	float diff = max(dot(lightDir, norm), 0.0);
+	vec3 diffuse = u_light.diffuse * diff * color;
 
 	// specular
-	vec3 viewDir;
-	vec3 reflectDir;
-	float spec;
-	vec3 specular;
-	if (hasSpecularTex == false)
+	vec3 viewDir = normalize(u_cameraPos - fragPos); // calculate the direction of the camera tothefragment
+	vec3 halfwayDir = normalize(lightDir + viewDir);
+	float spec = pow(max(dot(norm, halfwayDir), 0.0), 32);
+
+	vec3 specular = vec3(0.0f);
+	if (hasSpecularTex)
 	{
-		float specularStrength = 0.5;
-		viewDir = normalize(u_cameraPos - fragPos); // calculate the direction of the camera tothefragment
-		reflectDir = reflect(-lightDir, norm);
-		spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
-		specular = specularStrength * spec * vec3(1.0f);
+		specular = u_light.specular * spec * texture(texture_specular1, texCoord).rgb;
 	}
 	else
 	{
-		viewDir = normalize(u_cameraPos - fragPos);
-		reflectDir = reflect(-lightDir, norm);
-		spec = pow(max(dot(u_cameraPos, reflectDir), 0.0), 64);
-		specular = u_light.specular * spec * texture(texture_specular1, texCoord).rgb;
+		specular = u_light.specular * spec;
 	}
 
-	vec3 result = ambient + diffuse + specular;
-	
-	FragColor = vec4(result, 1.0);
-	
-	//FragColor = vec4((ambient + diffuse + specular) * color * sampledColor.rgb, 1.0);
-	//FragColor = vec4(sampledColor.rgb, 1.0);
-	
+	FragColor = vec4(ambient + diffuse + specular, 1.0);
 } 
