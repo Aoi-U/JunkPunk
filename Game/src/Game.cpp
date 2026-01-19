@@ -5,6 +5,7 @@
 #include "ImGuiTest.h"
 #include "ImGuiPanel.h"
 
+static glm::vec3 position = glm::vec3(0.0f, 0.0f, 00.0f);
 static int camera_scroll_type = 0;
 static float camera_fov = 90.0f;
 static bool split_camera = false;
@@ -18,7 +19,7 @@ public:
 	CameraEditorPanelRenderer(std::shared_ptr<Camera> mainCamera) : mainCamera_ptr(mainCamera) {}
 	virtual void render() override {
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-		ImGui::Text("Position: (%f,%f,%f)", mainCamera_ptr->GetPosition().x, mainCamera_ptr->GetPosition().y, mainCamera_ptr->GetPosition().z);
+		ImGui::Text("Camera position: (%f,%f,%f)", position.x, position.y, position.z);
 		ImGui::Text("Distance: %f", mainCamera_ptr->GetDistance());
 		ImGui::Text("Phi: %f deg", glm::degrees(mainCamera_ptr->GetPhi()));
 		ImGui::Text("Theta: %f deg", glm::degrees(mainCamera_ptr->GetTheta()));
@@ -127,22 +128,88 @@ void Game::Run()
 	shadowMapper->Init();
 	ShaderSetup(); // set up shaders
 
+	float vertices[] = {
+		// back face
+		-1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 0.0f, // bottom-left
+		 1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 1.0f, // top-right
+		 1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 0.0f, // bottom-right         
+		 1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 1.0f, // top-right
+		-1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 0.0f, // bottom-left
+		-1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 1.0f, // top-left
+		// front face
+		-1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 0.0f, // bottom-left
+		 1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 0.0f, // bottom-right
+		 1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 1.0f, // top-right
+		 1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, 1.0f, // top-right
+		-1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 1.0f, // top-left
+		-1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 0.0f, // bottom-left
+		// left face
+		-1.0f,  1.0f,  1.0f, -1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-right
+		-1.0f,  1.0f, -1.0f, -1.0f,  0.0f,  0.0f, 1.0f, 1.0f, // top-left
+		-1.0f, -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-left
+		-1.0f, -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-left
+		-1.0f, -1.0f,  1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 0.0f, // bottom-right
+		-1.0f,  1.0f,  1.0f, -1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-right
+		// right face
+		 1.0f,  1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-left
+		 1.0f, -1.0f, -1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-right
+		 1.0f,  1.0f, -1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 1.0f, // top-right         
+		 1.0f, -1.0f, -1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 1.0f, // bottom-right
+		 1.0f,  1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // top-left
+		 1.0f, -1.0f,  1.0f,  1.0f,  0.0f,  0.0f, 0.0f, 0.0f, // bottom-left     
+		 // bottom face
+		 -1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 1.0f, // top-right
+			1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 1.0f, // top-left
+			1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 0.0f, // bottom-left
+			1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 1.0f, 0.0f, // bottom-left
+		 -1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 0.0f, // bottom-right
+		 -1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, 0.0f, 1.0f, // top-right
+		 // top face
+		 -1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 1.0f, // top-left
+			1.0f,  1.0f , 1.0f,  0.0f,  1.0f,  0.0f, 1.0f, 0.0f, // bottom-right
+			1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, 1.0f, 1.0f, // top-right     
+			1.0f,  1.0f,  1.0f,  0.0f,  1.0f,  0.0f, 1.0f, 0.0f, // bottom-right
+		 -1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 1.0f, // top-left
+		 -1.0f,  1.0f,  1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 0.0f  // bottom-left        
+	};
+	
+	GLuint lightVAO, lightVBO;
+	glGenVertexArrays(1, &lightVAO);
+	glGenBuffers(1, &lightVBO);
+	// fill buffer
+	glBindBuffer(GL_ARRAY_BUFFER, lightVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	// link vertex attributes
+	glBindVertexArray(lightVAO);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+
+	
+
 	// test car model 
-	player = Entity(Model("assets/models/2003_peugeot_hoggar_concept/scene.gltf"), glm::mat4(1.0f)); // add car model to gameObjects
+	glm::mat4 model = glm::mat4(1.0f);
+	model = glm::translate(model, glm::vec3(0.0f, 10.0f, 0.0f));
+	player = Entity(Model("assets/models/2003_peugeot_hoggar_concept/scene.gltf"), model); // add car model to gameObjects
 	// end test car model
 	
 	//staticGameObjects.push_back(Entity(Model("assets/models/classroom/scene.gltf"), glm::mat4(1.0f)));
 
-	glm::mat4 model = glm::mat4(1.0f);
+	model = glm::mat4(1.0f);
 	model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-	model = glm::scale(model, glm::vec3(400.0f));
+	model = glm::scale(model, glm::vec3(500.0f));
 	staticGameObjects.push_back(Entity(Model("assets/models/snowy_mountain_-_terrain/scene.gltf"), model));
 	// test classroom model
 
 	// test rubix model
 	model = glm::mat4(1.0f);
-	model = glm::translate(model, glm::vec3(0.0f, -10.0f, 0.0f));
-	model = glm::scale(model, glm::vec3(10.0f));
+	model = glm::translate(model, glm::vec3(50.0f, -20.0f, 0.0f));
+	model = glm::scale(model, glm::vec3(5.0f));
 	staticGameObjects.push_back(Entity(Model("assets/models/rubix_2.0/scene.gltf"), model));
 
 	grass = Entity(Model("assets/models/single_grass/scene.gltf"), glm::mat4(1.0f));
@@ -265,6 +332,7 @@ void Game::Run()
 			height /= 2;//temporary testing for split camera
 		}
 		vehicleVelocity = scene.getVehicle().getVelocity();
+		position = playerTransform[3];
 
 
 		// -------------------------- rendering code -----------------------------
@@ -293,6 +361,14 @@ void Game::Run()
 		renderer->Clear(0.0f, 0.0f, 0.0f, 1.0f);
 		RenderScene();
 		// end lighting pass
+
+		// Draw light cube
+		lightShader->use();
+		lightShader->setMat4("u_projView", camera->GetViewProjectionMatrix());
+
+		glBindVertexArray(lightVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+		glBindVertexArray(0);
 		
 		// draw physics colliders
 		renderer->DrawCollisionDebug(camera->GetViewProjectionMatrix(), physicsShader, scene.GetRenderBuffer());
@@ -332,7 +408,10 @@ void Game::ShaderSetup()
 
 	// setup light shader
 	lightShader->use();
-	lightShader->setVec3("u_lightPos", &light->getPosition().x);
+	glm::mat4 model = glm::mat4(1.0f);
+	model = glm::translate(model, light->getPosition());
+	lightShader->setMat4("u_model", model);
+	
 
 	// setup skybox shader
 	skyboxShader->use();

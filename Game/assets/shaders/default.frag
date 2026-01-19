@@ -32,7 +32,7 @@ uniform bool hasSpecularTex;
 uniform bool hasNormalTex;
 uniform bool hasHeightTex;
 
-#define DEBUG_MODE 0
+
 
 float ShadowCalculation()
 {
@@ -50,6 +50,7 @@ float ShadowCalculation()
 	float cosTheta = clamp(dot(norm, lightDir), 0.0, 1.0);
 	float bias = 0.05*tan(acos(cosTheta));
 	bias = clamp(bias, 0, 0.001);
+	//float bias = max(0.05 * (1.0 - dot(norm, lightDir)), 0.005);
 
 	float shadow = 0.0;
 	vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
@@ -69,24 +70,58 @@ float ShadowCalculation()
 	return shadow;
 }
 
+#define DEBUG 0
 void main()
 {	
-	vec3 color = vec3(texture(texture_diffuse1, texCoord));
+	#if DEBUG == 1 
+		// Calculate projected coordinates for frustum visualization
+		vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+		projCoords = projCoords * 0.5 + 0.5;
+	
+		// Check if inside the light frustum [0,1] range for XY and depth
+		bool insideFrustumXY = projCoords.x >= 0.0 && projCoords.x <= 1.0 && 
+							   projCoords.y >= 0.0 && projCoords.y <= 1.0;
+		bool insideFrustumZ = projCoords.z >= 0.0 && projCoords.z <= 1.0;
+	
+		if (insideFrustumXY && insideFrustumZ)
+		{
+			// green: Fully inside the light frustum
+			FragColor = vec4(0.0, 1.0, 0.0, 1.0);
+			return;
+		}
+		else if (insideFrustumXY && !insideFrustumZ)
+		{
+			// yellow: Inside XY bounds but outside depth range
+			FragColor = vec4(1.0, 1.0, 0.0, 1.0);
+			return;
+		}
+		else
+		{
+			// red: Outside the light frustum XY bounds
+			FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+			return;
+		}
+	#endif
+
+	vec3 sampledColor = vec3(texture(texture_diffuse1, texCoord));
 
 	vec3 lightDir = normalize(u_light.position - fragPos);
 	vec3 norm = normalize(normal);
+	if (dot(norm, lightDir) < 0.0)
+		norm = -norm;
+
 	vec3 viewDir = normalize(u_cameraPos - fragPos); // calculate the direction of the camera to the fragment
 
 	// ambient
-	vec3 ambient = u_light.ambient * color;
+	vec3 ambient = u_light.ambient;
 
 	// diffuse
-	float diff = max(dot(lightDir, norm), 0.0);
-	vec3 diffuse = diff * color;
+	float diff = max(dot(norm, lightDir), 0.0);
+	vec3 diffuse = diff * u_light.diffuse;
 
 	// specular
 	vec3 halfwayDir = normalize(lightDir + viewDir);
-	float spec = pow(max(dot(norm, halfwayDir), 0.0), 32);
+	float spec = pow(max(dot(norm, halfwayDir), 0.0), 32.0);
 
 	vec3 specular = vec3(0.0);
 	if (hasSpecularTex)
@@ -100,7 +135,6 @@ void main()
 
 	float shadow = ShadowCalculation();
 
-	vec3 lighting = ambient + (1.0 - shadow) * (diffuse + specular);
-
+	vec3 lighting = (ambient + (1.0 - shadow) * (diffuse + specular)) * sampledColor * color;
 	FragColor = vec4(lighting, 1.0);
 } 
