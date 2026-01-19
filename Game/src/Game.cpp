@@ -123,7 +123,7 @@ Game::Game()
 // main game function
 void Game::Run()
 {
-	//renderer->Init();
+	renderer->Init();
 	skybox->Init(); // load and process skybox 
 	shadowMapper->Init(shadowShader, defaultShader);
 	ShaderSetup(); // set up shaders

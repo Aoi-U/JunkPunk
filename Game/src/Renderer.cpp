@@ -22,6 +22,7 @@ Renderer::Renderer(std::shared_ptr<InputManager> inputMgr)
 
 void Renderer::Init()
 {
+	// setup debug line buffers
 	glGenVertexArrays(1, &debugVao);
 	glGenBuffers(1, &debugVbo);
 	glBindVertexArray(debugVao);
@@ -34,6 +35,7 @@ void Renderer::Init()
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1, 4, GL_FLOAT, GL_TRUE, 6 * sizeof(GLfloat), (void*)(3 * sizeof(GLfloat)));
 	glBindVertexArray(0);
+	// end setup debug line buffers
 
 }
 
@@ -111,7 +113,7 @@ void Renderer::DrawCollisionDebug(const glm::mat4& projView, std::shared_ptr<Sha
 {
 	shader->use();
 	shader->setMat4("u_projView", projView);
-	/*
+	
 	PxU32 nbLines = renderBuffer.getNbLines();
 	PxDebugLine* lines = const_cast<PxDebugLine*>(renderBuffer.getLines());
 
@@ -120,17 +122,17 @@ void Renderer::DrawCollisionDebug(const glm::mat4& projView, std::shared_ptr<Sha
 
 	if (nbLines > maxDebugLines)
 	{
-		nbLines = maxDebugLines;
 		std::cout << "Too many debug lines. Some lines will not be rendered" << std::endl;
+		std::cout << "	Attemping to render " << nbLines << " lines." << std::endl;
+		nbLines = maxDebugLines;
 	}
 
 	glBindBuffer(GL_ARRAY_BUFFER, debugVbo);
+	GLfloat* vertexData = (GLfloat*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
 
-	*/
-	for (PxU32 i = 0; i < renderBuffer.getNbLines(); i++)
+	for (PxU32 i = 0; i < nbLines; i++)
 	{
-		const PxDebugLine& line = renderBuffer.getLines()[i];
-		
+		const PxDebugLine& line = lines[i];
 		glm::vec3 col0 = glm::vec3(
 			((line.color0 >> 16) & 0xFF) / 255.0f,
 			((line.color0 >> 8) & 0xFF) / 255.0f,
@@ -141,38 +143,26 @@ void Renderer::DrawCollisionDebug(const glm::mat4& projView, std::shared_ptr<Sha
 			((line.color1 >> 8) & 0xFF) / 255.0f,
 			(line.color1 & 0xFF) / 255.0f
 		);
+		// first vertex
+		vertexData[i * 12 + 0] = line.pos0.x;
+		vertexData[i * 12 + 1] = line.pos0.y;
+		vertexData[i * 12 + 2] = line.pos0.z;
+		vertexData[i * 12 + 3] = col0.x;
+		vertexData[i * 12 + 4] = col0.y;
+		vertexData[i * 12 + 5] = col0.z;
 
-		GLfloat lineVertices[] = {
-			line.pos0.x, line.pos0.y, line.pos0.z, col0.x, col0.y, col0.z,
-			line.pos1.x, line.pos1.y, line.pos1.z, col1.x, col1.y, col1.z
-		};
-
-		GLuint lineIndices[] = {
-			0, 1
-		};
-
-		GLuint lineVAO, lineVBO, lineEBO;
-		glGenVertexArrays(1, &lineVAO);
-		glGenBuffers(1, &lineVBO);
-		glGenBuffers(1, &lineEBO);
-
-		glBindVertexArray(lineVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, lineVBO);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(lineVertices), lineVertices, GL_STATIC_DRAW);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, lineEBO);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(lineIndices), lineIndices, GL_STATIC_DRAW);
-
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)0);
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
-		glEnableVertexAttribArray(0);
-		glEnableVertexAttribArray(1);
-		glDrawElements(GL_LINES, 2, GL_UNSIGNED_INT, 0);
-
-		glBindVertexArray(0);
-		glDeleteVertexArrays(1, &lineVAO);
-		glDeleteBuffers(1, &lineVBO);
-		glDeleteBuffers(1, &lineEBO);	
+		// second vertex
+		vertexData[i * 12 + 6] = line.pos1.x;
+		vertexData[i * 12 + 7] = line.pos1.y;
+		vertexData[i * 12 + 8] = line.pos1.z;
+		vertexData[i * 12 + 9] = col1.x;
+		vertexData[i * 12 + 10] = col1.y;
+		vertexData[i * 12 + 11] = col1.z;
 	}
+	glUnmapBuffer(GL_ARRAY_BUFFER);
+	glBindVertexArray(debugVao);
+	glDrawArrays(GL_LINES, 0, nbLines * 2);
+	glBindVertexArray(0);
 }
 
 void Renderer::DrawMesh(Mesh& mesh, const glm::mat4& proj, const glm::mat4& view, std::shared_ptr<Shader> shader)
