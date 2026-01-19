@@ -1,4 +1,4 @@
-#version 330 core
+#version 400 core
 out vec4 FragColor;
 
 struct Light
@@ -19,13 +19,14 @@ in vec4 fragPosLightSpace;
 uniform vec3 u_cameraPos;
 uniform Light u_light;
 
-uniform sampler2D shadowMap;
-
 uniform sampler2D texture_diffuse1;
 uniform sampler2D texture_diffuse2;
 uniform sampler2D texture_diffuse3;
 uniform sampler2D texture_specular1;
 uniform sampler2D texture_specular2;
+
+//uniform sampler2DArray shadowMap;
+uniform sampler2D shadowMap;
 
 uniform bool hasDiffuseTex;
 uniform bool hasSpecularTex;

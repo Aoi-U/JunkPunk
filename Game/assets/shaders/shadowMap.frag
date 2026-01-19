@@ -1,4 +1,4 @@
-#version 330 core
+#version 400 core
 /*
 uniform sampler2D texture_diffuse1;
 uniform sampler2D texture_diffuse2;

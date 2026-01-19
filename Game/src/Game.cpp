@@ -395,11 +395,11 @@ void Game::RenderScene()
 
 	glm::mat4 projView = camera->GetViewProjectionMatrix();
 	glm::vec3 cameraPos = camera->GetPosition();
-	glActiveTexture(GL_TEXTURE0);
+	glActiveTexture(GL_TEXTURE6);
 	shadowMapper->BindDepthMapTexture();
 
 	defaultShader->use();
-	defaultShader->setInt("shadowMap", 0);
+	defaultShader->setInt("shadowMap", 6);
 	defaultShader->setVec3("u_cameraPos", &cameraPos.x);
 	defaultShader->setMat4("u_projView", projView);
 

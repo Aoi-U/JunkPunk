@@ -355,5 +355,8 @@
     <None Include="assets\shaders\shadowMap.frag">
       <Filter>Resource Files\shaders</Filter>
     </None>
+    <None Include="assets\shaders\shadowMap.geom">
+      <Filter>Resource Files\shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

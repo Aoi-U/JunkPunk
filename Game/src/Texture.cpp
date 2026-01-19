@@ -66,7 +66,7 @@ bool Texture::Load(const std::string& directory)
 
 void Texture::Bind(GLenum unit) const
 {
-	//glActiveTexture(unit);
+	glActiveTexture(unit);
 	glBindTexture(GL_TEXTURE_2D, ID);
 }
 

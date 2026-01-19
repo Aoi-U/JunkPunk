@@ -187,10 +187,10 @@ void Renderer::BindTextures(Mesh& mesh, std::shared_ptr<Shader> shader)
 
 		//shader->setInt(("material." + name + number).c_str(), i);
 		if (shader)
-			shader->setInt((name + number).c_str(), i + 1); // set the texture unit in the shader
+			shader->setInt((name + number).c_str(), i); // set the texture unit in the shader
 
-		glActiveTexture(GL_TEXTURE1 + i); // activate proper texture unit before binding
-		mesh.getTextures()[i].Bind(GL_TEXTURE1 + i);
+		//glActiveTexture(GL_TEXTURE0 + i); // activate proper texture unit before binding
+		mesh.getTextures()[i].Bind(GL_TEXTURE0 + i);
 	}
 }
 

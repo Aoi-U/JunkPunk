@@ -232,6 +232,7 @@
     <None Include="assets\shaders\postProcess.frag" />
     <None Include="assets\shaders\postProcess.vert" />
     <None Include="assets\shaders\shadowMap.frag" />
+    <None Include="assets\shaders\shadowMap.geom" />
     <None Include="assets\shaders\shadowMap.vert" />
     <None Include="assets\shaders\skybox.frag" />
     <None Include="assets\shaders\skybox.vert" />

@@ -95,6 +95,7 @@ bool Shader::compile(const char* vertexSource, const char* fragmentSource)
 	{
 		glGetShaderInfoLog(vertexShader, 512, nullptr, infoLog);
 		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
+		std::cout << "Vertex Shader Source:\n" << vertexSource << std::endl;
 		glDeleteShader(vertexShader);
 		return false;
 	}
@@ -108,6 +109,7 @@ bool Shader::compile(const char* vertexSource, const char* fragmentSource)
 	{
 		glGetShaderInfoLog(fragmentShader, 512, nullptr, infoLog);
 		std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
+		std::cout << "Fragment Shader Source:\n" << fragmentSource << std::endl;
 		glDeleteShader(vertexShader);
 		glDeleteShader(fragmentShader);
 		return false;
