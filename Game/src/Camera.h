@@ -56,6 +56,12 @@ public:
 
 	float GetPhi();
 
+	float GetFarClipPlane() const { return 1000.0f; }
+
+	float GetFov() const { return fov; }
+
+	float GetAspectRatio() const { return aspectRatio; }
+
 private:
 
 	void UpdateViewMatrix();

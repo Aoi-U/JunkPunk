@@ -31,7 +31,7 @@ private:
 	std::shared_ptr<Camera> camera;
 	std::shared_ptr<Skybox> skybox;
 
-	std::unique_ptr<Light> light;
+	std::shared_ptr<Light> light;
 
 	std::shared_ptr<PostProcessor> postProcessor; // default size, will be updated in Run()	
 	std::shared_ptr<ShadowMapper> shadowMapper;

@@ -42,8 +42,8 @@ private:
 //might have to move to Camera.cpp to declutter later
 void Game::CalculateCameraPanning(float current_xpos, float current_ypos) {
 	//right now it snaps since the input manager only records the final mouse position rather than delta change
-	float screen_width = window->getWindowSize().x;
-	float screen_height = window->getWindowSize().y;
+	float screen_width = window->getFrameBufferSize().first;
+	float screen_height = window->getFrameBufferSize().second;
 	float aspect_ratio = screen_width / screen_height;
 	//get relative position based on center of screen
 	float xscreen = (current_xpos / (screen_width / 2)) - 1;
@@ -81,16 +81,15 @@ Game::Game()
 
 	inputManager = std::make_shared<InputManager>(
 		[this](int width, int height) {
-			glViewport(0, 0, width, height);
-			postProcessor->Resize(width, height);
-			camera->ChangeAspectRatio((float)width / (float)height);
+			//glViewport(0, 0, width, height);
+			postProcessor->Resize(window->getFrameBufferSize().first, window->getFrameBufferSize().second);
+			camera->ChangeAspectRatio((float)window->getFrameBufferSize().first / (float)window->getFrameBufferSize().second);
 		}
 	); 
 
 	//window = std::make_unique<Window>(1280, 720, "JunkPunk", inputManager); 
 	window = std::make_shared<Window>(1280, 720, "JunkPunk", inputManager);
-	postProcessor = std::make_shared<PostProcessor>(1280, 720);
-	shadowMapper = std::make_shared<ShadowMapper>();
+	postProcessor = std::make_shared<PostProcessor>(window->getFrameBufferSize().first, window->getFrameBufferSize().second);
 
 	glfwSwapInterval(1); // Enable vsync to limit fps
 
@@ -98,16 +97,17 @@ Game::Game()
 
 	time = std::make_unique<Time>();
 
-	camera = std::make_shared<Camera>(cameraTarget, Camera::Params{}, camera_fov, 1280 / 720.0f); // replace with actual values later
+	camera = std::make_shared<Camera>(cameraTarget, Camera::Params{}, camera_fov, (float)window->getFrameBufferSize().first / (float)window->getFrameBufferSize().second); // replace with actual values later
 
 	skybox = std::make_shared<Skybox>();
 
 	// initialize light properties
-	light = std::make_unique<Light>();
+	light = std::make_shared<Light>();
+	shadowMapper = std::make_shared<ShadowMapper>(camera, window, light);
 
 	// initialize shaders
 	postProcessShader = std::make_shared<Shader>("assets/shaders/postProcess.vert", "assets/shaders/postProcess.frag");
-	shadowShader = std::make_shared<Shader>("assets/shaders/shadowMap.vert", "assets/shaders/shadowMap.frag");
+	shadowShader = std::make_shared<Shader>("assets/shaders/shadowMap.vert", "assets/shaders/shadowMap.frag", "assets/shaders/shadowMap.geom");
 	defaultShader = std::make_shared<Shader>("assets/shaders/default.vert", "assets/shaders/default.frag");
 	defaultInstanceShader = std::make_shared<Shader>("assets/shaders/defaultInstanced.vert", "assets/shaders/defaultInstanced.frag");
 	lightShader = std::make_shared<Shader>("assets/shaders/light.vert", "assets/shaders/light.frag");
@@ -125,7 +125,7 @@ void Game::Run()
 {
 	//renderer->Init();
 	skybox->Init(); // load and process skybox 
-	shadowMapper->Init();
+	shadowMapper->Init(shadowShader, defaultShader);
 	ShaderSetup(); // set up shaders
 
 	// test car model 
@@ -201,10 +201,11 @@ void Game::Run()
 	}
 	*/
 	// end instance translations 
-
+	int frameCount = 0;
 	// main loop
 	while (!window->shouldClose())
 	{
+		renderer->Clear(0.0f, 0.0f, 0.0f, 1.0f); // clear screen
 		time->Update();
 		
 		Command command;
@@ -282,17 +283,21 @@ void Game::Run()
 		model = glm::scale(playerTransform, glm::vec3(40.0f)); 
 		player.setModelMatrix(model);
 
+
 		// shadow pass
-		glEnable(GL_DEPTH_TEST);
+		shadowShader->use();
+		shadowMapper->SetupUBO();
 		glViewport(0, 0, shadowMapper->SHADOW_WIDTH, shadowMapper->SHADOW_HEIGHT);
 		shadowMapper->BindShadowMap();
+		//shadowMapper->BindFramebufferTextures();
 		glClear(GL_DEPTH_BUFFER_BIT);
 		RenderShadowScene();
 		shadowMapper->UnbindShadowMap();
 		// end shadow pass
 
 		// lighting pass
-		glViewport(0, 0, window->getWindowSize().x, window->getWindowSize().y);
+		//glViewport(0, 0, window->getWindowSize().x, window->getWindowSize().y);
+		glViewport(0, 0, window->getFrameBufferSize().first, window->getFrameBufferSize().second);
 		postProcessor->BindFBO();
 		renderer->Clear(0.0f, 0.0f, 0.0f, 1.0f);
 		RenderScene();
@@ -311,6 +316,7 @@ void Game::Run()
 		camera_debug_panel.render();// render imgui camera debugger
 		window->swapBuffers();
 		glfwPollEvents();
+		frameCount++;
 	}
 
 	Cleanup();
@@ -324,15 +330,15 @@ void Game::ShaderSetup()
 	postProcessShader->setInt("screenTexture", 0);
 
 	shadowShader->use();
-	shadowShader->setMat4("u_lightSpaceMatrix", light->getLightSpaceMatrix());
+	shadowShader->setInt("depthMaps", 6);
 
 	// setup default shader
 	defaultShader->use();
-	defaultShader->setMat4("u_lightSpaceMatrix", light->getLightSpaceMatrix());
 	defaultShader->setVec3("u_light.position", &light->getPosition().x);
 	defaultShader->setVec3("u_light.ambient", &light->getAmbient().r);
 	defaultShader->setVec3("u_light.diffuse", &light->getDiffuse().r);
 	defaultShader->setVec3("u_light.specular", &light->getSpecular().r);
+	defaultShader->setInt("depthMaps", 6);
 
 	// setup light shader
 	lightShader->use();
@@ -374,10 +380,6 @@ void Game::Cleanup()
 void Game::RenderShadowScene()
 {
 	glCullFace(GL_FRONT); // reduce peter panning
-	glm::mat4 lightSpaceMatrix = light->getLightSpaceMatrix();
-
-	shadowShader->use();
-	shadowShader->setMat4("u_lightSpaceMatrix", lightSpaceMatrix);
 
 	for (Entity& entity : staticGameObjects)
 	{
@@ -392,31 +394,40 @@ void Game::RenderShadowScene()
 
 void Game::RenderScene()
 {
-
-	glm::mat4 projView = camera->GetViewProjectionMatrix();
+	glm::mat4 proj = camera->GetProjectionMatrix();
+	glm::mat4 view = camera->GetViewMatrix();
 	glm::vec3 cameraPos = camera->GetPosition();
-	glActiveTexture(GL_TEXTURE6);
-	shadowMapper->BindDepthMapTexture();
 
 	defaultShader->use();
-	defaultShader->setInt("shadowMap", 6);
+	defaultShader->setMat4("u_view", camera->GetViewMatrix());
+	defaultShader->setMat4("u_projection", camera->GetProjectionMatrix());
 	defaultShader->setVec3("u_cameraPos", &cameraPos.x);
-	defaultShader->setMat4("u_projView", projView);
+	defaultShader->setVec3("u_lightDir", &light->getDirection().x);
+	defaultShader->setFloat("u_farPlane", camera->GetFarClipPlane());
+	defaultShader->setInt("u_cascadeCount", shadowMapper->GetCascadeCount());
+	for (size_t i = 0; i < shadowMapper->GetCascadeCount(); ++i)
+	{
+		defaultShader->setFloat("cascadePlaneDistances[" + std::to_string(i) + "]", shadowMapper->GetCascadeLevels()[i]);
+	}
+
+	glActiveTexture(GL_TEXTURE6);
+	shadowMapper->BindDepthMapTexture();
+	defaultShader->setInt("depthMaps", 6);
 
 	for (Entity& entity : staticGameObjects)
 	{
 		defaultShader->setMat4("u_model", entity.getModelMatrix());
 
-		renderer->DrawEntity(projView, defaultShader, entity);
+		renderer->DrawEntity(proj, view, defaultShader, entity);
 	}
 
 	defaultShader->setMat4("u_model", player.getModelMatrix());
 
-	renderer->DrawEntity(projView, defaultShader, player);
+	renderer->DrawEntity(proj, view, defaultShader, player);
 
 	//renderer->DrawEntityInstanced(projView, defaultInstanceShader, entity, modelMatrices);
 
-	projView = camera->GetProjectionMatrix() * glm::mat4(glm::mat3(camera->GetViewMatrix())); // remove translation from the view matrix)
+	glm::mat4 projView = camera->GetProjectionMatrix() * glm::mat4(glm::mat3(camera->GetViewMatrix())); // remove translation from the view matrix)
 	renderer->DrawSkybox(projView, skyboxShader, skybox);
 }
 

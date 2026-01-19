@@ -25,7 +25,7 @@ public:
 	void Clear(float r, float g, float b, float a); // clears screen and buffers
 	void SetCamera(glm::vec3 pos) { cameraPos = pos; } // set camera position
 
-	void DrawEntity(const glm::mat4& projView, std::shared_ptr<Shader> shader, Entity& entity); // draw function for rendering entities
+	void DrawEntity(const glm::mat4& proj, const glm::mat4& view, std::shared_ptr<Shader> shader, Entity& entity); // draw function for rendering entities
 
 	void DrawEntityShadow(Entity& entity); // draw function for rendering entities to shadow map
 
@@ -43,6 +43,9 @@ private:
 	// probably not ideal for renderer to see camera, change to better solution later
 	glm::vec3 cameraPos{}; 
 
-	void DrawMesh(Mesh& mesh, const glm::mat4& projView, std::shared_ptr<Shader> shader); // draw function for rendering meshes
+	GLuint debugVao{}, debugVbo{};
+	const size_t maxDebugLines = 10000;
+
+	void DrawMesh(Mesh& mesh, const glm::mat4& proj, const glm::mat4& view, std::shared_ptr<Shader> shader); // draw function for rendering meshes
 	void BindTextures(Mesh& mesh, std::shared_ptr<Shader> shader); // bind textures for a mesh
 };

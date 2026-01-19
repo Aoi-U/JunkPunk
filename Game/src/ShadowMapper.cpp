@@ -1,32 +1,14 @@
 #include "ShadowMapper.h"
 
-ShadowMapper::ShadowMapper()
-	: depthMapFBO(0), depthMap(0)
+ShadowMapper::ShadowMapper(std::shared_ptr<Camera> cam, std::shared_ptr<Window> win, std::shared_ptr<Light> light)
+	: depthMapFBO(0), depthMaps(0), matricesUBO(0), camera(cam), window(win), light(light)
 {
 
 }
 
-void ShadowMapper::Init()
+void ShadowMapper::Init(std::shared_ptr<Shader> shader, std::shared_ptr<Shader> shader2)
 {
-	glGenFramebuffers(1, &depthMapFBO);
-
-	glGenTextures(1, &depthMap);
-	glBindTexture(GL_TEXTURE_2D, depthMap);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-	float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
-
-	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
-	glDrawBuffer(GL_NONE);
-	glReadBuffer(GL_NONE);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-	/*
+	// make depth map fbo
 	glGenFramebuffers(1, &depthMapFBO);
 
 	glGenTextures(1, &depthMaps);
@@ -44,7 +26,7 @@ void ShadowMapper::Init()
 	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
 	glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthMaps, 0);
 	glDrawBuffer(GL_NONE);
-	glDrawBuffer(GL_NONE);
+	glReadBuffer(GL_NONE);
 
 	int status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 	if (status != GL_FRAMEBUFFER_COMPLETE)
@@ -52,28 +34,143 @@ void ShadowMapper::Init()
 		std::cout << "Framebuffer not complete: " << status << std::endl;
 		return;
 	}
-	*/
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	GLuint uboIndex = glGetUniformBlockIndex(shader->getID(), "LightSpaceMatrices");
+	GLuint uboIndex2 = glGetUniformBlockIndex(shader2->getID(), "LightSpaceMatrices");
+	glUniformBlockBinding(shader->getID(), uboIndex, 0);
+	glUniformBlockBinding(shader2->getID(), uboIndex2, 0);
+
+	if (uboIndex == GL_INVALID_INDEX)
+	{
+		std::cout << "ERROR: LightSpaceMatrices UBO not found in shadow shader!" << std::endl;
+	}
+	if (uboIndex2 == GL_INVALID_INDEX)
+	{
+		std::cout << "ERROR: LightSpaceMatrices UBO not found in default shader!" << std::endl;
+	}
+
+	glGenBuffers(1, &matricesUBO);
+	glBindBuffer(GL_UNIFORM_BUFFER, matricesUBO);
+	glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::mat4x4) * 16, NULL, GL_STATIC_DRAW);
+	glBindBufferBase(GL_UNIFORM_BUFFER, 0, matricesUBO);
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
 void ShadowMapper::BindShadowMap()
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+	glEnable(GL_DEPTH_TEST);
 }
 
 void ShadowMapper::UnbindShadowMap()
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glEnable(GL_DEPTH_TEST);
 }
 
 void ShadowMapper::BindDepthMapTexture()
 {
-	glBindTexture(GL_TEXTURE_2D, depthMap);
-	//glBindTexture(GL_TEXTURE_2D_ARRAY, depthMaps);
+	//glBindTexture(GL_TEXTURE_2D, depthMap);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, depthMaps);
 }
 
-std::vector<glm::vec4> ShadowMapper::GetFrustumCornersWorldSpace(const glm::mat4& proj, const glm::mat4& view)
+void ShadowMapper::BindFramebufferTextures()
 {
-	const auto inv = glm::inverse(proj * view);
+	glFramebufferTexture(GL_FRAMEBUFFER, GL_TEXTURE_2D_ARRAY, depthMaps, 0);
+}
+
+void ShadowMapper::SetupUBO()
+{
+	const auto lightMatrices = GetLightSpaceMatrices();
+
+	glBindBuffer(GL_UNIFORM_BUFFER, matricesUBO);
+	for (size_t i = 0; i < lightMatrices.size(); ++i)
+	{
+		glBufferSubData(GL_UNIFORM_BUFFER, i * sizeof(glm::mat4x4), sizeof(glm::mat4x4), &lightMatrices[i]);
+	}
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+}
+
+glm::mat4 ShadowMapper::GetLightSpaceMatrix(const float nearPlane, const float farPlane)
+{
+	float aspectRatio = window->getFrameBufferSize().first / (float)window->getFrameBufferSize().second;
+	const auto proj = glm::perspective(glm::radians(camera->GetFov()), aspectRatio, nearPlane, farPlane);
+	const std::vector<glm::vec4> corners = GetFrustumCornersWorldSpace(proj * camera->GetViewMatrix());
+
+	glm::vec3 center = glm::vec3(0, 0, 0);
+	for (const auto& v : corners)
+	{
+		center += glm::vec3(v);
+	}
+	center /= corners.size();
+
+	const auto lightView = glm::lookAt(center + light->getDirection(), center, glm::vec3(0.0f, 1.0f, 0.0f));
+
+	float minX = std::numeric_limits<float>::max();
+	float maxX = std::numeric_limits<float>::lowest();
+	float minY = std::numeric_limits<float>::max();
+	float maxY = std::numeric_limits<float>::lowest();
+	float minZ = std::numeric_limits<float>::max();
+	float maxZ = std::numeric_limits<float>::lowest();
+	for (const auto& v : corners)
+	{
+		const auto trf = lightView * v;
+		minX = std::min(minX, trf.x);
+		maxX = std::max(maxX, trf.x);
+		minY = std::min(minY, trf.y);
+		maxY = std::max(maxY, trf.y);
+		minZ = std::min(minZ, trf.z);
+		maxZ = std::max(maxZ, trf.z);
+	}
+
+	// Tune this parameter according to the scene
+	constexpr float zMult = 3.5f;
+	if (minZ < 0)
+	{
+		minZ *= zMult;
+	}
+	else
+	{
+		minZ /= zMult;
+	}
+	if (maxZ < 0)
+	{
+		maxZ /= zMult;
+	}
+	else
+	{
+		maxZ *= zMult;
+	}
+
+	const glm::mat4 lightProjection = glm::ortho(minX, maxX, minY, maxY, minZ, maxZ);
+	return lightProjection * lightView;
+}
+
+std::vector<glm::mat4> ShadowMapper::GetLightSpaceMatrices()
+{
+	std::vector<glm::mat4> lightSpaceMatrices;
+	for (size_t i = 0; i < shadowCascadeLevels.size() + 1; ++i)
+	{
+		if (i == 0)
+		{
+			lightSpaceMatrices.push_back(GetLightSpaceMatrix(0.1f, shadowCascadeLevels[i]));
+		}
+		else if (i < shadowCascadeLevels.size())
+		{
+			lightSpaceMatrices.push_back(GetLightSpaceMatrix(shadowCascadeLevels[i - 1], shadowCascadeLevels[i]));
+		}
+		else
+		{
+			lightSpaceMatrices.push_back(GetLightSpaceMatrix(shadowCascadeLevels[i - 1], camera->GetFarClipPlane()));
+		}
+	}
+	return lightSpaceMatrices;
+}
+
+std::vector<glm::vec4> ShadowMapper::GetFrustumCornersWorldSpace(const glm::mat4& projView)
+{
+	const auto inv = glm::inverse(projView);
 
 	std::vector<glm::vec4> frustumCorners;
 	for (unsigned int x = 0; x < 2; ++x)
@@ -82,11 +179,7 @@ std::vector<glm::vec4> ShadowMapper::GetFrustumCornersWorldSpace(const glm::mat4
 		{
 			for (unsigned int z = 0; z < 2; ++z)
 			{
-				const glm::vec4 pt = inv * glm::vec4(
-					2.0f * x - 1.0f,
-					2.0f * y - 1.0f,
-					2.0f * z - 1.0f,
-					1.0f);
+				const glm::vec4 pt = inv * glm::vec4(2.0f * x - 1.0f, 2.0f * y - 1.0f, 2.0f * z - 1.0f, 1.0f);
 				frustumCorners.push_back(pt / pt.w);
 			}
 		}

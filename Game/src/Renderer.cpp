@@ -6,10 +6,10 @@ Renderer::Renderer(std::shared_ptr<InputManager> inputMgr)
 	glEnable(GL_DEPTH_TEST); // enable depth testing for 3D
 	glEnable(GL_CULL_FACE);
 
-	glEnable(GL_POLYGON_OFFSET_FILL);
+	/*glEnable(GL_POLYGON_OFFSET_FILL);
 	float factor = 1.0f;
 	float units = 1.0f;
-	glPolygonOffset(factor, units);
+	glPolygonOffset(factor, units);*/
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -22,7 +22,19 @@ Renderer::Renderer(std::shared_ptr<InputManager> inputMgr)
 
 void Renderer::Init()
 {
-	
+	glGenVertexArrays(1, &debugVao);
+	glGenBuffers(1, &debugVbo);
+	glBindVertexArray(debugVao);
+	glBindBuffer(GL_ARRAY_BUFFER, debugVbo);
+
+	glBufferData(GL_ARRAY_BUFFER, maxDebugLines * 2 * sizeof(GLfloat) * 6, nullptr, GL_DYNAMIC_DRAW); // line: 2 vertices, 3 position 3 color
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (void*)0);
+
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 4, GL_FLOAT, GL_TRUE, 6 * sizeof(GLfloat), (void*)(3 * sizeof(GLfloat)));
+	glBindVertexArray(0);
+
 }
 
 void Renderer::Clear(float r, float g, float b, float a)
@@ -31,12 +43,12 @@ void Renderer::Clear(float r, float g, float b, float a)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-void Renderer::DrawEntity(const glm::mat4& projView, std::shared_ptr<Shader> shader, Entity& entity)
+void Renderer::DrawEntity(const glm::mat4& proj, const glm::mat4& view, std::shared_ptr<Shader> shader, Entity& entity)
 {	
 	// draw each mesh in the entity's model
 	for (Mesh& mesh : entity.getModel()->getMeshes())
 	{
-		DrawMesh(mesh, projView, shader);
+		DrawMesh(mesh, proj, view, shader);
 	}
 }
 
@@ -99,6 +111,22 @@ void Renderer::DrawCollisionDebug(const glm::mat4& projView, std::shared_ptr<Sha
 {
 	shader->use();
 	shader->setMat4("u_projView", projView);
+	/*
+	PxU32 nbLines = renderBuffer.getNbLines();
+	PxDebugLine* lines = const_cast<PxDebugLine*>(renderBuffer.getLines());
+
+	if (nbLines == 0)
+		return;
+
+	if (nbLines > maxDebugLines)
+	{
+		nbLines = maxDebugLines;
+		std::cout << "Too many debug lines. Some lines will not be rendered" << std::endl;
+	}
+
+	glBindBuffer(GL_ARRAY_BUFFER, debugVbo);
+
+	*/
 	for (PxU32 i = 0; i < renderBuffer.getNbLines(); i++)
 	{
 		const PxDebugLine& line = renderBuffer.getLines()[i];
@@ -147,7 +175,7 @@ void Renderer::DrawCollisionDebug(const glm::mat4& projView, std::shared_ptr<Sha
 	}
 }
 
-void Renderer::DrawMesh(Mesh& mesh, const glm::mat4& projView, std::shared_ptr<Shader> shader)
+void Renderer::DrawMesh(Mesh& mesh, const glm::mat4& proj, const glm::mat4& view, std::shared_ptr<Shader> shader)
 {
 	BindTextures(mesh, shader);
 

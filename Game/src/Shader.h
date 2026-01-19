@@ -16,6 +16,7 @@ class Shader
 {
 public:
 	Shader(const char* vertPath, const char* fragPath);
+	Shader(const char* vertPath, const char* fragPath, const char* geomPath);
 
 	void use();
 	unsigned int getID();
@@ -34,5 +35,6 @@ private:
 	unsigned int ID;
 
 	std::string readFile(const char* filePath);
-	bool compile(const char* vertPath, const char* fragPath);
+	bool compile(const char* vertexSource, const char* fragmentSource);
+	bool compile(const char* vertexSource, const char* fragmentSource, const char* geomSource);
 };

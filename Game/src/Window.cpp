@@ -1,5 +1,8 @@
 #include "Window.h"
 
+int Window::fbWidth = 0;
+int Window::fbHeight = 0;
+
 void Window::keyMetaCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
 	InputManager* callbacks = static_cast<InputManager*>(glfwGetWindowUserPointer(window));
 
@@ -75,6 +78,13 @@ void Window::scrollMetaCallback(GLFWwindow* window, double xoffset, double yoffs
 	}
 }
 
+void Window::framebuffer_size_callback(GLFWwindow* window, int width, int height)
+{
+	fbWidth = width;
+	fbHeight = height;
+	glViewport(0, 0, width, height);
+}
+
 Window::Window(int width, int height, const char* title, std::shared_ptr<InputManager> im)
 	: window(nullptr), inputManager(im)
 {
@@ -94,6 +104,8 @@ Window::Window(int width, int height, const char* title, std::shared_ptr<InputMa
 		return;
 	}
 	makeContextCurrent();
+	glfwSetFramebufferSizeCallback(window.get(), framebuffer_size_callback);
+	glfwGetFramebufferSize(window.get(), &fbWidth, &fbHeight);
 
 	// initialize OpenGL extensions for the current context (this window)
 	if (!gladLoadGL()) {

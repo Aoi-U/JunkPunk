@@ -30,11 +30,19 @@ public:
 
 	GLFWwindow* getGLFWwindow() const { return window.get(); }
 
+	std::pair<int, int> getFrameBufferSize() const {
+		return { fbWidth, fbHeight };
+	}
+
 private:
 	std::unique_ptr<GLFWwindow, WindowDeleter> window;
 	std::shared_ptr<InputManager> inputManager; 
 
+	static int fbWidth;
+	static int fbHeight;
+
 	static void defaultWindowSizeCallback(GLFWwindow* window, int width, int height) { glViewport(0, 0, width, height); }
+	static void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
 	static void keyMetaCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 	static void mouseButtonMetaCallback(GLFWwindow* window, int button, int action, int mods);
