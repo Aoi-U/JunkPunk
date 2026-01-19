@@ -11,6 +11,8 @@ static float camera_fov = 90.0f;
 static bool split_camera = false;
 static glm::dvec2 previous_mouse_position;
 static bool first_time_held_right_click = false;
+
+CAudioEngine aEngine;
 // Setup ImGui panel for camera, putting it here to quick access 
 class CameraEditorPanelRenderer : public ImGuiPanelRendererInterface {
 public:
@@ -107,6 +109,11 @@ void Game::Run()
 {
 	//renderer->Init();
 	skybox->Init();
+	aEngine.Init();
+
+	aEngine.LoadSound("assets/audio/jazz-background-music-325355.mp3", false);
+
+	aEngine.PlaySounds("assets/audio/jazz-background-music-325355.mp3", Vector3{ 0,0,0 }, -10.0f);
 
 	
 	glm::mat4 view;

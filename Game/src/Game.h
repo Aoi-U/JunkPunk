@@ -6,6 +6,7 @@
 #include "Mesh.h"
 #include "Model.h"
 #include "SkyBox.h"
+#include "AudioEngine.h"
 
 class Game
 {
@@ -13,8 +14,6 @@ public:
 	Game();
 	~Game() = default;
 	void Run();
-
-
 
 private:
 	std::shared_ptr<InputManager> inputManager; 
