@@ -5,8 +5,12 @@ Renderer::Renderer(std::shared_ptr<InputManager> inputMgr)
 {
 	glEnable(GL_DEPTH_TEST); // enable depth testing for 3D
 	glEnable(GL_CULL_FACE);
-	//glCullFace(GL_BACK);
-	//glFrontFace(GL_CCW);
+
+	glEnable(GL_POLYGON_OFFSET_FILL);
+	float factor = 1.0f;
+	float units = 1.0f;
+	glPolygonOffset(factor, units);
+
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }

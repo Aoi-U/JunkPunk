@@ -32,9 +32,7 @@ uniform bool hasSpecularTex;
 uniform bool hasNormalTex;
 uniform bool hasHeightTex;
 
-
-
-float ShadowCalculation()
+float ShadowCalculation(vec3 lightDir, vec3 norm)
 {
 	// perform perspective divide
 	vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
@@ -43,14 +41,9 @@ float ShadowCalculation()
 	
 	float closestDepth = texture(shadowMap, projCoords.xy).r; 
 	float currentDepth = projCoords.z;
-
-	vec3 norm = normalize(normal);
-	vec3 lightDir = normalize(u_light.position - fragPos);
 	
-	float cosTheta = clamp(dot(norm, lightDir), 0.0, 1.0);
-	float bias = 0.05*tan(acos(cosTheta));
-	bias = clamp(bias, 0, 0.001);
-	//float bias = max(0.05 * (1.0 - dot(norm, lightDir)), 0.005);
+	float diffuseFactor = dot(norm, lightDir);
+	float bias = mix(0.001, 0.0, diffuseFactor);
 
 	float shadow = 0.0;
 	vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
@@ -65,9 +58,9 @@ float ShadowCalculation()
 
 	shadow /= 9.0;
 
-	if (projCoords.z > 1.0)
-		shadow = 0.0;
-	return shadow;
+	if (closestDepth + bias < currentDepth)
+		return shadow;
+	return 0.0;
 }
 
 #define DEBUG 0
@@ -133,7 +126,7 @@ void main()
 		specular = u_light.specular * spec;
 	}
 
-	float shadow = ShadowCalculation();
+	float shadow = ShadowCalculation(lightDir, norm);
 
 	vec3 lighting = (ambient + (1.0 - shadow) * (diffuse + specular)) * sampledColor * color;
 	FragColor = vec4(lighting, 1.0);

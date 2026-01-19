@@ -20,10 +20,10 @@ private:
 
 	glm::vec3 ambient{ 0.3f, 0.3f, 0.3f };
 	glm::vec3 diffuse{ 0.8f, 0.8f, 0.8f };
-	glm::vec3 specular{ 1.0f, 1.0f, 1.0f };
+	glm::vec3 specular{ 0.2f, 0.2f, 0.2f };
 
 	float near = 1.0f;
-	float far = 1000.0f;
+	float far = 700.0f;
 	glm::mat4 lightProjection;
 	glm::mat4 lightView;
 	glm::mat4 lightSpaceMatrix;
