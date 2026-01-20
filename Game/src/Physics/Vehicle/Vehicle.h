@@ -46,7 +46,7 @@ public:
 
 	// ----------- game related functions -------------
 
-	const glm::mat4& getTransform() const; // returns the vehicles transform matrix
+	const PxTransform getTransform() const; // returns the vehicles transform matrix
 
 	void resetTransform(); // use when vehicle is stuck (maybe dont need because of checkpoints)
 	

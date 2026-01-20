@@ -7,24 +7,24 @@
 #include "../Entity.h"
 
 using namespace physx;
-class Scene
+class PhysicsScene
 {
 public:
-	Scene();
+	PhysicsScene();
 
 	void InitPVD();
 
-	void InitScene();
+	void InitPhysicsScene();
 
 	void PrepPVD();
 
 	void Plane();
 
-	void Map(std::vector<Entity>& entities);
+	void Map(std::vector<std::shared_ptr<Entity>> entities);
 
 	void Box(float halfLen, PxU32 size, PxVec3 position); // test
 
-	void InitPhysics(std::vector<Entity>& entities);
+	void InitPhysics(std::vector<std::shared_ptr<Entity>> entities);
 
 	void Simulate(float deltaTime);
 
@@ -32,7 +32,7 @@ public:
 
 	Vehicle& getVehicle() { return gVehicle; }
 
-	const PxRenderBuffer& GetRenderBuffer() { return gScene->getRenderBuffer(); }
+	const PxRenderBuffer& GetRenderBuffer() { return gPhysicsScene->getRenderBuffer(); }
 
 private:
 	PxDefaultAllocator gAllocator;
@@ -40,7 +40,7 @@ private:
 	PxFoundation* gFoundation = NULL;
 	PxPhysics* gPhysics = NULL;
 	PxDefaultCpuDispatcher* gDispatcher = NULL;
-	PxScene* gScene = NULL;
+	PxScene* gPhysicsScene = NULL;
 	PxMaterial* gMaterial = NULL;
 	PxPvd* gPvd = NULL;
 

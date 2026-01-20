@@ -45,19 +45,19 @@ void Renderer::Clear(float r, float g, float b, float a)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-void Renderer::DrawEntity(const glm::mat4& proj, const glm::mat4& view, std::shared_ptr<Shader> shader, Entity& entity)
+void Renderer::DrawEntity(const glm::mat4& proj, const glm::mat4& view, std::shared_ptr<Shader> shader, std::shared_ptr<Entity> entity)
 {	
 	// draw each mesh in the entity's model
-	for (Mesh& mesh : entity.getModel()->getMeshes())
+	for (Mesh& mesh : entity->getMeshes())
 	{
 		DrawMesh(mesh, proj, view, shader);
 	}
 }
 
-void Renderer::DrawEntityShadow(Entity& entity)
+void Renderer::DrawEntityShadow(std::shared_ptr<Entity> entity)
 {	
 	// draw each mesh in the entity's model
-	for (Mesh& mesh : entity.getModel()->getMeshes())
+	for (Mesh& mesh : entity->getMeshes())
 	{
 		mesh.BindVao();
 		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(mesh.getIndices().size()), GL_UNSIGNED_INT, 0);
@@ -66,13 +66,13 @@ void Renderer::DrawEntityShadow(Entity& entity)
 	}
 }
 
-void Renderer::DrawEntityInstanced(const glm::mat4& projView, std::shared_ptr<Shader> shader, Entity& entity, const std::vector<glm::mat4>& translations)
+void Renderer::DrawEntityInstanced(const glm::mat4& projView, std::shared_ptr<Shader> shader, std::shared_ptr<Entity> entity, const std::vector<glm::mat4>& translations)
 {
 	shader->use();
 	shader->setMat4("u_projView", projView);
 	shader->setVec3("u_cameraPos", &cameraPos.x);
 	// draw each mesh in the entity's model
-	for (Mesh& mesh : entity.getModel()->getMeshes())
+	for (Mesh& mesh : entity->getMeshes())
 	{
 		BindTextures(mesh, shader);
 

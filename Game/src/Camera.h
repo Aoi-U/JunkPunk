@@ -6,6 +6,8 @@
 #include <GLFW/glfw3.h>
 #include "InputManager.h"
 
+
+
 class Camera
 {
 public:
@@ -56,7 +58,7 @@ public:
 
 	float GetPhi();
 
-	float GetFarClipPlane() const { return 1000.0f; }
+	float GetFarClipPlane() const { return zFar; }
 
 	float GetFov() const { return fov; }
 
@@ -79,6 +81,8 @@ private:
 	float defaultDistance;
 
 	float fov;
+	float zNear = 0.1f;
+	float zFar = 1000.0f;
 	float theta;
 	float phi;
 
@@ -90,4 +94,7 @@ private:
 	glm::mat4 viewMatrix{};
 	glm::mat4 projectionMatrix{};
 	glm::vec3 position{};
+
+	glm::vec3 targetCameraPosition{};
+	glm::vec3 upVector{ 0.0f, 1.0f, 0.0f };
 };

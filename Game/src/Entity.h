@@ -3,25 +3,128 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+//#include <glm/gtx/quaternion.hpp>
 #include <memory>
+#include <list>
 
 #include "Model.h"
 
-// entity class to represent objects in the game 
-class Entity
+class Transform
 {
 public:
-	Entity() = default;
-	Entity(Model modelPtr, const glm::mat4& modelMatrix);
+	void computeModelMatrix()
+	{
+		modelMatrix = getLocalModelMatrix();
+		isDirty = false;
+	}
 
-	std::shared_ptr<Model> getModel() { return model; }
+	void computeModelMatrix(const glm::mat4& parentGlobalModelMatrix)
+	{
+		modelMatrix = parentGlobalModelMatrix * getLocalModelMatrix();
+		isDirty = false;
+	}
+
+	void setLocalPosition(const glm::vec3& newPosition)
+	{
+		pos = newPosition;
+		isDirty = true;
+	}
+
+	void setLocalRotation(const glm::quat& newRotation)
+	{
+		quatRot = newRotation;
+		isDirty = true;
+	}
+
+	void setLocalScale(const glm::vec3& newScale)
+	{
+		scale = newScale;
+		isDirty = true;
+	}
+
+	const glm::vec3& getGlobalPosition() const { return modelMatrix[3]; }
+	const glm::vec3 getLocalPosition() const { return pos; }
+	const glm::quat& getLocalRotation() const { return quatRot; }
+	const glm::vec3& getLocalScale() const { return scale; }
+
 	const glm::mat4& getModelMatrix() { return modelMatrix; }
 
-	void setModelMatrix(const glm::mat4& matrix) { modelMatrix = matrix; }
+	glm::vec3 getRight() const { return modelMatrix[0]; }
+	glm::vec3 getUp() const { return modelMatrix[1]; }
+	glm::vec3 getForward() const { return -modelMatrix[2]; }
+	glm::vec3 getBack() const { return modelMatrix[2]; }
+
+	glm::vec3 getGlobalScale() const { return { glm::length(getRight()), glm::length(getUp()), glm::length(getForward()) }; }
+
+	bool getIsDirty() const { return isDirty; }
+
+protected:
+	glm::vec3 pos = glm::vec3(0.0f);
+	glm::quat quatRot = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
+	glm::vec3 scale = glm::vec3(1.0f);
+
+	glm::mat4 modelMatrix = glm::mat4(1.0f);
+
+	bool isDirty = true;
+
+	glm::mat4 getLocalModelMatrix()
+	{
+		glm::mat4 rotationMatrix = glm::mat4_cast(quatRot);
+		glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), pos);
+		glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), scale);
+		return translationMatrix * rotationMatrix * scaleMatrix;
+	}
+};
+
+// entity class to represent objects in the game 
+class Entity : public Model
+{
+public:
+	Entity(std::string const& path) : Model(path) {}
 
 	void Cleanup();
 
-private:
-	std::shared_ptr<Model> model;
-	glm::mat4 modelMatrix{};
+	template<typename... TArgs>
+	void addChild(const TArgs&... args)
+	{
+		children.emplace_back(std::make_unique<Entity>(args...));
+		children.back()->parent = this;
+	}
+	
+
+	void updateSelfAndChild()
+	{
+		if (transform.getIsDirty())
+		{
+			forceUpdateSelfAndChild();
+			return;
+		}
+
+		for (auto&& child : children)
+		{
+			child->updateSelfAndChild();
+		}
+	}
+
+	void forceUpdateSelfAndChild()
+	{
+		if (parent)
+		{
+			transform.computeModelMatrix(parent->transform.getModelMatrix());
+		}
+		else
+		{
+			transform.computeModelMatrix();
+		}
+		
+		for (auto&& child : children)
+		{
+			child->forceUpdateSelfAndChild();
+		}
+	}
+
+	Transform transform;
+
+	std::vector<std::unique_ptr<Entity>> children; // scene graph
+	Entity* parent = nullptr;
 };

@@ -8,7 +8,7 @@
 #include "Time.h"
 #include "Entity.h"
 #include "PostProcessor.h"
-#include "Physics/Scene.h"
+#include "Physics/PhysicsScene.h"
 #include "Light.h"
 #include "ShadowMapper.h"
 
@@ -45,18 +45,18 @@ private:
 	std::shared_ptr<Shader> physicsShader;
 
 	// list of all static game objects (map objects that dont move)
-	std::vector<Entity> staticGameObjects;
-	Entity player;
-	Entity grass;
+	std::vector<std::shared_ptr<Entity>> staticGameObjects;
+	std::shared_ptr<Entity> player;
+	//Entity grass;
 
-	Scene scene;
+	PhysicsScene pScene;
 
 	void ShaderSetup();
 	void Cleanup();
 
-	void RenderShadowScene();
-	void RenderScene();
-	void DrawGameObjectsInstanced(const std::vector<glm::mat4> modelMatrices, Entity entity);
+	void RenderShadowPhysicsScene();
+	void RenderPhysicsScene();
+	void DrawGameObjectsInstanced(const std::vector<glm::mat4> modelMatrices, std::shared_ptr<Entity> entity);
 
 	// add game related stuff 
 

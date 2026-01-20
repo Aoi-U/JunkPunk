@@ -1,6 +1,6 @@
-#include "Scene.h"
+#include "PhysicsScene.h"
 
-Scene::Scene()
+PhysicsScene::PhysicsScene()
 	: gVehicle()
 {
 	gFoundation = PxCreateFoundation(PX_PHYSICS_VERSION, gAllocator, gErrorCallback);
@@ -12,7 +12,7 @@ Scene::Scene()
 
 }
 
-void Scene::InitPVD()
+void PhysicsScene::InitPVD()
 {
 	gPvd = PxCreatePvd(*gFoundation);
 	PxPvdTransport* transport = PxDefaultPvdSocketTransportCreate("127.0.0.1", 5425, 10);
@@ -21,7 +21,7 @@ void Scene::InitPVD()
 	PxInitVehicleExtension(*gFoundation);
 }
 
-void Scene::InitScene()
+void PhysicsScene::InitPhysicsScene()
 {
 	gPhysics = PxCreatePhysics(PX_PHYSICS_VERSION, *gFoundation, PxTolerancesScale(), true, gPvd);
 	if (!gPhysics)
@@ -30,18 +30,18 @@ void Scene::InitScene()
 		return;
 	}
 
-	PxSceneDesc sceneDesc(gPhysics->getTolerancesScale());
-	sceneDesc.gravity = PxVec3(0.0f, -9.81f, 0.0f);
+	PxSceneDesc PhysicsSceneDesc(gPhysics->getTolerancesScale());
+	PhysicsSceneDesc.gravity = PxVec3(0.0f, -9.81f, 0.0f);
 	gDispatcher = PxDefaultCpuDispatcherCreate(2);
-	sceneDesc.cpuDispatcher = gDispatcher;
-	sceneDesc.filterShader = PxDefaultSimulationFilterShader;
-	//sceneDesc.filterShader = VehicleFilterShader;
-	gScene = gPhysics->createScene(sceneDesc);
+	PhysicsSceneDesc.cpuDispatcher = gDispatcher;
+	PhysicsSceneDesc.filterShader = PxDefaultSimulationFilterShader;
+	//PhysicsSceneDesc.filterShader = VehicleFilterShader;
+	gPhysicsScene = gPhysics->createScene(PhysicsSceneDesc);
 
 	// https://nvidia-omniverse.github.io/PhysX/physx/5.6.1/docs/DebugVisualization.html
-	gScene->setVisualizationParameter(PxVisualizationParameter::eSCALE, 1.0f);
-	gScene->setVisualizationParameter(PxVisualizationParameter::eCOLLISION_SHAPES, 1.0f);
-	gScene->setVisualizationParameter(PxVisualizationParameter::eBODY_AXES, 1.0f);
+	gPhysicsScene->setVisualizationParameter(PxVisualizationParameter::eSCALE, 1.0f);
+	gPhysicsScene->setVisualizationParameter(PxVisualizationParameter::eCOLLISION_SHAPES, 1.0f);
+	gPhysicsScene->setVisualizationParameter(PxVisualizationParameter::eBODY_AXES, 1.0f);
 	// vehicle specific visualizations
 
 	// ---------------------------------------------------------------------------------
@@ -49,9 +49,9 @@ void Scene::InitScene()
 	gMaterial = gPhysics->createMaterial(0.5f, 0.5f, 0.6f);
 }
 
-void Scene::PrepPVD()
+void PhysicsScene::PrepPVD()
 {
-	PxPvdSceneClient* pvdClient = gScene->getScenePvdClient();
+	PxPvdSceneClient* pvdClient = gPhysicsScene->getScenePvdClient();
 	if (pvdClient)
 	{
 		pvdClient->setScenePvdFlag(PxPvdSceneFlag::eTRANSMIT_CONSTRAINTS, true);
@@ -60,7 +60,7 @@ void Scene::PrepPVD()
 	}
 }
 
-void Scene::Plane()
+void PhysicsScene::Plane()
 {
 	gGroundPlane = PxCreatePlane(*gPhysics, PxPlane(0, 1, 0, 0), *gMaterial);
 	for (PxU32 i = 0; i < gGroundPlane->getNbShapes(); i++)
@@ -72,16 +72,16 @@ void Scene::Plane()
 		shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, false);
 	}
 
-	gScene->addActor(*gGroundPlane);
+	gPhysicsScene->addActor(*gGroundPlane);
 }
 
-void Scene::Map(std::vector<Entity>& entities)
+void PhysicsScene::Map(std::vector<std::shared_ptr<Entity>> entities)
 {
 	for (size_t i = 0; i < entities.size(); i++)
 	{
-		for (size_t j = 0; j < entities[i].getModel()->getMeshes().size(); j++)
+		for (size_t j = 0; j < entities[i]->getMeshes().size(); j++)
 		{
-			Mesh& mesh = entities[i].getModel()->getMeshes()[j];
+			Mesh& mesh = entities[i]->getMeshes()[j];
 			PxTriangleMesh* triangleMesh = CreateTriangleMesh(mesh);
 			if (!triangleMesh)
 			{
@@ -89,8 +89,10 @@ void Scene::Map(std::vector<Entity>& entities)
 				continue;
 			}
 
-			glm::mat4 modelMatrix = entities[i].getModelMatrix();
-			glm::vec3 scale = glm::vec3(modelMatrix[0][0], modelMatrix[1][1], modelMatrix[2][2]);
+			//glm::mat4 modelMatrix = entities[i]->getModelMatrix();
+			//glm::vec3 scale = glm::vec3(modelMatrix[0][0], modelMatrix[1][1], modelMatrix[2][2]);
+			glm::mat4 modelMatrix = entities[i]->transform.getModelMatrix();
+			glm::vec3 scale = entities[i]->transform.getGlobalScale();
 			PxMeshScale meshScale(PxVec3(scale.x, scale.y, scale.z), PxQuat(PxIdentity));
 
 			PxShape* shape = gPhysics->createShape(PxTriangleMeshGeometry(triangleMesh, meshScale), *gMaterial);
@@ -108,7 +110,7 @@ void Scene::Map(std::vector<Entity>& entities)
 			PxRigidStatic* staticBody = gPhysics->createRigidStatic(tran);
 			staticBody->attachShape(*shape);
 			staticBody->setActorFlag(PxActorFlag::eVISUALIZATION, false);
-			gScene->addActor(*staticBody);
+			gPhysicsScene->addActor(*staticBody);
 
 			shape->release();
 			triangleMesh->release();
@@ -116,7 +118,7 @@ void Scene::Map(std::vector<Entity>& entities)
 	}
 }
 
-void Scene::Box(float halfLen, PxU32 size, PxVec3 position)
+void PhysicsScene::Box(float halfLen, PxU32 size, PxVec3 position)
 {
 	PxShape* shape = gPhysics->createShape(PxBoxGeometry(halfLen, halfLen, halfLen), *gMaterial);
 	PxTransform tran(position);
@@ -130,38 +132,38 @@ void Scene::Box(float halfLen, PxU32 size, PxVec3 position)
 			PxRigidDynamic* body = gPhysics->createRigidDynamic(tran.transform(localTran));
 			body->attachShape(*shape);
 			PxRigidBodyExt::updateMassAndInertia(*body, 10.0f);
-			gScene->addActor(*body);
+			gPhysicsScene->addActor(*body);
 		}
 	}
 	shape->release();
 }
 
-void Scene::InitPhysics(std::vector<Entity>& entities)
+void PhysicsScene::InitPhysics(std::vector<std::shared_ptr<Entity>> entities)
 {
 	InitPVD();
-	InitScene();
+	InitPhysicsScene();
 	PrepPVD();
 	//Plane();
 	Box(1.0f, 5, PxVec3(0.0f, 10.0f, 0.0f)); // test
 	Map(entities);
-	if (!gVehicle.setup(gScene, gPhysics, gMaterial))
+	if (!gVehicle.setup(gPhysicsScene, gPhysics, gMaterial))
 	{
 		std::cout << "Vehicle failed to initialize!" << std::endl;
 		return;
 	}
 }
 
-void Scene::Simulate(float deltaTime)
+void PhysicsScene::Simulate(float deltaTime)
 {
 	gVehicle.step(deltaTime);
-	gScene->simulate(1 / 60.0f);
-	gScene->fetchResults(true);
+	gPhysicsScene->simulate(1 / 60.0f);
+	gPhysicsScene->fetchResults(true);
 }
 
-void Scene::Cleanup()
+void PhysicsScene::Cleanup()
 {
 	PxCloseVehicleExtension();
-	gScene->release();
+	gPhysicsScene->release();
 	gDispatcher->release();
 	gPhysics->release();
 	if (gPvd)
@@ -173,7 +175,7 @@ void Scene::Cleanup()
 	gFoundation->release();
 }
 
-PxTriangleMesh* Scene::CreateTriangleMesh(Mesh& mesh)
+PxTriangleMesh* PhysicsScene::CreateTriangleMesh(Mesh& mesh)
 {
 	std::vector<PxVec3> positions;
 	positions.reserve(mesh.getVertices().size());

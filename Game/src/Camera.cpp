@@ -96,13 +96,35 @@ void Camera::UpdateViewMatrix()
 		localOffset.z -= 1.0f; // move camera back a bit
 		glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), theta, glm::vec3(0.0f, 1.0f, 0.0f));
 		glm::vec3 offset = glm::vec3(rotation * glm::vec4(localOffset, 0.0f));
-		glm::vec3 targetCameraPosition = targetPosition + offset;
+		targetCameraPosition = targetPosition + offset;
 
 		position = targetCameraPosition;
 
 		viewMatrix = glm::lookAt(position, targetPosition, glm::vec3(0.0f, 1.0f, 0.0f));
 	}
 }
+
+/*
+Frustum Camera::CreateFrustum()
+{
+	Frustum frustum;
+	const float halfVSide = zFar * tanf(glm::radians(fov) * 0.5f);
+	const float halfHSide = halfVSide * aspectRatio;
+	const glm::vec3 front = glm::normalize(-glm::vec3(viewMatrix[2]));
+	const glm::vec3 frontMultFar = zFar * front;
+
+	glm::vec3 right = glm::normalize(glm::vec3(viewMatrix[0]));
+
+	frustum.near = { position + zNear * front, front };
+	frustum.far = { position + frontMultFar, -front };
+	frustum.right = { position, glm::cross(frontMultFar - right * halfHSide, upVector) };
+	frustum.left = { position, glm::cross(upVector, frontMultFar + right * halfHSide) };
+	frustum.top = { position, glm::cross(right, frontMultFar - upVector * halfHSide) };
+	frustum.bottom = { position, glm::cross(frontMultFar + upVector * halfVSide, right) };
+
+	return frustum;
+}
+*/
 
 void Camera::ChangeTheta(float deltaTheta)
 {

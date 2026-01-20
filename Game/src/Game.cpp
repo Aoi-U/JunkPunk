@@ -5,7 +5,7 @@
 #include "ImGuiTest.h"
 #include "ImGuiPanel.h"
 
-static glm::vec3 position = glm::vec3(0.0f, 0.0f, 00.0f);
+static glm::vec3 vehicle_position = glm::vec3(0.0f, 0.0f, 00.0f);
 static int camera_scroll_type = 0;
 static float camera_fov = 90.0f;
 static bool split_camera = false;
@@ -19,7 +19,7 @@ public:
 	CameraEditorPanelRenderer(std::shared_ptr<Camera> mainCamera) : mainCamera_ptr(mainCamera) {}
 	virtual void render() override {
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-		ImGui::Text("Camera position: (%f,%f,%f)", position.x, position.y, position.z);
+		ImGui::Text("Vehicle position: (%f,%f,%f)", vehicle_position.x, vehicle_position.y, vehicle_position.z);
 		ImGui::Text("Distance: %f", mainCamera_ptr->GetDistance());
 		ImGui::Text("Phi: %f deg", glm::degrees(mainCamera_ptr->GetPhi()));
 		ImGui::Text("Theta: %f deg", glm::degrees(mainCamera_ptr->GetTheta()));
@@ -113,6 +113,28 @@ Game::Game()
 	lightShader = std::make_shared<Shader>("assets/shaders/light.vert", "assets/shaders/light.frag");
 	skyboxShader = std::make_shared<Shader>("assets/shaders/skybox.vert", "assets/shaders/skybox.frag");
 	physicsShader = std::make_shared<Shader>("assets/shaders/colliders.vert", "assets/shaders/colliders.frag");
+
+
+	// ------------------ initialize game scene and objects ----------------------
+
+	// test car model 
+	player = std::make_shared<Entity>("assets/models/2003_peugeot_hoggar_concept/scene.gltf");
+	player->transform.setLocalPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+	player->transform.setLocalScale(glm::vec3(40.0f));
+	player->updateSelfAndChild();
+	// end test car model
+
+	
+	staticGameObjects.emplace_back(std::make_shared<Entity>("assets/models/snowy_mountain_-_terrain/scene.gltf"));
+	staticGameObjects.back()->transform.setLocalScale(glm::vec3(500.0f));
+	staticGameObjects.back()->updateSelfAndChild();
+
+	// test rubix model
+	staticGameObjects.emplace_back(std::make_shared<Entity>("assets/models/rubix_2.0/scene.gltf"));
+	staticGameObjects.back()->transform.setLocalPosition(glm::vec3(50.0f, -20.0f, 0.0f));
+	staticGameObjects.back()->transform.setLocalScale(glm::vec3(5.0f));
+	staticGameObjects.back()->updateSelfAndChild();
+	
 }
 
 //Game::~Game()
@@ -128,29 +150,11 @@ void Game::Run()
 	shadowMapper->Init(shadowShader, defaultShader);
 	ShaderSetup(); // set up shaders
 
-	// test car model 
-	glm::mat4 model = glm::mat4(1.0f);
-	model = glm::translate(model, glm::vec3(0.0f, 10.0f, 0.0f));
-	player = Entity(Model("assets/models/2003_peugeot_hoggar_concept/scene.gltf"), model); // add car model to gameObjects
-	// end test car model
 	
-	//staticGameObjects.push_back(Entity(Model("assets/models/classroom/scene.gltf"), glm::mat4(1.0f)));
 
-	model = glm::mat4(1.0f);
-	model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-	model = glm::scale(model, glm::vec3(500.0f));
-	staticGameObjects.push_back(Entity(Model("assets/models/snowy_mountain_-_terrain/scene.gltf"), model));
-	// test classroom model
+	//grass = Entity(Model("assets/models/single_grass/PhysicsScene.gltf"), glm::mat4(1.0f));
 
-	// test rubix model
-	model = glm::mat4(1.0f);
-	model = glm::translate(model, glm::vec3(50.0f, -20.0f, 0.0f));
-	model = glm::scale(model, glm::vec3(5.0f));
-	staticGameObjects.push_back(Entity(Model("assets/models/rubix_2.0/scene.gltf"), model));
-
-	grass = Entity(Model("assets/models/single_grass/scene.gltf"), glm::mat4(1.0f));
-
-	scene.InitPhysics(staticGameObjects); // initialize physics scene with static game objects
+	pScene.InitPhysics(staticGameObjects); // initialize physics PhysicsScene with static game objects
 
 	// imgui panel for debugging
 	ImGuiPanel camera_debug_panel(window);
@@ -201,7 +205,7 @@ void Game::Run()
 	}
 	*/
 	// end instance translations 
-	int frameCount = 0;
+
 	// main loop
 	while (!window->shouldClose())
 	{
@@ -223,14 +227,20 @@ void Game::Run()
 		}
 
 		// send commands to vehicle
-		scene.getVehicle().setCommand(command);
-		// simulate physics scene
-		scene.Simulate(time->getDeltaTime());		
+		pScene.getVehicle().setCommand(command);
+		// simulate physics PhysicsScene
+		pScene.Simulate(time->getDeltaTime());		
 	
-		// update camera
-		glm::mat4 playerTransform = scene.getVehicle().getTransform();
-		camera->Update(time->getDeltaTime(), playerTransform);
-		
+		// update player and camera
+		PxTransform playerTransform = pScene.getVehicle().getTransform();
+		glm::vec3 pos = glm::vec3(playerTransform.p.x, playerTransform.p.y, playerTransform.p.z);
+		glm::quat rot = glm::quat(playerTransform.q.w, playerTransform.q.x, playerTransform.q.y, playerTransform.q.z);
+		player->transform.setLocalPosition(pos);
+		player->transform.setLocalRotation(rot);
+		player->updateSelfAndChild();
+
+		glm::mat4 playerModelMatrix = player->transform.getModelMatrix();
+		camera->Update(time->getDeltaTime(), playerModelMatrix);
 
 		// example input handling, probably move to InputManager or some other class for readability later
 		if (inputManager->IsKeyboardButtonDown(GLFW_KEY_ESCAPE))
@@ -268,21 +278,14 @@ void Game::Run()
 			float height = static_cast<float>(windowSize.y);
 			height /= 2;//temporary testing for split camera
 		}
-		vehicleVelocity = scene.getVehicle().getVelocity();
-		position = playerTransform[3];
+		vehicleVelocity = pScene.getVehicle().getVelocity();
+		vehicle_position = glm::vec3(pos);
 
 
 		// -------------------------- rendering code -----------------------------
 		renderer->SetCamera(camera->GetPosition());
 
 		//glViewport(0, 0, width, height); //temporary testing for split camera
-
-		glm::mat4 model = glm::mat4(1.0f); // identity matrix for model
-		
-		// car model 
-		model = glm::scale(playerTransform, glm::vec3(40.0f)); 
-		player.setModelMatrix(model);
-
 
 		// shadow pass
 		shadowShader->use();
@@ -291,7 +294,7 @@ void Game::Run()
 		shadowMapper->BindShadowMap();
 		//shadowMapper->BindFramebufferTextures();
 		glClear(GL_DEPTH_BUFFER_BIT);
-		RenderShadowScene();
+		RenderShadowPhysicsScene();
 		shadowMapper->UnbindShadowMap();
 		// end shadow pass
 
@@ -300,11 +303,11 @@ void Game::Run()
 		glViewport(0, 0, window->getFrameBufferSize().first, window->getFrameBufferSize().second);
 		postProcessor->BindFBO();
 		renderer->Clear(0.0f, 0.0f, 0.0f, 1.0f);
-		RenderScene();
+		RenderPhysicsScene();
 		// end lighting pass
 		
 		// draw physics colliders
-		renderer->DrawCollisionDebug(camera->GetViewProjectionMatrix(), physicsShader, scene.GetRenderBuffer());
+		renderer->DrawCollisionDebug(camera->GetViewProjectionMatrix(), physicsShader, pScene.GetRenderBuffer());
 
 		// post processing pass
 		postProcessor->Blit();
@@ -316,7 +319,6 @@ void Game::Run()
 		camera_debug_panel.render();// render imgui camera debugger
 		window->swapBuffers();
 		glfwPollEvents();
-		frameCount++;
 	}
 
 	Cleanup();
@@ -354,12 +356,9 @@ void Game::ShaderSetup()
 
 void Game::Cleanup()
 {
-	for (Entity& entity : staticGameObjects)
-	{
-		entity.Cleanup();
-	}
+	
 
-	grass.Cleanup();
+	//grass.Cleanup();
 
 	postProcessor->Cleanup();
 
@@ -372,27 +371,27 @@ void Game::Cleanup()
 	skybox->Delete();
 	physicsShader->Delete();
 
-	scene.Cleanup();
+	pScene.Cleanup();
 
 	std::cout << "Game cleaned up and exited successfully." << std::endl;
 }
 
-void Game::RenderShadowScene()
+void Game::RenderShadowPhysicsScene()
 {
 	glCullFace(GL_FRONT); // reduce peter panning
 
-	for (Entity& entity : staticGameObjects)
+	for (auto& entity : staticGameObjects)
 	{
-		shadowShader->setMat4("u_model", entity.getModelMatrix());
+		shadowShader->setMat4("u_model", entity->transform.getModelMatrix());
 		renderer->DrawEntityShadow(entity);
 	}
 
-	shadowShader->setMat4("u_model", player.getModelMatrix());
+	shadowShader->setMat4("u_model", player->transform.getModelMatrix());
 	renderer->DrawEntityShadow(player);
 	glCullFace(GL_BACK);
 }
 
-void Game::RenderScene()
+void Game::RenderPhysicsScene()
 {
 	glm::mat4 proj = camera->GetProjectionMatrix();
 	glm::mat4 view = camera->GetViewMatrix();
@@ -414,14 +413,14 @@ void Game::RenderScene()
 	shadowMapper->BindDepthMapTexture();
 	defaultShader->setInt("depthMaps", 6);
 
-	for (Entity& entity : staticGameObjects)
+	for (auto& entity : staticGameObjects)
 	{
-		defaultShader->setMat4("u_model", entity.getModelMatrix());
+		defaultShader->setMat4("u_model", entity->transform.getModelMatrix());
 
 		renderer->DrawEntity(proj, view, defaultShader, entity);
 	}
 
-	defaultShader->setMat4("u_model", player.getModelMatrix());
+	defaultShader->setMat4("u_model", player->transform.getModelMatrix());
 
 	renderer->DrawEntity(proj, view, defaultShader, player);
 
@@ -431,7 +430,7 @@ void Game::RenderScene()
 	renderer->DrawSkybox(projView, skyboxShader, skybox);
 }
 
-void Game::DrawGameObjectsInstanced(const std::vector<glm::mat4> modelMatrices, Entity entity)
+void Game::DrawGameObjectsInstanced(const std::vector<glm::mat4> modelMatrices, std::shared_ptr<Entity> entity)
 {
 	renderer->DrawEntityInstanced(camera->GetViewProjectionMatrix(), defaultInstanceShader, entity, modelMatrices);
 }
