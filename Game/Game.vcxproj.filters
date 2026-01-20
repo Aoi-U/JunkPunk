@@ -34,9 +34,6 @@
     <Filter Include="Source Files\stb">
       <UniqueIdentifier>{5e1a055d-9bdd-4d2b-b95e-78b2fae0539d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Physics">
-      <UniqueIdentifier>{85b24c75-9706-4c82-8911-428dce74d0e8}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\Physics">
       <UniqueIdentifier>{8b3ccae1-296b-4126-bea0-2a96bd842b03}</UniqueIdentifier>
     </Filter>
@@ -135,9 +132,6 @@
     <ClCompile Include="src\stb.cpp">
       <Filter>Source Files\stb</Filter>
     </ClCompile>
-    <ClCompile Include="src\Entity.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\Time.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -171,7 +165,7 @@
     <ClCompile Include="src\Physics\Vehicle\Vehicle.cpp">
       <Filter>Source Files\Physics\Vehicle</Filter>
     </ClCompile>
-    <ClCompile Include="src\Physics\Scene.cpp">
+    <ClCompile Include="src\Physics\PhysicsScene.cpp">
       <Filter>Source Files\Physics</Filter>
     </ClCompile>
     <ClCompile Include="src\Physics\Vehicle\SnippetVehicleHelpers.cpp">
@@ -290,7 +284,7 @@
     <ClInclude Include="src\Physics\Vehicle\physxintegration\PhysXIntegration.h">
       <Filter>Header Files\Physics\Vehicle\physxintegration</Filter>
     </ClInclude>
-    <ClInclude Include="src\Physics\Scene.h">
+    <ClInclude Include="src\Physics\PhysicsScene.h">
       <Filter>Header Files\Physics</Filter>
     </ClInclude>
     <ClInclude Include="src\Physics\Vehicle\SnippetVehicleHelpers.h">
