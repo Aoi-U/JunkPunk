@@ -5,6 +5,10 @@
 #include "ImGuiTest.h"
 #include "ImGuiPanel.h"
 
+#include "Entity.h"
+#include "Renderer.h"
+
+
 static glm::vec3 vehicle_position = glm::vec3(0.0f, 0.0f, 00.0f);
 static int camera_scroll_type = 0;
 static float camera_fov = 90.0f;
@@ -93,7 +97,7 @@ Game::Game()
 
 	glfwSwapInterval(1); // Enable vsync to limit fps
 
-	renderer = std::make_unique<Renderer>(inputManager);
+	renderer = std::make_shared<Renderer>(inputManager);
 
 	time = std::make_unique<Time>();
 
@@ -117,7 +121,9 @@ Game::Game()
 
 	// ------------------ initialize game scene and objects ----------------------
 
+	
 	// test car model 
+	//player = std::make_shared<Model>("assets/models/2003_peugeot_hoggar_concept/scene.gltf");
 	player = std::make_shared<Entity>("assets/models/2003_peugeot_hoggar_concept/scene.gltf");
 	player->transform.setLocalPosition(glm::vec3(0.0f, 0.0f, 0.0f));
 	player->transform.setLocalScale(glm::vec3(40.0f));
@@ -230,6 +236,9 @@ void Game::Run()
 		pScene.getVehicle().setCommand(command);
 		// simulate physics PhysicsScene
 		pScene.Simulate(time->getDeltaTime());		
+
+		glm::mat4 playerModelMatrix = player->transform.getModelMatrix();
+		camera->Update(time->getDeltaTime(), playerModelMatrix);
 	
 		// update player and camera
 		PxTransform playerTransform = pScene.getVehicle().getTransform();
@@ -239,8 +248,12 @@ void Game::Run()
 		player->transform.setLocalRotation(rot);
 		player->updateSelfAndChild();
 
-		glm::mat4 playerModelMatrix = player->transform.getModelMatrix();
-		camera->Update(time->getDeltaTime(), playerModelMatrix);
+
+		for (std::shared_ptr<Entity> entity : staticGameObjects)
+		{
+			entity->updateSelfAndChild();
+		}
+
 
 		// example input handling, probably move to InputManager or some other class for readability later
 		if (inputManager->IsKeyboardButtonDown(GLFW_KEY_ESCAPE))
@@ -294,7 +307,7 @@ void Game::Run()
 		shadowMapper->BindShadowMap();
 		//shadowMapper->BindFramebufferTextures();
 		glClear(GL_DEPTH_BUFFER_BIT);
-		RenderShadowPhysicsScene();
+		RenderShadowScene();
 		shadowMapper->UnbindShadowMap();
 		// end shadow pass
 
@@ -303,7 +316,7 @@ void Game::Run()
 		glViewport(0, 0, window->getFrameBufferSize().first, window->getFrameBufferSize().second);
 		postProcessor->BindFBO();
 		renderer->Clear(0.0f, 0.0f, 0.0f, 1.0f);
-		RenderPhysicsScene();
+		RenderScene();
 		// end lighting pass
 		
 		// draw physics colliders
@@ -356,8 +369,6 @@ void Game::ShaderSetup()
 
 void Game::Cleanup()
 {
-	
-
 	//grass.Cleanup();
 
 	postProcessor->Cleanup();
@@ -376,22 +387,24 @@ void Game::Cleanup()
 	std::cout << "Game cleaned up and exited successfully." << std::endl;
 }
 
-void Game::RenderShadowPhysicsScene()
+void Game::RenderShadowScene()
 {
 	glCullFace(GL_FRONT); // reduce peter panning
 
-	for (auto& entity : staticGameObjects)
+	int temp = 0;
+	for (std::shared_ptr<Entity> entity : staticGameObjects)
 	{
-		shadowShader->setMat4("u_model", entity->transform.getModelMatrix());
-		renderer->DrawEntityShadow(entity);
+		Frustum frust = CreateFrustum(camera);
+		entity->drawSelfAndChild(frust, renderer, shadowShader, true, temp);
 	}
 
 	shadowShader->setMat4("u_model", player->transform.getModelMatrix());
-	renderer->DrawEntityShadow(player);
+	player->drawSelfAndChild(CreateFrustum(camera), renderer, shadowShader, true, temp);
+
 	glCullFace(GL_BACK);
 }
 
-void Game::RenderPhysicsScene()
+void Game::RenderScene()
 {
 	glm::mat4 proj = camera->GetProjectionMatrix();
 	glm::mat4 view = camera->GetViewMatrix();
@@ -412,25 +425,25 @@ void Game::RenderPhysicsScene()
 	glActiveTexture(GL_TEXTURE6);
 	shadowMapper->BindDepthMapTexture();
 	defaultShader->setInt("depthMaps", 6);
+	
+	Frustum frust = CreateFrustum(camera);
 
-	for (auto& entity : staticGameObjects)
+	int numDrawed = 0;
+	for (std::shared_ptr<Entity> entity : staticGameObjects)
 	{
-		defaultShader->setMat4("u_model", entity->transform.getModelMatrix());
-
-		renderer->DrawEntity(proj, view, defaultShader, entity);
+		entity->drawSelfAndChild(frust, renderer, defaultShader, false, numDrawed);
 	}
 
 	defaultShader->setMat4("u_model", player->transform.getModelMatrix());
+	player->drawSelfAndChild(frust, renderer, defaultShader, false, numDrawed);
+	
+	std::cout << "Total objects drawn: " << numDrawed << std::endl;
 
-	renderer->DrawEntity(proj, view, defaultShader, player);
-
-	//renderer->DrawEntityInstanced(projView, defaultInstanceShader, entity, modelMatrices);
-
-	glm::mat4 projView = camera->GetProjectionMatrix() * glm::mat4(glm::mat3(camera->GetViewMatrix())); // remove translation from the view matrix)
+	glm::mat4 projView = camera->GetProjectionMatrix() * glm::mat4(glm::mat3(camera->GetViewMatrix())); // remove translation from the view matrix
 	renderer->DrawSkybox(projView, skyboxShader, skybox);
 }
 
 void Game::DrawGameObjectsInstanced(const std::vector<glm::mat4> modelMatrices, std::shared_ptr<Entity> entity)
 {
-	renderer->DrawEntityInstanced(camera->GetViewProjectionMatrix(), defaultInstanceShader, entity, modelMatrices);
+	//renderer->DrawEntityInstanced(camera->GetViewProjectionMatrix(), defaultInstanceShader, entity, modelMatrices);
 }

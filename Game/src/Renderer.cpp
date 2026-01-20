@@ -45,15 +45,18 @@ void Renderer::Clear(float r, float g, float b, float a)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
+/*
 void Renderer::DrawEntity(const glm::mat4& proj, const glm::mat4& view, std::shared_ptr<Shader> shader, std::shared_ptr<Entity> entity)
 {	
 	// draw each mesh in the entity's model
 	for (Mesh& mesh : entity->getMeshes())
 	{
-		DrawMesh(mesh, proj, view, shader);
+		DrawMesh(mesh, shader);
 	}
 }
+*/
 
+/*
 void Renderer::DrawEntityShadow(std::shared_ptr<Entity> entity)
 {	
 	// draw each mesh in the entity's model
@@ -65,7 +68,9 @@ void Renderer::DrawEntityShadow(std::shared_ptr<Entity> entity)
 		mesh.UnbindVao();
 	}
 }
+*/
 
+/*
 void Renderer::DrawEntityInstanced(const glm::mat4& projView, std::shared_ptr<Shader> shader, std::shared_ptr<Entity> entity, const std::vector<glm::mat4>& translations)
 {
 	shader->use();
@@ -83,6 +88,7 @@ void Renderer::DrawEntityInstanced(const glm::mat4& projView, std::shared_ptr<Sh
 		glActiveTexture(GL_TEXTURE0);
 	}
 }
+*/
 
 void Renderer::DrawSkybox(const glm::mat4& projView, std::shared_ptr<Shader> shader, std::shared_ptr<Skybox> skybox)
 {
@@ -165,15 +171,34 @@ void Renderer::DrawCollisionDebug(const glm::mat4& projView, std::shared_ptr<Sha
 	glBindVertexArray(0);
 }
 
-void Renderer::DrawMesh(Mesh& mesh, const glm::mat4& proj, const glm::mat4& view, std::shared_ptr<Shader> shader)
+void Renderer::DrawMesh(Mesh& mesh, std::shared_ptr<Shader> shader)
 {
-	BindTextures(mesh, shader);
+	if (shader)
+		BindTextures(mesh, shader);
 
 	mesh.BindVao();
 	glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(mesh.getIndices().size()), GL_UNSIGNED_INT, 0);
 
 	mesh.UnbindVao();
 	//glActiveTexture(GL_TEXTURE0);
+}
+
+void Renderer::DrawModel(std::shared_ptr<Model> model, std::shared_ptr<Shader> shader)
+{
+	for (Mesh& mesh : model->getMeshes())
+	{
+		DrawMesh(mesh, shader);
+	}
+}
+
+void Renderer::DrawModelShadow(std::shared_ptr<Model> model)
+{
+	for (Mesh& mesh : model->getMeshes())
+	{
+		mesh.BindVao();
+		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(mesh.getIndices().size()), GL_UNSIGNED_INT, 0);
+		mesh.UnbindVao();
+	}
 }
 
 void Renderer::BindTextures(Mesh& mesh, std::shared_ptr<Shader> shader)

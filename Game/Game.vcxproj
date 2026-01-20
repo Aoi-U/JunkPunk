@@ -142,6 +142,7 @@
     <ClCompile Include="Gamepad.cpp" />
     <ClCompile Include="src\Camera.cpp" />
     <ClCompile Include="src\EBO.cpp" />
+    <ClCompile Include="src\Entity.cpp" />
     <ClCompile Include="src\Game.cpp" />
     <ClCompile Include="src\glad.c" />
     <ClCompile Include="src\ImGuiPanel.cpp" />

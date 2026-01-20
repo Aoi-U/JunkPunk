@@ -46,27 +46,33 @@ public:
 
 	glm::mat4 GetViewProjectionMatrix();
 
-	glm::mat4 GetProjectionMatrix();
+	glm::mat4 GetProjectionMatrix() const { return glm::perspective(glm::radians(fov), aspectRatio, zNear, zFar); }
 
-	glm::mat4 GetViewMatrix();
+	glm::mat4 GetViewMatrix() const { return viewMatrix; }
 
-	glm::vec3 GetPosition();
+	glm::vec3 GetPosition() const { return position; }
 
-	float GetDistance();
+	glm::vec3 GetFrontVector() const { return frontVector; }
 
-	float GetTheta();
+	glm::vec3 GetUpVector() const { return upVector; }
 
-	float GetPhi();
+	glm::vec3 GetRightVector() const { return rightVector; }
+
+	float GetDistance() const { return distance; }
+
+	float GetTheta() const { return theta; }
+
+	float GetPhi() const { return phi; }
 
 	float GetFarClipPlane() const { return zFar; }
+
+	float GetNearClipPlane() const { return zNear; }
 
 	float GetFov() const { return fov; }
 
 	float GetAspectRatio() const { return aspectRatio; }
 
 private:
-
-	void UpdateViewMatrix();
 
 	float aspectRatio;
 
@@ -89,12 +95,12 @@ private:
 	float lerpSpeed;
 	float lookSpeed;
 
-	bool isDirty = true;
-
 	glm::mat4 viewMatrix{};
 	glm::mat4 projectionMatrix{};
 	glm::vec3 position{};
+	glm::vec3 targetPosition{};
 
-	glm::vec3 targetCameraPosition{};
+	glm::vec3 frontVector{ 0.0f, 0.0f, -1.0f };
 	glm::vec3 upVector{ 0.0f, 1.0f, 0.0f };
+	glm::vec3 rightVector{ 1.0f, 0.0f, 0.0f };
 };
