@@ -10,6 +10,7 @@
 #include "Renderer.h"
 #include "Transform.h"
 
+// ------------ frustum culling structs and classes ----------------
 struct Plane
 {
 	glm::vec3 normal = { 0.0f, 1.0f, 0.0f };
@@ -166,10 +167,26 @@ struct AABB : public BoundingVolume
 	glm::vec3 extents{ 0.0f, 0.0f, 0.0f };
 };
 
-Frustum CreateFrustum(const std::shared_ptr<Camera> camera);
+Frustum CreateFrustum(const std::shared_ptr<Camera> camera); // creates the camera frustum
 
-AABB generateAABB(std::shared_ptr<Model> model);
-Sphere generateBoundingSphere(std::shared_ptr<Model> model);
+AABB generateAABB(std::shared_ptr<Model> model); // generates an aabb for a model
+Sphere generateBoundingSphere(std::shared_ptr<Model> model); // generates a bounding sphere for a model
+// -------------------------------------------------------------------
+
+enum BodyType
+{
+	STATIC,
+	DYNAMIC,
+	KINEMATIC,
+	TRIGGER
+};
+
+struct PhysicsProperties
+{
+	BodyType type = DYNAMIC;
+	float mass = 1.0f;
+	
+};
 
 
 // entity class to represent objects in the game 

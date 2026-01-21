@@ -125,7 +125,7 @@ Game::Game()
 	// test car model 
 	//player = std::make_shared<Model>("assets/models/2003_peugeot_hoggar_concept/scene.gltf");
 	player = std::make_unique<Entity>("Player", "assets/models/2003_peugeot_hoggar_concept/scene.gltf");
-	player->transform.setLocalPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+	//player->transform.setLocalPosition(glm::vec3(0.0f, 0.0f, 0.0f));
 	player->transform.setLocalScale(glm::vec3(40.0f));
 	player->updateSelfAndChild();
 	// end test car model
@@ -175,8 +175,6 @@ void Game::Run()
 	//pScene.InitPhysics(staticGameObjects)
 	
 	
-	
-
 	// imgui panel for debugging
 	ImGuiPanel camera_debug_panel(window);
 	auto camera_editor_panel_renderer = std::make_shared<CameraEditorPanelRenderer>(camera);
@@ -259,6 +257,27 @@ void Game::Run()
 			command.throttle = inputManager->GetThrottleValue();
 			command.brake = inputManager->GetBrakeValue();
 			command.steer = inputManager->GetLStickTurnValue();
+
+			if (inputManager->IsButtonDown(Buttons::JUMP))
+			{
+				pScene->getVehicle().jump();
+			}
+			if (inputManager->IsButtonDown(Buttons::POWERUP))
+			{
+				// not implemented yet
+			}
+			if (inputManager->IsButtonPressed(Buttons::LEFTROLL))
+			{
+				// not implemented yet, might need some function to check if we are on the ground or not
+			}
+			else if (inputManager->IsButtonPressed(Buttons::RIGHTROLL))
+			{
+				// same here, else if to not roll both ways at once
+			}
+			if (inputManager->IsButtonPressed(Buttons::PAUSE))
+			{
+				// not implemented yet
+			}
 
 			// camera adjustment
 			camera->ChangeTheta(inputManager->GetRStickTurnValueX() * time->getDeltaTime());

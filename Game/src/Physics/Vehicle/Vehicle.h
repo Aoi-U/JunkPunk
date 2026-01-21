@@ -8,12 +8,14 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "directdrivetrain/DirectDrivetrain.h"
-//#include "serialization/BaseSerialization.h"
+//#include "directdrivetrain/DirectDrivetrain.h"
+#include "enginedrivetrain/EngineDrivetrain.h"
+#include "serialization/BaseSerialization.h"
 //#include "serialization/DirectDrivetrainSerialization.h"
+#include "serialization/EngineDrivetrainSerialization.h"
 #include "SnippetVehicleHelpers.h"
 
-#include "VehicleParamHelper.h"
+//#include "VehicleParamHelper.h"
 
 #include "glad/glad.h"
 
@@ -27,6 +29,8 @@ struct Command
 	PxF32 brake = 0.0;
 	PxF32 throttle = 0.0;
 	PxF32 steer = 0.0;
+	PxU32 gear = 1;
+	PxU32 duration;
 };
 
 class Vehicle
@@ -36,7 +40,6 @@ public:
 
 	bool setup(PxScene* scene, PxPhysics* physics, PxMaterial* material);
 
-	bool initVehicles(PxScene* gScene, PxPhysics* gPhysics, PxMaterial* gMaterial);
 
 	void step(float deltaTime);
 
@@ -60,7 +63,8 @@ public:
 
 
 private:
-	DirectDriveVehicle gVehicle;
+	//DirectDriveVehicle gVehicle;
+	EngineDriveVehicle gVehicle;
 
 	PxVehiclePhysXSimulationContext gVehicleSimulationContext;
 
@@ -74,6 +78,8 @@ private:
 	Command gCommand;
 
 	void initMaterialFrictionTable(PxMaterial* gMaterial);
+
+	bool initVehicles(PxScene* gScene, PxPhysics* gPhysics, PxMaterial* gMaterial);
 
 	// game related methods and variables 
 

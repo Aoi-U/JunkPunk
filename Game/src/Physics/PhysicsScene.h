@@ -37,7 +37,7 @@ private:
 	PxPhysics* gPhysics = NULL;
 	PxDefaultCpuDispatcher* gDispatcher = NULL;
 	PxScene* gPhysicsScene = NULL;
-	PxMaterial* gMaterial = NULL;
+	PxMaterial* gGroundMaterial = NULL;
 	PxPvd* gPvd = NULL;
 
 	PxRigidStatic* gGroundPlane = NULL;

@@ -14,7 +14,6 @@ PhysicsScene::PhysicsScene()
 	PxPvdTransport* transport = PxDefaultPvdSocketTransportCreate("127.0.0.1", 5425, 10);
 	gPvd->connect(*transport, PxPvdInstrumentationFlag::eALL);
 
-	PxInitVehicleExtension(*gFoundation); // initialize vehicle extension
 
 	gPhysics = PxCreatePhysics(PX_PHYSICS_VERSION, *gFoundation, PxTolerancesScale(), true, gPvd);
 	if (!gPhysics)
@@ -35,9 +34,10 @@ PhysicsScene::PhysicsScene()
 	gPhysicsScene->setVisualizationParameter(PxVisualizationParameter::eSCALE, 1.0f);
 	gPhysicsScene->setVisualizationParameter(PxVisualizationParameter::eCOLLISION_SHAPES, 1.0f);
 	gPhysicsScene->setVisualizationParameter(PxVisualizationParameter::eBODY_AXES, 1.0f);
+	
 	// vehicle specific visualizations
 
-	gMaterial = gPhysics->createMaterial(0.5f, 0.5f, 0.6f);
+	gGroundMaterial = gPhysics->createMaterial(0.5f, 0.5f, 0.6f);
 
 
 	// initialize PVD
@@ -49,11 +49,13 @@ PhysicsScene::PhysicsScene()
 		pvdClient->setScenePvdFlag(PxPvdSceneFlag::eTRANSMIT_CONTACTS, true);
 		pvdClient->setScenePvdFlag(PxPvdSceneFlag::eTRANSMIT_SCENEQUERIES, true);
 	}
+
+	PxInitVehicleExtension(*gFoundation); // initialize vehicle extension
 }
 
 void PhysicsScene::Plane()
 {
-	gGroundPlane = PxCreatePlane(*gPhysics, PxPlane(0, 1, 0, 0), *gMaterial);
+	gGroundPlane = PxCreatePlane(*gPhysics, PxPlane(0, 1, 0, 0), *gGroundMaterial);
 	for (PxU32 i = 0; i < gGroundPlane->getNbShapes(); i++)
 	{
 		PxShape* shape = NULL;
@@ -78,7 +80,7 @@ void PhysicsScene::InitPhysicsComponentFromEntity(const Entity* entity)
 
 void PhysicsScene::Box(float halfLen, PxU32 size, PxVec3 position)
 {
-	PxShape* shape = gPhysics->createShape(PxBoxGeometry(halfLen, halfLen, halfLen), *gMaterial);
+	PxShape* shape = gPhysics->createShape(PxBoxGeometry(halfLen, halfLen, halfLen), *gGroundMaterial);
 	PxTransform tran(position);
 
 	// Create a pyramid of physics-enabled boxes
@@ -103,7 +105,7 @@ void PhysicsScene::InitPhysics()
 {
 	Box(1.0f, 5, PxVec3(0.0f, 10.0f, 0.0f)); // test
 	//Map(entities);
-	if (!gVehicle.setup(gPhysicsScene, gPhysics, gMaterial))
+	if (!gVehicle.setup(gPhysicsScene, gPhysics, gGroundMaterial))
 	{
 		std::cout << "Vehicle failed to initialize!" << std::endl;
 		return;
@@ -156,7 +158,9 @@ PxTriangleMesh* PhysicsScene::CreateTriangleMesh(const Mesh& mesh)
 	meshDesc.triangles.stride = 3 * sizeof(GLuint);
 	meshDesc.triangles.data = mesh.getIndices().data();
 
-	PxTolerancesScale scale;
+	
+
+	PxTolerancesScale scale = PxTolerancesScale();
 	PxCookingParams params(scale);
 
 	params.meshPreprocessParams = PxMeshPreprocessingFlags(PxMeshPreprocessingFlag::eWELD_VERTICES);
@@ -190,12 +194,14 @@ void PhysicsScene::CreateStaticPhysicsComponent(const Entity* entity)
 		glm::vec3 scale = entity->transform.getGlobalScale();
 		PxMeshScale meshScale = PxMeshScale(PxVec3(scale.x, scale.y, scale.z), PxQuat(PxIdentity));
 
-		PxShape* shape = gPhysics->createShape(PxTriangleMeshGeometry(triangleMesh, meshScale), *gMaterial);
-
 		// collision flags
+		PxShape* shape;
+		shape = gPhysics->createShape(PxTriangleMeshGeometry(triangleMesh, meshScale), *gGroundMaterial);
+			
 		shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, true);
 		shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, true);
 		shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, false);
+
 
 		glm::vec3 pos = entity->transform.getGlobalPosition();
 		PxTransform tran = PxTransform(PxVec3(pos.x, pos.y, pos.z));
@@ -208,46 +214,4 @@ void PhysicsScene::CreateStaticPhysicsComponent(const Entity* entity)
 		shape->release();
 		triangleMesh->release();
 	}
-
-
-
-	//for (size_t i = 0; i < entities.size(); i++)
-	//{
-	//	for (size_t j = 0; j < entities[i]->getMeshes().size(); j++)
-	//	{
-	//		Mesh& mesh = entities[i]->getMeshes()[j];
-	//		PxTriangleMesh* triangleMesh = CreateTriangleMesh(mesh);
-	//		if (!triangleMesh)
-	//		{
-	//			std::cout << "Failed to create triangle mesh for entity " + i << std::endl;
-	//			continue;
-	//		}
-
-	//		//glm::mat4 modelMatrix = entities[i]->getModelMatrix();
-	//		//glm::vec3 scale = glm::vec3(modelMatrix[0][0], modelMatrix[1][1], modelMatrix[2][2]);
-	//		glm::mat4 modelMatrix = entities[i]->transform.getModelMatrix();
-	//		glm::vec3 scale = entities[i]->transform.getGlobalScale();
-	//		PxMeshScale meshScale(PxVec3(scale.x, scale.y, scale.z), PxQuat(PxIdentity));
-
-	//		PxShape* shape = gPhysics->createShape(PxTriangleMeshGeometry(triangleMesh, meshScale), *gMaterial);
-
-	//		// collision flags 
-	//		shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, true);
-	//		shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, true);
-	//		shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, false);
-
-	//		// set the mesh position
-	//		glm::vec3 position = modelMatrix[3];
-	//		PxTransform tran(PxVec3(position.x, position.y, position.z));
-
-
-	//		PxRigidStatic* staticBody = gPhysics->createRigidStatic(tran);
-	//		staticBody->attachShape(*shape);
-	//		staticBody->setActorFlag(PxActorFlag::eVISUALIZATION, false);
-	//		gPhysicsScene->addActor(*staticBody);
-
-	//		shape->release();
-	//		triangleMesh->release();
-	//	}
-	//}
 }

@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include "glm/glm.hpp"
 
+
 class Gamepad;
 
 class InputManager
@@ -49,6 +50,8 @@ public:
 	float GetRStickTurnValueY() const;
   float GetThrottleValue() const;
   float GetBrakeValue() const;
+  bool IsButtonPressed(int button) const; // pressed: returns true if button is held down
+  bool IsButtonDown(int button) const; // down: returns true only on the frame the button is first pressed
   
 private:
   float dirty_scroll_value = 0;

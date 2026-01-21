@@ -111,3 +111,13 @@ float InputManager::GetBrakeValue() const
 {
   return gamepad->LeftTrigger();
 }
+
+bool InputManager::IsButtonPressed(int button) const
+{
+  return gamepad->GetButtonPressed(button);
+}
+
+bool InputManager::IsButtonDown(int button) const
+{
+  return gamepad->GetButtonDown(button);
+}

@@ -27,25 +27,34 @@ void Vehicle::initMaterialFrictionTable(PxMaterial* gMaterial)
 bool Vehicle::initVehicles(PxScene* gScene, PxPhysics* gPhysics, PxMaterial* gMaterial)
 {
 	// Initialize the vehicle
-	VehicleParamHelper vph;
-	vph.setBaseParams(gVehicle.mBaseParams);
-	vph.setPhysXIntegrationParams(gVehicle.mBaseParams.axleDescription, gPhysXMaterialFrictions, gNbPhysXmaterialFrictions, gPhysXDefaultMaterialFriction, gVehicle.mPhysXParams);
-	vph.setDirectDriveParams(gVehicle.mDirectDriveParams);
-	
-	if (!gVehicle.initialize(*gPhysics, PxCookingParams(PxTolerancesScale()), *gMaterial))
+	if (readBaseParamsFromJsonFile("assets/vehicledata/", "Base.json", gVehicle.mBaseParams))
+	{
+		std::cout << "Successfully read base params from JSON file." << std::endl;
+	}
+	setPhysXIntegrationParams(gVehicle.mBaseParams.axleDescription, gPhysXMaterialFrictions, gNbPhysXmaterialFrictions, gPhysXDefaultMaterialFriction, gVehicle.mPhysXParams);
+	//readDirectDrivetrainParamsFromJsonFile("assets/vehicledata/", "DirectDrive.json", gVehicle.mBaseParams.axleDescription, gVehicle.mDirectDriveParams);
+	readEngineDrivetrainParamsFromJsonFile("assets/vehicledata/", "EngineDrive.json", gVehicle.mEngineDriveParams);
+
+	if (!gVehicle.initialize(*gPhysics, PxCookingParams(PxTolerancesScale()), *gMaterial, EngineDriveVehicle::eDIFFTYPE_FOURWHEELDRIVE))
 	{
 		std::cout << "Failed to initialize vehicle!" << std::endl;
 		return false;
 	}
 
-	gVehicle.mTransmissionCommandState.gear = PxVehicleDirectDriveTransmissionCommandState::eFORWARD;
-
 	// Apply a start pose to the physx actor and add it to the physx scene
 	PxTransform pose(PxVec3(0.0f, 10.0f, 0.0f), PxQuat(PxIdentity));
+	// rotate around y 180 degrees
+	PxQuat rot = PxQuat(PxPi, PxVec3(0.0f, 1.0f, 0.0f));
+	pose.q = rot;
 	gVehicle.setUpActor(*gScene, pose, gVehicleName);
 
-	PxShape* chassisShape = gPhysics->createShape(PxBoxGeometry(vph.physxActorBoxShapeHalfExtents), *gMaterial);
-	chassisShape->setLocalPose(vph.physxActorCMassLocalPose);
+	gVehicle.mEngineDriveState.gearboxState.currentGear = gVehicle.mEngineDriveParams.gearBoxParams.neutralGear + 1;
+	gVehicle.mEngineDriveState.gearboxState.targetGear = gVehicle.mEngineDriveParams.gearBoxParams.neutralGear + 1;
+
+	gVehicle.mTransmissionCommandState.targetGear = PxVehicleEngineDriveTransmissionCommandState::eAUTOMATIC_GEAR;
+
+	//PxShape* chassisShape = gPhysics->createShape(PxBoxGeometry(vph.physxActorBoxShapeHalfExtents), *gMaterial);
+	PxShape* chassisShape = gPhysics->createShape(PxBoxGeometry(gVehicle.mPhysXParams.physxActorBoxShapeHalfExtents), *gMaterial);
 	gVehicle.mPhysXState.physxActor.rigidBody->attachShape(*chassisShape);
 	chassisShape->release();
 
@@ -59,6 +68,11 @@ bool Vehicle::initVehicles(PxScene* gScene, PxPhysics* gPhysics, PxMaterial* gMa
 	gVehicleSimulationContext.physxActorUpdateMode = PxVehiclePhysXActorUpdateMode::eAPPLY_ACCELERATION;
 
 	gVehicle.mPhysXState.physxActor.rigidBody->setActorFlag(PxActorFlag::eVISUALIZATION, true);
+	gVehicle.mPhysXState.physxActor.wheelShapes[0]->setFlag(PxShapeFlag::eVISUALIZATION, true);
+	gVehicle.mPhysXState.physxActor.wheelShapes[1]->setFlag(PxShapeFlag::eVISUALIZATION, true);
+	gVehicle.mPhysXState.physxActor.wheelShapes[2]->setFlag(PxShapeFlag::eVISUALIZATION, true);
+	gVehicle.mPhysXState.physxActor.wheelShapes[3]->setFlag(PxShapeFlag::eVISUALIZATION, true);
+
 	
 	return true;
 }
@@ -129,6 +143,7 @@ const PxVec3 Vehicle::getVelocity() const
 
 void Vehicle::jump()
 {
+	std::cout << "Jump!" << std::endl;
 	gVehicle.mPhysXState.physxActor.rigidBody->addForce(jumpForce, PxForceMode::eIMPULSE);
 }
 
