@@ -107,7 +107,7 @@ void main()
 	
 	vec3 norm;
 	//if (hasNormalTex)
-	{
+	//{
 		//norm = texture(texture_normal1, texCoord).rgb
 		//norm = normalize(norm * 2.0 - 1.0);
 	//}
@@ -144,4 +144,4 @@ void main()
 
 	vec3 lighting = (ambient + (1.0 - shadow) * (diffuse + specular)) * sampledColor * color;
 	FragColor = vec4(lighting, 1.0);
-} 
+}
