@@ -29,17 +29,17 @@ public:
 
 	//void DrawEntityShadow(std::shared_ptr<Entity> entity); // draw function for rendering entities to shadow map
 
-	//void DrawEntityInstanced(const glm::mat4& projView, std::shared_ptr<Shader> shader, std::shared_ptr<Entity> entity, const std::vector<glm::mat4>& translations); // draw function for rendering instanced entities
+	void DrawEntityInstanced(const glm::mat4& projView, std::shared_ptr<Shader> shader, std::shared_ptr<Model> model, const std::vector<glm::mat4>& matrices); // draw function for rendering instanced entities
 
-	void DrawSkybox(const glm::mat4& projView, std::shared_ptr<Shader> shader, std::shared_ptr<Skybox> skybox); // draw function for rendering skybox
+	void DrawSkybox(const glm::mat4& projView, const std::shared_ptr<Shader> shader, std::shared_ptr<Skybox> skybox); // draw function for rendering skybox
 
-	void DrawQuad(std::shared_ptr<Shader> shader, std::shared_ptr<PostProcessor> postProcessor); // draw function for rendering a quad (used for post processing)
+	void DrawQuad(const std::shared_ptr<Shader> shader, std::shared_ptr<PostProcessor> postProcessor); // draw function for rendering a quad (used for post processing)
 
-	void DrawCollisionDebug(const glm::mat4& projView, std::shared_ptr<Shader> shader, const PxRenderBuffer& renderBuffer);
+	void DrawCollisionDebug(const glm::mat4& projView, const std::shared_ptr<Shader> shader, const PxRenderBuffer& renderBuffer);
 
-	void DrawMesh(Mesh& mesh, std::shared_ptr<Shader> shader); // draw function for rendering meshes
+	void DrawMesh(Mesh& mesh, const std::shared_ptr<Shader> shader); // draw function for rendering meshes
 
-	void DrawModel(std::shared_ptr<Model> model, std::shared_ptr<Shader> shader); // draw function for rendering models
+	void DrawModel(std::shared_ptr<Model> model, const std::shared_ptr<Shader> shader); // draw function for rendering models
 
 	void DrawModelShadow(std::shared_ptr<Model> model);
 
@@ -52,5 +52,5 @@ private:
 	GLuint debugVao{}, debugVbo{};
 	const size_t maxDebugLines = 10000;
 
-	void BindTextures(Mesh& mesh, std::shared_ptr<Shader> shader); // bind textures for a mesh
+	void BindTextures(Mesh& mesh, const std::shared_ptr<Shader> shader); // bind textures for a mesh
 };

@@ -6,7 +6,7 @@ ShadowMapper::ShadowMapper(std::shared_ptr<Camera> cam, std::shared_ptr<Window> 
 
 }
 
-void ShadowMapper::Init(std::shared_ptr<Shader> shader, std::shared_ptr<Shader> shader2)
+void ShadowMapper::Init(const std::shared_ptr<Shader> shader, const std::shared_ptr<Shader> shader2)
 {
 	// make depth map fbo
 	glGenFramebuffers(1, &depthMapFBO);
@@ -36,8 +36,11 @@ void ShadowMapper::Init(std::shared_ptr<Shader> shader, std::shared_ptr<Shader> 
 	}
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-	GLuint uboIndex = glGetUniformBlockIndex(shader->getID(), "LightSpaceMatrices");
-	GLuint uboIndex2 = glGetUniformBlockIndex(shader2->getID(), "LightSpaceMatrices");
+	const unsigned int shader1ID = shader->getID();
+	const unsigned int shader2ID = shader2->getID();
+
+	GLuint uboIndex = glGetUniformBlockIndex(shader1ID, "LightSpaceMatrices");
+	GLuint uboIndex2 = glGetUniformBlockIndex(shader2ID, "LightSpaceMatrices");
 	glUniformBlockBinding(shader->getID(), uboIndex, 0);
 	glUniformBlockBinding(shader2->getID(), uboIndex2, 0);
 

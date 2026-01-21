@@ -124,23 +124,37 @@ Game::Game()
 	
 	// test car model 
 	//player = std::make_shared<Model>("assets/models/2003_peugeot_hoggar_concept/scene.gltf");
-	player = std::make_shared<Entity>("assets/models/2003_peugeot_hoggar_concept/scene.gltf");
+	player = std::make_unique<Entity>("Player", "assets/models/2003_peugeot_hoggar_concept/scene.gltf");
 	player->transform.setLocalPosition(glm::vec3(0.0f, 0.0f, 0.0f));
 	player->transform.setLocalScale(glm::vec3(40.0f));
 	player->updateSelfAndChild();
 	// end test car model
 
 	
-	staticGameObjects.emplace_back(std::make_shared<Entity>("assets/models/snowy_mountain_-_terrain/scene.gltf"));
-	staticGameObjects.back()->transform.setLocalScale(glm::vec3(500.0f));
-	staticGameObjects.back()->updateSelfAndChild();
+	//staticGameObjects.insert({ "Terrain", std::make_unique<Entity>("Terrain", "assets/models/snowy_mountain_-_terrain/scene.gltf" }));
+	staticGameObjects.insert({ "Terrain", std::make_unique<Entity>("Terrain", "assets/models/snowy_mountain_-_terrain/scene.gltf") });
+	staticGameObjects["Terrain"]->transform.setLocalScale(glm::vec3(500.0f));
+	staticGameObjects["Terrain"]->updateSelfAndChild();
 
-	// test rubix model
-	staticGameObjects.emplace_back(std::make_shared<Entity>("assets/models/rubix_2.0/scene.gltf"));
-	staticGameObjects.back()->transform.setLocalPosition(glm::vec3(50.0f, -20.0f, 0.0f));
-	staticGameObjects.back()->transform.setLocalScale(glm::vec3(5.0f));
-	staticGameObjects.back()->updateSelfAndChild();
+	//// test rubix model
+	//staticGameObjects.emplace_back("Rubix", std::make_unique<Entity>("Rubix", "assets/models/rubix_2.0/scene.gltf"));
+	staticGameObjects.insert({ "Rubix", std::make_unique<Entity>("Rubix1", "assets/models/rubix_2.0/scene.gltf")});
+	staticGameObjects["Rubix"]->addChild("Rubix2", "assets/models/rubix_2.0/scene.gltf");
+	staticGameObjects["Rubix"]->getChild("Rubix2")->transform.setLocalScale(glm::vec3(0.5f));
+	staticGameObjects["Rubix"]->getChild("Rubix2")->transform.setLocalPosition(glm::vec3(3.0f, -2.0f, 0.0f));
+
+	staticGameObjects["Rubix"]->transform.setLocalPosition(glm::vec3(50.0f, -20.0f, 0.0f));
+	staticGameObjects["Rubix"]->transform.setLocalScale(glm::vec3(5.0f));
+	staticGameObjects["Rubix"]->updateSelfAndChild();
 	
+
+	pScene = std::make_unique<PhysicsScene>();
+	
+	pScene->InitPhysics();
+	for (const auto& [_, entity] : staticGameObjects)
+	{
+		pScene->InitPhysicsComponentFromEntity(entity.get());
+	}
 }
 
 //Game::~Game()
@@ -156,11 +170,12 @@ void Game::Run()
 	shadowMapper->Init(shadowShader, defaultShader);
 	ShaderSetup(); // set up shaders
 
-	
-
 	//grass = Entity(Model("assets/models/single_grass/PhysicsScene.gltf"), glm::mat4(1.0f));
 
-	pScene.InitPhysics(staticGameObjects); // initialize physics PhysicsScene with static game objects
+	//pScene.InitPhysics(staticGameObjects)
+	
+	
+	
 
 	// imgui panel for debugging
 	ImGuiPanel camera_debug_panel(window);
@@ -217,8 +232,26 @@ void Game::Run()
 	{
 		renderer->Clear(0.0f, 0.0f, 0.0f, 1.0f); // clear screen
 		time->Update();
-		
+
 		Command command;
+		if (inputManager->IsKeyboardButtonDown(GLFW_KEY_W))
+		{
+			command.throttle = 1.0f;
+		}
+		if (inputManager->IsKeyboardButtonDown(GLFW_KEY_S))
+		{
+			//command.brake = 1.0f;
+			command.throttle = -1.0f;
+		}
+		if (inputManager->IsKeyboardButtonDown(GLFW_KEY_A))
+		{
+			command.steer = 1.0f;
+		}
+		if (inputManager->IsKeyboardButtonDown(GLFW_KEY_D))
+		{
+			command.steer = -1.0f;
+		}
+
 		// make sure window is focused and controller is connected
 		if (inputManager->IsWindowFocused() && inputManager->IsControllerConnected())
 		{
@@ -233,27 +266,14 @@ void Game::Run()
 		}
 
 		// send commands to vehicle
-		pScene.getVehicle().setCommand(command);
+		pScene->getVehicle().setCommand(command);
 		// simulate physics PhysicsScene
-		pScene.Simulate(time->getDeltaTime());		
+		pScene->Simulate(time->getDeltaTime());
 
-		glm::mat4 playerModelMatrix = player->transform.getModelMatrix();
-		camera->Update(time->getDeltaTime(), playerModelMatrix);
-	
-		// update player and camera
-		PxTransform playerTransform = pScene.getVehicle().getTransform();
-		glm::vec3 pos = glm::vec3(playerTransform.p.x, playerTransform.p.y, playerTransform.p.z);
-		glm::quat rot = glm::quat(playerTransform.q.w, playerTransform.q.x, playerTransform.q.y, playerTransform.q.z);
-		player->transform.setLocalPosition(pos);
-		player->transform.setLocalRotation(rot);
-		player->updateSelfAndChild();
-
-
-		for (std::shared_ptr<Entity> entity : staticGameObjects)
+		for (auto& [_, entity] : staticGameObjects)
 		{
 			entity->updateSelfAndChild();
 		}
-
 
 		// example input handling, probably move to InputManager or some other class for readability later
 		if (inputManager->IsKeyboardButtonDown(GLFW_KEY_ESCAPE))
@@ -284,16 +304,33 @@ void Game::Run()
 		else {
 			first_time_held_right_click = false;
 		}
-		
+
 		if (split_camera) {
 			glm::ivec2 windowSize = window->getWindowSize();
 			float width = static_cast<float>(windowSize.x);
 			float height = static_cast<float>(windowSize.y);
 			height /= 2;//temporary testing for split camera
 		}
-		vehicleVelocity = pScene.getVehicle().getVelocity();
-		vehicle_position = glm::vec3(pos);
+		vehicleVelocity = pScene->getVehicle().getVelocity();
 
+		glm::mat4 playerModelMatrix = player->transform.getModelMatrix();
+		camera->Update(time->getDeltaTime(), playerModelMatrix);
+
+
+		for (auto& [_, entity] : staticGameObjects)
+		{
+			entity->updateSelfAndChild();
+		}
+
+		// update player and camera
+		PxTransform playerTransform = pScene->getVehicle().getTransform();
+		glm::vec3 pos = glm::vec3(playerTransform.p.x, playerTransform.p.y, playerTransform.p.z);
+		glm::quat rot = glm::quat(playerTransform.q.w, playerTransform.q.x, playerTransform.q.y, playerTransform.q.z);
+		player->transform.setLocalPosition(pos);
+		player->transform.setLocalRotation(rot);
+		player->updateSelfAndChild();
+
+		vehicle_position = glm::vec3(pos); // set position for imgui
 
 		// -------------------------- rendering code -----------------------------
 		renderer->SetCamera(camera->GetPosition());
@@ -320,7 +357,7 @@ void Game::Run()
 		// end lighting pass
 		
 		// draw physics colliders
-		renderer->DrawCollisionDebug(camera->GetViewProjectionMatrix(), physicsShader, pScene.GetRenderBuffer());
+		renderer->DrawCollisionDebug(camera->GetViewProjectionMatrix(), physicsShader, pScene->GetRenderBuffer());
 
 		// post processing pass
 		postProcessor->Blit();
@@ -382,7 +419,7 @@ void Game::Cleanup()
 	skybox->Delete();
 	physicsShader->Delete();
 
-	pScene.Cleanup();
+	pScene->Cleanup();
 
 	std::cout << "Game cleaned up and exited successfully." << std::endl;
 }
@@ -392,9 +429,10 @@ void Game::RenderShadowScene()
 	glCullFace(GL_FRONT); // reduce peter panning
 
 	int temp = 0;
-	for (std::shared_ptr<Entity> entity : staticGameObjects)
+	for (auto& [_, entity] : staticGameObjects)
 	{
 		Frustum frust = CreateFrustum(camera);
+		
 		entity->drawSelfAndChild(frust, renderer, shadowShader, true, temp);
 	}
 
@@ -429,7 +467,7 @@ void Game::RenderScene()
 	Frustum frust = CreateFrustum(camera);
 
 	int numDrawed = 0;
-	for (std::shared_ptr<Entity> entity : staticGameObjects)
+	for (auto& [_, entity] : staticGameObjects)
 	{
 		entity->drawSelfAndChild(frust, renderer, defaultShader, false, numDrawed);
 	}
@@ -437,8 +475,6 @@ void Game::RenderScene()
 	defaultShader->setMat4("u_model", player->transform.getModelMatrix());
 	player->drawSelfAndChild(frust, renderer, defaultShader, false, numDrawed);
 	
-	std::cout << "Total objects drawn: " << numDrawed << std::endl;
-
 	glm::mat4 projView = camera->GetProjectionMatrix() * glm::mat4(glm::mat3(camera->GetViewMatrix())); // remove translation from the view matrix
 	renderer->DrawSkybox(projView, skyboxShader, skybox);
 }

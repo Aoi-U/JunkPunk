@@ -69,17 +69,10 @@ Sphere generateBoundingSphere(std::shared_ptr<Model> model)
 	return Sphere((maxAABB + minAABB) * 0.5f, glm::length(minAABB - maxAABB));
 }
 
-Entity::Entity(const std::string path)
-	: model(std::make_shared<Model>(path))
+Entity::Entity(const std::string name, const std::string path)
+	: name(name), model(std::make_shared<Model>(path))
 {
 	boundingVolume = std::make_unique<AABB>(generateAABB(model));
-}
-
-template<typename... TArgs>
-void Entity::addChild(const TArgs&... args)
-{
-	children.emplace_back(std::make_unique<Entity>(args...));
-	children.back()->parent = this;
 }
 
 void Entity::updateSelfAndChild()
@@ -113,7 +106,21 @@ void Entity:: forceUpdateSelfAndChild()
 	}
 }
 
-void Entity::drawSelfAndChild(const Frustum& frust, std::shared_ptr<Renderer> renderer, std::shared_ptr<Shader>& shader, bool isShadowpass, int& numDrawed)
+Entity* Entity::getChild(std::string name)
+{
+	for (const std::unique_ptr<Entity>& child : children)
+	{
+		if (child->name == name)
+		{
+			return child.get();
+		}
+	}
+
+	std::cout << "Child " << name << " not found" << std::endl;
+	return nullptr;
+}
+
+void Entity::drawSelfAndChild(const Frustum& frust, const std::shared_ptr<Renderer> renderer, const std::shared_ptr<Shader> shader, bool isShadowpass, int& numDrawed)
 {
 	if (isShadowpass) // ignore frustum for shadow pass
 	{

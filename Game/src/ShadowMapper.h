@@ -17,7 +17,7 @@ class ShadowMapper
 public:
 	ShadowMapper(std::shared_ptr<Camera> cam, std::shared_ptr<Window> win, std::shared_ptr<Light> light);
 
-	void Init(std::shared_ptr<Shader> shader, std::shared_ptr<Shader> shader2);
+	void Init(const std::shared_ptr<Shader> shader, const std::shared_ptr<Shader> shader2);
 
 	void BindShadowMap();
 

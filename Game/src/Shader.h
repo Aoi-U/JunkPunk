@@ -19,7 +19,7 @@ public:
 	Shader(const char* vertPath, const char* fragPath, const char* geomPath);
 
 	void use();
-	unsigned int getID();
+	unsigned int getID() const { return ID; }
 
 	void setBool(const std::string& name, bool value) const;
 	void setInt(const std::string& name, int value) const;

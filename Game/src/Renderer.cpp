@@ -70,27 +70,26 @@ void Renderer::DrawEntityShadow(std::shared_ptr<Entity> entity)
 }
 */
 
-/*
-void Renderer::DrawEntityInstanced(const glm::mat4& projView, std::shared_ptr<Shader> shader, std::shared_ptr<Entity> entity, const std::vector<glm::mat4>& translations)
+
+void Renderer::DrawEntityInstanced(const glm::mat4& projView, std::shared_ptr<Shader> shader, std::shared_ptr<Model> model, const std::vector<glm::mat4>& matrices)
 {
 	shader->use();
 	shader->setMat4("u_projView", projView);
 	shader->setVec3("u_cameraPos", &cameraPos.x);
 	// draw each mesh in the entity's model
-	for (Mesh& mesh : entity->getMeshes())
+	for (Mesh& mesh : model->getMeshes())
 	{
 		BindTextures(mesh, shader);
 
 		mesh.BindVao();
-		glDrawElementsInstanced(GL_TRIANGLES, static_cast<GLsizei>(mesh.getIndices().size()), GL_UNSIGNED_INT, 0, static_cast<GLsizei>(translations.size()));
+		glDrawElementsInstanced(GL_TRIANGLES, static_cast<GLsizei>(mesh.getIndices().size()), GL_UNSIGNED_INT, 0, static_cast<GLsizei>(matrices.size()));
 
 		mesh.UnbindVao();
 		glActiveTexture(GL_TEXTURE0);
 	}
 }
-*/
 
-void Renderer::DrawSkybox(const glm::mat4& projView, std::shared_ptr<Shader> shader, std::shared_ptr<Skybox> skybox)
+void Renderer::DrawSkybox(const glm::mat4& projView, const std::shared_ptr<Shader> shader, std::shared_ptr<Skybox> skybox)
 {
 	glDepthFunc(GL_LEQUAL); // change depth function for skybox
 
@@ -107,7 +106,7 @@ void Renderer::DrawSkybox(const glm::mat4& projView, std::shared_ptr<Shader> sha
 	glDepthFunc(GL_LESS); // reset depth function
 }
 
-void Renderer::DrawQuad(std::shared_ptr<Shader> shader, std::shared_ptr<PostProcessor> postProcessor)
+void Renderer::DrawQuad(const std::shared_ptr<Shader> shader, std::shared_ptr<PostProcessor> postProcessor)
 {
 	shader->use();
 	postProcessor->BindVAO();
@@ -115,7 +114,7 @@ void Renderer::DrawQuad(std::shared_ptr<Shader> shader, std::shared_ptr<PostProc
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
-void Renderer::DrawCollisionDebug(const glm::mat4& projView, std::shared_ptr<Shader> shader, const PxRenderBuffer& renderBuffer)
+void Renderer::DrawCollisionDebug(const glm::mat4& projView, const std::shared_ptr<Shader> shader, const PxRenderBuffer& renderBuffer)
 {
 	shader->use();
 	shader->setMat4("u_projView", projView);
@@ -171,7 +170,7 @@ void Renderer::DrawCollisionDebug(const glm::mat4& projView, std::shared_ptr<Sha
 	glBindVertexArray(0);
 }
 
-void Renderer::DrawMesh(Mesh& mesh, std::shared_ptr<Shader> shader)
+void Renderer::DrawMesh(Mesh& mesh, const std::shared_ptr<Shader> shader)
 {
 	if (shader)
 		BindTextures(mesh, shader);
@@ -183,7 +182,7 @@ void Renderer::DrawMesh(Mesh& mesh, std::shared_ptr<Shader> shader)
 	//glActiveTexture(GL_TEXTURE0);
 }
 
-void Renderer::DrawModel(std::shared_ptr<Model> model, std::shared_ptr<Shader> shader)
+void Renderer::DrawModel(std::shared_ptr<Model> model, const std::shared_ptr<Shader> shader)
 {
 	for (Mesh& mesh : model->getMeshes())
 	{
@@ -201,7 +200,7 @@ void Renderer::DrawModelShadow(std::shared_ptr<Model> model)
 	}
 }
 
-void Renderer::BindTextures(Mesh& mesh, std::shared_ptr<Shader> shader)
+void Renderer::BindTextures(Mesh& mesh, const std::shared_ptr<Shader> shader)
 {
 	unsigned int diffuseNr = 1;
 	unsigned int specularNr = 1;

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <unordered_map>
+
 #include "Window.h"
 #include "InputManager.h"
 #include "Renderer.h"
@@ -45,11 +47,13 @@ private:
 	std::shared_ptr<Shader> physicsShader;
 
 	// list of all static game objects (map objects that dont move)
-	std::vector<std::shared_ptr<Entity>> staticGameObjects;
-	std::shared_ptr<Entity> player;
+	//std::<std::pair<std::string, std::unique_ptr<Entity>>> staticGameObjects;
+	//std::vector<std::pair<std::string, std::unique_ptr<Entity>>> staticGameObjects;
+	std::unordered_map<std::string, std::unique_ptr<Entity>> staticGameObjects;
+	std::unique_ptr<Entity> player;
 	//Entity grass;
 
-	PhysicsScene pScene;
+	std::unique_ptr<PhysicsScene> pScene;
 
 	void ShaderSetup();
 	void Cleanup();

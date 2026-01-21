@@ -41,7 +41,7 @@ uniform bool hasSpecularTex;
 uniform bool hasNormalTex;
 uniform bool hasHeightTex;
 
-float ShadowCalculation(vec3 fragPosWorldSpace)
+float ShadowCalculation(vec3 fragPosWorldSpace, vec3 norm)
 {
 	vec4 fragPosViewSpace = u_view * vec4(fragPosWorldSpace, 1.0);
 	float depthValue = abs(fragPosViewSpace.z);
@@ -73,10 +73,6 @@ float ShadowCalculation(vec3 fragPosWorldSpace)
 	{
 		return 0.0;
 	}
-	
-	vec3 norm = normalize(normal);
-	if (dot(norm, u_lightDir) < 0.0)
-		norm = -norm;
 
 	float bias = max(0.05 * (1.0 - dot(norm, u_lightDir)), 0.005);
 	const float biasModifier = 0.5f;
@@ -107,11 +103,20 @@ float ShadowCalculation(vec3 fragPosWorldSpace)
 
 void main()
 {	
-	vec3 sampledColor = vec3(texture(texture_diffuse1, texCoord));
-
-	vec3 norm = normalize(normal);
-	if (dot(norm, u_lightDir) < 0.0)
-		norm = -norm;
+	vec3 sampledColor = texture(texture_diffuse1, texCoord).rgb;
+	
+	vec3 norm;
+	//if (hasNormalTex)
+	{
+		//norm = texture(texture_normal1, texCoord).rgb
+		//norm = normalize(norm * 2.0 - 1.0);
+	//}
+	//else
+	//{
+		norm = normalize(normal);
+		if (dot(norm, u_lightDir) < 0.0)
+			norm = -norm;
+	//}
 
 	// ambient
 	vec3 ambient = u_light.ambient * sampledColor;
@@ -135,7 +140,7 @@ void main()
 		specular = u_light.specular * spec;
 	}
 
-	float shadow = ShadowCalculation(fragPos);
+	float shadow = ShadowCalculation(fragPos, norm);
 
 	vec3 lighting = (ambient + (1.0 - shadow) * (diffuse + specular)) * sampledColor * color;
 	FragColor = vec4(lighting, 1.0);
