@@ -7,7 +7,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "glad/glad.h"
-#include "Camera.h"
+//#include "Camera.h"
 #include "Window.h"
 #include "Light.h"
 #include "Shader.h"
@@ -15,9 +15,11 @@
 class ShadowMapper
 {
 public:
-	ShadowMapper(std::shared_ptr<Camera> cam, std::shared_ptr<Window> win, std::shared_ptr<Light> light);
+	ShadowMapper(float aspect, float near, float far, float fovY, glm::mat4 view, Light light);
 
 	void Init(const std::shared_ptr<Shader> shader, const std::shared_ptr<Shader> shader2);
+
+	void Update(float aspect, float near, float far, float fovY, glm::mat4 view);
 
 	void BindShadowMap();
 
@@ -40,11 +42,14 @@ private:
 	GLuint depthMaps;
 	GLuint matricesUBO;
 
-	std::shared_ptr<Camera> camera;
-	std::shared_ptr<Window> window;
-	std::shared_ptr<Light> light;
+	float aspectRatio;
+	float nearPlane;
+	float farPlane;
+	float fovY;
+	glm::mat4 view;
 
 	std::vector<float> shadowCascadeLevels = { 1000.0 / 50.0f, 1000.0 / 25.0f, 1000.0 / 10.0f, 1000.0 / 3.0f };
+	Light light;
 
 	std::vector<glm::mat4> GetLightSpaceMatrices();
 	glm::mat4 GetLightSpaceMatrix(const float nearPlane, const float farPlane);

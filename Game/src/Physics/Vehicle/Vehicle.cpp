@@ -143,7 +143,6 @@ const PxVec3 Vehicle::getVelocity() const
 
 void Vehicle::jump()
 {
-	std::cout << "Jump!" << std::endl;
 	gVehicle.mPhysXState.physxActor.rigidBody->addForce(jumpForce, PxForceMode::eIMPULSE);
 }
 

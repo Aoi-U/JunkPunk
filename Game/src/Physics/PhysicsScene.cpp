@@ -68,13 +68,45 @@ void PhysicsScene::Plane()
 	gPhysicsScene->addActor(*gGroundPlane);
 }
 
-void PhysicsScene::InitPhysicsComponentFromEntity(const Entity* entity)
+void PhysicsScene::InitPhysicsComponentFromEntity(BaseEntity* entity)
 {
-	CreateStaticPhysicsComponent(entity);
-
-	for (const auto& child : entity->children)
+	if (!entity)
 	{
-		CreateStaticPhysicsComponent(child.get());
+		std::cout << "Null entity passed to InitPhysicsComponentFromEntity" << std::endl;
+		return;
+	}
+
+	PhysicsEntity* physicsEntity = dynamic_cast<PhysicsEntity*>(entity);
+	
+	if (physicsEntity)
+	{
+		std::cout << "Initializing physics component for entity: " << physicsEntity->name << " with physics type: " << static_cast<int>(physicsEntity->physicsType) << std::endl;
+		switch (physicsEntity->physicsType)
+		{
+		case PhysicsType::STATIC_MESH:
+			CreateStaticPhysicsComponent(physicsEntity);
+			break;
+		case PhysicsType::VEHICLE:
+			std::cout << "Creating vehicle physics component for entity: " << physicsEntity->name << std::endl;
+			CreateVehiclePhysicsComponent(physicsEntity);
+			break;
+		case PhysicsType::RIGID_BODY:
+			CreateDynamicPhysicsComponent(physicsEntity);
+			break;
+		case PhysicsType::KINEMATIC:
+			CreateKinematicPhysicsComponent(physicsEntity);
+			break;
+		case PhysicsType::TRIGGER:
+			CreateTriggerPhysicsComponent(physicsEntity);
+			break;
+		default:
+			break;
+		}
+	}
+	
+	for (auto& child : entity->children)
+	{
+		InitPhysicsComponentFromEntity(child.get());
 	}
 }
 
@@ -139,6 +171,68 @@ PxVec3 PhysicsScene::GetDynamicActorPos(std::string name)
 	return dynamicActors[name]->getGlobalPose().p;
 }
 
+
+void PhysicsScene::CreateStaticPhysicsComponent(const PhysicsEntity* entity)
+{
+	std::cout << "Creating physics entity for: " << entity->name << std::endl;
+	for (const Mesh mesh : entity->getModel()->getMeshes())
+	{
+		PxTriangleMesh* triangleMesh = CreateTriangleMesh(mesh);
+		if (!triangleMesh)
+		{
+			std::cout << "Failed to create triangle mesh for entity: " << entity->name << std::endl;
+			continue;
+		}
+
+		glm::vec3 scale = entity->transform.getGlobalScale();
+		PxMeshScale meshScale = PxMeshScale(PxVec3(scale.x, scale.y, scale.z), PxQuat(PxIdentity));
+
+		PxShape* shape;
+		shape = gPhysics->createShape(PxTriangleMeshGeometry(triangleMesh, meshScale), *gGroundMaterial);
+			
+		// set collision flags
+		shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, true);
+		shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, true);
+		shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, false);
+
+		glm::vec3 pos = entity->transform.getGlobalPosition();
+		PxTransform tran = PxTransform(PxVec3(pos.x, pos.y, pos.z));
+
+		PxRigidStatic* staticBody = gPhysics->createRigidStatic(tran);
+		staticBody->attachShape(*shape);
+		staticBody->setActorFlag(PxActorFlag::eVISUALIZATION, false);
+		gPhysicsScene->addActor(*staticBody);
+
+		shape->release();
+		triangleMesh->release();
+	}
+}
+
+void PhysicsScene::CreateVehiclePhysicsComponent(const PhysicsEntity* entity)
+{
+	std::cout << "called" << std::endl;
+	if (!gVehicle.setup(gPhysicsScene, gPhysics, gGroundMaterial))
+	{
+		std::cout << "Vehicle failed to initialize for entity: " << entity->name << std::endl;
+		return;
+	}
+}
+
+void PhysicsScene::CreateDynamicPhysicsComponent(const PhysicsEntity* entity)
+{
+
+}
+
+void PhysicsScene::CreateKinematicPhysicsComponent(const PhysicsEntity* entity)
+{
+
+}
+
+void PhysicsScene::CreateTriggerPhysicsComponent(const PhysicsEntity* entity)
+{
+
+}
+
 PxTriangleMesh* PhysicsScene::CreateTriangleMesh(const Mesh& mesh)
 {
 	std::vector<PxVec3> positions;
@@ -163,8 +257,8 @@ PxTriangleMesh* PhysicsScene::CreateTriangleMesh(const Mesh& mesh)
 	PxTolerancesScale scale = PxTolerancesScale();
 	PxCookingParams params(scale);
 
-	params.meshPreprocessParams = PxMeshPreprocessingFlags(PxMeshPreprocessingFlag::eWELD_VERTICES);
-	params.meshWeldTolerance = 0.001f;
+	//params.meshPreprocessParams = PxMeshPreprocessingFlags(PxMeshPreprocessingFlag::eWELD_VERTICES);
+	//params.meshWeldTolerance = 0.001f;
 
 	PxDefaultMemoryOutputStream writeBuffer;
 	PxTriangleMeshCookingResult::Enum result;
@@ -177,41 +271,4 @@ PxTriangleMesh* PhysicsScene::CreateTriangleMesh(const Mesh& mesh)
 	PxDefaultMemoryInputData readBuffer(writeBuffer.getData(), writeBuffer.getSize());
 
 	return gPhysics->createTriangleMesh(readBuffer);
-}
-
-void PhysicsScene::CreateStaticPhysicsComponent(const Entity* entity)
-{
-	std::cout << "Creating physics entity for: " << entity->getName() << std::endl;
-	for (const Mesh& mesh : entity->getMeshes())
-	{
-		PxTriangleMesh* triangleMesh = CreateTriangleMesh(mesh);
-		if (!triangleMesh)
-		{
-			std::cout << "Failed to create triangle mesh for entity: " << entity->getName() << std::endl;
-			continue;
-		}
-
-		glm::vec3 scale = entity->transform.getGlobalScale();
-		PxMeshScale meshScale = PxMeshScale(PxVec3(scale.x, scale.y, scale.z), PxQuat(PxIdentity));
-
-		// collision flags
-		PxShape* shape;
-		shape = gPhysics->createShape(PxTriangleMeshGeometry(triangleMesh, meshScale), *gGroundMaterial);
-			
-		shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, true);
-		shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, true);
-		shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, false);
-
-
-		glm::vec3 pos = entity->transform.getGlobalPosition();
-		PxTransform tran = PxTransform(PxVec3(pos.x, pos.y, pos.z));
-
-		PxRigidStatic* staticBody = gPhysics->createRigidStatic(tran);
-		staticBody->attachShape(*shape);
-		staticBody->setActorFlag(PxActorFlag::eVISUALIZATION, false);
-		gPhysicsScene->addActor(*staticBody);
-
-		shape->release();
-		triangleMesh->release();
-	}
 }

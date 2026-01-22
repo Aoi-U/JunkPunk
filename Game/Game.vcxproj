@@ -144,9 +144,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Gamepad.cpp" />
-    <ClCompile Include="src\Camera.cpp" />
+    <ClCompile Include="src\BaseEntity.cpp" />
+    <ClCompile Include="src\CameraEntity.cpp" />
     <ClCompile Include="src\EBO.cpp" />
-    <ClCompile Include="src\Entity.cpp" />
     <ClCompile Include="src\Game.cpp" />
     <ClCompile Include="src\glad.c" />
     <ClCompile Include="src\ImGuiPanel.cpp" />
@@ -156,6 +156,7 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Mesh.cpp" />
     <ClCompile Include="src\Model.cpp" />
+    <ClCompile Include="src\PhysicsEntity.cpp" />
     <ClCompile Include="src\Physics\PhysicsScene.cpp" />
     <ClCompile Include="src\Physics\Vehicle\base\Base.cpp" />
     <ClCompile Include="src\Physics\Vehicle\directdrivetrain\DirectDrivetrain.cpp" />
@@ -189,9 +190,9 @@
   <ItemGroup>
     <ClInclude Include="assets\shaders\colliders.vert" />
     <ClInclude Include="Gamepad.h" />
+    <ClInclude Include="src\BaseEntity.h" />
+    <ClInclude Include="src\CameraEntity.h" />
     <ClInclude Include="src\EBO.h" />
-    <ClInclude Include="src\Camera.h" />
-    <ClInclude Include="src\Entity.h" />
     <ClInclude Include="src\Game.h" />
     <ClInclude Include="src\ImGuiPanel.h" />
     <ClInclude Include="src\ImGuiTest.h" />
@@ -199,6 +200,7 @@
     <ClInclude Include="src\Light.h" />
     <ClInclude Include="src\Mesh.h" />
     <ClInclude Include="src\Model.h" />
+    <ClInclude Include="src\PhysicsEntity.h" />
     <ClInclude Include="src\Physics\PhysicsScene.h" />
     <ClInclude Include="src\Physics\Vehicle\base\Base.h" />
     <ClInclude Include="src\Physics\Vehicle\directdrivetrain\DirectDrivetrain.h" />

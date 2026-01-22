@@ -70,11 +70,14 @@
     <Filter Include="Source Files\Physics\Vehicle\base">
       <UniqueIdentifier>{2c641929-ebef-4271-8c4b-f55aa1447e14}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Physics\Vehicle\serialization">
+      <UniqueIdentifier>{e4921e01-e7e7-46c6-9fd6-dea8e5157a02}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Physics\Vehicle\serialization">
+      <UniqueIdentifier>{167172af-e833-4761-8942-92e6a74b6084}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\Camera.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\Game.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -171,12 +174,6 @@
     <ClCompile Include="src\Physics\Vehicle\SnippetVehicleHelpers.cpp">
       <Filter>Source Files\Physics\Vehicle</Filter>
     </ClCompile>
-    <ClCompile Include="src\Physics\Vehicle\SnippetVehicleRender.cpp">
-      <Filter>Source Files\Physics\Vehicle</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Physics\Vehicle\VehicleParamHelper.cpp">
-      <Filter>Source Files\Physics\Vehicle</Filter>
-    </ClCompile>
     <ClCompile Include="Gamepad.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -189,14 +186,29 @@
     <ClCompile Include="src\ImGuiPanel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Entity.cpp">
+    <ClCompile Include="src\BaseEntity.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\PhysicsEntity.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Physics\Vehicle\serialization\BaseSerialization.cpp">
+      <Filter>Source Files\Physics\Vehicle\serialization</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Physics\Vehicle\serialization\DirectDrivetrainSerialization.cpp">
+      <Filter>Source Files\Physics\Vehicle\serialization</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Physics\Vehicle\serialization\EngineDrivetrainSerialization.cpp">
+      <Filter>Source Files\Physics\Vehicle\serialization</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Physics\Vehicle\serialization\SerializationCommon.cpp">
+      <Filter>Source Files\Physics\Vehicle\serialization</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CameraEntity.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\Camera.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\Game.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -254,9 +266,6 @@
     <ClInclude Include="src\SkyBox.h">
       <Filter>Header Files\Rendering</Filter>
     </ClInclude>
-    <ClInclude Include="src\Entity.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\Model.h">
       <Filter>Header Files\Rendering</Filter>
     </ClInclude>
@@ -293,9 +302,6 @@
     <ClInclude Include="src\Physics\Vehicle\SnippetVehicleHelpers.h">
       <Filter>Header Files\Physics\Vehicle</Filter>
     </ClInclude>
-    <ClInclude Include="src\Physics\Vehicle\VehicleParamHelper.h">
-      <Filter>Header Files\Physics\Vehicle</Filter>
-    </ClInclude>
     <ClInclude Include="Gamepad.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -311,8 +317,29 @@
     <ClInclude Include="src\ImGuiPanel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\BaseEntity.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\PhysicsEntity.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="src\Transform.h">
-      <Filter>Source Files</Filter>
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Physics\Vehicle\serialization\SerializationCommon.h">
+      <Filter>Header Files\Physics\Vehicle\serialization</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Physics\Vehicle\serialization\EngineDrivetrainSerialization.h">
+      <Filter>Header Files\Physics\Vehicle\serialization</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Physics\Vehicle\serialization\BaseSerialization.h">
+      <Filter>Header Files\Physics\Vehicle\serialization</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Physics\Vehicle\serialization\DirectDrivetrainSerialization.h">
+      <Filter>Header Files\Physics\Vehicle\serialization</Filter>
+    </ClInclude>
+    <ClInclude Include="src\CameraEntity.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

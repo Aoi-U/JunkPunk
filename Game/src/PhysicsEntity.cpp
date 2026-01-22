@@ -1,16 +1,6 @@
-#include "Entity.h"
+#include "PhysicsEntity.h"
 
-Frustum CreateFrustum(const std::shared_ptr<Camera> camera) {
-	float zFar = camera->GetFarClipPlane();
-	float zNear = camera->GetNearClipPlane();
-	float fovY = glm::radians(camera->GetFov());
-	float aspectRatio = camera->GetAspectRatio();
-	glm::vec3 front = camera->GetFrontVector();
-	glm::vec3 right = camera->GetRightVector();
-	glm::vec3 up = camera->GetUpVector();
-	glm::vec3 pos = camera->GetPosition();
-
-
+Frustum CreateFrustum(float zFar, float zNear, float fovY, float aspectRatio, glm::vec3 front, glm::vec3 right, glm::vec3 up, glm::vec3 pos) {
 	Frustum frust;
 	const float halfVSide = zFar * tanf(fovY * 0.5f);
 	const float halfHSide = halfVSide * aspectRatio;
@@ -26,19 +16,19 @@ Frustum CreateFrustum(const std::shared_ptr<Camera> camera) {
 	return frust;
 }
 
-AABB generateAABB(std::shared_ptr<Model> model)
+AABB generateAABB(Model& model)
 {
 	glm::vec3 minAABB = glm::vec3(std::numeric_limits<float>::max());
 	glm::vec3 maxAABB = glm::vec3(std::numeric_limits<float>::min());
 
-	for (Mesh& mesh : model->getMeshes())
+	for (const Mesh& mesh : model.getMeshes())
 	{
 		for (const Vertex& vertex : mesh.getVertices())
 		{
 			minAABB.x = glm::min(minAABB.x, vertex.position.x);
 			minAABB.y = glm::min(minAABB.y, vertex.position.y);
 			minAABB.z = glm::min(minAABB.z, vertex.position.z);
-									
+
 			maxAABB.x = glm::max(maxAABB.x, vertex.position.x);
 			maxAABB.y = glm::max(maxAABB.y, vertex.position.y);
 			maxAABB.z = glm::max(maxAABB.z, vertex.position.z);
@@ -52,14 +42,14 @@ Sphere generateBoundingSphere(std::shared_ptr<Model> model)
 	glm::vec3 minAABB = glm::vec3(std::numeric_limits<float>::max());
 	glm::vec3 maxAABB = glm::vec3(std::numeric_limits<float>::min());
 
-	for (Mesh& mesh : model->getMeshes())
+	for (const Mesh& mesh : model->getMeshes())
 	{
 		for (const Vertex& vertex : mesh.getVertices())
 		{
 			minAABB.x = glm::min(minAABB.x, vertex.position.x);
 			minAABB.y = glm::min(minAABB.y, vertex.position.y);
 			minAABB.z = glm::min(minAABB.z, vertex.position.z);
-																						 
+
 			maxAABB.x = glm::max(maxAABB.x, vertex.position.x);
 			maxAABB.y = glm::max(maxAABB.y, vertex.position.y);
 			maxAABB.z = glm::max(maxAABB.z, vertex.position.z);
@@ -69,27 +59,27 @@ Sphere generateBoundingSphere(std::shared_ptr<Model> model)
 	return Sphere((maxAABB + minAABB) * 0.5f, glm::length(minAABB - maxAABB));
 }
 
-Entity::Entity(const std::string name, const std::string path)
-	: name(name), model(std::make_shared<Model>(path))
+PhysicsEntity::PhysicsEntity(const std::string name, DrawType dt, PhysicsType pt, const std::string path)
+	: BaseEntity(name, dt, pt), model(std::make_unique<Model>(path))
 {
-	boundingVolume = std::make_unique<AABB>(generateAABB(model));
+	bv = std::make_unique<AABB>(generateAABB(*model));
 }
 
-void Entity::updateSelfAndChild()
+void PhysicsEntity::updateSelfAndChild(float deltaTime)
 {
 	if (transform.getIsDirty())
 	{
-		forceUpdateSelfAndChild();
+		forceUpdateSelfAndChild(deltaTime);
 		return;
 	}
 
 	for (auto&& child : children)
 	{
-		child->updateSelfAndChild();
+		child->updateSelfAndChild(deltaTime);
 	}
 }
 
-void Entity:: forceUpdateSelfAndChild()
+void PhysicsEntity::forceUpdateSelfAndChild(float deltaTime)
 {
 	if (parent)
 	{
@@ -102,40 +92,22 @@ void Entity:: forceUpdateSelfAndChild()
 
 	for (auto&& child : children)
 	{
-		child->forceUpdateSelfAndChild();
+		child->forceUpdateSelfAndChild(deltaTime);
 	}
 }
 
-Entity* Entity::getChild(std::string name)
-{
-	for (const std::unique_ptr<Entity>& child : children)
-	{
-		if (child->name == name)
-		{
-			return child.get();
-		}
-	}
+//void PhysicsEntity::drawSelfAndChild(const Frustum& frust, const std::shared_ptr<Renderer> rend, const std::shared_ptr<Shader> shader, bool isShadowPass, int& numDrawed)
+//{
+//	if (isShadowPass)
+//	{
+//		shader->setMat4("u_model", transform.getModelMatrix());
+//		rend->DrawModelShadow(model.get());
+//	}
+//	else if (bv->isOnFrustum(frust, transform))
+//	{
+//		shader->setMat4("u_model", transform.getModelMatrix());
+//		rend->DrawModel(model.get(), shader);
+//		numDrawed++;
+//	}
+//}
 
-	std::cout << "Child " << name << " not found" << std::endl;
-	return nullptr;
-}
-
-void Entity::drawSelfAndChild(const Frustum& frust, const std::shared_ptr<Renderer> renderer, const std::shared_ptr<Shader> shader, bool isShadowpass, int& numDrawed)
-{
-	if (isShadowpass) // ignore frustum for shadow pass
-	{
-		shader->setMat4("u_model", transform.getModelMatrix());
-		renderer->DrawModelShadow(model);
-	}
-	else if (boundingVolume->isOnFrustum(frust, transform)) // frustum culling
-	{
-		numDrawed++;
-		shader->setMat4("u_model", transform.getModelMatrix());
-		renderer->DrawModel(model, shader);
-	}
-
-	for (auto&& child : children)
-	{
-		child->drawSelfAndChild(frust, renderer, shader, isShadowpass, numDrawed);
-	}
-}

@@ -20,7 +20,7 @@ Renderer::Renderer(std::shared_ptr<InputManager> inputMgr)
 //
 //}
 
-void Renderer::Init()
+void Renderer::Init(CameraParams params)
 {
 	// setup debug line buffers
 	glGenVertexArrays(1, &debugVao);
@@ -37,6 +37,26 @@ void Renderer::Init()
 	glBindVertexArray(0);
 	// end setup debug line buffers
 
+	light = Light();
+
+	postProcessor = std::make_unique<PostProcessor>(static_cast<GLuint>(params.width), static_cast<GLuint>(params.height));
+
+	skybox = std::make_unique<Skybox>();
+	skybox->Init();
+
+
+	postProcessShader = std::make_shared<Shader>("assets/shaders/postProcess.vert", "assets/shaders/postProcess.frag");
+	shadowShader = std::make_shared<Shader>("assets/shaders/shadowMap.vert", "assets/shaders/shadowMap.frag", "assets/shaders/shadowMap.geom");
+	defaultShader = std::make_shared<Shader>("assets/shaders/default.vert", "assets/shaders/default.frag");
+	defaultInstanceShader = std::make_shared<Shader>("assets/shaders/defaultInstanced.vert", "assets/shaders/defaultInstanced.frag");
+	lightShader = std::make_shared<Shader>("assets/shaders/light.vert", "assets/shaders/light.frag");
+	skyboxShader = std::make_shared<Shader>("assets/shaders/skybox.vert", "assets/shaders/skybox.frag");
+	physicsDebugShader = std::make_shared<Shader>("assets/shaders/colliders.vert", "assets/shaders/colliders.frag");
+
+	shadowMapper = std::make_unique<ShadowMapper>(params.width / params.height, params.zNear, params.zFar, glm::radians(params.fov), params.viewMatrix, light);
+
+	ShaderSetup();
+	shadowMapper->Init(shadowShader, defaultShader);
 }
 
 void Renderer::Clear(float r, float g, float b, float a)
@@ -45,56 +65,173 @@ void Renderer::Clear(float r, float g, float b, float a)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-/*
-void Renderer::DrawEntity(const glm::mat4& proj, const glm::mat4& view, std::shared_ptr<Shader> shader, std::shared_ptr<Entity> entity)
-{	
-	// draw each mesh in the entity's model
-	for (Mesh& mesh : entity->getMeshes())
-	{
-		DrawMesh(mesh, shader);
-	}
-}
-*/
-
-/*
-void Renderer::DrawEntityShadow(std::shared_ptr<Entity> entity)
-{	
-	// draw each mesh in the entity's model
-	for (Mesh& mesh : entity->getMeshes())
-	{
-		mesh.BindVao();
-		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(mesh.getIndices().size()), GL_UNSIGNED_INT, 0);
-
-		mesh.UnbindVao();
-	}
-}
-*/
-
-
-void Renderer::DrawEntityInstanced(const glm::mat4& projView, std::shared_ptr<Shader> shader, std::shared_ptr<Model> model, const std::vector<glm::mat4>& matrices)
+void Renderer::BeginRender(CameraParams params)
 {
-	shader->use();
-	shader->setMat4("u_projView", projView);
-	shader->setVec3("u_cameraPos", &cameraPos.x);
-	// draw each mesh in the entity's model
-	for (Mesh& mesh : model->getMeshes())
+	cameraState = params;
+}
+
+void Renderer::SetupShadowPass()
+{
+	// setup shadow mapping and shaders
+	shadowMapper->Update(cameraState.width / cameraState.height, cameraState.zNear, cameraState.zFar, glm::radians(cameraState.fov), cameraState.viewMatrix);
+	shadowShader->use();
+	shadowMapper->SetupUBO();
+	glViewport(0, 0, shadowMapper->SHADOW_WIDTH, shadowMapper->SHADOW_HEIGHT);
+	shadowMapper->BindShadowMap();
+	glClear(GL_DEPTH_BUFFER_BIT);
+	glCullFace(GL_FRONT); // to reduce peter panning
+}
+
+void Renderer::DrawShadowPass(BaseEntity* entity)
+{
+	assert(entity != nullptr, "Entity passed to DrawShadowPass is null");
+
+
+	PhysicsEntity* drawable = dynamic_cast<PhysicsEntity*>(entity);
+	
+	if (drawable)
 	{
-		BindTextures(mesh, shader);
+		shadowShader->setMat4("u_model", drawable->transform.getModelMatrix());
 
-		mesh.BindVao();
-		glDrawElementsInstanced(GL_TRIANGLES, static_cast<GLsizei>(mesh.getIndices().size()), GL_UNSIGNED_INT, 0, static_cast<GLsizei>(matrices.size()));
+		for (Mesh& mesh : drawable->getModel()->getMeshes())
+		{
+			mesh.BindVao();
+			glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(mesh.getIndices().size()), GL_UNSIGNED_INT, 0);
+			mesh.UnbindVao();
+		}
+	}
 
-		mesh.UnbindVao();
-		glActiveTexture(GL_TEXTURE0);
+	for (auto&& child : entity->children)
+	{
+		DrawShadowPass(child.get());
 	}
 }
 
-void Renderer::DrawSkybox(const glm::mat4& projView, const std::shared_ptr<Shader> shader, std::shared_ptr<Skybox> skybox)
+void Renderer::EndShadowPass()
+{
+	glCullFace(GL_BACK);
+	shadowMapper->UnbindShadowMap();
+	glViewport(0, 0, static_cast<int>(cameraState.width), static_cast<int>(cameraState.height));
+}
+
+void Renderer::SetupLightingPass()
+{
+	// set post processing framebuffer
+	postProcessor->BindFBO();
+	Clear(0.0f, 0.0f, 0.0f, 1.0f);
+
+	defaultShader->use();
+	defaultShader->setMat4("u_projection", cameraState.projectionMatrix);
+	defaultShader->setMat4("u_view", cameraState.viewMatrix);
+	defaultShader->setVec3("u_cameraPos", &cameraState.position.x);
+	defaultShader->setVec3("u_lightDir", &light.getDirection().x);
+	defaultShader->setFloat("u_farPlane", cameraState.zFar);
+	defaultShader->setInt("u_cascadeCount", shadowMapper->GetCascadeCount());
+	for (size_t i = 0; i < shadowMapper->GetCascadeCount(); ++i)
+	{
+		defaultShader->setFloat("cascadePlaneDistances[" + std::to_string(i) + "]", shadowMapper->GetCascadeLevels()[i]);
+	}
+	glActiveTexture(GL_TEXTURE6);
+	shadowMapper->BindDepthMapTexture();
+
+	cameraFrustum = CreateFrustum(
+		cameraState.zFar,
+		cameraState.zNear,
+		glm::radians(cameraState.fov),
+		cameraState.width / cameraState.height,
+		cameraState.frontVector,
+		cameraState.rightVector,
+		cameraState.upVector,
+		cameraState.position
+	);
+}
+
+void Renderer::DrawLightingPass(BaseEntity* entity)
+{
+	assert(entity != nullptr, "Entity passed to DrawLightingPass is null");
+
+	PhysicsEntity* drawable = dynamic_cast<PhysicsEntity*>(entity);
+
+	if (drawable)
+	{
+		if (drawable->isVisible(cameraFrustum))
+		{
+			defaultShader->setMat4("u_model", drawable->transform.getModelMatrix());
+			
+			Model* model = drawable->getModel();
+			for (Mesh& mesh : model->getMeshes())
+			{
+				BindTextures(mesh);
+				mesh.BindVao();
+				glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(mesh.getIndices().size()), GL_UNSIGNED_INT, 0);
+				mesh.UnbindVao();
+			}
+		}
+	}
+	
+	for (auto&& child : entity->children)
+	{
+		DrawLightingPass(child.get());
+	}
+
+}
+
+void Renderer::EndLightingPass()
+{
+	DrawSkybox();
+}
+
+void Renderer::SetupPostProcessingPass()
+{
+	postProcessor->Blit();
+	postProcessor->Unbind();
+	Clear(0.0f, 0.0f, 0.0f, 1.0f);
+	postProcessShader->use();
+}
+
+void Renderer::DrawPostProcessingPass()
+{
+	postProcessor->BindVAO();
+	postProcessor->BindTexture();
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+}
+
+void Renderer::EndPostProcessingPass()
+{
+
+}
+
+void Renderer::EndRender()
+{
+}
+
+
+//void Renderer::DrawEntityInstanced(const glm::mat4& projView, std::shared_ptr<Shader> shader, Model* model, const std::vector<glm::mat4>& matrices)
+//{
+//	shader->use();
+//	shader->setMat4("u_projView", projView);
+//	shader->setVec3("u_cameraPos", &cameraPos.x);
+//	// draw each mesh in the entity's model
+//	for (Mesh& mesh : model->getMeshes())
+//	{
+//		BindTextures(mesh, shader);
+//
+//		mesh.BindVao();
+//		glDrawElementsInstanced(GL_TRIANGLES, static_cast<GLsizei>(mesh.getIndices().size()), GL_UNSIGNED_INT, 0, static_cast<GLsizei>(matrices.size()));
+//
+//		mesh.UnbindVao();
+//		glActiveTexture(GL_TEXTURE0);
+//	}
+//}
+
+void Renderer::DrawSkybox()
 {
 	glDepthFunc(GL_LEQUAL); // change depth function for skybox
 
-	shader->use();
-	shader->setMat4("u_projView", projView);
+	glm::mat4 projView = cameraState.projectionMatrix * glm::mat4(glm::mat3(cameraState.viewMatrix)); // remove translation from view matrix
+
+	skyboxShader->use();
+	skyboxShader->setMat4("u_projView", projView);
 
 	// bind skybox VAO and cubemap texture
 	skybox->Bind();
@@ -106,18 +243,12 @@ void Renderer::DrawSkybox(const glm::mat4& projView, const std::shared_ptr<Shade
 	glDepthFunc(GL_LESS); // reset depth function
 }
 
-void Renderer::DrawQuad(const std::shared_ptr<Shader> shader, std::shared_ptr<PostProcessor> postProcessor)
+void Renderer::DrawCollisionDebug(const PxRenderBuffer& renderBuffer)
 {
-	shader->use();
-	postProcessor->BindVAO();
-	postProcessor->BindTexture();
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-}
+	glm::mat4 projView = cameraState.projectionMatrix * cameraState.viewMatrix;
 
-void Renderer::DrawCollisionDebug(const glm::mat4& projView, const std::shared_ptr<Shader> shader, const PxRenderBuffer& renderBuffer)
-{
-	shader->use();
-	shader->setMat4("u_projView", projView);
+	physicsDebugShader->use();
+	physicsDebugShader->setMat4("u_projView", projView);
 	
 	PxU32 nbLines = renderBuffer.getNbLines();
 	PxDebugLine* lines = const_cast<PxDebugLine*>(renderBuffer.getLines());
@@ -170,47 +301,17 @@ void Renderer::DrawCollisionDebug(const glm::mat4& projView, const std::shared_p
 	glBindVertexArray(0);
 }
 
-void Renderer::DrawMesh(Mesh& mesh, const std::shared_ptr<Shader> shader)
-{
-	if (shader)
-		BindTextures(mesh, shader);
-
-	mesh.BindVao();
-	glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(mesh.getIndices().size()), GL_UNSIGNED_INT, 0);
-
-	mesh.UnbindVao();
-	//glActiveTexture(GL_TEXTURE0);
-}
-
-void Renderer::DrawModel(std::shared_ptr<Model> model, const std::shared_ptr<Shader> shader)
-{
-	for (Mesh& mesh : model->getMeshes())
-	{
-		DrawMesh(mesh, shader);
-	}
-}
-
-void Renderer::DrawModelShadow(std::shared_ptr<Model> model)
-{
-	for (Mesh& mesh : model->getMeshes())
-	{
-		mesh.BindVao();
-		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(mesh.getIndices().size()), GL_UNSIGNED_INT, 0);
-		mesh.UnbindVao();
-	}
-}
-
-void Renderer::BindTextures(Mesh& mesh, const std::shared_ptr<Shader> shader)
+void Renderer::BindTextures(Mesh& mesh)
 {
 	unsigned int diffuseNr = 1;
 	unsigned int specularNr = 1;
 	unsigned int normalNr = 1;
 	unsigned int heightNr = 1;
 
-	shader->setBool("hasDiffuseTex", mesh.hasDiffuseTexture());
-	shader->setBool("hasSpecularTex", mesh.hasSpecularTexture());
-	shader->setBool("hasNormalTex", mesh.hasNormalTexture());
-	shader->setBool("hasHeightTex", mesh.hasHeightTexture());
+	defaultShader->setBool("hasDiffuseTex", mesh.hasDiffuseTexture());
+	defaultShader->setBool("hasSpecularTex", mesh.hasSpecularTexture());
+	defaultShader->setBool("hasNormalTex", mesh.hasNormalTexture());
+	defaultShader->setBool("hasHeightTex", mesh.hasHeightTexture());
 
 	// bind each texture for the model
 	for (unsigned int i = 0; i < mesh.getTextures().size(); i++)
@@ -228,13 +329,37 @@ void Renderer::BindTextures(Mesh& mesh, const std::shared_ptr<Shader> shader)
 			number = std::to_string(heightNr++); // transfer unsigned int to string
 
 		//shader->setInt(("material." + name + number).c_str(), i);
-		if (shader)
-			shader->setInt((name + number).c_str(), i); // set the texture unit in the shader
+		
+		defaultShader->setInt((name + number).c_str(), i); // set the texture unit in the shader
 
-		//glActiveTexture(GL_TEXTURE0 + i); // activate proper texture unit before binding
-		mesh.getTextures()[i].Bind(GL_TEXTURE0 + i);
+		mesh.getTextures()[i].Bind(GL_TEXTURE0 + i); // activate and bind texture
 	}
 }
 
+void Renderer::ShaderSetup()
+{
+	// post processor
+	postProcessShader->use();
+	postProcessShader->setInt("screenTexture", 0);
 
+	shadowShader->use();
+	shadowShader->setInt("depthMaps", 6);
 
+	// setup default shader
+	defaultShader->use();
+	defaultShader->setVec3("u_light.position", &light.getPosition().x);
+	defaultShader->setVec3("u_light.ambient", &light.getAmbient().r);
+	defaultShader->setVec3("u_light.diffuse", &light.getDiffuse().r);
+	defaultShader->setVec3("u_light.specular", &light.getSpecular().r);
+	defaultShader->setInt("depthMaps", 6);
+
+	// setup light shader
+	lightShader->use();
+	glm::mat4 model = glm::mat4(1.0f);
+	model = glm::translate(model, light.getPosition());
+	lightShader->setMat4("u_model", model);
+
+	// setup skybox shader
+	skyboxShader->use();
+	skyboxShader->setInt("u_skybox", 0);
+}

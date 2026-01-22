@@ -1,10 +1,13 @@
 #pragma once
 
 #include <iostream>
+#include <unordered_map>
 #include <PxPhysicsAPI.h>
 
 #include "Vehicle/Vehicle.h"
-#include "../Entity.h"
+//#include "../Entity.h"
+//#include "../BaseEntity.h"
+#include "../PhysicsEntity.h"
 
 using namespace physx;
 class PhysicsScene
@@ -14,7 +17,7 @@ public:
 
 	void Plane();
 
-	void InitPhysicsComponentFromEntity(const Entity* entity);
+	void InitPhysicsComponentFromEntity(BaseEntity* entity);
 
 	void Box(float halfLen, PxU32 size, PxVec3 position); // test
 
@@ -43,9 +46,14 @@ private:
 	PxRigidStatic* gGroundPlane = NULL;
 	Vehicle gVehicle;
 
-	PxTriangleMesh* CreateTriangleMesh(const Mesh& mesh); // generate static triangle meshes from models
 
-	void CreateStaticPhysicsComponent(const Entity* entity);
+	void CreateStaticPhysicsComponent(const PhysicsEntity* entity);
+	void CreateVehiclePhysicsComponent(const PhysicsEntity* entity);
+	void CreateDynamicPhysicsComponent(const PhysicsEntity* entity);
+	void CreateKinematicPhysicsComponent(const PhysicsEntity* entity);
+	void CreateTriggerPhysicsComponent(const PhysicsEntity* entity);
+
+	PxTriangleMesh* CreateTriangleMesh(const Mesh& mesh); // generate static triangle meshes from models
 
 	std::unordered_map<std::string, PxRigidDynamic*> dynamicActors;
 

@@ -1,7 +1,7 @@
 #include "ShadowMapper.h"
 
-ShadowMapper::ShadowMapper(std::shared_ptr<Camera> cam, std::shared_ptr<Window> win, std::shared_ptr<Light> light)
-	: depthMapFBO(0), depthMaps(0), matricesUBO(0), camera(cam), window(win), light(light)
+ShadowMapper::ShadowMapper(float aspect, float near, float far, float fovY, glm::mat4 view, Light light)
+	: depthMapFBO(0), depthMaps(0), matricesUBO(0), aspectRatio(aspect), nearPlane(near), farPlane(far), fovY(fovY), view(view), light(light)
 {
 
 }
@@ -60,6 +60,15 @@ void ShadowMapper::Init(const std::shared_ptr<Shader> shader, const std::shared_
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
+void ShadowMapper::Update(float aspect, float near, float far, float fovY, glm::mat4 view)
+{
+	this->aspectRatio = aspect;
+	this->nearPlane = near;
+	this->farPlane = far;
+	this->fovY = fovY;
+	this->view = view;
+}
+
 void ShadowMapper::BindShadowMap()
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
@@ -97,9 +106,8 @@ void ShadowMapper::SetupUBO()
 
 glm::mat4 ShadowMapper::GetLightSpaceMatrix(const float nearPlane, const float farPlane)
 {
-	float aspectRatio = window->getFrameBufferSize().first / (float)window->getFrameBufferSize().second;
-	const auto proj = glm::perspective(glm::radians(camera->GetFov()), aspectRatio, nearPlane, farPlane);
-	const std::vector<glm::vec4> corners = GetFrustumCornersWorldSpace(proj * camera->GetViewMatrix());
+	const auto proj = glm::perspective(fovY, aspectRatio, nearPlane, farPlane);
+	const std::vector<glm::vec4> corners = GetFrustumCornersWorldSpace(proj * view);
 
 	glm::vec3 center = glm::vec3(0, 0, 0);
 	for (const auto& v : corners)
@@ -108,7 +116,7 @@ glm::mat4 ShadowMapper::GetLightSpaceMatrix(const float nearPlane, const float f
 	}
 	center /= corners.size();
 
-	const auto lightView = glm::lookAt(center + light->getDirection(), center, glm::vec3(0.0f, 1.0f, 0.0f));
+	const auto lightView = glm::lookAt(center + light.getDirection(), center, glm::vec3(0.0f, 1.0f, 0.0f));
 
 	float minX = std::numeric_limits<float>::max();
 	float maxX = std::numeric_limits<float>::lowest();
@@ -165,7 +173,7 @@ std::vector<glm::mat4> ShadowMapper::GetLightSpaceMatrices()
 		}
 		else
 		{
-			lightSpaceMatrices.push_back(GetLightSpaceMatrix(shadowCascadeLevels[i - 1], camera->GetFarClipPlane()));
+			lightSpaceMatrices.push_back(GetLightSpaceMatrix(shadowCascadeLevels[i - 1], farPlane));
 		}
 	}
 	return lightSpaceMatrices;

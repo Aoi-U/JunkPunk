@@ -1,16 +1,12 @@
 #pragma once
 
-#include <memory>
-#include <list>
 #include <array>
 
+#include "BaseEntity.h"
 #include "Model.h"
-#include "Camera.h"
-#include "Shader.h"
-#include "Renderer.h"
-#include "Transform.h"
 
 // ------------ frustum culling structs and classes ----------------
+
 struct Plane
 {
 	glm::vec3 normal = { 0.0f, 1.0f, 0.0f };
@@ -61,7 +57,7 @@ struct BoundingVolume
 struct Sphere : public BoundingVolume
 {
 	Sphere(const glm::vec3& inCenter, float inRadius)
-		: BoundingVolume(), center(inCenter), radius(inRadius) 
+		: BoundingVolume(), center(inCenter), radius(inRadius)
 	{
 	}
 
@@ -84,7 +80,7 @@ struct Sphere : public BoundingVolume
 			globalSphere.isOnOrForwardPlane(frust.top) &&
 			globalSphere.isOnOrForwardPlane(frust.bottom) &&
 			globalSphere.isOnOrForwardPlane(frust.far) &&
-			globalSphere.isOnOrForwardPlane(frust.near) 
+			globalSphere.isOnOrForwardPlane(frust.near)
 			);
 	}
 
@@ -103,7 +99,7 @@ struct AABB : public BoundingVolume
 		: BoundingVolume(), center(inCenter), extents(inExtentsX, inExtentsY, inExtentsZ)
 	{
 	}
-	
+
 	std::array<glm::vec3, 8> getVertices() const
 	{
 		std::array<glm::vec3, 8> vertices;
@@ -124,7 +120,7 @@ struct AABB : public BoundingVolume
 			extents.x * glm::abs(plane.normal.x) +
 			extents.y * glm::abs(plane.normal.y) +
 			extents.z * glm::abs(plane.normal.z);
-	
+
 		return -r <= plane.getSignedDistanceToPoint(center);
 	}
 
@@ -162,14 +158,13 @@ struct AABB : public BoundingVolume
 			);
 	}
 
-
 	glm::vec3 center{ 0.0f, 0.0f, 0.0f };
 	glm::vec3 extents{ 0.0f, 0.0f, 0.0f };
 };
 
-Frustum CreateFrustum(const std::shared_ptr<Camera> camera); // creates the camera frustum
+Frustum CreateFrustum(float zFar, float zNear, float fovY, float aspectRatio, glm::vec3 front, glm::vec3 right, glm::vec3 up, glm::vec3 pos); // creates the camera frustum
 
-AABB generateAABB(std::shared_ptr<Model> model); // generates an aabb for a model
+AABB generateAABB(const Model& model); // generates an aabb for a model
 Sphere generateBoundingSphere(std::shared_ptr<Model> model); // generates a bounding sphere for a model
 // -------------------------------------------------------------------
 
@@ -178,53 +173,37 @@ enum BodyType
 	STATIC,
 	DYNAMIC,
 	KINEMATIC,
-	TRIGGER
+	TRIGGER,
+	PLAYER // player will be a vehicle
 };
 
 struct PhysicsProperties
 {
 	BodyType type = DYNAMIC;
 	float mass = 1.0f;
-	
+
 };
 
-
-// entity class to represent objects in the game 
-class Entity 
+class PhysicsEntity : public BaseEntity
 {
 public:
-	Entity(const std::string name, const std::string path);
-	
-	void Cleanup();
+	// name of the entity, file path to the model
+	PhysicsEntity(const std::string name, DrawType dt, PhysicsType pt, const std::string path);
 
-	template<typename... TArgs>
-	void addChild(const std::string name, const TArgs&... args)
+	//void Init() override;
+
+	void updateSelfAndChild(float deltaTime) override;
+
+	void forceUpdateSelfAndChild(float deltaTime) override;
+
+	Model* getModel() const { return model.get(); }
+
+	bool isVisible(const Frustum& frust) const
 	{
-		children.emplace_back(std::make_unique<Entity>(name, args...));
-		children.back()->parent = this;
+		return bv->isOnFrustum(frust, transform);
 	}
-	
-	void updateSelfAndChild();
-
-	void forceUpdateSelfAndChild();
-
-	Entity* getChild(std::string name);
-
-	std::string getName() const { return name; }
-
-	virtual void drawSelfAndChild(const Frustum& frust, const std::shared_ptr<Renderer> renderer, const std::shared_ptr<Shader> shader, bool isShadowpass, int& numDrawed);
-
-	std::vector<Mesh>& getMeshes() const { return model->getMeshes(); }
-
-	std::shared_ptr<Model> getModel() { return model; }
-
-	Transform transform;
-
-	std::vector<std::unique_ptr<Entity>> children; // scene graph
-	Entity* parent = nullptr;
 
 private:
-	const std::string name;
-	std::shared_ptr<Model> model;
-	std::unique_ptr<AABB> boundingVolume;
+	std::unique_ptr<Model> model;
+	std::unique_ptr<AABB> bv;
 };
