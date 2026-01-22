@@ -8,7 +8,6 @@
 //#include "Entity.h"
 #include "Renderer.h"
 
-
 static glm::vec3 vehicle_position = glm::vec3(0.0f, 0.0f, 00.0f);
 static glm::vec3 camera_pos = glm::vec3(0.0f, 0.0f, 0.0f);
 static int camera_scroll_type = 0;
@@ -90,7 +89,8 @@ Game::Game()
 
 	inputManager = std::make_shared<InputManager>(
 		[this](int width, int height) {
-			//glViewport(0, 0, width, height);
+			glViewport(0, 0, width, height);
+			
 			//postProcessor->Resize(window->getFrameBufferSize().first, window->getFrameBufferSize().second);
 			renderer->postProcessor->Resize(window->getFrameBufferSize().first, window->getFrameBufferSize().second);
 			camera->ChangeAspectRatio((float)window->getFrameBufferSize().first, (float)window->getFrameBufferSize().second);
@@ -342,9 +342,12 @@ void Game::Run()
 		renderer->EndPostProcessingPass();
 		// end post processing
 
-		camera_debug_panel.render();// render imgui camera debugger
+		renderer->RenderText(std::to_string(time->getFPS()), 10.f, window->getWindowSize().y - 50.0f, 1.f, glm::vec3(0.5f, 0.8f, 0.2f), renderer->text.charArial);
 
 		renderer->EndRender();
+
+		camera_debug_panel.render();// render imgui camera debugger
+
 
 		window->swapBuffers();
 		glfwPollEvents();

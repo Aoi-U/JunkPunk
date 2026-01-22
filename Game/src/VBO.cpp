@@ -21,6 +21,11 @@ VBO::VBO(std::vector<PostProcessVertex>& vertices)
 	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(PostProcessVertex), vertices.data(), GL_STATIC_DRAW);
 }
 
+VBO::VBO()
+{
+	glGenBuffers(1, &ID);
+}
+
 void VBO::Bind()
 {
 	glBindBuffer(GL_ARRAY_BUFFER, ID);

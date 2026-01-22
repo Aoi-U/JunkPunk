@@ -207,6 +207,9 @@
     <ClCompile Include="src\CameraEntity.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\Text.cpp">
+      <Filter>Source Files\Rendering</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Game.h">
@@ -341,6 +344,9 @@
     <ClInclude Include="src\CameraEntity.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\Text.h">
+      <Filter>Header Files\Rendering</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\shaders\default.vert">
@@ -383,6 +389,12 @@
       <Filter>Resource Files\shaders</Filter>
     </None>
     <None Include="assets\shaders\shadowMap.geom">
+      <Filter>Resource Files\shaders</Filter>
+    </None>
+    <None Include="assets\shaders\text.vert">
+      <Filter>Resource Files\shaders</Filter>
+    </None>
+    <None Include="assets\shaders\text.frag">
       <Filter>Resource Files\shaders</Filter>
     </None>
   </ItemGroup>

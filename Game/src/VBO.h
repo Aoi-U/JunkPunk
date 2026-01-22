@@ -12,6 +12,11 @@ struct Vertex
 	glm::vec2 texCoord;
 };
 
+struct TextVertex
+{
+	glm::vec3 position;
+};
+
 struct PostProcessVertex
 {
 	glm::vec2 position;
@@ -25,6 +30,7 @@ public:
 	VBO(std::vector<Vertex>& vertices);
 	VBO(std::vector<glm::mat4>& matrices);
 	VBO(std::vector<PostProcessVertex>& vertices);
+	VBO(); // text vbo
 
 	void Bind();
 	void Unbind();

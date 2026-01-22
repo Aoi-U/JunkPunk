@@ -45,6 +45,7 @@ void Renderer::Init(CameraParams params)
 	skybox->Init();
 
 
+
 	postProcessShader = std::make_shared<Shader>("assets/shaders/postProcess.vert", "assets/shaders/postProcess.frag");
 	shadowShader = std::make_shared<Shader>("assets/shaders/shadowMap.vert", "assets/shaders/shadowMap.frag", "assets/shaders/shadowMap.geom");
 	defaultShader = std::make_shared<Shader>("assets/shaders/default.vert", "assets/shaders/default.frag");
@@ -52,8 +53,17 @@ void Renderer::Init(CameraParams params)
 	lightShader = std::make_shared<Shader>("assets/shaders/light.vert", "assets/shaders/light.frag");
 	skyboxShader = std::make_shared<Shader>("assets/shaders/skybox.vert", "assets/shaders/skybox.frag");
 	physicsDebugShader = std::make_shared<Shader>("assets/shaders/colliders.vert", "assets/shaders/colliders.frag");
+	textShader = std::make_shared<Shader>("assets/shaders/text.vert", "assets/shaders/text.frag");
 
 	shadowMapper = std::make_unique<ShadowMapper>(params.width / params.height, params.zNear, params.zFar, glm::radians(params.fov), params.viewMatrix, light);
+
+	text = Text();
+	textVAO = VAO();
+	textVBO = VBO();
+	text.initVAO(&textVAO, &textVBO);
+	text.projMat = glm::ortho(0.0f, cameraState.width, 0.0f, cameraState.height);
+	textShader->use();
+	textShader->setMat4("u_projection", text.projMat);
 
 	ShaderSetup();
 	shadowMapper->Init(shadowShader, defaultShader);
@@ -68,6 +78,7 @@ void Renderer::Clear(float r, float g, float b, float a)
 void Renderer::BeginRender(CameraParams params)
 {
 	cameraState = params;
+	text.projMat = glm::ortho(0.0f, cameraState.width, 0.0f, cameraState.height);
 }
 
 void Renderer::SetupShadowPass()
@@ -199,6 +210,55 @@ void Renderer::DrawPostProcessingPass()
 void Renderer::EndPostProcessingPass()
 {
 
+}
+
+void Renderer::RenderText(std::string text, float x, float y, float scale, glm::vec3 color, std::map<char, Character> characters)
+{
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	textShader->use();
+	textShader->setVec3("textColor", &color.x);
+	textShader->setMat4("u_projection", fonts.projMat);
+	glActiveTexture(GL_TEXTURE0);
+	textVAO.Bind();
+
+	// iterate through all characters
+	std::string::const_iterator c;
+	for (c = text.begin(); c != text.end(); c++)
+	{
+		Character ch = characters[*c];
+		float xPos = x + ch.bearing.x * scale;
+		float yPos = y - (ch.size.y - ch.bearing.y) * scale;
+
+		float w = ch.size.x * scale;
+		float h = ch.size.y * scale;
+
+		// update vbo for each character
+		float vertices[6][4] =
+		{
+			{xPos,			yPos + h, 0.0f, 0.0f},
+			{xPos,			yPos,			0.0f, 1.0f},
+			{xPos + w,	yPos,			1.0f, 1.0f},
+
+			{xPos,			yPos + h, 0.0f, 0.0f},
+			{xPos + w,	yPos,			1.0f, 1.0f},
+			{xPos + w,	yPos + h,	1.0f, 0.0f}
+		};
+
+		// render glyph texture over quad
+		glBindTexture(GL_TEXTURE_2D, ch.textID);
+		// update content of VBO memory
+		textVBO.Bind();
+		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
+		textVBO.Unbind();
+		// render quad
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		// advance cursors for next glyph (advance is number of 1/64 pixels
+		x += (ch.Advance >> 6) * scale; // bitshift by 6 to get value in pixels (2^6 = 64)
+	}
+
+	textVAO.Unbind();
+	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void Renderer::EndRender()
