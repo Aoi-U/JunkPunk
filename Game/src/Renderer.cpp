@@ -75,6 +75,36 @@ void Renderer::Clear(float r, float g, float b, float a)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
+void Renderer::Update(BaseEntity* entity, CameraParams params, PhysicsScene* pScene, float fps, float screenWidth, float screenHeight)
+{
+	BeginRender(params);
+
+	// shadow pass
+	SetupShadowPass();
+	DrawShadowPass(entity);
+	EndShadowPass();
+	// end shadow pass
+
+	// lighting pass
+	SetupLightingPass();
+	DrawLightingPass(entity);
+	EndLightingPass();
+	// end lighting pass
+
+	// draw physics colliders
+	DrawCollisionDebug(pScene->GetRenderBuffer());
+
+	// post processing pass
+	SetupPostProcessingPass();
+	DrawPostProcessingPass();
+	EndPostProcessingPass();
+	// end post processing
+
+	RenderText(std::to_string((int)fps) + " fps", 0.05f * screenWidth, 0.9f * screenHeight, 0.7f * (screenWidth / screenHeight), glm::vec3(0.5f, 0.8f, 0.2f), text.charArial, screenWidth, screenHeight);
+
+	EndRender();
+}
+
 void Renderer::BeginRender(CameraParams params)
 {
 	cameraState = params;
@@ -212,7 +242,7 @@ void Renderer::EndPostProcessingPass()
 
 }
 
-void Renderer::RenderText(std::string text, float x, float y, float scale, glm::vec3 color, std::map<char, Character> characters)
+void Renderer::RenderText(std::string text, float x, float y, float scale, glm::vec3 color, std::map<char, Character> characters, float screenWidth, float screenHeight)
 {
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -224,6 +254,7 @@ void Renderer::RenderText(std::string text, float x, float y, float scale, glm::
 
 	// iterate through all characters
 	std::string::const_iterator c;
+
 	for (c = text.begin(); c != text.end(); c++)
 	{
 		Character ch = characters[*c];
@@ -231,7 +262,7 @@ void Renderer::RenderText(std::string text, float x, float y, float scale, glm::
 		float yPos = y - (ch.size.y - ch.bearing.y) * scale;
 
 		float w = ch.size.x * scale;
-		float h = ch.size.y * scale;
+		float h = ch.size.y * scale;	
 
 		// update vbo for each character
 		float vertices[6][4] =

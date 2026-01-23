@@ -9,11 +9,13 @@ public:
 
 	void Update();
 
-	float getDeltaTime() const { return (float)deltaTime;  }
-
-	float getFPS() const { return 1 / deltaTime; }
+	float fps() const { return 1 / frameTime; }
 	
+	float frameTime;
+	float currentTime;
+	float newTime;
+	float accumulator;
+	const double deltaTime = 1 / 60.0f;
+	float totalTime;
 private:
-	double deltaTime;
-	double lastFrameTime;
 };

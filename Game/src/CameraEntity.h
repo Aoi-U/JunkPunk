@@ -34,6 +34,8 @@ public:
 
 	void forceUpdateSelfAndChild(float deltaTime) override;
 
+	void SetTarget(glm::mat4 target, float dt);
+
 	void ChangeAspectRatio(float width, float height);
 
 	void Update(float deltaTime);
@@ -42,9 +44,9 @@ public:
 
 	void ChangeFov(float newFov);
 
-	void ChangeTheta(float deltaTheta);
+	void ChangeHorizontal(float deltaDegrees);
 
-	void ChangePhi(float deltaPhi);
+	void ChangeVertical(float deltaDegrees);
 
 	void ChangeRadius(float deltaRadius);
 
@@ -105,6 +107,9 @@ private:
 	float lookSpeed = 6.0f; // how fast the camera rotates based on input
 	float minDistance = 2.0f;
 	float maxDistance = 10.0f;
+	float distance = 2.0f; // current distance from the target
+	float theta = 0.0f;
+	float phi = 0.0f;
 
 	float aspectRatio;
 	float width;
@@ -115,5 +120,6 @@ private:
 	float zNear = 0.1f;
 	float zFar = 1000.0f;
 
-
+	glm::mat4 targetMatrix; // the matrix to eventually reach
+	// transform represents the current matrix
 };

@@ -5,7 +5,6 @@
 #include "Window.h"
 #include "InputManager.h"
 #include "Renderer.h"
-//#include "Camera.h"
 #include "SkyBox.h"
 #include "Time.h"
 //#include "Entity.h"

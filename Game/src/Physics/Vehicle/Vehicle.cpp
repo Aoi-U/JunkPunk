@@ -86,7 +86,7 @@ void Vehicle::step(float deltaTime)
 	gVehicle.mCommandState.steer = gCommand.steer;
 
 	//Forward integrate the vehicle by a single timestep.
-	gVehicle.step(1 / 60.0f, gVehicleSimulationContext);
+	gVehicle.step(deltaTime, gVehicleSimulationContext);
 }
 
 void Vehicle::cleanup()

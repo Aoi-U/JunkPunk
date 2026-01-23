@@ -2,13 +2,14 @@
 
 Time::Time()
 {
-	lastFrameTime = glfwGetTime();
-	deltaTime = 0.0;
+	currentTime = glfwGetTime();
 }
 
 void Time::Update()
 {
-	double currentFrameTime = glfwGetTime();
-	deltaTime = currentFrameTime - lastFrameTime;
-	lastFrameTime = currentFrameTime;
+	float newTime = glfwGetTime();
+	frameTime = newTime - currentTime;
+	currentTime = newTime;
+	accumulator += frameTime;
+
 }

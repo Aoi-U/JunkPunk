@@ -21,6 +21,8 @@
 #include "BaseEntity.h"
 #include "Text.h"
 
+#include "Physics/PhysicsScene.h"
+
 
 
 #include "PxPhysicsAPI.h"
@@ -36,6 +38,15 @@ public:
 	void Init(CameraParams params);
 	void Clear(float r, float g, float b, float a); // clears screen and buffers
 
+	void Update(BaseEntity* entity, CameraParams params, PhysicsScene* pScene, float fps, float screenWidth, float screenHeight);
+
+
+	//void DrawEntityInstanced(const glm::mat4& projView, std::shared_ptr<Shader> shader, Model* model, const std::vector<glm::mat4>& matrices); // draw function for rendering instanced entities
+
+
+	std::unique_ptr<PostProcessor> postProcessor; 
+	Text text;
+private:
 	void BeginRender(CameraParams params);
 
 	void SetupShadowPass();
@@ -53,20 +64,14 @@ public:
 	void DrawPostProcessingPass();
 	void EndPostProcessingPass();
 
-	void RenderText(std::string text, float x, float y, float scale, glm::vec3 color, std::map<char, Character> characters);
-
-
+	void RenderText(std::string text, float x, float y, float scale, glm::vec3 color, std::map<char, Character> characters, float screenWidth, float screenHeight);
 
 	void EndRender();
 
-	//void DrawEntityInstanced(const glm::mat4& projView, std::shared_ptr<Shader> shader, Model* model, const std::vector<glm::mat4>& matrices); // draw function for rendering instanced entities
 
+	void BindTextures(Mesh& mesh); // bind textures for a mesh
+	void ShaderSetup(); // setup all shader constnat uniforms
 
-
-
-	std::unique_ptr<PostProcessor> postProcessor; 
-	Text text;
-private:
 	std::shared_ptr<InputManager> inputManager; // not used but maybe useful later idk
 
 	GLuint debugVao{}, debugVbo{};
@@ -94,7 +99,4 @@ private:
 	std::shared_ptr<Shader> physicsDebugShader;
 	std::shared_ptr<Shader> textShader;
 
-
-	void BindTextures(Mesh& mesh); // bind textures for a mesh
-	void ShaderSetup(); // setup all shader constnat uniforms
 };

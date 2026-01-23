@@ -129,7 +129,7 @@ void Game::Run()
 	gameScene["World"]->addChild<PhysicsEntity>("Terrain", DrawType::MESH, PhysicsType::STATIC_MESH, "assets/models/snowy_mountain_-_terrain/scene.gltf");
 	gameScene["World"]->getChild("Terrain")->transform.setLocalScale(glm::vec3(500.0f));
 
-	player->transform.setLocalScale(glm::vec3(40.0f));
+	player->transform.setLocalScale(glm::vec3(10.0f));
 
 	camera->transform.setLocalPosition(glm::vec3(0.0f, 2.0f, -2.0f));
 	camera->transform.setLocalRotation(glm::angleAxis(glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
@@ -139,7 +139,7 @@ void Game::Run()
 	gameScene["World"]->getChild("Rubix")->transform.setLocalScale(glm::vec3(10.0f));
 	gameScene["World"]->getChild("Rubix")->transform.setLocalPosition(glm::vec3(5.0f, -20.0f, 0.0f));
 
-	gameScene["World"]->updateSelfAndChild(time->getDeltaTime());
+	gameScene["World"]->updateSelfAndChild(time->deltaTime);
 
 	pScene->InitPhysicsComponentFromEntity(gameScene["World"].get());
 	renderer->Init(camera->getCameraParams());
@@ -255,14 +255,19 @@ void Game::Run()
 			}
 
 			// camera adjustment
-			camera->ChangeTheta(inputManager->GetRStickTurnValueX() * time->getDeltaTime());
-			camera->ChangePhi(inputManager->GetRStickTurnValueY() * time->getDeltaTime());
+			camera->ChangeHorizontal(inputManager->GetRStickTurnValueX() * time->deltaTime);
+			camera->ChangeVertical(inputManager->GetRStickTurnValueY() * time->deltaTime);
 		}
 
 		// send commands to vehicle
 		pScene->getVehicle().setCommand(command);
 		// simulate physics PhysicsScene
-		pScene->Simulate(time->getDeltaTime());
+		while (time->accumulator >= time->deltaTime)
+		{
+			pScene->Simulate(time->deltaTime);
+			time->accumulator -= time->deltaTime;
+			time->totalTime++;
+		}
 
 		// example input handling, probably move to InputManager or some other class for readability later
 		if (inputManager->IsKeyboardButtonDown(GLFW_KEY_ESCAPE))
@@ -280,10 +285,10 @@ void Game::Run()
 				camera->ChangeFov(camera_fov);
 			}
 			else if (camera_scroll_type == 2) {
-				camera->ChangeTheta(scroll_changed * 0.01f);
+				camera->ChangeHorizontal(scroll_changed * 0.01f);
 			}
 			else if (camera_scroll_type == 3) {
-				camera->ChangePhi(scroll_changed * 0.01f);
+				camera->ChangeVertical(scroll_changed * 0.01f);
 			}
 		}
 		if (inputManager->IsMouseButtonDown(1)) {
@@ -310,42 +315,21 @@ void Game::Run()
 		player->transform.setLocalPosition(pos);
 		player->transform.setLocalRotation(rot);
 
-		camera->transform.setLocalPosition(glm::vec3(pos.x, pos.y + 2.0f, pos.z - 3.0f));
-		camera->transform.setLocalRotation(glm::angleAxis(glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
+		glm::mat4 cameraTarget = player->transform.getModelMatrix();
+		camera->SetTarget(cameraTarget, time->deltaTime);
 
-		gameScene["World"]->updateSelfAndChild(time->getDeltaTime()); // updates all entities in the scene
+		gameScene["World"]->updateSelfAndChild(time->deltaTime); // updates all entities in the scene
 
 		vehicle_position = player->transform.getGlobalPosition(); // set position for imgui
+		camera_pos = camera->transform.getGlobalPosition();
 
 		// -------------------------- rendering code -----------------------------
 		//glViewport(0, 0, width, height); //temporary testing for split camera
 
-		renderer->BeginRender(camera->getCameraParams());
-		// shadow pass
-		renderer->SetupShadowPass();
-		renderer->DrawShadowPass(gameScene["World"].get());
-		renderer->EndShadowPass();
-		// end shadow pass
+		glm::vec2 screenSize = window->getWindowSize();
+		renderer->Update(gameScene["World"].get(), camera->getCameraParams(), pScene.get(), time->fps(), screenSize.x, screenSize.y);
 
-		// lighting pass
-		renderer->SetupLightingPass();
-		renderer->DrawLightingPass(gameScene["World"].get());
-		renderer->EndLightingPass();
-		// end lighting pass
 		
-		// draw physics colliders
-		renderer->DrawCollisionDebug(pScene->GetRenderBuffer());
-
-		// post processing pass
-		renderer->SetupPostProcessingPass();
-		renderer->DrawPostProcessingPass();
-		renderer->EndPostProcessingPass();
-		// end post processing
-
-		renderer->RenderText(std::to_string(time->getFPS()), 10.f, window->getWindowSize().y - 50.0f, 1.f, glm::vec3(0.5f, 0.8f, 0.2f), renderer->text.charArial);
-
-		renderer->EndRender();
-
 		camera_debug_panel.render();// render imgui camera debugger
 
 

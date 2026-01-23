@@ -147,7 +147,7 @@ void PhysicsScene::InitPhysics()
 void PhysicsScene::Simulate(float deltaTime)
 {
 	gVehicle.step(deltaTime);
-	gPhysicsScene->simulate(1 / 60.0f);
+	gPhysicsScene->simulate(deltaTime);
 	gPhysicsScene->fetchResults(true);
 }
 
