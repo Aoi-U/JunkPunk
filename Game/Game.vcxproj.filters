@@ -22,59 +22,68 @@
     <Filter Include="Header Files\imgui">
       <UniqueIdentifier>{d4255b95-a7b8-4627-8931-1fdabe066682}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\stb">
-      <UniqueIdentifier>{0ad0c0f3-e7a9-4422-afde-e6b6989ada72}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\Rendering">
       <UniqueIdentifier>{bc14bf24-5185-4cc0-ab69-b40114ef96b8}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Rendering">
+    <Filter Include="Header Files\Entity">
+      <UniqueIdentifier>{30358ca3-1031-4bd1-908d-0fa56a49bc6e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Components">
+      <UniqueIdentifier>{9075b52b-1e2c-48cb-9be0-e6abba023277}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Systems">
+      <UniqueIdentifier>{f1f92914-778e-4783-8108-60532533d098}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Core">
+      <UniqueIdentifier>{3d650287-2da6-4fbd-a85c-be24eab7e316}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Systems">
+      <UniqueIdentifier>{ed31050d-9b61-475c-a97b-1563a4c31e84}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Core">
+      <UniqueIdentifier>{c4e804ce-ebd0-46d9-8894-5060a2dc7f2b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Core\Vehicle">
+      <UniqueIdentifier>{949fbe44-f620-4191-8f2c-f6c2a081ed5c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Core\Vehicle\base">
+      <UniqueIdentifier>{3c841342-af3f-445d-bd5b-5643ea923536}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Core\Vehicle\directdrivetrain">
+      <UniqueIdentifier>{dcc37db3-c48b-4234-bc36-00fcdca4f650}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Core\Vehicle\enginedrivetrain">
+      <UniqueIdentifier>{388a317f-56fa-463d-a329-088894f91f11}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Core\Vehicle\physxintegration">
+      <UniqueIdentifier>{5724d3a6-be91-4cb0-a315-d638e3b024bc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Core\Vehicle\serialization">
+      <UniqueIdentifier>{8d53b767-a994-4c1d-ac85-5c3489e751ac}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Core\Vehicle">
+      <UniqueIdentifier>{6f6da323-6004-47a8-bbc8-97e78068c023}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Core\Vehicle\base">
+      <UniqueIdentifier>{a760157c-cc30-43d1-8235-6922b8f6d205}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Core\Vehicle\directdrivetrain">
+      <UniqueIdentifier>{4defd6cf-11f9-4222-8d01-f4c30d866e9e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Core\Vehicle\enginedrivetrain">
+      <UniqueIdentifier>{65ccb647-6583-418b-bc8a-6b1ed1999276}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Core\Vehicle\serialization">
+      <UniqueIdentifier>{78584466-455d-4973-bbda-03ecf3931f77}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Core\Vehicle\physxintegration">
+      <UniqueIdentifier>{4d2edb3b-9e17-4ee9-a8af-af80fc819539}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Core\Rendering">
+      <UniqueIdentifier>{34114f59-9888-4406-a206-839aba42d24f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Core\Rendering">
       <UniqueIdentifier>{1d06648f-3303-4175-ad95-2454e316ecf5}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\stb">
-      <UniqueIdentifier>{5e1a055d-9bdd-4d2b-b95e-78b2fae0539d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Physics">
-      <UniqueIdentifier>{8b3ccae1-296b-4126-bea0-2a96bd842b03}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Physics\Vehicle">
-      <UniqueIdentifier>{6222f4d0-4a38-4bba-b57f-55dfc3debc18}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Physics">
-      <UniqueIdentifier>{7709078a-f700-440e-ab09-8cb1569cf5b4}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Physics\Vehicle">
-      <UniqueIdentifier>{875a6de4-a7a3-4ab2-ba6c-82372a86d716}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Physics\Vehicle\physxintegration">
-      <UniqueIdentifier>{ff98f024-4f9c-490b-8c05-a1689d9b06cf}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Physics\Vehicle\enginedrivetrain">
-      <UniqueIdentifier>{bcd294ad-1eee-4ddc-996f-8df2c772fad8}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Physics\Vehicle\directdrivetrain">
-      <UniqueIdentifier>{459245d2-d8c4-4949-b215-93a57328673b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Physics\Vehicle\base">
-      <UniqueIdentifier>{24d5d414-64e8-4c10-b9ba-3739b2c09f75}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Physics\Vehicle\physxintegration">
-      <UniqueIdentifier>{79a23189-9c80-4026-b86d-c5c2b4696f43}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Physics\Vehicle\enginedrivetrain">
-      <UniqueIdentifier>{5e4b26d1-5457-4613-bb50-b0245bea1391}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Physics\Vehicle\directdrivetrain">
-      <UniqueIdentifier>{b2afa5fc-8f94-4761-91fa-90e9c067ad01}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Physics\Vehicle\base">
-      <UniqueIdentifier>{2c641929-ebef-4271-8c4b-f55aa1447e14}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Physics\Vehicle\serialization">
-      <UniqueIdentifier>{e4921e01-e7e7-46c6-9fd6-dea8e5157a02}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Physics\Vehicle\serialization">
-      <UniqueIdentifier>{167172af-e833-4761-8942-92e6a74b6084}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -117,111 +126,102 @@
     <ClCompile Include="src\ImGuiTest.cpp">
       <Filter>Source Files\imgui</Filter>
     </ClCompile>
-    <ClCompile Include="src\VAO.cpp">
-      <Filter>Source Files\Rendering</Filter>
-    </ClCompile>
-    <ClCompile Include="src\VBO.cpp">
-      <Filter>Source Files\Rendering</Filter>
-    </ClCompile>
-    <ClCompile Include="src\EBO.cpp">
-      <Filter>Source Files\Rendering</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Renderer.cpp">
-      <Filter>Source Files\Rendering</Filter>
-    </ClCompile>
-    <ClCompile Include="src\SkyBox.cpp">
-      <Filter>Source Files\Rendering</Filter>
-    </ClCompile>
-    <ClCompile Include="src\stb.cpp">
-      <Filter>Source Files\stb</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Time.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Mesh.cpp">
-      <Filter>Source Files\Rendering</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Model.cpp">
-      <Filter>Source Files\Rendering</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Shader.cpp">
-      <Filter>Source Files\Rendering</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Texture.cpp">
-      <Filter>Source Files\Rendering</Filter>
-    </ClCompile>
-    <ClCompile Include="src\PostProcessor.cpp">
-      <Filter>Source Files\Rendering</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Physics\Vehicle\base\Base.cpp">
-      <Filter>Source Files\Physics\Vehicle\base</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Physics\Vehicle\directdrivetrain\DirectDrivetrain.cpp">
-      <Filter>Source Files\Physics\Vehicle\directdrivetrain</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Physics\Vehicle\physxintegration\PhysXIntegration.cpp">
-      <Filter>Source Files\Physics\Vehicle\physxintegration</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Physics\Vehicle\enginedrivetrain\EngineDrivetrain.cpp">
-      <Filter>Source Files\Physics\Vehicle\enginedrivetrain</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Physics\Vehicle\Vehicle.cpp">
-      <Filter>Source Files\Physics\Vehicle</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Physics\PhysicsScene.cpp">
-      <Filter>Source Files\Physics</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Physics\Vehicle\SnippetVehicleHelpers.cpp">
-      <Filter>Source Files\Physics\Vehicle</Filter>
-    </ClCompile>
     <ClCompile Include="Gamepad.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\ShadowMapper.cpp">
-      <Filter>Source Files\Rendering</Filter>
+    <ClCompile Include="src\Systems\CameraControlSystem.cpp">
+      <Filter>Source Files\Systems</Filter>
     </ClCompile>
-    <ClCompile Include="src\Light.cpp">
-      <Filter>Source Files\Rendering</Filter>
+    <ClCompile Include="src\Systems\RenderSystem.cpp">
+      <Filter>Source Files\Systems</Filter>
     </ClCompile>
-    <ClCompile Include="src\ImGuiPanel.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="src\Core\stb.cpp">
+      <Filter>Source Files\Core</Filter>
     </ClCompile>
-    <ClCompile Include="src\BaseEntity.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="src\Core\Time.cpp">
+      <Filter>Source Files\Core</Filter>
     </ClCompile>
-    <ClCompile Include="src\PhysicsEntity.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="src\Systems\PhysicsSystem.cpp">
+      <Filter>Source Files\Systems</Filter>
     </ClCompile>
-    <ClCompile Include="src\Physics\Vehicle\serialization\BaseSerialization.cpp">
-      <Filter>Source Files\Physics\Vehicle\serialization</Filter>
+    <ClCompile Include="src\Core\Vehicle\base\Base.cpp">
+      <Filter>Source Files\Core\Vehicle\base</Filter>
     </ClCompile>
-    <ClCompile Include="src\Physics\Vehicle\serialization\DirectDrivetrainSerialization.cpp">
-      <Filter>Source Files\Physics\Vehicle\serialization</Filter>
+    <ClCompile Include="src\Core\Vehicle\directdrivetrain\DirectDrivetrain.cpp">
+      <Filter>Source Files\Core\Vehicle\directdrivetrain</Filter>
     </ClCompile>
-    <ClCompile Include="src\Physics\Vehicle\serialization\EngineDrivetrainSerialization.cpp">
-      <Filter>Source Files\Physics\Vehicle\serialization</Filter>
+    <ClCompile Include="src\Core\Vehicle\enginedrivetrain\EngineDrivetrain.cpp">
+      <Filter>Source Files\Core\Vehicle\enginedrivetrain</Filter>
     </ClCompile>
-    <ClCompile Include="src\Physics\Vehicle\serialization\SerializationCommon.cpp">
-      <Filter>Source Files\Physics\Vehicle\serialization</Filter>
+    <ClCompile Include="src\Core\Vehicle\physxintegration\PhysXIntegration.cpp">
+      <Filter>Source Files\Core\Vehicle\physxintegration</Filter>
     </ClCompile>
-    <ClCompile Include="src\CameraEntity.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="src\Core\Vehicle\serialization\DirectDrivetrainSerialization.cpp">
+      <Filter>Source Files\Core\Vehicle\serialization</Filter>
     </ClCompile>
-    <ClCompile Include="src\Text.cpp">
-      <Filter>Source Files\Rendering</Filter>
+    <ClCompile Include="src\Core\Vehicle\serialization\EngineDrivetrainSerialization.cpp">
+      <Filter>Source Files\Core\Vehicle\serialization</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\Vehicle\serialization\SerializationCommon.cpp">
+      <Filter>Source Files\Core\Vehicle\serialization</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\Vehicle\serialization\BaseSerialization.cpp">
+      <Filter>Source Files\Core\Vehicle\serialization</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\Vehicle\SnippetVehicleHelpers.cpp">
+      <Filter>Source Files\Core\Vehicle</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Systems\LevelLoaderSystem.cpp">
+      <Filter>Source Files\Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\Vehicle\MainVehicle.cpp">
+      <Filter>Source Files\Core\Vehicle</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Systems\VehicleControlSystem.cpp">
+      <Filter>Source Files\Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\VBO.cpp">
+      <Filter>Source Files\Core\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\VAO.cpp">
+      <Filter>Source Files\Core\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\Texture.cpp">
+      <Filter>Source Files\Core\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\Text.cpp">
+      <Filter>Source Files\Core\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\SkyBox.cpp">
+      <Filter>Source Files\Core\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\ShadowMapper.cpp">
+      <Filter>Source Files\Core\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\Shader.cpp">
+      <Filter>Source Files\Core\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\PostProcessor.cpp">
+      <Filter>Source Files\Core\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\Model.cpp">
+      <Filter>Source Files\Core\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\Mesh.cpp">
+      <Filter>Source Files\Core\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\Light.cpp">
+      <Filter>Source Files\Core\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\EBO.cpp">
+      <Filter>Source Files\Core\Rendering</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Game.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\InputManager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\Window.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Time.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="thirdparty\include\imgui\imgui_impl_glfw.h">
@@ -245,107 +245,140 @@
     <ClInclude Include="thirdparty\include\imgui\imgui.h">
       <Filter>Header Files\imgui</Filter>
     </ClInclude>
-    <ClInclude Include="thirdparty\include\imgui\imstb_rectpack.h">
-      <Filter>Header Files\stb</Filter>
-    </ClInclude>
-    <ClInclude Include="thirdparty\include\imgui\imstb_textedit.h">
-      <Filter>Header Files\stb</Filter>
-    </ClInclude>
-    <ClInclude Include="thirdparty\include\imgui\imstb_truetype.h">
-      <Filter>Header Files\stb</Filter>
-    </ClInclude>
-    <ClInclude Include="src\EBO.h">
-      <Filter>Header Files\Rendering</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Renderer.h">
-      <Filter>Header Files\Rendering</Filter>
-    </ClInclude>
-    <ClInclude Include="src\VAO.h">
-      <Filter>Header Files\Rendering</Filter>
-    </ClInclude>
-    <ClInclude Include="src\VBO.h">
-      <Filter>Header Files\Rendering</Filter>
-    </ClInclude>
-    <ClInclude Include="src\SkyBox.h">
-      <Filter>Header Files\Rendering</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Model.h">
-      <Filter>Header Files\Rendering</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Mesh.h">
-      <Filter>Header Files\Rendering</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Shader.h">
-      <Filter>Header Files\Rendering</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Texture.h">
-      <Filter>Header Files\Rendering</Filter>
-    </ClInclude>
-    <ClInclude Include="src\PostProcessor.h">
-      <Filter>Header Files\Rendering</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Physics\Vehicle\Vehicle.h">
-      <Filter>Header Files\Physics\Vehicle</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Physics\Vehicle\base\Base.h">
-      <Filter>Header Files\Physics\Vehicle\base</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Physics\Vehicle\directdrivetrain\DirectDrivetrain.h">
-      <Filter>Header Files\Physics\Vehicle\directdrivetrain</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Physics\Vehicle\enginedrivetrain\EngineDrivetrain.h">
-      <Filter>Header Files\Physics\Vehicle\enginedrivetrain</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Physics\Vehicle\physxintegration\PhysXIntegration.h">
-      <Filter>Header Files\Physics\Vehicle\physxintegration</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Physics\PhysicsScene.h">
-      <Filter>Header Files\Physics</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Physics\Vehicle\SnippetVehicleHelpers.h">
-      <Filter>Header Files\Physics\Vehicle</Filter>
-    </ClInclude>
     <ClInclude Include="Gamepad.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="assets\shaders\colliders.vert">
       <Filter>Resource Files\shaders</Filter>
     </ClInclude>
-    <ClInclude Include="src\Light.h">
-      <Filter>Header Files\Rendering</Filter>
-    </ClInclude>
-    <ClInclude Include="src\ShadowMapper.h">
-      <Filter>Header Files\Rendering</Filter>
-    </ClInclude>
-    <ClInclude Include="src\ImGuiPanel.h">
+    <ClInclude Include="src\ECSController.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\BaseEntity.h">
+    <ClInclude Include="src\Event.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\PhysicsEntity.h">
+    <ClInclude Include="src\EventManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Transform.h">
+    <ClInclude Include="src\Entity\EntityManager.h">
+      <Filter>Header Files\Entity</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Components\ComponentArray.h">
+      <Filter>Header Files\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Components\ComponentManager.h">
+      <Filter>Header Files\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Components\Render.h">
+      <Filter>Header Files\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Components\Camera.h">
+      <Filter>Header Files\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Components\Player.h">
+      <Filter>Header Files\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Components\Transform.h">
+      <Filter>Header Files\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Systems\CameraControlSystem.h">
+      <Filter>Header Files\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Systems\RenderSystem.h">
+      <Filter>Header Files\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Systems\SystemManager.h">
+      <Filter>Header Files\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Systems\System.h">
+      <Filter>Header Files\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\Time.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\Types.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\InputManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Physics\Vehicle\serialization\SerializationCommon.h">
-      <Filter>Header Files\Physics\Vehicle\serialization</Filter>
+    <ClInclude Include="src\Systems\PhysicsSystem.h">
+      <Filter>Header Files\Systems</Filter>
     </ClInclude>
-    <ClInclude Include="src\Physics\Vehicle\serialization\EngineDrivetrainSerialization.h">
-      <Filter>Header Files\Physics\Vehicle\serialization</Filter>
+    <ClInclude Include="src\Core\Vehicle\base\Base.h">
+      <Filter>Header Files\Core\Vehicle\base</Filter>
     </ClInclude>
-    <ClInclude Include="src\Physics\Vehicle\serialization\BaseSerialization.h">
-      <Filter>Header Files\Physics\Vehicle\serialization</Filter>
+    <ClInclude Include="src\Core\Vehicle\directdrivetrain\DirectDrivetrain.h">
+      <Filter>Header Files\Core\Vehicle\directdrivetrain</Filter>
     </ClInclude>
-    <ClInclude Include="src\Physics\Vehicle\serialization\DirectDrivetrainSerialization.h">
-      <Filter>Header Files\Physics\Vehicle\serialization</Filter>
+    <ClInclude Include="src\Core\Vehicle\enginedrivetrain\EngineDrivetrain.h">
+      <Filter>Header Files\Core\Vehicle\enginedrivetrain</Filter>
     </ClInclude>
-    <ClInclude Include="src\CameraEntity.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="src\Core\Vehicle\physxintegration\PhysXIntegration.h">
+      <Filter>Header Files\Core\Vehicle\physxintegration</Filter>
     </ClInclude>
-    <ClInclude Include="src\Text.h">
-      <Filter>Header Files\Rendering</Filter>
+    <ClInclude Include="src\Core\Vehicle\serialization\BaseSerialization.h">
+      <Filter>Header Files\Core\Vehicle\serialization</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\Vehicle\serialization\DirectDrivetrainSerialization.h">
+      <Filter>Header Files\Core\Vehicle\serialization</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\Vehicle\serialization\EngineDrivetrainSerialization.h">
+      <Filter>Header Files\Core\Vehicle\serialization</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\Vehicle\serialization\SerializationCommon.h">
+      <Filter>Header Files\Core\Vehicle\serialization</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\Vehicle\SnippetVehicleHelpers.h">
+      <Filter>Header Files\Core\Vehicle</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\EBO.h">
+      <Filter>Header Files\Core\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\Light.h">
+      <Filter>Header Files\Core\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\Mesh.h">
+      <Filter>Header Files\Core\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\Model.h">
+      <Filter>Header Files\Core\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\PostProcessor.h">
+      <Filter>Header Files\Core\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\Shader.h">
+      <Filter>Header Files\Core\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\ShadowMapper.h">
+      <Filter>Header Files\Core\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\SkyBox.h">
+      <Filter>Header Files\Core\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\Text.h">
+      <Filter>Header Files\Core\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\Texture.h">
+      <Filter>Header Files\Core\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\VAO.h">
+      <Filter>Header Files\Core\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\VBO.h">
+      <Filter>Header Files\Core\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Components\Physics.h">
+      <Filter>Header Files\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Systems\LevelLoaderSystem.h">
+      <Filter>Header Files\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\Vehicle\MainVehicle.h">
+      <Filter>Header Files\Core\Vehicle</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Systems\VehicleControlSystem.h">
+      <Filter>Header Files\Systems</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
