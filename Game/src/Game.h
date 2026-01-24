@@ -6,6 +6,7 @@
 #include "Mesh.h"
 #include "Model.h"
 #include "SkyBox.h"
+#include "PVDDebugger.h"
 
 class Game
 {
@@ -28,6 +29,8 @@ private:
 	std::shared_ptr<Shader> defaultShader; 
 	std::shared_ptr<Shader> lightShader;
 	std::shared_ptr<Shader> skyboxShader;
+	
+	PVDDebugger pvdDebugger;
 
 	// list of all game objects and its model matrices (maybe think of a better solution)
 	std::vector<std::pair<std::shared_ptr<Model>, glm::mat4>> gameObjects;

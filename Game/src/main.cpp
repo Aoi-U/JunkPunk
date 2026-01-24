@@ -3,7 +3,7 @@
 #include <GLFW/glfw3.h>
 
 #include "Game.h"
-#include "PVDDebugger.h"
+
 
 int main()
 {
@@ -14,6 +14,4 @@ int main()
 	}
 	glfwTerminate();
 
-	//PVDDebugger pvdDebugger;
-	//pvdDebugger.Run();
 }

@@ -1,18 +1,8 @@
 #include "PVDDebugger.h"
 
 
-int PVDDebugger::Run()
+int PVDDebugger::Init()
 {
-	//PhysX management class instances.
-	physx::PxDefaultAllocator gAllocator;
-	physx::PxDefaultErrorCallback gErrorCallback;
-	physx::PxFoundation* gFoundation = NULL;
-	physx::PxPhysics* gPhysics = NULL;
-	physx::PxDefaultCpuDispatcher* gDispatcher = NULL;
-	physx::PxScene* gScene = NULL;
-	physx::PxMaterial* gMaterial = NULL;
-	physx::PxPvd* gPvd = NULL;
-
 	// Initialize PhysX
 	gFoundation = PxCreateFoundation(PX_PHYSICS_VERSION, gAllocator, gErrorCallback);
 	if (!gFoundation)
@@ -78,12 +68,12 @@ int PVDDebugger::Run()
 	// Clean up
 	shape->release();
 
-	// Simulate at 60fps
-	while (1)
-	{
-		gScene->simulate(1.0f / 60.0f);
-		gScene->fetchResults(true);
-	}
-
 	return 0;
+}
+	
+void PVDDebugger::Update()
+{
+	// Simulate at 60fps
+	gScene->simulate(1.0f / 60.0f);
+	gScene->fetchResults(true);
 }

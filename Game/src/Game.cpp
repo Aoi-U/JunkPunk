@@ -107,6 +107,7 @@ void Game::Run()
 {
 	//renderer->Init();
 	skybox->Init();
+	pvdDebugger.Init();
 
 	
 	glm::mat4 view;
@@ -217,6 +218,7 @@ void Game::Run()
 			first_time_held_right_click = false;
 		}
 		
+		pvdDebugger.Update();
 
 		glm::ivec2 windowSize = window->getWindowSize();
 		float width = static_cast<float>(windowSize.x);
