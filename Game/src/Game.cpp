@@ -12,20 +12,14 @@
 #include "Components/Physics.h"
 
 #include "ECSController.h"
+#include "Core/Types.h"
 
 
 //#include "Entity.h"
 
-static glm::vec3 vehicle_position = glm::vec3(0.0f, 0.0f, 00.0f);
-static glm::vec3 camera_pos = glm::vec3(0.0f, 0.0f, 0.0f);
 static int camera_scroll_type = 0;
-static float camera_fov = 90.0f;
 static bool split_camera = false;
-static glm::dvec2 previous_mouse_position;
 static bool first_time_held_right_click = false;
-static PxVec3 vehicleVelocity = PxVec3(0.0f, 0.0f, 0.0f);
-
-CAudioEngine aEngine;
 
 // Define a global ECSController instance so systems can access it
 ECSController controller;
@@ -45,7 +39,7 @@ public:
 		ImGui::Text("Distance: %f", mainCamera_ptr->radius);
 		ImGui::Text("Phi: %f deg", glm::degrees(mainCamera_ptr->pitch));
 		ImGui::Text("Theta: %f deg", glm::degrees(mainCamera_ptr->yaw));
-		ImGui::Text("FOV: %f deg", camera_fov);
+		ImGui::Text("FOV: %f deg", mainCamera_ptr->fov);
 
 		ImGui::RadioButton("scroll distance", &camera_scroll_type, 0);
 		ImGui::RadioButton("scroll fov", &camera_scroll_type, 1);
@@ -150,6 +144,13 @@ Game::Game()
 		controller.SetSystemSignature<VehicleControlSystem>(signature);
 	}
 
+	audioSystem = controller.RegisterSystem<AudioSystem>();
+	{
+		Signature signature;
+		controller.SetSystemSignature<AudioSystem>(signature);
+	}
+
+	audioSystem->Init();
 	loaderSystem->LoadLevel();
 	vehicleControlSystem->Init(gamepad);
 	camControlSystem->Init(gamepad);
@@ -165,11 +166,11 @@ Game::Game()
 // main game function
 void Game::Run()
 {
-  aEngine.Init();
-
-  aEngine.LoadSound("assets/audio/jazz-background-music-325355.mp3", false);
-
-  aEngine.PlaySounds("assets/audio/jazz-background-music-325355.mp3", Vector3{0, 0, 0}, -10.0f);
+	Event event(Events::Audio::PLAY_SOUND);
+	event.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/jazz-background-music-325355.mp3");
+	event.SetParam<Vector3>(Events::Audio::Play_Sound::POSITION, Vector3{ 0.0f, 0.0f, 0.0f });
+	event.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, -10.0f);
+	controller.SendEvent(event);
 
 	// imgui panel for debugging
 	ImGuiPanel camera_debug_panel(window);

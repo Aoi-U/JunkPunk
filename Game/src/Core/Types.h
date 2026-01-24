@@ -62,7 +62,7 @@ namespace Events::Audio
 	const EventId STOP_SOUND = "Events::Audio::STOP_SOUND"_hash;
 }
 
-namespace Events::Audio::PlaySound 
+namespace Events::Audio::Play_Sound 
 {
 	const ParamId SOUND_NAME = "Events::Audio::PlaySound::SOUND_NAME"_hash; // sound file name
 	const ParamId POSITION = "Events::Audio::PlaySound::POSITION"_hash; // position to play sound at
@@ -76,7 +76,7 @@ namespace Events::Physics
 	const EventId TRIGGER_EXIT = "Events::Physics::TRIGGER_EXIT"_hash;
 }
 
-namespace Events::Physics::TriggerEnter 
+namespace Events::Physics::Trigger_Enter 
 {
 	const ParamId ENTITY_ONE = "Events::Physics::TriggerEnter::ENTITY_ONE"_hash; // first entity involved
 	const ParamId ENTITY_TWO = "Events::Physics::TriggerEnter::ENTITY_TWO"_hash; // second entity involved

@@ -175,6 +175,7 @@
     <ClCompile Include="src\ImGuiTest.cpp" />
     <ClCompile Include="src\InputManager.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\Systems\AudioSystem.cpp" />
     <ClCompile Include="src\Systems\CameraControlSystem.cpp" />
     <ClCompile Include="src\Systems\LevelLoaderSystem.cpp" />
     <ClCompile Include="src\Systems\PhysicsSystem.cpp" />

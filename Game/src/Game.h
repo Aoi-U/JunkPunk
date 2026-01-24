@@ -9,8 +9,8 @@
 #include "Systems/LevelLoaderSystem.h"
 #include "Systems/PhysicsSystem.h"
 #include "Systems/VehicleControlSystem.h"
+#include "Systems/AudioSystem.h"
 #include "Core/Time.h"
-#include "AudioEngine.h"
 
 class Game
 {
@@ -30,6 +30,7 @@ private:
 	std::shared_ptr<PhysicsSystem> physicsSystem;
 	std::shared_ptr<LevelLoaderSystem> loaderSystem;
 	std::shared_ptr<VehicleControlSystem> vehicleControlSystem;
+	std::shared_ptr<AudioSystem> audioSystem;
 
 
 	std::unique_ptr<Time> time;

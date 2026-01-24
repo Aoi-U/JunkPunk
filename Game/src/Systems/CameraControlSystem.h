@@ -2,7 +2,7 @@
 #include <memory>
 #include <iostream>
 
-#include "../Systems/System.h"
+#include "System.h"
 #include "../../Gamepad.h"
 
 class Event;
