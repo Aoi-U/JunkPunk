@@ -220,6 +220,9 @@ void Game::Run()
 		
 		pvdDebugger.Update();
 
+		physx::PxVec3 boxPos = pvdDebugger.GetBoxPosition(50);
+		std::cout << "Box 5 position: " << boxPos.x << ", " << boxPos.y << ", " << boxPos.z << std::endl;
+
 		glm::ivec2 windowSize = window->getWindowSize();
 		float width = static_cast<float>(windowSize.x);
 		float height = static_cast<float>(windowSize.y);

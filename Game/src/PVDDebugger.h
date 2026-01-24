@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <vector>
 
 #include "PxPhysicsAPI.h"
 
@@ -15,6 +16,8 @@ public:
 
 	void Update();
 
+	physx::PxVec3 GetBoxPosition(int i);
+
 private:
 	//PhysX management class instances.
 	physx::PxDefaultAllocator gAllocator;
@@ -25,4 +28,7 @@ private:
 	physx::PxScene* gScene = NULL;
 	physx::PxMaterial* gMaterial = NULL;
 	physx::PxPvd* gPvd = NULL;
+
+
+	std::vector<physx::PxRigidDynamic*> rigidDynamicList;
 };
