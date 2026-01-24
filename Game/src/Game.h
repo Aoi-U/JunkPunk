@@ -22,7 +22,7 @@ public:
 	void Run();
 
 private:
-	std::unique_ptr<Window> window;
+	std::shared_ptr<Window> window;
 	
 	// systems
 	std::shared_ptr<RenderSystem> renderSystem;

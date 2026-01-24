@@ -29,17 +29,55 @@ constexpr std::uint32_t operator "" _hash(char const* s, std::size_t count)
 #define METHOD_LISTENER(EventType, Listener) EventType, std::bind(&Listener, this, std::placeholders::_1)
 #define FUNCTION_LISTENER(EventType, Listener) EventType, std::bind(&Listener, std::placeholders::_1)
 
-namespace Events::Window {
+// window events
+namespace Events::Window 
+{
 	const EventId QUIT = "Events::Window::QUIT"_hash;
 	const EventId RESIZED = "Events::Window::RESIZED"_hash;
 	const EventId INPUT = "Events::Window::INPUT"_hash;
+	const EventId SCROLLED = "Events::Window::SCROLLED"_hash;
 }
 
-namespace Events::Window::Input {
-	const ParamId INPUT = "Events::Window::Input::INPUT"_hash;
+namespace Events::Window::Resized 
+{
+	const ParamId WIDTH = "Events::Window::Resized::WIDTH"_hash; // new width
+	const ParamId HEIGHT = "Events::Window::Resized::HEIGHT"_hash; // new height
 }
 
-namespace Events::Window::Resized {
-	const ParamId WIDTH = "Events::Window::Resized::WIDTH"_hash;
-	const ParamId HEIGHT = "Events::Window::Resized::HEIGHT"_hash;
+namespace Events::Window::Input 
+{
+	const ParamId INPUT = "Events::Window::Input::INPUT"_hash;  // input data
+}
+
+namespace Events::Window::Scrolled
+{
+	const ParamId XOFFSET = "Events::Window::Scrolled::XOFFSET"_hash; // scroll x offset
+	const ParamId YOFFSET = "Events::Window::Scrolled::YOFFSET"_hash; // scroll y offset
+}
+
+// audio events
+namespace Events::Audio 
+{
+	const EventId PLAY_SOUND = "Events::Audio::PLAY_SOUND"_hash;
+	const EventId STOP_SOUND = "Events::Audio::STOP_SOUND"_hash;
+}
+
+namespace Events::Audio::PlaySound 
+{
+	const ParamId SOUND_NAME = "Events::Audio::PlaySound::SOUND_NAME"_hash; // sound file name
+	const ParamId POSITION = "Events::Audio::PlaySound::POSITION"_hash; // position to play sound at
+	const ParamId VOLUME_DB = "Events::Audio::PlaySound::VOLUME_DB"_hash; // volume in decibels
+}
+
+// physics events
+namespace Events::Physics 
+{
+	const EventId TRIGGER_ENTER = "Events::Physics::TRIGGER_ENTER"_hash;
+	const EventId TRIGGER_EXIT = "Events::Physics::TRIGGER_EXIT"_hash;
+}
+
+namespace Events::Physics::TriggerEnter 
+{
+	const ParamId ENTITY_ONE = "Events::Physics::TriggerEnter::ENTITY_ONE"_hash; // first entity involved
+	const ParamId ENTITY_TWO = "Events::Physics::TriggerEnter::ENTITY_TWO"_hash; // second entity involved
 }

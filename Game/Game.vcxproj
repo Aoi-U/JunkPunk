@@ -143,6 +143,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\test\Game\src\ImGuiPanel.cpp" />
     <ClCompile Include="Gamepad.cpp" />
     <ClCompile Include="src\AudioEngine.cpp" />
     <ClCompile Include="src\Core\EBO.cpp" />
@@ -189,6 +190,7 @@
     <ClCompile Include="thirdparty\include\imgui\imgui_widgets.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\test\Game\src\ImGuiPanel.h" />
     <ClInclude Include="assets\shaders\colliders.vert" />
     <ClInclude Include="Gamepad.h" />
     <ClInclude Include="src\AudioEngine.h" />
@@ -230,6 +232,7 @@
     <ClInclude Include="src\Game.h" />
     <ClInclude Include="src\ImGuiTest.h" />
     <ClInclude Include="src\InputManager.h" />
+    <ClInclude Include="src\Systems\AudioSystem.h" />
     <ClInclude Include="src\Systems\CameraControlSystem.h" />
     <ClInclude Include="src\Systems\LevelLoaderSystem.h" />
     <ClInclude Include="src\Systems\PhysicsSystem.h" />

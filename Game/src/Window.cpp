@@ -55,8 +55,11 @@ void Window::scrollMetaCallback(GLFWwindow* window, double xoffset, double yoffs
 	//	ImGui_ImplGlfw_ScrollCallback(window, xoffset, yoffset);
 	//	forward_to_user_callback = !ImGui::GetIO().WantCaptureMouse;
 	//}
-
 	// If ImGui isn't capturing scroll input, call the user-defined scroll callback
+	Event event(Events::Window::SCROLLED);
+	event.SetParam<double>(Events::Window::Scrolled::XOFFSET, xoffset);
+	event.SetParam<double>(Events::Window::Scrolled::YOFFSET, yoffset);
+	controller.SendEvent(event);
 
 }
 

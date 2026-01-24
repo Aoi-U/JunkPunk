@@ -26,28 +26,64 @@ static bool first_time_held_right_click = false;
 static PxVec3 vehicleVelocity = PxVec3(0.0f, 0.0f, 0.0f);
 
 CAudioEngine aEngine;
-// Setup ImGui panel for camera, putting it here to quick access 
-// class CameraEditorPanelRenderer : public ImGuiPanelRendererInterface {
-// public:
-// 	//CameraEditorPanelRenderer(){}
-// 	CameraEditorPanelRenderer(std::shared_ptr<Camera> mainCamera) : mainCamera_ptr(mainCamera) {}
-// 	virtual void render() override {
-// 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-// 		ImGui::Text("Position: (%f,%f,%f)", mainCamera_ptr->GetPosition().x, mainCamera_ptr->GetPosition().y, mainCamera_ptr->GetPosition().z);
-// 		ImGui::Text("Distance: %f", mainCamera_ptr->GetDistance());
-// 		ImGui::Text("Phi: %f deg", glm::degrees(mainCamera_ptr->GetPhi()));
-// 		ImGui::Text("Theta: %f deg", glm::degrees(mainCamera_ptr->GetTheta()));
-// 		ImGui::Text("FOV: %f deg", camera_fov);
-		
-// 		ImGui::RadioButton("scroll distance", &camera_scroll_type, 0);
-// 		ImGui::RadioButton("scroll fov", &camera_scroll_type, 1);
-// 		ImGui::RadioButton("scroll theta", &camera_scroll_type, 2);
-// 		ImGui::RadioButton("scroll phi", &camera_scroll_type, 3);
-//   }
-// }
 
 // Define a global ECSController instance so systems can access it
 ECSController controller;
+
+
+//Setup ImGui panel for camera, putting it here to quick access 
+class CameraEditorPanelRenderer : public ImGuiPanelRendererInterface {
+public:
+	//CameraEditorPanelRenderer(){}
+	CameraEditorPanelRenderer(ThirdPersonCamera* mainCamera, Transform* cameraTransform) : mainCamera_ptr(mainCamera), cameraTransform_ptr(cameraTransform) 
+	{
+		controller.AddEventListener(Events::Window::SCROLLED, [this](Event& e) {this->ScrollEventListener(e); });
+	}
+	virtual void render() override {
+		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+		ImGui::Text("Position: (%f,%f,%f)", cameraTransform_ptr->position.x, cameraTransform_ptr->position.y, cameraTransform_ptr->position.z);
+		ImGui::Text("Distance: %f", mainCamera_ptr->radius);
+		ImGui::Text("Phi: %f deg", glm::degrees(mainCamera_ptr->pitch));
+		ImGui::Text("Theta: %f deg", glm::degrees(mainCamera_ptr->yaw));
+		ImGui::Text("FOV: %f deg", camera_fov);
+
+		ImGui::RadioButton("scroll distance", &camera_scroll_type, 0);
+		ImGui::RadioButton("scroll fov", &camera_scroll_type, 1);
+		ImGui::RadioButton("scroll theta", &camera_scroll_type, 2);
+		ImGui::RadioButton("scroll phi", &camera_scroll_type, 3);
+
+		
+	}
+
+private:
+	ThirdPersonCamera* mainCamera_ptr;
+	Transform* cameraTransform_ptr;
+
+	void ScrollEventListener(Event& e)
+	{
+		std::cout << "Scroll event received in camera panel" << std::endl;
+		double xoffset = e.GetParam<double>(Events::Window::Scrolled::XOFFSET);
+		double yoffset = e.GetParam<double>(Events::Window::Scrolled::YOFFSET);
+
+		switch (camera_scroll_type)
+		{
+		case 0:
+			mainCamera_ptr->radius = glm::clamp(mainCamera_ptr->radius + static_cast<float>(yoffset) * 0.1f, 1.0f, 10.0f);
+			break;
+		case 1:
+			mainCamera_ptr->fov = glm::clamp(mainCamera_ptr->fov + static_cast<float>(yoffset) * 0.5f, 30.0f, 120.0f);
+			break;
+		case 2:
+			mainCamera_ptr->yaw += static_cast<float>(yoffset) * 0.1f;
+			break;
+		case 3:
+			mainCamera_ptr->pitch = glm::clamp(mainCamera_ptr->pitch + static_cast<float>(yoffset) * 0.1f, glm::radians(-89.0f), glm::radians(89.0f));
+			break;
+		}
+	}
+
+};
+
 
 Game::Game()
 {
@@ -56,8 +92,7 @@ Game::Game()
 	glfwWindowHint(GLFW_SAMPLES, 32);
 
 
-	window = std::make_unique<Window>(1280, 720, "JunkPunk");
-	loaderSystem = std::make_unique<LevelLoaderSystem>();
+	window = std::make_shared<Window>(1280, 720, "JunkPunk");
 	time = std::make_unique<Time>();
 	gamepad = std::make_shared<Gamepad>(1); // initialize gamepad at index 0
 	glfwSwapInterval(1); // Enable vsync to limit fps
@@ -135,6 +170,16 @@ void Game::Run()
   aEngine.LoadSound("assets/audio/jazz-background-music-325355.mp3", false);
 
   aEngine.PlaySounds("assets/audio/jazz-background-music-325355.mp3", Vector3{0, 0, 0}, -10.0f);
+
+	// imgui panel for debugging
+	ImGuiPanel camera_debug_panel(window);
+	// get main camera and transform to pass to panel
+	Entity cameraEntity = controller.GetEntityByTag("MainCamera");
+	ThirdPersonCamera& mainCamera = controller.GetComponent<ThirdPersonCamera>(cameraEntity);
+	Transform& cameraTransform = controller.GetComponent<Transform>(cameraEntity);
+	std::shared_ptr<CameraEditorPanelRenderer> cameraPanelRenderer = std::make_shared<CameraEditorPanelRenderer>(&mainCamera, &cameraTransform);
+	camera_debug_panel.setPanelRenderer(cameraPanelRenderer);
+
   // main loop
 	while (!window->shouldClose())
 	{
@@ -159,6 +204,8 @@ void Game::Run()
 
 		renderSystem->Update(time->fps(), physicsSystem->GetRenderBuffer()); // render physics debug data
 		
+		camera_debug_panel.render(); // render debug panel
+
 		window->swapBuffers();
 		glfwPollEvents();
 	}
