@@ -10,6 +10,7 @@
 #include "Systems/PhysicsSystem.h"
 #include "Systems/VehicleControlSystem.h"
 #include "Core/Time.h"
+#include "AudioEngine.h"
 
 class Game
 {

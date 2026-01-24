@@ -25,6 +25,27 @@ static glm::dvec2 previous_mouse_position;
 static bool first_time_held_right_click = false;
 static PxVec3 vehicleVelocity = PxVec3(0.0f, 0.0f, 0.0f);
 
+CAudioEngine aEngine;
+// Setup ImGui panel for camera, putting it here to quick access 
+// class CameraEditorPanelRenderer : public ImGuiPanelRendererInterface {
+// public:
+// 	//CameraEditorPanelRenderer(){}
+// 	CameraEditorPanelRenderer(std::shared_ptr<Camera> mainCamera) : mainCamera_ptr(mainCamera) {}
+// 	virtual void render() override {
+// 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+// 		ImGui::Text("Position: (%f,%f,%f)", mainCamera_ptr->GetPosition().x, mainCamera_ptr->GetPosition().y, mainCamera_ptr->GetPosition().z);
+// 		ImGui::Text("Distance: %f", mainCamera_ptr->GetDistance());
+// 		ImGui::Text("Phi: %f deg", glm::degrees(mainCamera_ptr->GetPhi()));
+// 		ImGui::Text("Theta: %f deg", glm::degrees(mainCamera_ptr->GetTheta()));
+// 		ImGui::Text("FOV: %f deg", camera_fov);
+		
+// 		ImGui::RadioButton("scroll distance", &camera_scroll_type, 0);
+// 		ImGui::RadioButton("scroll fov", &camera_scroll_type, 1);
+// 		ImGui::RadioButton("scroll theta", &camera_scroll_type, 2);
+// 		ImGui::RadioButton("scroll phi", &camera_scroll_type, 3);
+//   }
+// }
+
 // Define a global ECSController instance so systems can access it
 ECSController controller;
 
@@ -109,8 +130,12 @@ Game::Game()
 // main game function
 void Game::Run()
 {
+  aEngine.Init();
 
-	// main loop
+  aEngine.LoadSound("assets/audio/jazz-background-music-325355.mp3", false);
+
+  aEngine.PlaySounds("assets/audio/jazz-background-music-325355.mp3", Vector3{0, 0, 0}, -10.0f);
+  // main loop
 	while (!window->shouldClose())
 	{
 		renderSystem->Clear(0.0f, 0.0f, 0.0f, 1.0f); // clear screen
