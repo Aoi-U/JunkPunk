@@ -202,6 +202,7 @@
     <ClInclude Include="src\Components\Render.h" />
     <ClInclude Include="src\Components\Transform.h" />
     <ClInclude Include="src\Core\AudioEngine.h" />
+    <ClInclude Include="src\Core\BoundingVolumes.h" />
     <ClInclude Include="src\Core\EBO.h" />
     <ClInclude Include="src\Core\Light.h" />
     <ClInclude Include="src\Core\Mesh.h" />

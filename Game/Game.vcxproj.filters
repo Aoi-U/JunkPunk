@@ -22,9 +22,6 @@
     <Filter Include="Header Files\imgui">
       <UniqueIdentifier>{d4255b95-a7b8-4627-8931-1fdabe066682}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Rendering">
-      <UniqueIdentifier>{bc14bf24-5185-4cc0-ab69-b40114ef96b8}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\Entity">
       <UniqueIdentifier>{30358ca3-1031-4bd1-908d-0fa56a49bc6e}</UniqueIdentifier>
     </Filter>
@@ -216,8 +213,14 @@
     <ClCompile Include="src\Core\EBO.cpp">
       <Filter>Source Files\Core\Rendering</Filter>
     </ClCompile>
-    <ClCompile Include="src\AudioEngine.cpp">
+    <ClCompile Include="..\..\test\Game\src\ImGuiPanel.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\AudioEngine.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Systems\AudioSystem.cpp">
+      <Filter>Source Files\Systems</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -383,8 +386,17 @@
     <ClInclude Include="src\Systems\VehicleControlSystem.h">
       <Filter>Header Files\Systems</Filter>
     </ClInclude>
-    <ClInclude Include="src\AudioEngine.h">
+    <ClInclude Include="..\..\test\Game\src\ImGuiPanel.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\BoundingVolumes.h">
+      <Filter>Header Files\Core\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\AudioEngine.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Systems\AudioSystem.h">
+      <Filter>Header Files\Systems</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

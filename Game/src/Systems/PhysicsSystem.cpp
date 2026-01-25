@@ -81,7 +81,6 @@ void PhysicsSystem::Update(float deltaTime)
 	auto& vehicleCommands = controller.GetComponent<VehicleCommands>(vehicleEntity);
 
 	vehicleCommands.isGrounded = gVehicle.IsGrounded(gPhysicsScene);
-	std::cout << "Vehicle is grounded: " << vehicleCommands.isGrounded << std::endl;
 
 	Command command;
 	command.throttle = vehicleCommands.throttle;

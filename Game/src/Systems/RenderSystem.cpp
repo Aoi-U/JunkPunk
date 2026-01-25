@@ -29,7 +29,7 @@ void RenderSystem::Init()
 	textShader = std::make_shared<Shader>("assets/shaders/text.vert", "assets/shaders/text.frag");
 
 
-	Entity player = controller.GetEntityByTag("Player");
+	Entity player = controller.GetEntityByTag("VehicleCommands");
 	auto& playerTransform = controller.GetComponent<Transform>(player);
 
 	float radius = 5.0f;
@@ -122,7 +122,7 @@ void RenderSystem::DrawShadowPass()
 	glViewport(0, 0, shadowMapper->SHADOW_WIDTH, shadowMapper->SHADOW_HEIGHT);
 	shadowMapper->BindShadowMap();
 	glClear(GL_DEPTH_BUFFER_BIT);
-	glCullFace(GL_FRONT); // to reduce peter panning
+	glCullFace(GL_FRONT); 
 
 	// draw entities
 	for (auto& entity : entities)
@@ -142,7 +142,6 @@ void RenderSystem::DrawShadowPass()
 			mesh.UnbindVao();
 		}
 	}
-
 	shadowMapper->UnbindShadowMap();
 	glCullFace(GL_BACK);
 	glViewport(0, 0, screenWidth, screenHeight);
@@ -158,6 +157,13 @@ void RenderSystem::DrawLightingPass()
 	
 	auto& tpp = controller.GetComponent<ThirdPersonCamera>(camera);
 
+	// create cameras frustum for frustum culling
+	glm::vec3 forward = glm::normalize(glm::vec3(glm::inverse(tpp.viewMatrix)[2]));
+	glm::vec3 right = glm::normalize(glm::vec3(glm::inverse(tpp.viewMatrix)[0]));
+	glm::vec3 up = glm::normalize(glm::vec3(glm::inverse(tpp.viewMatrix)[1]));
+	Frustum frust = CreateFrustum(tpp.zFar, tpp.zNear, tpp.fov, tpp.screenWidth / (float)tpp.screenHeight, -forward, right, up, glm::vec3(glm::inverse(tpp.viewMatrix)[3]));
+
+	// setup uniforms
 	glm::vec3 pos = glm::vec3(glm::inverse(tpp.viewMatrix)[3]);
 	glm::vec3 lightDir = light.getDirection();
 
@@ -180,6 +186,13 @@ void RenderSystem::DrawLightingPass()
 	{
 		auto& renderComp = controller.GetComponent<Render>(entity);
 		auto& transformComp = controller.GetComponent<Transform>(entity);
+		
+		// check if entity is visible
+		if (!renderComp.boundingVolume->isOnFrustum(frust, transformComp))
+		{
+			continue;
+		}
+
 		glm::mat4 translation = glm::translate(glm::mat4(1.0f), transformComp.position);
 		glm::mat4 rotation = glm::mat4_cast(transformComp.quatRotation);
 		glm::mat4 scale = glm::scale(glm::mat4(1.0f), transformComp.scale);

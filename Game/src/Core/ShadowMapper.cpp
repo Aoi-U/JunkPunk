@@ -67,6 +67,8 @@ void ShadowMapper::Update(float aspect, float near, float far, float fovY, glm::
 	this->farPlane = far;
 	this->fovY = fovY;
 	this->view = view;
+
+	shadowCascadeLevels = { far / 50.0f, far / 25.0f, far / 10.0f, far / 3.0f };
 }
 
 void ShadowMapper::BindShadowMap()
@@ -135,8 +137,7 @@ glm::mat4 ShadowMapper::GetLightSpaceMatrix(const float nearPlane, const float f
 		maxZ = std::max(maxZ, trf.z);
 	}
 
-	// Tune this parameter according to the scene
-	constexpr float zMult = 3.5f;
+	constexpr float zMult = 5.0f;
 	if (minZ < 0)
 	{
 		minZ *= zMult;
@@ -165,7 +166,7 @@ std::vector<glm::mat4> ShadowMapper::GetLightSpaceMatrices()
 	{
 		if (i == 0)
 		{
-			lightSpaceMatrices.push_back(GetLightSpaceMatrix(0.1f, shadowCascadeLevels[i]));
+			lightSpaceMatrices.push_back(GetLightSpaceMatrix(nearPlane, shadowCascadeLevels[i]));
 		}
 		else if (i < shadowCascadeLevels.size())
 		{

@@ -151,10 +151,10 @@ Game::Game()
 	}
 
 	audioSystem->Init();
-	loaderSystem->LoadLevel();
 	vehicleControlSystem->Init(gamepad);
 	camControlSystem->Init(gamepad);
 	renderSystem->Init();
+	loaderSystem->LoadLevel();
 	physicsSystem->Init();
 }
 
@@ -175,7 +175,7 @@ void Game::Run()
 	// imgui panel for debugging
 	ImGuiPanel camera_debug_panel(window);
 	// get main camera and transform to pass to panel
-	Entity cameraEntity = controller.GetEntityByTag("MainCamera");
+	Entity cameraEntity = controller.GetEntityByTag("Camera");
 	ThirdPersonCamera& mainCamera = controller.GetComponent<ThirdPersonCamera>(cameraEntity);
 	Transform& cameraTransform = controller.GetComponent<Transform>(cameraEntity);
 	std::shared_ptr<CameraEditorPanelRenderer> cameraPanelRenderer = std::make_shared<CameraEditorPanelRenderer>(&mainCamera, &cameraTransform);
