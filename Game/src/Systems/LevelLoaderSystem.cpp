@@ -29,9 +29,9 @@ void LevelLoaderSystem::LoadLevel()
 	entity = loaded.first;
 	controller.AddComponent(entity, Transform{ glm::vec3(0.0f, -5.0f, 0.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(40.0f) });
 	controller.AddComponent(entity, VehicleBody{});
-	controller.AddComponent(entity, Player{});
+	controller.AddComponent(entity, VehicleCommands{});
 	controller.AddComponent(entity, PhysicsBody{});
-	controller.AssignTag(entity, "Player");
+	controller.AssignTag(entity, "VehicleCommands");
 }
 
 std::pair<Entity, std::shared_ptr<Model>> LevelLoaderSystem::LoadModel(std::string path)

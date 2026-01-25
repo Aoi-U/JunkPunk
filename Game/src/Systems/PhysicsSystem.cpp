@@ -10,6 +10,8 @@ extern ECSController controller;
 PhysicsSystem::PhysicsSystem()
 	: gVehicle()
 {
+	controller.AddEventListener(Events::Player::PLAYER_JUMPED, [this](Event& e) { this->PhysicsSystem::JumpEventListener(e); });
+
 	gFoundation = PxCreateFoundation(PX_PHYSICS_VERSION, gAllocator, gErrorCallback);
 	if (!gFoundation)
 	{
@@ -30,7 +32,8 @@ PhysicsSystem::PhysicsSystem()
 	}
 
 	PxSceneDesc PhysicsSceneDesc(gPhysics->getTolerancesScale());
-	PhysicsSceneDesc.gravity = PxVec3(0.0f, -9.81f, 0.0f);
+	//PhysicsSceneDesc.gravity = PxVec3(0.0f, -9.81f, 0.0f);
+	PhysicsSceneDesc.gravity = PxVec3(0.0f, -20.0f, 0.0f); // double gravity for vehicle testing
 	gDispatcher = PxDefaultCpuDispatcherCreate(2);
 	PhysicsSceneDesc.cpuDispatcher = gDispatcher;
 	PhysicsSceneDesc.filterShader = PxDefaultSimulationFilterShader;
@@ -74,8 +77,12 @@ void PhysicsSystem::Init()
 void PhysicsSystem::Update(float deltaTime)
 {
 	// get the vehicle command from ECS
-	Entity vehicleEntity = controller.GetEntityByTag("Player");
-	auto& vehicleCommands = controller.GetComponent<Player>(vehicleEntity);
+	Entity vehicleEntity = controller.GetEntityByTag("VehicleCommands");
+	auto& vehicleCommands = controller.GetComponent<VehicleCommands>(vehicleEntity);
+
+	vehicleCommands.isGrounded = gVehicle.IsGrounded(gPhysicsScene);
+	std::cout << "Vehicle is grounded: " << vehicleCommands.isGrounded << std::endl;
+
 	Command command;
 	command.throttle = vehicleCommands.throttle;
 	command.brake = vehicleCommands.brake;
@@ -176,7 +183,6 @@ void PhysicsSystem::Cleanup()
 
 void PhysicsSystem::CreateMap()
 {
-	std::cout << "Number of entities in PhysicsSystem: " << entities.size() << std::endl;
 	// get all entities with StaticModel and Transform components
 	for (auto& entity : entities)
 	{
@@ -273,4 +279,9 @@ PxTriangleMesh* PhysicsSystem::CreateTriangleMesh(const Mesh& mesh)
 	PxDefaultMemoryInputData readBuffer(writeBuffer.getData(), writeBuffer.getSize());
 
 	return gPhysics->createTriangleMesh(readBuffer);
+}
+
+void PhysicsSystem::JumpEventListener(Event& e)
+{
+	gVehicle.jump();
 }

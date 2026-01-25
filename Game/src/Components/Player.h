@@ -6,11 +6,11 @@
 
 #include "../Core/Types.h"
 
-struct Player
+struct VehicleCommands
 {
 	int score;
 	float throttle;
 	float brake;
 	float steer;
-	bool jump;
+	bool isGrounded;
 };

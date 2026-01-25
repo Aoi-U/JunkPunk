@@ -81,3 +81,19 @@ namespace Events::Physics::Trigger_Enter
 	const ParamId ENTITY_ONE = "Events::Physics::TriggerEnter::ENTITY_ONE"_hash; // first entity involved
 	const ParamId ENTITY_TWO = "Events::Physics::TriggerEnter::ENTITY_TWO"_hash; // second entity involved
 }
+
+namespace Events::Physics::Trigger_Exit
+{
+	const ParamId ENTITY_ONE = "Events::Physics::TriggerExit::ENTITY_ONE"_hash; // first entity involved
+	const ParamId ENTITY_TWO = "Events::Physics::TriggerExit::ENTITY_TWO"_hash; // second entity involved
+}
+
+namespace Events::Player
+{
+	const EventId PLAYER_JUMPED = "Events::Player::PLAYER_JUMPED"_hash;
+}
+
+namespace Events::Player::Player_Jumped
+{
+	const ParamId ENTITY = "Events::Physics::PlayerJumped::ENTITY"_hash; // entity that jumped
+}

@@ -96,7 +96,7 @@ Game::Game()
 	controller.RegisterComponent<Render>();
 	controller.RegisterComponent<Transform>();
 	controller.RegisterComponent<ThirdPersonCamera>();
-	controller.RegisterComponent<Player>();
+	controller.RegisterComponent<VehicleCommands>();
 	controller.RegisterComponent<PhysicsBody>();
 	controller.RegisterComponent<RigidBody>();
 	controller.RegisterComponent<StaticModel>();
@@ -140,7 +140,7 @@ Game::Game()
 	vehicleControlSystem = controller.RegisterSystem<VehicleControlSystem>();
 	{
 		Signature signature;
-		signature.set(controller.GetComponentType<Player>());
+		signature.set(controller.GetComponentType<VehicleCommands>());
 		controller.SetSystemSignature<VehicleControlSystem>(signature);
 	}
 

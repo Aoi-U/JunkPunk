@@ -146,6 +146,25 @@ const PxVec3 MainVehicle::getAngularVelocity() const
 	return gVehicle.mPhysXState.physxActor.rigidBody->getAngularVelocity();
 }
 
+bool MainVehicle::IsGrounded(PxScene* scene) const
+{
+	PxRaycastBuffer hit;
+	bool grounded = false;
+	PxVec3 rayOrigin = gVehicle.mPhysXState.physxActor.rigidBody->getGlobalPose().p;
+	rayOrigin.y -= gVehicle.mPhysXParams.physxActorBoxShapeHalfExtents.y;
+	PxVec3 rayDir = PxVec3(0.0f, -1.0f, 0.0f);
+	PxReal rayLength = 1.0f;
+	
+	grounded = scene->raycast(rayOrigin, rayDir, rayLength, hit, PxHitFlag::eDEFAULT);
+
+	if (grounded && hit.block.actor && hit.block.actor != gVehicle.mPhysXState.physxActor.rigidBody)
+	{
+		return true;
+	}
+
+	return false;
+}
+
 void MainVehicle::jump()
 {
 	gVehicle.mPhysXState.physxActor.rigidBody->addForce(jumpForce, PxForceMode::eIMPULSE);

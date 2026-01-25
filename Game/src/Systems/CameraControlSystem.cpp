@@ -19,9 +19,9 @@ void CameraControlSystem::Init(std::shared_ptr<Gamepad> gamepad)
 
 void CameraControlSystem::Update(float deltaTime)
 {
-	Entity player = controller.GetEntityByTag("Player");
+	Entity player = controller.GetEntityByTag("VehicleCommands");
 	auto& playerTransform = controller.GetComponent<Transform>(player);
-	auto& playerComp = controller.GetComponent<Player>(player);
+	auto& playerComp = controller.GetComponent<VehicleCommands>(player);
 
 	for (auto const& entity : entities)
 	{

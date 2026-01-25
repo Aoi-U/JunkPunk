@@ -3,7 +3,7 @@
 #include "../Core/Types.h"
 
 #include "System.h"
-#include "../AudioEngine.h"
+#include "../Core/AudioEngine.h"
 
 class Event;
 
@@ -16,4 +16,6 @@ private:
 	CAudioEngine aEngine;
 
 	void AudioEventListener(Event& e);
+
+	void JumpEventListener(Event& e);
 };

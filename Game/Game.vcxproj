@@ -145,7 +145,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\test\Game\src\ImGuiPanel.cpp" />
     <ClCompile Include="Gamepad.cpp" />
-    <ClCompile Include="src\AudioEngine.cpp" />
+    <ClCompile Include="src\Core\AudioEngine.cpp" />
     <ClCompile Include="src\Core\EBO.cpp" />
     <ClCompile Include="src\Core\Light.cpp" />
     <ClCompile Include="src\Core\Mesh.cpp" />
@@ -194,7 +194,6 @@
     <ClInclude Include="..\..\test\Game\src\ImGuiPanel.h" />
     <ClInclude Include="assets\shaders\colliders.vert" />
     <ClInclude Include="Gamepad.h" />
-    <ClInclude Include="src\AudioEngine.h" />
     <ClInclude Include="src\Components\Camera.h" />
     <ClInclude Include="src\Components\ComponentArray.h" />
     <ClInclude Include="src\Components\ComponentManager.h" />
@@ -202,6 +201,7 @@
     <ClInclude Include="src\Components\Player.h" />
     <ClInclude Include="src\Components\Render.h" />
     <ClInclude Include="src\Components\Transform.h" />
+    <ClInclude Include="src\Core\AudioEngine.h" />
     <ClInclude Include="src\Core\EBO.h" />
     <ClInclude Include="src\Core\Light.h" />
     <ClInclude Include="src\Core\Mesh.h" />

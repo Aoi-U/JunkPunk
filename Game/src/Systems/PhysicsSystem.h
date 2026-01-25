@@ -6,7 +6,10 @@
 
 #include "../Core/Vehicle/MainVehicle.h"
 #include "../Core/Mesh.h"
+#include "../Core/Types.h"
 #include "System.h"
+
+class Event;
 
 using namespace physx;
 class PhysicsSystem : public System
@@ -47,5 +50,7 @@ private:
 	void CreateMap();
 
 	PxTriangleMesh* CreateTriangleMesh(const Mesh& mesh); // generate static triangle meshes from models
+
+	void JumpEventListener(Event& e);
 
 };
