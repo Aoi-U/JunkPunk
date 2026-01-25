@@ -15,8 +15,6 @@
 #include "Core/Types.h"
 
 
-//#include "Entity.h"
-
 static int camera_scroll_type = 0;
 static bool split_camera = false;
 static bool first_time_held_right_click = false;
@@ -78,21 +76,23 @@ private:
 
 };
 
+// some sources that explain ecs
+// https://austinmorlan.com/posts/entity_component_system/ // the ecs i wrote is based on this article so best to read this to understand how it works
+// https://www.youtube.com/watch?v=dEdFM0uQpA0 
 
 Game::Game()
 {
-	//controller = ECSController();
 	controller.Init();
 	glfwWindowHint(GLFW_SAMPLES, 32);
 
 
 	window = std::make_shared<Window>(1280, 720, "JunkPunk");
+	gamepad = std::make_shared<Gamepad>(1); // initialize gamepad 
 	time = std::make_unique<Time>();
-	gamepad = std::make_shared<Gamepad>(1); // initialize gamepad at index 0
 	glfwSwapInterval(1); // Enable vsync to limit fps
 
 
-	// register components
+	// register components (you must register components first to use them so just register all components here)
 	controller.RegisterComponent<Render>();
 	controller.RegisterComponent<Transform>();
 	controller.RegisterComponent<ThirdPersonCamera>();
@@ -103,10 +103,16 @@ Game::Game()
 	controller.RegisterComponent<VehicleBody>();
 	controller.RegisterComponent<Trigger>();
 
-	
-	// register systems
+	// register systems (you must register systems before setting component signatures) 
 	loaderSystem = controller.RegisterSystem<LevelLoaderSystem>();
 	{
+		// signatures basically just tell the system which components to look for in an entity
+		// an entity must have all the components in the signature to be added to the systems entity list
+		// meaning, an entities component list must be a superset of the systems signature to be added to the system (an entity can have more components than a system requires)
+		// ex:
+		//	system signature: [Transform, Render]
+		//	entity A components: [Transform, Render, PhysicsBody] -> added to system
+		//	entity B components: [Transform] -> not added to system
 		Signature signature;
 		controller.SetSystemSignature<LevelLoaderSystem>(signature);
 	}
@@ -150,18 +156,13 @@ Game::Game()
 		controller.SetSystemSignature<AudioSystem>(signature);
 	}
 
+	loaderSystem->LoadLevel();
 	audioSystem->Init();
 	vehicleControlSystem->Init(gamepad);
 	camControlSystem->Init(gamepad);
 	renderSystem->Init();
-	loaderSystem->LoadLevel();
 	physicsSystem->Init();
 }
-
-//Game::~Game()
-//{
-//
-//}
 
 // main game function
 void Game::Run()
@@ -171,6 +172,7 @@ void Game::Run()
 	event.SetParam<Vector3>(Events::Audio::Play_Sound::POSITION, Vector3{ 0.0f, 0.0f, 0.0f });
 	event.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, -10.0f);
 	controller.SendEvent(event);
+
 
 	// imgui panel for debugging
 	ImGuiPanel camera_debug_panel(window);
@@ -187,20 +189,15 @@ void Game::Run()
 		renderSystem->Clear(0.0f, 0.0f, 0.0f, 1.0f); // clear screen
 		time->Update();
 
-		vehicleControlSystem->Update();
 
-
-		int totalUpdates = 0;
+		
 		while (time->accumulator >= time->deltaTime)
 		{
 			physicsSystem->Update(time->deltaTime);
 			time->accumulator -= time->deltaTime;
 			time->totalTime += time->deltaTime;
-			totalUpdates++;
-			//std::cout << "Total Physics Updates this frame: " << totalUpdates << std::endl;
 		}
-		
-
+		vehicleControlSystem->Update();
 		camControlSystem->Update(time->deltaTime);
 
 		renderSystem->Update(time->fps(), physicsSystem->GetRenderBuffer()); // render physics debug data
@@ -217,5 +214,4 @@ void Game::Run()
 void Game::Cleanup()
 {
 
-	std::cout << "Game cleaned up and exited successfully." << std::endl;
 }

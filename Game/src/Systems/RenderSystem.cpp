@@ -29,29 +29,6 @@ void RenderSystem::Init()
 	textShader = std::make_shared<Shader>("assets/shaders/text.vert", "assets/shaders/text.frag");
 
 
-	Entity player = controller.GetEntityByTag("VehicleCommands");
-	auto& playerTransform = controller.GetComponent<Transform>(player);
-
-	float radius = 5.0f;
-	float heightOffset = 1.5f;
-	float lerpSpeed = 3.0f;
-	float horizontalLookSpeed = 5.0f;
-	float verticalLookSpeed = 1.5f;
-	float yaw = 0.0f;
-	float pitch = 00.0f;
-	float fov = 45.0f;
-	float zNear = 0.1f;
-	float zFar = 1000.0f;
-	
-	glm::vec3 cameraPos = playerTransform.position + glm::vec3(0.0f, heightOffset, -radius);
-	glm::mat4 viewMatrix = glm::lookAt(cameraPos, playerTransform.position + glm::vec3(0.0f, heightOffset, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-	glm::mat4 projectionMatrix = glm::perspective(glm::radians(fov), 1280 / (float)720, zNear, zFar);
-
-	Entity camera = controller.createEntity();
-	controller.AddComponent(camera, ThirdPersonCamera{ radius, heightOffset, lerpSpeed, horizontalLookSpeed, verticalLookSpeed, yaw, pitch, fov, zNear, zFar, 1280, 720, viewMatrix, projectionMatrix });
-	controller.AddComponent(camera, Transform{ cameraPos, glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(1.0f) });
-	controller.AssignTag(camera, "Camera");
-
 	controller.AddEventListener(Events::Window::RESIZED, [this](Event& e){this->RenderSystem::WindowSizeListener(e); });
 
 	// setup skybox
@@ -70,6 +47,12 @@ void RenderSystem::Init()
 	textShader->setMat4("u_projection", text.projMat);
 
 	// setup shadow mapper
+	Entity camera = controller.GetEntityByTag("Camera");
+	auto& tpp = controller.GetComponent<ThirdPersonCamera>(camera);
+	float zNear = tpp.zNear;
+	float zFar = tpp.zFar;
+	float fov = tpp.fov;
+	glm::mat4 viewMatrix = tpp.viewMatrix;
 	light = Light();
 	shadowMapper = std::make_unique<ShadowMapper>(screenWidth / (float)screenHeight, zNear, zFar, glm::radians(fov), viewMatrix, light);
 	shadowMapper->Init(shadowShader, defaultShader);

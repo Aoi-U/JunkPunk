@@ -15,7 +15,7 @@ using EventId = std::uint32_t;
 using ParamId = std::uint32_t;
 
 
-// https://gist.github.com/Lee-R/3839813
+// https://gist.github.com/Lee-R/3839813 hasing functions
 constexpr std::uint32_t fnv1a_32(char const* s, std::size_t count)
 {
 	return ((count ? fnv1a_32(s, count - 1) : 2166136261u) ^ s[count]) * 16777619u; // NOLINT (hicpp-signed-bitwise)
@@ -25,6 +25,7 @@ constexpr std::uint32_t operator "" _hash(char const* s, std::size_t count)
 {
 	return fnv1a_32(s, count);
 }
+// end hashing functions
 
 #define METHOD_LISTENER(EventType, Listener) EventType, std::bind(&Listener, this, std::placeholders::_1)
 #define FUNCTION_LISTENER(EventType, Listener) EventType, std::bind(&Listener, std::placeholders::_1)
@@ -32,7 +33,6 @@ constexpr std::uint32_t operator "" _hash(char const* s, std::size_t count)
 // window events
 namespace Events::Window 
 {
-	const EventId QUIT = "Events::Window::QUIT"_hash;
 	const EventId RESIZED = "Events::Window::RESIZED"_hash;
 	const EventId INPUT = "Events::Window::INPUT"_hash;
 	const EventId SCROLLED = "Events::Window::SCROLLED"_hash;
@@ -88,12 +88,19 @@ namespace Events::Physics::Trigger_Exit
 	const ParamId ENTITY_TWO = "Events::Physics::TriggerExit::ENTITY_TWO"_hash; // second entity involved
 }
 
+// player events
 namespace Events::Player
 {
 	const EventId PLAYER_JUMPED = "Events::Player::PLAYER_JUMPED"_hash;
+	const EventId RESET_VEHICLE = "Events::Player::RESET_VEHICLE"_hash;
 }
 
 namespace Events::Player::Player_Jumped
 {
-	const ParamId ENTITY = "Events::Physics::PlayerJumped::ENTITY"_hash; // entity that jumped
+	const ParamId ENTITY = "Events::Physics::Player_Jumped::ENTITY"_hash; // entity that jumped
+}
+
+namespace Events::Player::Reset_Vehicle
+{
+	const ParamId ENTITY = "Events::Player::Reset_Vehicle::ENTITY"_hash;
 }

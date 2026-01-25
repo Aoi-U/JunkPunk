@@ -1,9 +1,9 @@
 #pragma once
 
 #include "../Core/Types.h"
+#include "../Core/AudioEngine.h"
 
 #include "System.h"
-#include "../Core/AudioEngine.h"
 
 class Event;
 

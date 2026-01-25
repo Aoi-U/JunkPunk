@@ -11,6 +11,7 @@ PhysicsSystem::PhysicsSystem()
 	: gVehicle()
 {
 	controller.AddEventListener(Events::Player::PLAYER_JUMPED, [this](Event& e) { this->PhysicsSystem::JumpEventListener(e); });
+	controller.AddEventListener(Events::Player::RESET_VEHICLE, [this](Event& e) { this->PhysicsSystem::ResetVehicleEventListener(e); });
 
 	gFoundation = PxCreateFoundation(PX_PHYSICS_VERSION, gAllocator, gErrorCallback);
 	if (!gFoundation)
@@ -37,8 +38,12 @@ PhysicsSystem::PhysicsSystem()
 	gDispatcher = PxDefaultCpuDispatcherCreate(2);
 	PhysicsSceneDesc.cpuDispatcher = gDispatcher;
 	PhysicsSceneDesc.filterShader = PxDefaultSimulationFilterShader;
+
+
 	//PhysicsSceneDesc.filterShader = VehicleFilterShader;
 	gPhysicsScene = gPhysics->createScene(PhysicsSceneDesc);
+
+	gPhysicsScene->setSimulationEventCallback(gPhysicsCallbacks);
 
 	// https://nvidia-omniverse.github.io/PhysX/physx/5.6.1/docs/DebugVisualization.html
 	gPhysicsScene->setVisualizationParameter(PxVisualizationParameter::eSCALE, 1.0f);
@@ -47,7 +52,7 @@ PhysicsSystem::PhysicsSystem()
 	
 	// vehicle specific visualizations
 
-	gGroundMaterial = gPhysics->createMaterial(0.5f, 0.5f, 0.6f);
+	gGroundMaterial = gPhysics->createMaterial(1.0f, 1.0f, 1.0f);
 
 
 	// initialize PVD
@@ -61,17 +66,13 @@ PhysicsSystem::PhysicsSystem()
 	}
 
 	PxInitVehicleExtension(*gFoundation); // initialize vehicle extension
+
 }
 
 void PhysicsSystem::Init()
 {
 	Box(1.0f, 5, PxVec3(0.0f, 10.0f, 0.0f)); // test
 	CreateMap();
-	/*if (!gVehicle.setup(gPhysicsScene, gPhysics, gGroundMaterial))
-	{
-		std::cout << "Vehicle failed to initialize!" << std::endl;
-		return;
-	}*/
 }
 
 void PhysicsSystem::Update(float deltaTime)
@@ -283,4 +284,10 @@ PxTriangleMesh* PhysicsSystem::CreateTriangleMesh(const Mesh& mesh)
 void PhysicsSystem::JumpEventListener(Event& e)
 {
 	gVehicle.jump();
+}
+
+void PhysicsSystem::ResetVehicleEventListener(Event& e)
+{
+	//gVehicle.respawnAtCheckpoint();
+	gVehicle.resetTransform();
 }

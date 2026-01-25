@@ -69,8 +69,29 @@ Sphere generateBoundingSphere(std::shared_ptr<Model> model)
 
 void LevelLoaderSystem::LoadLevel()
 {
-	// create scene entities
+	// create camera entity (KEEP THIS AT THE VERY TOP OR ELSE IT WILL CRASH) (i know whats causing it but i cant think of a better solution)
+	float radius = 5.0f;
+	float heightOffset = 1.5f;
+	float lerpSpeed = 3.0f;
+	float horizontalLookSpeed = 5.0f;
+	float verticalLookSpeed = 1.5f;
+	float yaw = 0.0f;
+	float pitch = 00.0f;
+	float fov = 45.0f;
+	float zNear = 0.1f;
+	float zFar = 1000.0f;
+	glm::vec3 cameraPos = glm::vec3(0.0f, -5.0f, 0.0f) + glm::vec3(0.0f, heightOffset, -radius);
+	glm::mat4 viewMatrix = glm::lookAt(cameraPos, glm::vec3(0.0f, -5.0f, 0.0f) + glm::vec3(0.0f, heightOffset, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::mat4 projectionMatrix = glm::perspective(glm::radians(fov), 1280 / (float)720, zNear, zFar);
+
 	Entity entity = controller.createEntity();
+	controller.AddComponent(entity, ThirdPersonCamera{ radius, heightOffset, lerpSpeed, horizontalLookSpeed, verticalLookSpeed, yaw, pitch, fov, zNear, zFar, 1280, 720, viewMatrix, projectionMatrix });
+	controller.AddComponent(entity, Transform{ cameraPos, glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(1.0f) });
+	controller.AssignTag(entity, "Camera");
+	// end camera entity
+
+	// create scene entities
+	entity = controller.createEntity();
 	auto loaded = LoadModel("assets/models/snowy_mountain_-_terrain/scene.gltf");
 	controller.AddComponent(entity, Transform{ glm::vec3(0.0f, 0.0f, 0.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(500.0f) });
 	controller.AddComponent(entity, StaticModel{ nullptr, loaded.first });
@@ -93,6 +114,8 @@ void LevelLoaderSystem::LoadLevel()
 	controller.AddComponent(entity, Render{ loaded.first, loaded.second });
 	controller.AddComponent(entity, PhysicsBody{});
 	controller.AssignTag(entity, "VehicleCommands");
+
+
 }
 
 std::pair<std::shared_ptr<Model>, std::shared_ptr<BoundingVolume>> LevelLoaderSystem::LoadModel(std::string path)

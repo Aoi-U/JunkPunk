@@ -1,7 +1,5 @@
 #pragma once
 
-#include <unordered_map>
-
 #include "Window.h"
 #include "InputManager.h"
 #include "Systems/RenderSystem.h"
@@ -18,11 +16,13 @@ public:
 	Game();
 	~Game() = default;
 
-
 	void Run();
 
 private:
+	std::shared_ptr<Gamepad> gamepad;
 	std::shared_ptr<Window> window;
+	std::unique_ptr<Time> time;
+
 	
 	// systems
 	std::shared_ptr<RenderSystem> renderSystem;
@@ -32,11 +32,6 @@ private:
 	std::shared_ptr<VehicleControlSystem> vehicleControlSystem;
 	std::shared_ptr<AudioSystem> audioSystem;
 
-
-	std::unique_ptr<Time> time;
-
-	std::shared_ptr<Gamepad> gamepad;
-	
 
 	void Cleanup();
 

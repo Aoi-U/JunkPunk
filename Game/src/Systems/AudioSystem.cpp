@@ -15,6 +15,7 @@ void AudioSystem::Init()
 	aEngine.LoadSound("assets/audio/jazz-background-music-325355.mp3", false);
 	aEngine.LoadSound("assets/audio/mariojump.mp3", false);
 
+	// event listeners
 	controller.AddEventListener(Events::Audio::PLAY_SOUND, [this](Event& e) {this->AudioEventListener(e); });
 	controller.AddEventListener(Events::Player::PLAYER_JUMPED, [this](Event& e) {this->JumpEventListener(e); });
 }
@@ -33,13 +34,14 @@ void AudioSystem::JumpEventListener(Event& e)
 {
 	Entity entity = e.GetParam<Entity>(Events::Player::Player_Jumped::ENTITY);
 
+	// play the jump sound at the entitys position
 	if (controller.HasComponent<Transform>(entity))
 	{
 		auto& transform = controller.GetComponent<Transform>(entity);
 		Vector3 position = { transform.position.x, transform.position.y, transform.position.z };
 		aEngine.PlaySounds("assets/audio/mariojump.mp3", position, -20.0f);
 	}
-	else
+	else // fall back to origin
 	{
 		aEngine.PlaySounds("assets/audio/mariojump.mp3", Vector3{ 0, 0, 0 }, -20.0f);
 	}

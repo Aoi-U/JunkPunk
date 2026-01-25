@@ -7,6 +7,7 @@
 #include "../Core/Vehicle/MainVehicle.h"
 #include "../Core/Mesh.h"
 #include "../Core/Types.h"
+#include "PhysicsCallbacks.h"
 #include "System.h"
 
 class Event;
@@ -21,16 +22,8 @@ public:
 
 	void Update(float deltaTime);
 
-	void Plane();
-
-	void Box(float halfLen, PxU32 size, PxVec3 position); // test
-
-
-	void Simulate(float deltaTime);
 
 	void Cleanup();
-
-	MainVehicle& getVehicle() { return gVehicle; }
 
 	const PxRenderBuffer& GetRenderBuffer() { return gPhysicsScene->getRenderBuffer(); }
 
@@ -47,10 +40,24 @@ private:
 	PxRigidStatic* gGroundPlane = NULL;
 	MainVehicle gVehicle;
 
+	PhysicsCallbacks* gPhysicsCallbacks;
+
+	void Plane();
+
+	void Box(float halfLen, PxU32 size, PxVec3 position); // test
+
+	void Simulate(float deltaTime);
+
 	void CreateMap();
 
 	PxTriangleMesh* CreateTriangleMesh(const Mesh& mesh); // generate static triangle meshes from models
 
-	void JumpEventListener(Event& e);
+
+
+	// listeners
+
+	void JumpEventListener(Event& e); // listens for jump events
+
+	void ResetVehicleEventListener(Event& e); // listens for vehicle reset events
 
 };
