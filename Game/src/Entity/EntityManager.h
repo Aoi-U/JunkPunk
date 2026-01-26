@@ -79,7 +79,6 @@ public:
 	{
 		if (tagToEntityMap.find(tag) == tagToEntityMap.end())
 		{
-			std::cout << "searching for tag: " << tag << std::endl;
 			assert(false && "Failed to get entity by tag: Tag does not exist");
 			return MAX_ENTITIES;
 		}

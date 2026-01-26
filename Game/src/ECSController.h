@@ -42,7 +42,7 @@ public:
 	{
 		componentManager->RegisterComponent<T>();
 	}
-
+	
 	// component methods
 
 	template<typename T>
@@ -121,9 +121,7 @@ public:
 	}
 
 	// entity tag methods 
-	// added these as helpers to access any entity by a string tag
-	// can use these but ideally systems should operate on only on entities they are made for
-
+	// added these as helpers to access any entity by a string tag (if it has one assigned)
 	void AssignTag(Entity entity, const std::string tag)
 	{
 		entityManager->AssignTag(entity, tag);

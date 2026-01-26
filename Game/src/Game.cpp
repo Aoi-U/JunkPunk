@@ -10,6 +10,7 @@
 #include "Components/Camera.h"
 #include "Components/Player.h"
 #include "Components/Physics.h"
+#include "Components/Obstacle.h"
 
 #include "ECSController.h"
 #include "Core/Types.h"
@@ -29,7 +30,7 @@ public:
 	//CameraEditorPanelRenderer(){}
 	CameraEditorPanelRenderer(ThirdPersonCamera* mainCamera, Transform* cameraTransform) : mainCamera_ptr(mainCamera), cameraTransform_ptr(cameraTransform) 
 	{
-		controller.AddEventListener(Events::Window::SCROLLED, [this](Event& e) {this->ScrollEventListener(e); });
+		controller.AddEventListener(Events::Window::SCROLLED, [this](Event& e) { ScrollEventListener(e); });
 	}
 	virtual void render() override {
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
@@ -102,6 +103,7 @@ Game::Game()
 	controller.RegisterComponent<StaticModel>();
 	controller.RegisterComponent<VehicleBody>();
 	controller.RegisterComponent<Trigger>();
+	controller.RegisterComponent<MovingObstacle>();
 
 	// register systems (you must register systems before setting component signatures) 
 	loaderSystem = controller.RegisterSystem<LevelLoaderSystem>();
@@ -188,8 +190,6 @@ void Game::Run()
 	{
 		renderSystem->Clear(0.0f, 0.0f, 0.0f, 1.0f); // clear screen
 		time->Update();
-
-
 		
 		while (time->accumulator >= time->deltaTime)
 		{
@@ -198,7 +198,7 @@ void Game::Run()
 			time->totalTime += time->deltaTime;
 		}
 		vehicleControlSystem->Update();
-		camControlSystem->Update(time->deltaTime);
+		camControlSystem->Update(time->frameTime);
 
 		renderSystem->Update(time->fps(), physicsSystem->GetRenderBuffer()); // render physics debug data
 		

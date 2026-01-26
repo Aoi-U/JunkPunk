@@ -9,7 +9,8 @@
 class EventManager
 {
 public:
-	void AddListener(EventId id, std::function<void(Event&)> const& listener)
+	// usage: controller.addEventListener(Events::EventType::EVENT_NAME, [this](Event& e) { this->listenerFunction(e); });
+	void AddListener(EventId id, std::function<void(Event&)> const& listener) // add a listener for the given event type
 	{
 		listeners[id].push_back(listener);
 	}

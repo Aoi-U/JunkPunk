@@ -82,6 +82,9 @@
     <Filter Include="Source Files\Core\Rendering">
       <UniqueIdentifier>{1d06648f-3303-4175-ad95-2454e316ecf5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Events">
+      <UniqueIdentifier>{c3be6dc5-e315-41f7-bed2-2ffbc085f806}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Game.cpp">
@@ -213,17 +216,14 @@
     <ClCompile Include="src\Core\EBO.cpp">
       <Filter>Source Files\Core\Rendering</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\test\Game\src\ImGuiPanel.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\Core\AudioEngine.cpp">
       <Filter>Source Files\Core</Filter>
     </ClCompile>
     <ClCompile Include="src\Systems\AudioSystem.cpp">
       <Filter>Source Files\Systems</Filter>
     </ClCompile>
-    <ClCompile Include="src\Systems\PhysicsCallbacks.cpp">
-      <Filter>Source Files\Core</Filter>
+    <ClCompile Include="src\ImGuiPanel.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -261,12 +261,6 @@
       <Filter>Resource Files\shaders</Filter>
     </ClInclude>
     <ClInclude Include="src\ECSController.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Event.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\EventManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Entity\EntityManager.h">
@@ -389,9 +383,6 @@
     <ClInclude Include="src\Systems\VehicleControlSystem.h">
       <Filter>Header Files\Systems</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\test\Game\src\ImGuiPanel.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\Core\BoundingVolumes.h">
       <Filter>Header Files\Core\Rendering</Filter>
     </ClInclude>
@@ -401,8 +392,17 @@
     <ClInclude Include="src\Systems\AudioSystem.h">
       <Filter>Header Files\Systems</Filter>
     </ClInclude>
-    <ClInclude Include="src\Systems\PhysicsCallbacks.h">
-      <Filter>Header Files\Core</Filter>
+    <ClInclude Include="src\Event.h">
+      <Filter>Header Files\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="src\EventManager.h">
+      <Filter>Header Files\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Components\Obstacle.h">
+      <Filter>Header Files\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ImGuiPanel.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -143,7 +143,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\test\Game\src\ImGuiPanel.cpp" />
     <ClCompile Include="Gamepad.cpp" />
     <ClCompile Include="src\Core\AudioEngine.cpp" />
     <ClCompile Include="src\Core\EBO.cpp" />
@@ -172,13 +171,13 @@
     <ClCompile Include="src\Core\Vehicle\SnippetVehicleHelpers.cpp" />
     <ClCompile Include="src\Game.cpp" />
     <ClCompile Include="src\glad.c" />
+    <ClCompile Include="src\ImGuiPanel.cpp" />
     <ClCompile Include="src\ImGuiTest.cpp" />
     <ClCompile Include="src\InputManager.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Systems\AudioSystem.cpp" />
     <ClCompile Include="src\Systems\CameraControlSystem.cpp" />
     <ClCompile Include="src\Systems\LevelLoaderSystem.cpp" />
-    <ClCompile Include="src\Systems\PhysicsCallbacks.cpp" />
     <ClCompile Include="src\Systems\PhysicsSystem.cpp" />
     <ClCompile Include="src\Systems\RenderSystem.cpp" />
     <ClCompile Include="src\Systems\VehicleControlSystem.cpp" />
@@ -192,12 +191,12 @@
     <ClCompile Include="thirdparty\include\imgui\imgui_widgets.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\test\Game\src\ImGuiPanel.h" />
     <ClInclude Include="assets\shaders\colliders.vert" />
     <ClInclude Include="Gamepad.h" />
     <ClInclude Include="src\Components\Camera.h" />
     <ClInclude Include="src\Components\ComponentArray.h" />
     <ClInclude Include="src\Components\ComponentManager.h" />
+    <ClInclude Include="src\Components\Obstacle.h" />
     <ClInclude Include="src\Components\Physics.h" />
     <ClInclude Include="src\Components\Player.h" />
     <ClInclude Include="src\Components\Render.h" />
@@ -233,12 +232,12 @@
     <ClInclude Include="src\Event.h" />
     <ClInclude Include="src\EventManager.h" />
     <ClInclude Include="src\Game.h" />
+    <ClInclude Include="src\ImGuiPanel.h" />
     <ClInclude Include="src\ImGuiTest.h" />
     <ClInclude Include="src\InputManager.h" />
     <ClInclude Include="src\Systems\AudioSystem.h" />
     <ClInclude Include="src\Systems\CameraControlSystem.h" />
     <ClInclude Include="src\Systems\LevelLoaderSystem.h" />
-    <ClInclude Include="src\Systems\PhysicsCallbacks.h" />
     <ClInclude Include="src\Systems\PhysicsSystem.h" />
     <ClInclude Include="src\Systems\RenderSystem.h" />
     <ClInclude Include="src\Systems\System.h" />

@@ -14,8 +14,9 @@ extern ECSController controller;
 void CameraControlSystem::Init(std::shared_ptr<Gamepad> gamepad)
 {
 	this->gamepad = gamepad;
-	controller.AddEventListener(Events::Window::RESIZED, [this](Event& e) {this->CameraControlSystem::WindowSizeListener(e); });
+	controller.AddEventListener(Events::Window::RESIZED, [this](Event& e) { this->WindowSizeListener(e); });
 }
+
 
 void CameraControlSystem::Update(float deltaTime)
 {
@@ -46,15 +47,15 @@ void CameraControlSystem::Update(float deltaTime)
 			deltaYaw = glm::mod(deltaYaw + glm::pi<float>(), glm::two_pi<float>()) - glm::pi<float>();
 
 			// lerp the camera for smooth rotation
-			float lerpFactor = glm::clamp(camera.lerpSpeed * deltaTime, 0.0f, 1.0f);
+			float lerpFactor = camera.lerpSpeed * deltaTime;
 			camera.yaw = camera.yaw + glm::mix(0.0f, deltaYaw, lerpFactor);
-
+			
 			camera.yaw = glm::mod(camera.yaw + glm::pi<float>(), glm::two_pi<float>()) - glm::pi<float>();
 
 			glm::vec3 targetPosition = glm::vec3(playerTransform.position);
 			targetPosition.y += camera.heightOffset;
 
-			glm::vec localOffset = glm::vec3(0.0f, camera.radius * glm::sin(camera.pitch), -camera.radius * glm::cos(camera.pitch));
+			glm::vec3 localOffset = glm::vec3(0.0f, camera.radius * glm::sin(camera.pitch), -camera.radius * glm::cos(camera.pitch));
 			glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), camera.yaw, glm::vec3(0.0f, 1.0f, 0.0f));
 			glm::vec3 offset = glm::vec3(rotation * glm::vec4(localOffset, 0.0f));
 			transform.position = targetPosition + offset;

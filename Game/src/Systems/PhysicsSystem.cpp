@@ -2,6 +2,7 @@
 #include "../Components/Transform.h"
 #include "../Components/Physics.h"
 #include "../Components/Player.h"
+#include "../Components/Obstacle.h"
 
 #include "../ECSController.h"
 
@@ -10,8 +11,8 @@ extern ECSController controller;
 PhysicsSystem::PhysicsSystem()
 	: gVehicle()
 {
-	controller.AddEventListener(Events::Player::PLAYER_JUMPED, [this](Event& e) { this->PhysicsSystem::JumpEventListener(e); });
-	controller.AddEventListener(Events::Player::RESET_VEHICLE, [this](Event& e) { this->PhysicsSystem::ResetVehicleEventListener(e); });
+	controller.AddEventListener(Events::Player::PLAYER_JUMPED, [this](Event& e) { this->JumpEventListener(e); });
+	controller.AddEventListener(Events::Player::RESET_VEHICLE, [this](Event& e) { this->ResetVehicleEventListener(e); });
 
 	gFoundation = PxCreateFoundation(PX_PHYSICS_VERSION, gAllocator, gErrorCallback);
 	if (!gFoundation)
@@ -52,7 +53,7 @@ PhysicsSystem::PhysicsSystem()
 	
 	// vehicle specific visualizations
 
-	gGroundMaterial = gPhysics->createMaterial(1.0f, 1.0f, 1.0f);
+	gGroundMaterial = gPhysics->createMaterial(0.5f, 0.6f, 0.6f);
 
 
 	// initialize PVD
@@ -71,8 +72,9 @@ PhysicsSystem::PhysicsSystem()
 
 void PhysicsSystem::Init()
 {
-	Box(1.0f, 5, PxVec3(0.0f, 10.0f, 0.0f)); // test
+	//Box(1.0f, 5, PxVec3(0.0f, 10.0f, 0.0f)); // test
 	CreateMap();
+
 }
 
 void PhysicsSystem::Update(float deltaTime)
@@ -80,7 +82,6 @@ void PhysicsSystem::Update(float deltaTime)
 	// get the vehicle command from ECS
 	Entity vehicleEntity = controller.GetEntityByTag("VehicleCommands");
 	auto& vehicleCommands = controller.GetComponent<VehicleCommands>(vehicleEntity);
-
 	vehicleCommands.isGrounded = gVehicle.IsGrounded(gPhysicsScene);
 
 	Command command;
@@ -117,6 +118,22 @@ void PhysicsSystem::Update(float deltaTime)
 			PxVec3 angularVel = gVehicle.getAngularVelocity();
 			vehicleBody.linearVelocity = glm::vec3(linearVel.x, linearVel.y, linearVel.z);
 			vehicleBody.angularVelocity = glm::vec3(angularVel.x, angularVel.y, angularVel.z);
+		}
+		else if (controller.HasComponent<MovingObstacle>(entity))
+		{
+			auto& obstacle = controller.GetComponent<MovingObstacle>(entity);
+			auto& rigidBody = controller.GetComponent<RigidBody>(entity);
+			PxTransform pxTransform = rigidBody.actor->getGlobalPose();
+
+			glm::vec3 direction = glm::normalize(obstacle.pathPoints[obstacle.currentPathIndex] - transform.position);
+
+			transform.position += direction * obstacle.speed * deltaTime;
+
+			// check if reached the current path point
+			if (glm::length(obstacle.pathPoints[obstacle.currentPathIndex] - transform.position) < 0.1f)
+			{
+				obstacle.currentPathIndex = (obstacle.currentPathIndex + 1) % obstacle.pathPoints.size(); // increment the path index to the next point
+			}
 		}
 	}
 }
@@ -191,7 +208,7 @@ void PhysicsSystem::CreateMap()
 		if (controller.HasComponent<StaticModel>(entity))
 		{
 			auto& entityModel = controller.GetComponent<StaticModel>(entity);
-			for (const auto& mesh : entityModel.collisionMesh->getMeshes())
+			for (const Mesh& mesh : entityModel.collisionMesh->getMeshes())
 			{
 				PxTriangleMesh* triangleMesh = CreateTriangleMesh(mesh);
 				if (!triangleMesh)
@@ -205,7 +222,7 @@ void PhysicsSystem::CreateMap()
 					PxQuat(transform.quatRotation.x, transform.quatRotation.y, transform.quatRotation.z, transform.quatRotation.w));
 				
 				PxShape* shape = gPhysics->createShape(PxTriangleMeshGeometry(triangleMesh, scale), *gGroundMaterial);
-				shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, true);
+				//shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, true);
 				shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, true);
 				shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, false);
 
@@ -224,6 +241,52 @@ void PhysicsSystem::CreateMap()
 		else if (controller.HasComponent<RigidBody>(entity))
 		{
 			// create dynamic rigid body
+			auto& rigidBodyComponent = controller.GetComponent<RigidBody>(entity);
+			PxBounds3 aabb = PxBounds3::empty();
+
+			// check if a bounding volume already exists for this model
+			if (rigidBodyComponent.boundingVolume)
+			{
+				AABB& bv = *rigidBodyComponent.boundingVolume;
+				std::array<glm::vec3, 8> vertices = bv.getVertices();
+				for (const glm::vec3& vertex : vertices)
+				{
+					aabb.include(PxVec3(vertex.x, vertex.y, vertex.z));
+				}
+			} 
+			else // create aabb from collision mesh
+			{
+				for (const Mesh& mesh : rigidBodyComponent.collisionMesh->getMeshes())
+				{
+					for (const Vertex& vertex : mesh.getVertices())
+					{
+						aabb.include(PxVec3(vertex.position.x, vertex.position.y, vertex.position.z));
+					}
+
+				}
+			}
+
+			PxVec3 extent = aabb.getExtents();
+			// scale by the transform scale
+			extent.x *= transform.scale.x;
+			extent.y *= transform.scale.y;
+			extent.z *= transform.scale.z;
+
+			PxBoxGeometry boxGeometry(extent);
+			PxTransform bodyTransform = PxTransform(PxVec3(transform.position.x, transform.position.y, transform.position.z),
+				PxQuat(transform.quatRotation.x, transform.quatRotation.y, transform.quatRotation.z, transform.quatRotation.w));
+
+			PxShape* shape = gPhysics->createShape(boxGeometry, *gGroundMaterial);
+			shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, true);
+			shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, true);
+			shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, false);
+			PxRigidDynamic* dynamicActor = gPhysics->createRigidDynamic(bodyTransform);
+			dynamicActor->attachShape(*shape);
+			dynamicActor->setActorFlag(PxActorFlag::eVISUALIZATION, false);
+			PxRigidBodyExt::updateMassAndInertia(*dynamicActor, rigidBodyComponent.mass);
+			rigidBodyComponent.actor = dynamicActor;
+			gPhysicsScene->addActor(*dynamicActor);
+			shape->release();
 		}
 		else if (controller.HasComponent<VehicleBody>(entity))
 		{

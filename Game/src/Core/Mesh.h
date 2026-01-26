@@ -20,6 +20,8 @@ public:
 	void SetupMesh();
 	void SetupInstanceMesh();
 
+	void UpdateInstanceBuffer(const std::vector<glm::mat4>& matrices);
+
 	void Cleanup();
 
 	const std::vector<Vertex>& getVertices() const { return vertices; }
@@ -43,6 +45,8 @@ private:
 	VAO vao;
 	VBO vbo;
 	EBO ebo;
+
+	GLuint instanceVBO;
 
 	bool hasDiffuseTex = false;
 	bool hasSpecularTex = false;

@@ -45,7 +45,7 @@ struct Frustum
 // abstract base class that represents a bounding volume
 struct BoundingVolume
 {
-	virtual bool isOnFrustum(const Frustum& frust, const Transform& transform) const = 0;
+	virtual bool isOnFrustum(const Frustum& frust, const glm::mat4 modelMatrix) const = 0;
 
 	virtual bool isOnOrForwardPlane(const Plane& plane) const = 0;
 
@@ -74,11 +74,16 @@ struct Sphere : public BoundingVolume
 		return plane.getSignedDistanceToPoint(center) > -radius;
 	}
 
-	bool isOnFrustum(const Frustum& frust, const Transform& transform) const final
+	bool isOnFrustum(const Frustum& frust, const glm::mat4 modelMatrix) const final
 	{
-		glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), transform.position) * glm::mat4_cast(transform.quatRotation) * glm::scale(glm::mat4(1.0f), transform.scale);
+		glm::vec3 scale = {
+			glm::length(glm::vec3(modelMatrix[0])),
+			glm::length(glm::vec3(modelMatrix[1])),
+			glm::length(glm::vec3(modelMatrix[2]))
+		};
 
-		glm::vec3 globalScale = transform.scale;
+
+		glm::vec3 globalScale = scale;
 		glm::vec3 globalCenter = modelMatrix * glm::vec4(center, 1.0f);
 		float maxScale = (std::max)(globalScale.x, globalScale.y);
 		maxScale = (std::max)(maxScale, globalScale.z);
@@ -135,9 +140,8 @@ struct AABB : public BoundingVolume
 		return -r <= plane.getSignedDistanceToPoint(center);
 	}
 
-	bool isOnFrustum(const Frustum& frust, const Transform& transform) const final
+	bool isOnFrustum(const Frustum& frust, const glm::mat4 modelMatrix) const final
 	{
-		glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), transform.position) * glm::mat4_cast(transform.quatRotation) * glm::scale(glm::mat4(1.0f), transform.scale);
 		const glm::vec3 globalCenter = modelMatrix * glm::vec4(center, 1.0f);
 
 		// scaled orientation

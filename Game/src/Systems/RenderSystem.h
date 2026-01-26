@@ -32,10 +32,6 @@ public:
 
 	void Update(float fps, const PxRenderBuffer& buffer);
 
-	//void DrawEntityInstanced(const glm::mat4& projView, std::shared_ptr<Shader> shader, Model* model, const std::vector<glm::mat4>& matrices); // draw function for rendering instanced entities
-
-
-	Text text;
 private:
 	void DrawShadowPass();
 
@@ -49,6 +45,8 @@ private:
 
 	void RenderText(std::string text, float x, float y, float scale, glm::vec3 color, std::map<char, Character> characters);
 
+	void DrawEntityInstanced();
+
 	void BindTextures(Mesh& mesh); // bind textures for a mesh
 	void ShaderSetupDefaults(); // setup all shader constnat uniforms
 
@@ -61,6 +59,7 @@ private:
 	GLuint debugVao{}, debugVbo{};
 	const size_t maxDebugLines = 10000;
 
+	Text text;
 
 	Text fonts;
 	VAO textVAO;
@@ -80,6 +79,5 @@ private:
 	std::shared_ptr<Shader> skyboxShader;
 	std::shared_ptr<Shader> physicsDebugShader;
 	std::shared_ptr<Shader> textShader;
-
 
 };

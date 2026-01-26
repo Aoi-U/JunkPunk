@@ -5,12 +5,14 @@
 Mesh::Mesh(std::vector<Vertex>& vertices, std::vector<GLuint>& indices)
 	: vertices(vertices), indices(indices), vbo(vertices), ebo(indices)
 {
+	glGenBuffers(1, &instanceVBO);
 	//SetupMesh();
 }
 
 Mesh::Mesh(std::vector<Vertex>& vertices, std::vector<GLuint>& indices, std::vector<Texture>& textures)
 	: vertices(vertices), indices(indices), textures(textures), vbo(vertices), ebo(indices)
 {
+	glGenBuffers(1, &instanceVBO);
 	//SetupMesh();
 }
 
@@ -19,6 +21,8 @@ void Mesh::Cleanup()
 	vbo.Delete();
 	ebo.Delete();
 	vao.Delete();
+
+	glDeleteBuffers(1, &instanceVBO);
 
 	for (auto& texture : textures)
 	{
@@ -58,9 +62,10 @@ void Mesh::SetupMesh()
 void Mesh::SetupInstanceMesh()
 {
 	vao.Bind();
+	glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
 	// set attribute pointers for matrix (4 times vec4)
 	GLsizei vec4Size = sizeof(glm::vec4);
-	glEnableVertexAttribArray(4);
+	/*glEnableVertexAttribArray(4);
 	glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)0);
 	glEnableVertexAttribArray(5);
 	glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(1 * vec4Size));
@@ -71,6 +76,21 @@ void Mesh::SetupInstanceMesh()
 	glVertexAttribDivisor(4, 1);
 	glVertexAttribDivisor(5, 1);
 	glVertexAttribDivisor(6, 1);
-	glVertexAttribDivisor(7, 1);
+	glVertexAttribDivisor(7, 1);*/
+
+	for (int i = 0; i < 4; i++)
+	{
+		glEnableVertexAttribArray(4 + i);
+		glVertexAttribPointer(4 + i, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(i * vec4Size));
+		glVertexAttribDivisor(4 + i, 1);
+	}
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	vao.Unbind();
+}
+
+void Mesh::UpdateInstanceBuffer(const std::vector<glm::mat4>& matrices)
+{
+	glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
+	glBufferData(GL_ARRAY_BUFFER, matrices.size() * sizeof(glm::mat4), &matrices[0], GL_DYNAMIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }

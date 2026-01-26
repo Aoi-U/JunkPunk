@@ -7,5 +7,7 @@
 struct Render
 {
 	std::shared_ptr<Model> model;
-	std::shared_ptr<BoundingVolume> boundingVolume;
+	std::shared_ptr<AABB> boundingVolume;
+	bool isInstanced = false;
 };
+

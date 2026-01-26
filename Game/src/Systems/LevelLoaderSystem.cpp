@@ -3,6 +3,9 @@
 #include "../Components/Render.h"
 #include "../Components/Player.h"
 #include "../Components/Camera.h"
+#include "../Components/Obstacle.h"
+#include "../Components/Transform.h"
+
 
 #include "../ECSController.h"
 
@@ -72,7 +75,7 @@ void LevelLoaderSystem::LoadLevel()
 	// create camera entity (KEEP THIS AT THE VERY TOP OR ELSE IT WILL CRASH) (i know whats causing it but i cant think of a better solution)
 	float radius = 5.0f;
 	float heightOffset = 1.5f;
-	float lerpSpeed = 3.0f;
+	float lerpSpeed = 4.0f;
 	float horizontalLookSpeed = 5.0f;
 	float verticalLookSpeed = 1.5f;
 	float yaw = 0.0f;
@@ -98,12 +101,25 @@ void LevelLoaderSystem::LoadLevel()
 	controller.AddComponent(entity, Render{ loaded.first, loaded.second });
 	controller.AddComponent(entity, PhysicsBody{});
 
-	entity = controller.createEntity();
-	loaded = LoadModel("assets/models/rubix_2.0/scene.gltf");
-	controller.AddComponent(entity, Transform{ glm::vec3(3.0f, -5.0f, 10.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(1.0f) });
-	controller.AddComponent(entity, StaticModel{ nullptr, loaded.first });
-	controller.AddComponent(entity, Render{ loaded.first, loaded.second });
-	controller.AddComponent(entity, PhysicsBody{});
+	for (int i = 0; i < 100; i++)
+	{
+		entity = controller.createEntity();
+		loaded = LoadModel("assets/models/rubix_2.0/scene.gltf");
+		controller.AddComponent(entity, Transform{ glm::vec3(0.0f, -10.0f + i * 1.0f, 0.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.4f) });
+		controller.AddComponent(entity, RigidBody{ nullptr, loaded.first, loaded.second, 50.0f, false, true, glm::vec3(0.0f), glm::vec3(0.0f) });
+		controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
+		controller.AddComponent(entity, PhysicsBody{});
+		controller.AddComponent(entity, MovingObstacle{
+			std::vector<glm::vec3>{
+				{ 3.0f, -10.0f, 10.0f },
+				{ -10.0f, -10.0f, 10.0f },
+				{ -5.0f, -10.0f, -10.0f },
+				{ 10.0f, -10.0f, -10.0f }
+			},
+			0,
+			2.0f
+			});
+	}
 
 
 	entity = controller.createEntity();
@@ -118,7 +134,7 @@ void LevelLoaderSystem::LoadLevel()
 
 }
 
-std::pair<std::shared_ptr<Model>, std::shared_ptr<BoundingVolume>> LevelLoaderSystem::LoadModel(std::string path)
+std::pair<std::shared_ptr<Model>, std::shared_ptr<AABB>> LevelLoaderSystem::LoadModel(std::string path)
 {
 	// check if model is previously loaded
 	if (models.find(path) == models.end())

@@ -55,7 +55,7 @@ void RenderSystem::Init()
 	glm::mat4 viewMatrix = tpp.viewMatrix;
 	light = Light();
 	shadowMapper = std::make_unique<ShadowMapper>(screenWidth / (float)screenHeight, zNear, zFar, glm::radians(fov), viewMatrix, light);
-	shadowMapper->Init(shadowShader, defaultShader);
+	shadowMapper->Init(shadowShader, defaultInstanceShader);
 
 	// setup post processor
 	postProcessor = std::make_unique<PostProcessor>(1280, 720);
@@ -89,7 +89,7 @@ void RenderSystem::Update(float fps, const PxRenderBuffer& buffer)
 	DrawLightingPass();
 
 	// draw physics colliders
-	DrawCollisionDebug(buffer);
+	//DrawCollisionDebug(buffer);
 
 	DrawPostProcessingPass();
 
@@ -107,17 +107,48 @@ void RenderSystem::DrawShadowPass()
 	glClear(GL_DEPTH_BUFFER_BIT);
 	glCullFace(GL_FRONT); 
 
+	// create cameras frustum for frustum culling
+	Entity camera = controller.GetEntityByTag("Camera");
+	auto& tpp = controller.GetComponent<ThirdPersonCamera>(camera);
+	glm::vec3 forward = glm::normalize(glm::vec3(glm::inverse(tpp.viewMatrix)[2]));
+	glm::vec3 right = glm::normalize(glm::vec3(glm::inverse(tpp.viewMatrix)[0]));
+	glm::vec3 up = glm::normalize(glm::vec3(glm::inverse(tpp.viewMatrix)[1]));
+	Frustum frust = CreateFrustum(tpp.zFar, tpp.zNear, tpp.fov, tpp.screenWidth / (float)tpp.screenHeight, -forward, right, up, glm::vec3(glm::inverse(tpp.viewMatrix)[3]));
+
+	std::unordered_map<Model*, std::vector<glm::mat4>> instancedModels;
+	shadowShader->setBool("u_isInstanced", false);
+
+
 	// draw entities
 	for (auto& entity : entities)
 	{
 		auto& renderComp = controller.GetComponent<Render>(entity);
 		auto& transformComp = controller.GetComponent<Transform>(entity);
-		glm::mat4 translation = glm::translate(glm::mat4(1.0f), transformComp.position);
-		glm::mat4 rotation = glm::mat4_cast(transformComp.quatRotation);
-		glm::mat4 scale = glm::scale(glm::mat4(1.0f), transformComp.scale);
-		glm::mat4 model = translation * rotation * scale;
 
-		shadowShader->setMat4("u_model", model);
+		//glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), transformComp.position);
+		//modelMatrix = modelMatrix * glm::mat4_cast(transformComp.quatRotation);
+		//modelMatrix = glm::scale(modelMatrix, transformComp.scale);
+		glm::mat3 rot = glm::mat3_cast(transformComp.quatRotation);
+		rot[0] *= transformComp.scale.x;
+		rot[1] *= transformComp.scale.y;
+		rot[2] *= transformComp.scale.z;
+		glm::mat4 modelMatrix(rot);
+		modelMatrix[3] = glm::vec4(transformComp.position, 1.0f);
+
+		bool isVisible = renderComp.boundingVolume->isOnFrustum(frust, modelMatrix);
+
+		if (renderComp.isInstanced && isVisible) // if the entity should be instanced and is visible, add it to the list to render
+		{
+			instancedModels[renderComp.model.get()].push_back(modelMatrix);
+			continue;
+		}
+		else if (renderComp.isInstanced) // else, if its not visible but still instanced, cull it and skip it
+		{
+			continue;
+		}
+		// only using culling for instanced models in shadow pass 
+
+		shadowShader->setMat4("u_model", modelMatrix);
 		for (auto& mesh : renderComp.model->getMeshes())
 		{
 			mesh.BindVao();
@@ -125,6 +156,21 @@ void RenderSystem::DrawShadowPass()
 			mesh.UnbindVao();
 		}
 	}
+
+	// draw instanced models
+	shadowShader->setBool("u_isInstanced", true);
+	for (auto& [model, matrices] : instancedModels)
+	{
+		for (auto& mesh : model->getMeshes())
+		{
+			mesh.UpdateInstanceBuffer(matrices);
+			mesh.SetupInstanceMesh();
+			mesh.BindVao();
+			glDrawElementsInstanced(GL_TRIANGLES, static_cast<GLsizei>(mesh.getIndices().size()), GL_UNSIGNED_INT, 0, static_cast<GLsizei>(matrices.size()));
+			mesh.UnbindVao();
+		}
+	}
+
 	shadowMapper->UnbindShadowMap();
 	glCullFace(GL_BACK);
 	glViewport(0, 0, screenWidth, screenHeight);
@@ -132,6 +178,7 @@ void RenderSystem::DrawShadowPass()
 
 void RenderSystem::DrawLightingPass()
 {
+	//int cullCount = 0;
 	// set post processing framebuffer
 	postProcessor->BindFBO();
 	Clear(0.0f, 0.0f, 0.0f, 1.0f);
@@ -144,25 +191,28 @@ void RenderSystem::DrawLightingPass()
 	glm::vec3 forward = glm::normalize(glm::vec3(glm::inverse(tpp.viewMatrix)[2]));
 	glm::vec3 right = glm::normalize(glm::vec3(glm::inverse(tpp.viewMatrix)[0]));
 	glm::vec3 up = glm::normalize(glm::vec3(glm::inverse(tpp.viewMatrix)[1]));
-	Frustum frust = CreateFrustum(tpp.zFar, tpp.zNear, tpp.fov, tpp.screenWidth / (float)tpp.screenHeight, -forward, right, up, glm::vec3(glm::inverse(tpp.viewMatrix)[3]));
+	glm::vec3 pos = glm::vec3(glm::inverse(tpp.viewMatrix)[3]);
+	Frustum frust = CreateFrustum(tpp.zFar, tpp.zNear, tpp.fov, tpp.screenWidth / (float)tpp.screenHeight, -forward, right, up, pos);
 
 	// setup uniforms
-	glm::vec3 pos = glm::vec3(glm::inverse(tpp.viewMatrix)[3]);
 	glm::vec3 lightDir = light.getDirection();
 
-	defaultShader->use();
-	defaultShader->setMat4("u_projection", tpp.getProjectionMatrix());
-	defaultShader->setMat4("u_view", tpp.viewMatrix);
-	defaultShader->setVec3("u_cameraPos", &pos.x);
-	defaultShader->setVec3("u_lightDir", &lightDir.x);
-	defaultShader->setFloat("u_farPlane", tpp.zFar);
-	defaultShader->setInt("u_cascadeCount", shadowMapper->GetCascadeCount());
+	defaultInstanceShader->use();
+	defaultInstanceShader->setMat4("u_projection", tpp.getProjectionMatrix());
+	defaultInstanceShader->setMat4("u_view", tpp.viewMatrix);
+	defaultInstanceShader->setVec3("u_cameraPos", &pos.x);
+	defaultInstanceShader->setVec3("u_lightDir", &lightDir.x);
+	defaultInstanceShader->setFloat("u_farPlane", tpp.zFar);
+	defaultInstanceShader->setInt("u_cascadeCount", shadowMapper->GetCascadeCount());
 	for (size_t i = 0; i < shadowMapper->GetCascadeCount(); ++i)
 	{
-		defaultShader->setFloat("cascadePlaneDistances[" + std::to_string(i) + "]", shadowMapper->GetCascadeLevels()[i]);
+		defaultInstanceShader->setFloat("cascadePlaneDistances[" + std::to_string(i) + "]", shadowMapper->GetCascadeLevels()[i]);
 	}
 	glActiveTexture(GL_TEXTURE6);
 	shadowMapper->BindDepthMapTexture();
+
+	std::unordered_map<Model*, std::vector<glm::mat4>> instancedModels;
+	defaultInstanceShader->setBool("u_isInstanced", false);
 
 	// draw entities
 	for (auto& entity : entities)
@@ -170,18 +220,36 @@ void RenderSystem::DrawLightingPass()
 		auto& renderComp = controller.GetComponent<Render>(entity);
 		auto& transformComp = controller.GetComponent<Transform>(entity);
 		
-		// check if entity is visible
-		if (!renderComp.boundingVolume->isOnFrustum(frust, transformComp))
+		/*glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), transformComp.position);
+		modelMatrix = modelMatrix * glm::mat4_cast(transformComp.quatRotation);
+		modelMatrix = glm::scale(modelMatrix, transformComp.scale);*/
+		glm::mat3 rot = glm::mat3_cast(transformComp.quatRotation);
+		rot[0] *= transformComp.scale.x;
+		rot[1] *= transformComp.scale.y;
+		rot[2] *= transformComp.scale.z;
+		glm::mat4 modelMatrix(rot);
+		modelMatrix[3] = glm::vec4(transformComp.position, 1.0f);
+		
+		bool isVisible = renderComp.boundingVolume->isOnFrustum(frust, modelMatrix);
+
+		if (renderComp.isInstanced && isVisible) // check if the entity should be instanced and is visible
 		{
+			instancedModels[renderComp.model.get()].push_back(modelMatrix); // add this modelmatrix to the list of models to be instanced
+			continue;
+		}
+		else if (renderComp.isInstanced) // else, if its not visible but still instanced, cull it and skip it
+		{
+			//cullCount++;
+			continue;
+		}
+		else if (!isVisible) // else, if its not visible, cull it and skip it
+		{
+			//cullCount++;
 			continue;
 		}
 
-		glm::mat4 translation = glm::translate(glm::mat4(1.0f), transformComp.position);
-		glm::mat4 rotation = glm::mat4_cast(transformComp.quatRotation);
-		glm::mat4 scale = glm::scale(glm::mat4(1.0f), transformComp.scale);
-		glm::mat4 model = translation * rotation * scale;
-
-		defaultShader->setMat4("u_model", model);
+		// render non-instanced entities normally
+		defaultInstanceShader->setMat4("u_model", modelMatrix);
 
 		for (auto& mesh : renderComp.model->getMeshes())
 		{
@@ -193,7 +261,32 @@ void RenderSystem::DrawLightingPass()
 		}
 	}
 
+	// draw instanced entities
+	defaultInstanceShader->setBool("u_isInstanced", true);
+
+	for (size_t i = 0; i < shadowMapper->GetCascadeCount(); ++i)
+	{
+		defaultInstanceShader->setFloat("cascadePlaneDistances[" + std::to_string(i) + "]", shadowMapper->GetCascadeLevels()[i]);
+	}
+	/*glActiveTexture(GL_TEXTURE6);
+	shadowMapper->BindDepthMapTexture();*/
+	for (auto& [model, matrices] : instancedModels) // loop through each unique model that is instanced
+	{
+		for (auto& mesh : model->getMeshes()) // instance render each mesh in the model
+		{
+			mesh.UpdateInstanceBuffer(matrices);
+			mesh.SetupInstanceMesh();
+
+			// bind textures
+			BindTextures(mesh);
+			mesh.BindVao();
+			glDrawElementsInstanced(GL_TRIANGLES, static_cast<GLsizei>(mesh.getIndices().size()), GL_UNSIGNED_INT, 0, static_cast<GLsizei>(matrices.size()));
+			mesh.UnbindVao();
+		}
+	}
+
 	DrawSkybox();
+	//std::cout << "Culled entities this frame: " << cullCount << std::endl;
 }
 
 void RenderSystem::DrawPostProcessingPass()
@@ -260,23 +353,11 @@ void RenderSystem::RenderText(std::string text, float x, float y, float scale, g
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-//void Renderer::DrawEntityInstanced(const glm::mat4& projView, std::shared_ptr<Shader> shader, Model* model, const std::vector<glm::mat4>& matrices)
-//{
-//	shader->use();
-//	shader->setMat4("u_projView", projView);
-//	shader->setVec3("u_cameraPos", &cameraPos.x);
-//	// draw each mesh in the entity's model
-//	for (Mesh& mesh : model->getMeshes())
-//	{
-//		BindTextures(mesh, shader);
-//
-//		mesh.BindVao();
-//		glDrawElementsInstanced(GL_TRIANGLES, static_cast<GLsizei>(mesh.getIndices().size()), GL_UNSIGNED_INT, 0, static_cast<GLsizei>(matrices.size()));
-//
-//		mesh.UnbindVao();
-//		glActiveTexture(GL_TEXTURE0);
-//	}
-//}
+void RenderSystem::DrawEntityInstanced()
+{
+	defaultShader->use();
+
+}
 
 void RenderSystem::DrawSkybox()
 {
@@ -311,7 +392,7 @@ void RenderSystem::DrawCollisionDebug(const PxRenderBuffer& renderBuffer)
 	physicsDebugShader->setMat4("u_projView", projView);
 	
 	PxU32 nbLines = renderBuffer.getNbLines();
-	PxDebugLine* lines = const_cast<PxDebugLine*>(renderBuffer.getLines());
+	const PxDebugLine* lines = renderBuffer.getLines();
 
 	if (nbLines == 0)
 		return;
@@ -368,10 +449,10 @@ void RenderSystem::BindTextures(Mesh& mesh)
 	unsigned int normalNr = 1;
 	unsigned int heightNr = 1;
 
-	defaultShader->setBool("hasDiffuseTex", mesh.hasDiffuseTexture());
-	defaultShader->setBool("hasSpecularTex", mesh.hasSpecularTexture());
-	defaultShader->setBool("hasNormalTex", mesh.hasNormalTexture());
-	defaultShader->setBool("hasHeightTex", mesh.hasHeightTexture());
+	defaultInstanceShader->setBool("hasDiffuseTex", mesh.hasDiffuseTexture());
+	defaultInstanceShader->setBool("hasSpecularTex", mesh.hasSpecularTexture());
+	defaultInstanceShader->setBool("hasNormalTex", mesh.hasNormalTexture());
+	defaultInstanceShader->setBool("hasHeightTex", mesh.hasHeightTexture());
 
 	// bind each texture for the model
 	for (unsigned int i = 0; i < mesh.getTextures().size(); i++)
@@ -390,7 +471,8 @@ void RenderSystem::BindTextures(Mesh& mesh)
 
 		//shader->setInt(("material." + name + number).c_str(), i);
 		
-		defaultShader->setInt((name + number).c_str(), i); // set the texture unit in the shader
+		//defaultShader->setInt((name + number).c_str(), i); // set the texture unit in the shader
+		defaultInstanceShader->setInt((name + number).c_str(), i); // set the texture unit in the shader
 
 		mesh.getTextures()[i].Bind(GL_TEXTURE0 + i); // activate and bind texture
 	}
@@ -406,12 +488,12 @@ void RenderSystem::ShaderSetupDefaults()
 	shadowShader->setInt("depthMaps", 6);
 
 	// setup default shader
-	defaultShader->use();
-	defaultShader->setVec3("u_light.position", &light.getPosition().x);
-	defaultShader->setVec3("u_light.ambient", &light.getAmbient().r);
-	defaultShader->setVec3("u_light.diffuse", &light.getDiffuse().r);
-	defaultShader->setVec3("u_light.specular", &light.getSpecular().r);
-	defaultShader->setInt("depthMaps", 6);
+	defaultInstanceShader->use();
+	defaultInstanceShader->setVec3("u_light.position", &light.getPosition().x);
+	defaultInstanceShader->setVec3("u_light.ambient", &light.getAmbient().r);
+	defaultInstanceShader->setVec3("u_light.diffuse", &light.getDiffuse().r);
+	defaultInstanceShader->setVec3("u_light.specular", &light.getSpecular().r);
+	defaultInstanceShader->setInt("depthMaps", 6);
 
 	// setup light shader
 	lightShader->use();

@@ -5,6 +5,7 @@
 
 #include "glm/glm.hpp"
 #include "../Core/Model.h"
+#include "../Core/BoundingVolumes.h"
 
 using namespace physx;
 
@@ -16,8 +17,10 @@ struct PhysicsBody
 struct RigidBody
 {
 	PxRigidDynamic* actor = nullptr;
+	std::shared_ptr<Model>collisionMesh;
+	std::shared_ptr<AABB> boundingVolume;
 	float mass;
-	float useGravity;
+	bool useGravity;
 	bool isKinematic;
 	glm::vec3 linearVelocity;
 	glm::vec3 angularVelocity;
