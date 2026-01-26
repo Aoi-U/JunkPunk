@@ -49,9 +49,6 @@ PhysicsSystem::PhysicsSystem()
 	// https://nvidia-omniverse.github.io/PhysX/physx/5.6.1/docs/DebugVisualization.html
 	gPhysicsScene->setVisualizationParameter(PxVisualizationParameter::eSCALE, 1.0f);
 	gPhysicsScene->setVisualizationParameter(PxVisualizationParameter::eCOLLISION_SHAPES, 1.0f);
-	gPhysicsScene->setVisualizationParameter(PxVisualizationParameter::eBODY_AXES, 1.0f);
-	
-	// vehicle specific visualizations
 
 	gGroundMaterial = gPhysics->createMaterial(0.5f, 0.6f, 0.6f);
 
@@ -63,7 +60,7 @@ PhysicsSystem::PhysicsSystem()
 	{
 		pvdClient->setScenePvdFlag(PxPvdSceneFlag::eTRANSMIT_CONSTRAINTS, true);
 		pvdClient->setScenePvdFlag(PxPvdSceneFlag::eTRANSMIT_CONTACTS, true);
-		pvdClient->setScenePvdFlag(PxPvdSceneFlag::eTRANSMIT_SCENEQUERIES, true);
+		pvdClient->setScenePvdFlag(PxPvdSceneFlag::eTRANSMIT_SCENEQUERIES, false);
 	}
 
 	PxInitVehicleExtension(*gFoundation); // initialize vehicle extension
@@ -106,6 +103,42 @@ void PhysicsSystem::Update(float deltaTime)
 			PxTransform pxTransform = rigidBody.actor->getGlobalPose();
 			transform.position = glm::vec3(pxTransform.p.x, pxTransform.p.y, pxTransform.p.z);
 			transform.quatRotation = glm::quat(pxTransform.q.w, pxTransform.q.x, pxTransform.q.y, pxTransform.q.z);
+
+			if (controller.HasComponent<MovingObstacle>(entity))
+			{
+				auto& obstacle = controller.GetComponent<MovingObstacle>(entity);
+				
+				// https://stackoverflow.com/questions/1800138/given-a-start-and-end-point-and-a-distance-calculate-a-point-along-a-line
+				int currentPathIndex = obstacle.currentPathIndex;
+				int previousPathIndex = (currentPathIndex - 1 + obstacle.pathPoints.size()) % obstacle.pathPoints.size();
+				
+				// calculate the total distance between the two path points
+				glm::vec3 totalDistance = obstacle.pathPoints[currentPathIndex] - obstacle.pathPoints[previousPathIndex]; 
+				float pathLength = glm::length(totalDistance); 
+
+				
+				float distanceToTravel = obstacle.speed * deltaTime; // calculate the distance to travel this frame
+
+				obstacle.progress += distanceToTravel / pathLength; // update progress along the path
+				obstacle.progress = glm::clamp(obstacle.progress, 0.0f, 1.0f); // clamp progress between 0 and 1
+
+				// set the new target position for the kinematic actor
+				rigidBody.actor->setKinematicTarget(PxTransform(
+					PxVec3(
+						obstacle.pathPoints[previousPathIndex].x + totalDistance.x * obstacle.progress,
+						obstacle.pathPoints[previousPathIndex].y + totalDistance.y * obstacle.progress,
+						obstacle.pathPoints[previousPathIndex].z + totalDistance.z * obstacle.progress
+					),
+					PxQuat(0, 0, 0, 1)
+				));
+				
+				// check if the obstacle reached the current target point
+				if (glm::length(obstacle.pathPoints[currentPathIndex] - transform.position) < 0.1f)
+				{
+					obstacle.currentPathIndex = (obstacle.currentPathIndex + 1) % obstacle.pathPoints.size(); // increment the path index to the next point
+					obstacle.progress = 0.0f; // reset progress for the next segment
+				}
+			}
 		}
 		else if (controller.HasComponent<VehicleBody>(entity))
 		{
@@ -200,7 +233,7 @@ void PhysicsSystem::Cleanup()
 
 void PhysicsSystem::CreateMap()
 {
-	// get all entities with StaticModel and Transform components
+	// get all entities with Transform components
 	for (auto& entity : entities)
 	{
 		auto& transform = controller.GetComponent<Transform>(entity);
@@ -258,11 +291,7 @@ void PhysicsSystem::CreateMap()
 			{
 				for (const Mesh& mesh : rigidBodyComponent.collisionMesh->getMeshes())
 				{
-					for (const Vertex& vertex : mesh.getVertices())
-					{
-						aabb.include(PxVec3(vertex.position.x, vertex.position.y, vertex.position.z));
-					}
-
+				
 				}
 			}
 
@@ -283,6 +312,9 @@ void PhysicsSystem::CreateMap()
 			PxRigidDynamic* dynamicActor = gPhysics->createRigidDynamic(bodyTransform);
 			dynamicActor->attachShape(*shape);
 			dynamicActor->setActorFlag(PxActorFlag::eVISUALIZATION, false);
+
+			dynamicActor->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, controller.HasComponent<MovingObstacle>(entity));
+
 			PxRigidBodyExt::updateMassAndInertia(*dynamicActor, rigidBodyComponent.mass);
 			rigidBodyComponent.actor = dynamicActor;
 			gPhysicsScene->addActor(*dynamicActor);

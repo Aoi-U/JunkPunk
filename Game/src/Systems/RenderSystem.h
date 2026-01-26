@@ -43,9 +43,7 @@ private:
 
 	void DrawPostProcessingPass();
 
-	void RenderText(std::string text, float x, float y, float scale, glm::vec3 color, std::map<char, Character> characters);
-
-	void DrawEntityInstanced();
+	void RenderText(std::string text, float x, float y, float scale, glm::vec3 color);
 
 	void BindTextures(Mesh& mesh); // bind textures for a mesh
 	void ShaderSetupDefaults(); // setup all shader constnat uniforms
@@ -59,7 +57,6 @@ private:
 	GLuint debugVao{}, debugVbo{};
 	const size_t maxDebugLines = 10000;
 
-	Text text;
 
 	Text fonts;
 	VAO textVAO;

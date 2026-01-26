@@ -84,7 +84,7 @@ private:
 Game::Game()
 {
 	controller.Init();
-	glfwWindowHint(GLFW_SAMPLES, 32);
+	//glfwWindowHint(GLFW_SAMPLES, 32);
 
 
 	window = std::make_shared<Window>(1280, 720, "JunkPunk");

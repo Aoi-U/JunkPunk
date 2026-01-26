@@ -101,23 +101,24 @@ void LevelLoaderSystem::LoadLevel()
 	controller.AddComponent(entity, Render{ loaded.first, loaded.second });
 	controller.AddComponent(entity, PhysicsBody{});
 
-	for (int i = 0; i < 100; i++)
+	for (int i = 0; i < 50; i++)
 	{
 		entity = controller.createEntity();
 		loaded = LoadModel("assets/models/rubix_2.0/scene.gltf");
-		controller.AddComponent(entity, Transform{ glm::vec3(0.0f, -10.0f + i * 1.0f, 0.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.4f) });
-		controller.AddComponent(entity, RigidBody{ nullptr, loaded.first, loaded.second, 50.0f, false, true, glm::vec3(0.0f), glm::vec3(0.0f) });
+		controller.AddComponent(entity, Transform{ glm::vec3(10.0f, -30.0f + i * 10.0f, 0.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.7f) });
+		controller.AddComponent(entity, RigidBody{ nullptr, loaded.first, loaded.second, 50.0f, true, glm::vec3(0.0f), glm::vec3(0.0f) });
 		controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
 		controller.AddComponent(entity, PhysicsBody{});
 		controller.AddComponent(entity, MovingObstacle{
 			std::vector<glm::vec3>{
-				{ 3.0f, -10.0f, 10.0f },
-				{ -10.0f, -10.0f, 10.0f },
-				{ -5.0f, -10.0f, -10.0f },
-				{ 10.0f, -10.0f, -10.0f }
+				{ 60.0f - i, -27.0f + i * 2 , 0.0f + i },
+				{ 60.0f - i, -27.0f + i * 2, -10.0f + i },
+				{ 50.0f - i, -27.0f + i * 2, -10.0f + i },
+				{ 50.0f - i, -27.0f + i * 2, 0.0f + i }
 			},
+			0.0f,
 			0,
-			2.0f
+			5.0f
 			});
 	}
 
@@ -130,7 +131,6 @@ void LevelLoaderSystem::LoadLevel()
 	controller.AddComponent(entity, Render{ loaded.first, loaded.second });
 	controller.AddComponent(entity, PhysicsBody{});
 	controller.AssignTag(entity, "VehicleCommands");
-
 
 }
 

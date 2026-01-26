@@ -6,6 +6,7 @@
 #include "glm/glm.hpp"
 #include "../Core/Model.h"
 #include "../Core/BoundingVolumes.h"
+#include "../Core/Vehicle/MainVehicle.h"
 
 using namespace physx;
 
@@ -21,7 +22,6 @@ struct RigidBody
 	std::shared_ptr<AABB> boundingVolume;
 	float mass;
 	bool useGravity;
-	bool isKinematic;
 	glm::vec3 linearVelocity;
 	glm::vec3 angularVelocity;
 };
@@ -34,6 +34,7 @@ struct StaticModel
 
 struct VehicleBody
 {
+	EngineDriveVehicle* vehicle = nullptr;
 	glm::vec3 linearVelocity;
 	glm::vec3 angularVelocity;
 };

@@ -7,6 +7,7 @@
 struct MovingObstacle
 {
 	std::vector<glm::vec3> pathPoints; 
+	float progress;
 	int currentPathIndex;
 	float speed; // units per second
 };

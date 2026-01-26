@@ -38,13 +38,13 @@ void RenderSystem::Init()
 	ShaderSetupDefaults();
 
 	// setup text rendering
-	text = Text();
+	fonts = Text();
 	textVAO = VAO();
 	textVBO = VBO();
-	text.initVAO(&textVAO, &textVBO);
-	text.projMat = glm::ortho(0.0f, static_cast<float>(screenWidth), 0.0f, static_cast<float>(screenHeight));
+	fonts.initVAO(&textVAO, &textVBO);
+	fonts.projMat = glm::ortho(0.0f, static_cast<float>(screenWidth), 0.0f, static_cast<float>(screenHeight));
 	textShader->use();
-	textShader->setMat4("u_projection", text.projMat);
+	textShader->setMat4("u_projection", fonts.projMat);
 
 	// setup shadow mapper
 	Entity camera = controller.GetEntityByTag("Camera");
@@ -89,11 +89,13 @@ void RenderSystem::Update(float fps, const PxRenderBuffer& buffer)
 	DrawLightingPass();
 
 	// draw physics colliders
-	//DrawCollisionDebug(buffer);
+	DrawCollisionDebug(buffer);
 
 	DrawPostProcessingPass();
-
-	RenderText(std::to_string((int)fps) + " fps", 0.05f, 0.9f, 0.7f, glm::vec3(0.5f, 0.8f, 0.2f), text.charArial);
+	
+	int f = static_cast<int>(fps);
+	std::string text = "fps: " + std::to_string(f);
+	RenderText(text, 0.05f, 0.9f, 0.7f, glm::vec3(0.5f, 0.8f, 0.2f));
 }
 
 
@@ -270,15 +272,20 @@ void RenderSystem::DrawLightingPass()
 	}
 	/*glActiveTexture(GL_TEXTURE6);
 	shadowMapper->BindDepthMapTexture();*/
+	Mesh* previousMesh = nullptr;
 	for (auto& [model, matrices] : instancedModels) // loop through each unique model that is instanced
 	{
 		for (auto& mesh : model->getMeshes()) // instance render each mesh in the model
 		{
+			if (previousMesh != &mesh) // only bind textures if the mesh is different from the previous one since instanced meshes will share the same texture
+			{
+				// bind textures
+				BindTextures(mesh);
+				previousMesh = &mesh;
+			}
+
 			mesh.UpdateInstanceBuffer(matrices);
 			mesh.SetupInstanceMesh();
-
-			// bind textures
-			BindTextures(mesh);
 			mesh.BindVao();
 			glDrawElementsInstanced(GL_TRIANGLES, static_cast<GLsizei>(mesh.getIndices().size()), GL_UNSIGNED_INT, 0, static_cast<GLsizei>(matrices.size()));
 			mesh.UnbindVao();
@@ -303,7 +310,7 @@ void RenderSystem::DrawPostProcessingPass()
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
-void RenderSystem::RenderText(std::string text, float x, float y, float scale, glm::vec3 color, std::map<char, Character> characters)
+void RenderSystem::RenderText(std::string text, float x, float y, float scale, glm::vec3 color)
 {
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -318,7 +325,7 @@ void RenderSystem::RenderText(std::string text, float x, float y, float scale, g
 
 	for (c = text.begin(); c != text.end(); c++)
 	{
-		Character ch = characters[*c];
+		Character ch = fonts.charArial[*c];
 		float xPos = x + ch.bearing.x * scale;
 		float yPos = y - (ch.size.y - ch.bearing.y) * scale;
 
@@ -351,12 +358,6 @@ void RenderSystem::RenderText(std::string text, float x, float y, float scale, g
 
 	textVAO.Unbind();
 	glBindTexture(GL_TEXTURE_2D, 0);
-}
-
-void RenderSystem::DrawEntityInstanced()
-{
-	defaultShader->use();
-
 }
 
 void RenderSystem::DrawSkybox()
@@ -459,20 +460,25 @@ void RenderSystem::BindTextures(Mesh& mesh)
 	{
 		std::string number;
 		std::string name = mesh.getTextures()[i].getType();
-
 		if (name == "texture_diffuse")
+		{
 			number = std::to_string(diffuseNr++);
+		}
 		else if (name == "texture_specular")
+		{
 			number = std::to_string(specularNr++); // transfer unsigned int to string
+		}
 		else if (name == "texture_normal")
+		{
 			number = std::to_string(normalNr++); // transfer unsigned int to string
+		}
 		else if (name == "texture_height")
+		{
 			number = std::to_string(heightNr++); // transfer unsigned int to string
-
-		//shader->setInt(("material." + name + number).c_str(), i);
+		}
 		
-		//defaultShader->setInt((name + number).c_str(), i); // set the texture unit in the shader
-		defaultInstanceShader->setInt((name + number).c_str(), i); // set the texture unit in the shader
+		name = name + number; 
+		defaultInstanceShader->setInt(name, i); // set the texture unit in the shader
 
 		mesh.getTextures()[i].Bind(GL_TEXTURE0 + i); // activate and bind texture
 	}
@@ -516,5 +522,5 @@ void RenderSystem::WindowSizeListener(Event& e)
 
 	postProcessor->Resize(screenWidth, screenHeight);
 
-	text.projMat = glm::ortho(0.0f, static_cast<float>(screenWidth), 0.0f, static_cast<float>(screenHeight));
+	fonts.projMat = glm::ortho(0.0f, static_cast<float>(screenWidth), 0.0f, static_cast<float>(screenHeight));
 }
