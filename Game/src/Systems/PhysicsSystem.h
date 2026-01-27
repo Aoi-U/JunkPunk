@@ -22,7 +22,6 @@ public:
 
 	void Update(float deltaTime);
 
-
 	void Cleanup();
 
 	const PxRenderBuffer& GetRenderBuffer() { return gPhysicsScene->getRenderBuffer(); }
@@ -42,11 +41,11 @@ private:
 
 	PhysicsCallbacks* gPhysicsCallbacks;
 
-	std::unordered_map<std::string, PxMaterial*> materialMap;
+	std::unordered_map<std::string, PxMaterial*> materialMap; // holds different physics materials
 
-	void Simulate(float deltaTime);
+	void Simulate(float deltaTime); // run a physics simulation step
 
-	void CreateMap();
+	void CreateMap(); // initialize physics map
 
 	PxTriangleMesh* CreateTriangleMesh(const Mesh& mesh); // generate static triangle meshes from models
 
@@ -56,7 +55,7 @@ private:
 
 	void ReleaseActorListener(Event& e); // listens for a release actor event
 
-	void CreateActorListener(Event& e);
+	void CreateActorListener(Event& e); // listens for a create actor event
 
 	void JumpEventListener(Event& e); // listens for jump events
 

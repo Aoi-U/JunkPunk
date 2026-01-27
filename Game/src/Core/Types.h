@@ -55,6 +55,7 @@ namespace Events::Window // window related events
 	const EventId RESIZED = "Events::Window::RESIZED"_hash; // window resized event
 	const EventId INPUT = "Events::Window::INPUT"_hash; // keyboard input event
 	const EventId SCROLLED = "Events::Window::SCROLLED"_hash; // mouse scrolled event
+	const EventId MOUSEMOVED = "Events::Window::MOUSEMOVED"_hash; // mouse moved event
 }
 
 namespace Events::Window::Resized // parameters for window resized event
@@ -73,6 +74,12 @@ namespace Events::Window::Scrolled // parameters for mouse scrolled event
 {
 	const ParamId XOFFSET = "Events::Window::Scrolled::XOFFSET"_hash; // scroll x offset
 	const ParamId YOFFSET = "Events::Window::Scrolled::YOFFSET"_hash; // scroll y offset
+}
+
+namespace Events::Window::Mouse_Moved
+{
+	const ParamId XPOS = "Events::Window::Mouse_Moved::XPOS"_hash; 
+	const ParamId YPOS = "Events::Window::Mouse_Moved::YPOS"_hash;
 }
 
 // audio events

@@ -4,6 +4,7 @@
 int Window::fbWidth = 0;
 int Window::fbHeight = 0;
 std::unordered_map<int, bool> Window::mKeyStatusMap{};
+std::unordered_map<int, bool> Window::mMouseStatusMap{};
 
 
 extern ECSController controller;
@@ -51,7 +52,8 @@ void Window::mouseButtonMetaCallback(GLFWwindow* window, int button, int action,
 
 	// If ImGui doesn't want to capture the mouse, call the user-defined callback
 	
-	
+	mMouseStatusMap[button] = action;
+
 }
 
 
@@ -66,6 +68,13 @@ void Window::cursorPosMetaCallback(GLFWwindow* window, double xpos, double ypos)
 
 	// Call user-defined cursor position callback only if ImGui isn't capturing the mouse
 
+	if (mMouseStatusMap[GLFW_MOUSE_BUTTON_RIGHT] == GLFW_PRESS) {
+		// User is dragging with right mouse button held down
+		Event event(Events::Window::MOUSEMOVED);
+		event.SetParam<double>(Events::Window::Mouse_Moved::XPOS, xpos);
+		event.SetParam<double>(Events::Window::Mouse_Moved::YPOS, ypos);
+		controller.SendEvent(event);
+	}
 }
 
 void Window::scrollMetaCallback(GLFWwindow* window, double xoffset, double yoffset) {

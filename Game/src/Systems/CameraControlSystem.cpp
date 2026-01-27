@@ -15,6 +15,7 @@ void CameraControlSystem::Init(std::shared_ptr<Gamepad> gamepad)
 {
 	this->gamepad = gamepad;
 	controller.AddEventListener(Events::Window::RESIZED, [this](Event& e) { this->WindowSizeListener(e); });
+	controller.AddEventListener(Events::Window::MOUSEMOVED, [this](Event& e) { this->MouseMovedListener(e); });
 }
 
 
@@ -77,5 +78,27 @@ void CameraControlSystem::WindowSizeListener(Event& e)
 		camera.screenHeight = height;
 		std::cout << "Camera resized to: " << width << "x" << height << std::endl;
 	}
-
 }
+
+void CameraControlSystem::MouseMovedListener(Event& e)
+{
+	double xpos = e.GetParam<double>(Events::Window::Mouse_Moved::XPOS);
+	double ypos = e.GetParam<double>(Events::Window::Mouse_Moved::YPOS);
+
+	double deltaX = xpos - lastPosX;
+	double deltaY = ypos - lastPosY;
+
+	lastPosX = xpos;
+	lastPosY = ypos;
+
+	// rotate camera based on mouse movement
+	for (auto& entity : entities)
+	{
+		auto& camera = controller.GetComponent<ThirdPersonCamera>(entity);
+		camera.yaw += deltaX * 0.005f;
+		camera.pitch += deltaY * 0.005f;
+		camera.pitch = glm::clamp(camera.pitch, glm::radians(-89.0f), glm::radians(89.0f));
+
+	}
+}
+

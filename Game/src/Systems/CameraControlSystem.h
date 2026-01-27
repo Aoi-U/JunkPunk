@@ -20,7 +20,12 @@ public:
 private:
 	void WindowSizeListener(Event& e);
 
+	void MouseMovedListener(Event& e);
+
 	std::shared_ptr<Gamepad> gamepad;
 	int screenWidth = 1280;
 	int screenHeight = 720;
+
+	double lastPosX;
+	double lastPosY;
 };

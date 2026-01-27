@@ -194,14 +194,17 @@ void Game::Run()
 		renderSystem->Clear(0.0f, 0.0f, 0.0f, 1.0f); // clear screen
 		time->Update();
 		
+		// physics update first to prevent twitching/jittering objects
 		while (time->accumulator >= time->deltaTime)
 		{
 			physicsSystem->Update(time->deltaTime);
 			time->accumulator -= time->deltaTime;
 			time->totalTime += time->deltaTime;
 		}
-		vehicleControlSystem->Update();
-		camControlSystem->Update(time->frameTime);
+
+		vehicleControlSystem->Update(); // handle vehicle controls
+
+		camControlSystem->Update(time->frameTime); // handle camera controls
 
 		renderSystem->Update(time->fps(), physicsSystem->GetRenderBuffer()); // render physics debug data
 		

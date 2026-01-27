@@ -37,7 +37,7 @@ private:
 	static int fbWidth;
 	static int fbHeight;
 	static std::unordered_map<int, bool> mKeyStatusMap;
-
+	static std::unordered_map<int, bool> mMouseStatusMap;
 
 	static void defaultWindowSizeCallback(GLFWwindow* window, int width, int height) { glViewport(0, 0, width, height); }
 	static void framebuffer_size_callback(GLFWwindow* window, int width, int height);

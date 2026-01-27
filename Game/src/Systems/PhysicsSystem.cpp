@@ -79,9 +79,7 @@ PhysicsSystem::PhysicsSystem()
 
 void PhysicsSystem::Init()
 {
-	//Box(1.0f, 5, PxVec3(0.0f, 10.0f, 0.0f)); // test
 	CreateMap();
-
 }
 
 void PhysicsSystem::Update(float deltaTime)
@@ -110,10 +108,12 @@ void PhysicsSystem::Update(float deltaTime)
 		{
 			auto& rigidBody = controller.GetComponent<RigidBody>(entity);
 
+			// update the transforms from physics simulation
 			PxTransform pxTransform = rigidBody.actor->getGlobalPose();
 			transform.position = glm::vec3(pxTransform.p.x, pxTransform.p.y, pxTransform.p.z);
 			transform.quatRotation = glm::quat(pxTransform.q.w, pxTransform.q.x, pxTransform.q.y, pxTransform.q.z);
 
+			// update velocities from physics simulation
 			PxVec3 linearVelocity = rigidBody.actor->getLinearVelocity();
 			PxVec3 angularVelocity = rigidBody.actor->getAngularVelocity();
 			rigidBody.linearVelocity = glm::vec3(linearVelocity.x, linearVelocity.y, linearVelocity.z);
@@ -167,22 +167,6 @@ void PhysicsSystem::Update(float deltaTime)
 			vehicleBody.linearVelocity = glm::vec3(linearVel.x, linearVel.y, linearVel.z);
 			vehicleBody.angularVelocity = glm::vec3(angularVel.x, angularVel.y, angularVel.z);
 		}
-		else if (controller.HasComponent<MovingObstacle>(entity))
-		{
-			auto& obstacle = controller.GetComponent<MovingObstacle>(entity);
-			auto& rigidBody = controller.GetComponent<RigidBody>(entity);
-			PxTransform pxTransform = rigidBody.actor->getGlobalPose();
-
-			glm::vec3 direction = glm::normalize(obstacle.pathPoints[obstacle.currentPathIndex] - transform.position);
-
-			transform.position += direction * obstacle.speed * deltaTime;
-
-			// check if reached the current path point
-			if (glm::length(obstacle.pathPoints[obstacle.currentPathIndex] - transform.position) < 0.1f)
-			{
-				obstacle.currentPathIndex = (obstacle.currentPathIndex + 1) % obstacle.pathPoints.size(); // increment the path index to the next point
-			}
-		}
 	}
 }
 
@@ -228,7 +212,8 @@ void PhysicsSystem::CreateMap()
 				}
 				
 				PxMeshScale scale = PxMeshScale(PxVec3(transform.scale.x, transform.scale.y, transform.scale.z), PxQuat(PxIdentity)); 
-				PxTransform meshTransform = PxTransform(PxVec3(transform.position.x, transform.position.y, transform.position.z),
+				PxTransform meshTransform = 
+					PxTransform(PxVec3(transform.position.x, transform.position.y, transform.position.z),
 					PxQuat(transform.quatRotation.x, transform.quatRotation.y, transform.quatRotation.z, transform.quatRotation.w));
 				
 				PxShape* shape = gPhysics->createShape(PxTriangleMeshGeometry(triangleMesh, scale), *gGroundMaterial);
