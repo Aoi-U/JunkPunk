@@ -12,7 +12,7 @@ using namespace physx;
 
 struct PhysicsBody
 {
-
+	PxMaterial* material = nullptr;
 };
 
 struct RigidBody

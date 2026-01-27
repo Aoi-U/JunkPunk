@@ -3,7 +3,7 @@
 	{
 		"UpRatios": [0.65, 0.15, 0.65, 0.65, 0.65, 0.65, 0.65],
 		"DownRatios":[0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
-		"Latency": 2.0
+		"Latency": 0.05
 	},
 	"ClutchCommandResponseParams":
 	{
@@ -11,12 +11,12 @@
 	},
 	"EngineParams":
 	{
-		"TorqueCurve": [[0.0, 1.0], [0.33, 1.0], [1.0, 1.0]],
+		"TorqueCurve": [[0.0, 1.0], [0.5, 1.0], [1.0, 1.0]],
 		"MOI": 1.0,
-		"PeakTorque": 500.0,
+		"PeakTorque": 4000.0,
 		"IdleOmega": 0.0,
-		"MaxOmega": 600.0,
-		"DampingRateFullThrottle": 0.15,
+		"MaxOmega": 1000.0,
+		"DampingRateFullThrottle": 0.05,
 		"DampingRateZeroThrottleClutchEngaged": 2.0,
 		"DampingRateZeroThrottleClutchDisengaged": 0.35
 	},
@@ -25,7 +25,7 @@
 		"NeutralGear": 1,
 		"Ratios": [-4.0, 0.0, 4.0, 2.0, 1.5, 1.1, 1.0],
 		"FinalRatio": 4.0,
-		"SwitchTime": 0.5
+		"SwitchTime": 0.0
 	},
 	"MultiWheelDifferentialParams":
 	{

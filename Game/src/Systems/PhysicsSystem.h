@@ -42,6 +42,8 @@ private:
 
 	PhysicsCallbacks* gPhysicsCallbacks;
 
+	std::unordered_map<std::string, PxMaterial*> materialMap;
+
 	void Plane();
 
 	void Box(float halfLen, PxU32 size, PxVec3 position); // test

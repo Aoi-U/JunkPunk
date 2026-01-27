@@ -50,7 +50,14 @@ PhysicsSystem::PhysicsSystem()
 	gPhysicsScene->setVisualizationParameter(PxVisualizationParameter::eSCALE, 1.0f);
 	gPhysicsScene->setVisualizationParameter(PxVisualizationParameter::eCOLLISION_SHAPES, 1.0f);
 
-	gGroundMaterial = gPhysics->createMaterial(0.5f, 0.6f, 0.6f);
+	//gGroundMaterial = gPhysics->createMaterial(0.5f, 0.6f, 0.6f);
+
+	// initialize materials
+	materialMap["default"] = gPhysics->createMaterial(0.2f, 0.8f, 0.2f); 
+	materialMap["vehicle_tire"] = gPhysics->createMaterial(0.72f, 0.72f, 0.1f);
+	materialMap["ice"] = gPhysics->createMaterial(0.1f, 0.02f, 0.0f);
+	materialMap["bouncy"] = gPhysics->createMaterial(0.5f, 0.5f, 1.0f);
+	gGroundMaterial = materialMap["default"];
 
 
 	// initialize PVD
@@ -255,7 +262,7 @@ void PhysicsSystem::CreateMap()
 					PxQuat(transform.quatRotation.x, transform.quatRotation.y, transform.quatRotation.z, transform.quatRotation.w));
 				
 				PxShape* shape = gPhysics->createShape(PxTriangleMeshGeometry(triangleMesh, scale), *gGroundMaterial);
-				//shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, true);
+				shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, true);
 				shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, true);
 				shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, false);
 
@@ -322,7 +329,7 @@ void PhysicsSystem::CreateMap()
 		}
 		else if (controller.HasComponent<VehicleBody>(entity))
 		{
-			if (!gVehicle.setup(gPhysicsScene, gPhysics, gGroundMaterial))
+			if (!gVehicle.setup(gPhysicsScene, gPhysics, materialMap["vehicle_tire"]))
 			{
 				std::cout << "Vehicle failed to initialize!" << std::endl;
 				return;

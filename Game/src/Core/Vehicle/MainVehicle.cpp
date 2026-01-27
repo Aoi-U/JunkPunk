@@ -18,22 +18,33 @@ bool MainVehicle::setup(PxScene* scene, PxPhysics* physics, PxMaterial* material
 
 void MainVehicle::initMaterialFrictionTable(PxMaterial* gMaterial)
 {
-	gPhysXMaterialFrictions[0].friction = 3.0f;
+	gPhysXMaterialFrictions[0].friction = 2.0f;
 	gPhysXMaterialFrictions[0].material = gMaterial;
-	gPhysXDefaultMaterialFriction = 1.0f;
+	gPhysXDefaultMaterialFriction = 1.5f;
 	gNbPhysXmaterialFrictions = 1;
 }
 
 bool MainVehicle::initVehicles(PxScene* gScene, PxPhysics* gPhysics, PxMaterial* gMaterial)
 {
 	// Initialize the vehicle
-	if (readBaseParamsFromJsonFile("assets/vehicledata/", "Base.json", gVehicle.mBaseParams))
-	{
-		std::cout << "Successfully read base params from JSON file." << std::endl;
-	}
+	readBaseParamsFromJsonFile("assets/vehicledata/", "Base.json", gVehicle.mBaseParams);
 	setPhysXIntegrationParams(gVehicle.mBaseParams.axleDescription, gPhysXMaterialFrictions, gNbPhysXmaterialFrictions, gPhysXDefaultMaterialFriction, gVehicle.mPhysXParams);
-	//readDirectDrivetrainParamsFromJsonFile("assets/vehicledata/", "DirectDrive.json", gVehicle.mBaseParams.axleDescription, gVehicle.mDirectDriveParams);
 	readEngineDrivetrainParamsFromJsonFile("assets/vehicledata/", "EngineDrive.json", gVehicle.mEngineDriveParams);
+	//	good params to tune for exaggerated movement:
+	//		enginedrive.json:
+	//			autoboxparams latency: lower values makes gearbox react faster to rpm changes
+	//			engineparams torqueCurve: give full torque at lower rpm gives more power
+	//			engineparams peaktorque: gives a good instant acceleration feeling
+	//			engineparams maxOmega: higher values let engine rev higher which gets higher top speeds
+	//			gearboxparams switchtime: lower values make gear shift faster
+	//		base.json:
+	//			rigidbodyparams mass: lower values make it accelerate easier and faster
+	//			rigidbodyparams moi: lower values make turning very snappy and feels good, should focus more on this
+	//			suspensionparams stiffness: higher values might reduce rolling over when turning
+	//			suspensionparams damper: lower values make suspension bouncier
+	// just experiment with everything i guess
+
+
 
 	if (!gVehicle.initialize(*gPhysics, PxCookingParams(PxTolerancesScale()), *gMaterial, EngineDriveVehicle::eDIFFTYPE_FOURWHEELDRIVE))
 	{
@@ -55,6 +66,7 @@ bool MainVehicle::initVehicles(PxScene* gScene, PxPhysics* gPhysics, PxMaterial*
 
 	//PxShape* chassisShape = gPhysics->createShape(PxBoxGeometry(vph.physxActorBoxShapeHalfExtents), *gMaterial);
 	PxShape* chassisShape = gPhysics->createShape(PxBoxGeometry(gVehicle.mPhysXParams.physxActorBoxShapeHalfExtents), *gMaterial);
+	chassisShape->setFlag(PxShapeFlag::eVISUALIZATION, true);
 	gVehicle.mPhysXState.physxActor.rigidBody->attachShape(*chassisShape);
 	chassisShape->release();
 

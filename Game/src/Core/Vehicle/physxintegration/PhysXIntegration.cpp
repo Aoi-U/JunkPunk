@@ -122,14 +122,15 @@ void setPhysXIntegrationParams(const PxVehicleAxleDescription& axleDescription,
 
 	const PxQueryFilterData queryFilterData(PxFilterData(0, 0, 0, 0), PxQueryFlag::eSTATIC);
 	PxQueryFilterCallback* queryFilterCallback = NULL;
-	const PxTransform physxActorCMassLocalPose(PxVec3(0.0f, 0.1f, 0.0f), PxQuat(PxIdentity));
-	const PxVec3 physxActorBoxShapeHalfExtents(0.84097f, 0.25f, 0.8f);
-	const PxTransform physxActorBoxShapeLocalPose(PxVec3(0.0f, 0.3f, 0.0f), PxQuat(PxIdentity));
+	const PxTransform physxActorCMassLocalPose(PxVec3(0.0f, 0.0f, 0.2f), PxQuat(PxIdentity));
+	const PxVec3 physxActorBoxShapeHalfExtents(0.2f, 0.06f, 0.6f);
+	const PxTransform physxActorBoxShapeLocalPose(PxVec3(0.0f, 0.1f, 0.0f), PxQuat(PxIdentity));
+	// flip the box shape up so that the center of mass is at the origin
 
 	physXParams.create(
 		axleDescription,
 		queryFilterData, queryFilterCallback,
-		physXMaterialFrictions, nbPhysXMaterialFrictions, physXDefaultMaterialFriction,
+		physXMaterialFrictions, nbPhysXMaterialFrictions, physXDefaultMaterialFriction, 
 		physxActorCMassLocalPose,
 		physxActorBoxShapeHalfExtents, physxActorBoxShapeLocalPose);
 }
