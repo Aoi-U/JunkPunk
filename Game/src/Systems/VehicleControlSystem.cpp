@@ -54,7 +54,8 @@ void VehicleControlSystem::Update()
 
 void VehicleControlSystem::KeyboardInputListener(Event& e)
 {
-	int keyRecieve = e.GetParam<int>(Events::Window::Input::INPUT);
+	int keyRecieve = e.GetParam<int>(Events::Window::Input::KEY);
+	int action = e.GetParam<bool>(Events::Window::Input::ACTION);
 	char key = static_cast<char>(keyRecieve);
 
 	for (auto& entity : entities)
@@ -63,23 +64,23 @@ void VehicleControlSystem::KeyboardInputListener(Event& e)
 		
 		if (key == Keys::KEY_FORWARD)
 		{
-			playerCommands.throttle = 1.0f;
+			playerCommands.throttle = action ? 1.0f : 0.0f;
 		}
 		if (key == Keys::KEY_BACKWARD)
 		{
-			playerCommands.brake = 1.0f;
+			playerCommands.brake = action ? 1.0f : 0.0f;
 		}
 		if (key == Keys::KEY_LEFT)
 		{
-			playerCommands.steer = 1.0f;
+			playerCommands.steer = action ? 1.0f : 0.0f;
 		}
 		if (key == Keys::KEY_RIGHT)
 		{
-			playerCommands.steer = -1.0f;
+			playerCommands.steer = action ? -1.0f : 0.0f;
 		}
 		if (key == Keys::KEY_JUMP)
 		{
-			if (playerCommands.isGrounded)
+			if (playerCommands.isGrounded && action)
 			{
 				std::cout << "Jump key pressed" << std::endl;
 				// send jump event to physics and audio (can add more)
@@ -90,11 +91,15 @@ void VehicleControlSystem::KeyboardInputListener(Event& e)
 		}
 		if (key == Keys::KEY_RESET)
 		{
-			// send event to physics system
-			Event event(Events::Player::RESET_VEHICLE);
-			event.SetParam<Entity>(Events::Player::Reset_Vehicle::ENTITY, entity);
-			controller.SendEvent(event);
+			if (action)
+			{
+				// send event to physics system
+				Event event(Events::Player::RESET_VEHICLE);
+				event.SetParam<Entity>(Events::Player::Reset_Vehicle::ENTITY, entity);
+				controller.SendEvent(event);
+			}
 		}
+		
 
 		
 	}

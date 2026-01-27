@@ -1,12 +1,13 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 
 #include "Entity/EntityManager.h"
 #include "Components/ComponentManager.h"
+//#include "Components/Physics.h"
 #include "Systems/SystemManager.h"
 #include "EventManager.h"
-#include <optional>
 
 #include "Core/Types.h"
 
@@ -60,6 +61,13 @@ public:
 	template<typename T>
 	void RemoveComponent(Entity entity)
 	{
+		//const char* typeName = typeid(T).name();
+		//if (typeName == "RigidBody")
+		//{
+		//	//RigidBody& rigidbodyComponent = GetComponent<RigidBody>(entity);
+		//	//rigidbodyComponent.actor->release();
+		//}
+
 		componentManager->RemoveComponent<T>(entity);
 		Signature signature = entityManager->GetSignature(entity);
 		signature.set(componentManager->GetComponentType<T>(), false); // clear bit for this component

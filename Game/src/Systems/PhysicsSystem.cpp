@@ -246,9 +246,9 @@ void PhysicsSystem::CreateMap()
 	{
 		auto& transform = controller.GetComponent<Transform>(entity);
 
-		if (controller.HasComponent<StaticModel>(entity))
+		if (controller.HasComponent<StaticBody>(entity))
 		{
-			auto& entityModel = controller.GetComponent<StaticModel>(entity);
+			auto& entityModel = controller.GetComponent<StaticBody>(entity);
 			for (const Mesh& mesh : entityModel.collisionMesh->getMeshes())
 			{
 				PxTriangleMesh* triangleMesh = CreateTriangleMesh(mesh);
@@ -271,7 +271,7 @@ void PhysicsSystem::CreateMap()
 				staticActor->attachShape(*shape);
 				staticActor->setActorFlag(PxActorFlag::eVISUALIZATION, false);
 
-				auto& actor = controller.GetComponent<StaticModel>(entity);
+				auto& actor = controller.GetComponent<StaticBody>(entity);
 				actor.actor = staticActor;
 
 				gPhysicsScene->addActor(*staticActor);
@@ -382,6 +382,10 @@ PxTriangleMesh* PhysicsSystem::CreateTriangleMesh(const Mesh& mesh)
 	PxDefaultMemoryInputData readBuffer(writeBuffer.getData(), writeBuffer.getSize());
 
 	return gPhysics->createTriangleMesh(readBuffer);
+}
+
+void PhysicsSystem::EntityRemovedListener(Event& e)
+{
 }
 
 void PhysicsSystem::JumpEventListener(Event& e)

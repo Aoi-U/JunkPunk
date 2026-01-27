@@ -3,6 +3,7 @@
 #include <iostream>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <unordered_map>
 
 #include "Core/Types.h"
 
@@ -35,6 +36,8 @@ private:
 
 	static int fbWidth;
 	static int fbHeight;
+	static std::unordered_map<int, bool> mKeyStatusMap;
+
 
 	static void defaultWindowSizeCallback(GLFWwindow* window, int width, int height) { glViewport(0, 0, width, height); }
 	static void framebuffer_size_callback(GLFWwindow* window, int width, int height);

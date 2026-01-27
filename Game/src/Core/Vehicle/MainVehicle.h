@@ -92,7 +92,7 @@ private:
 	glm::vec3 checkpointPosition = glm::vec3(0.0f);
 	glm::vec3 checkpointRotation = glm::vec3(0.0f);
 
-	PxVec3 jumpForce = PxVec3(0.0f, 20000.0f, 0.0f);
+	PxVec3 jumpForce = PxVec3(0.0f, 6000.0f, 0.0f);
 
 	void setTransform(const glm::vec3& position, const glm::vec3& rotation); // set the position and rotation of the vehicle (use for checkpoints/respawning)
 };

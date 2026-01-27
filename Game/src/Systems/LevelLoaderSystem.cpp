@@ -97,7 +97,7 @@ void LevelLoaderSystem::LoadLevel()
 	entity = controller.createEntity();
 	auto loaded = LoadModel("assets/models/snowy_mountain_-_terrain/scene.gltf");
 	controller.AddComponent(entity, Transform{ glm::vec3(0.0f, 0.0f, 0.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(500.0f) });
-	controller.AddComponent(entity, StaticModel{ nullptr, loaded.first });
+	controller.AddComponent(entity, StaticBody{ nullptr, loaded.first });
 	controller.AddComponent(entity, Render{ loaded.first, loaded.second });
 	controller.AddComponent(entity, PhysicsBody{});
 

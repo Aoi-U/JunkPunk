@@ -12,7 +12,7 @@ using namespace physx;
 
 struct PhysicsBody
 {
-	PxMaterial* material = nullptr;
+
 };
 
 struct RigidBody
@@ -26,7 +26,7 @@ struct RigidBody
 	glm::vec3 angularVelocity;
 };
 
-struct StaticModel
+struct StaticBody
 {
 	PxRigidStatic* actor = nullptr;
 	std::shared_ptr<Model> collisionMesh;

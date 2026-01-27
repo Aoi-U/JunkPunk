@@ -58,6 +58,8 @@ private:
 
 	// listeners
 
+	void EntityRemovedListener(Event& e);
+
 	void JumpEventListener(Event& e); // listens for jump events
 
 	void ResetVehicleEventListener(Event& e); // listens for vehicle reset events

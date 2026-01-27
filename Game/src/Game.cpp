@@ -99,7 +99,7 @@ Game::Game()
 	controller.RegisterComponent<VehicleCommands>();
 	controller.RegisterComponent<PhysicsBody>();
 	controller.RegisterComponent<RigidBody>();
-	controller.RegisterComponent<StaticModel>();
+	controller.RegisterComponent<StaticBody>();
 	controller.RegisterComponent<VehicleBody>();
 	controller.RegisterComponent<Trigger>();
 	controller.RegisterComponent<MovingObstacle>();

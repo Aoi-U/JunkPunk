@@ -3,6 +3,8 @@
 
 int Window::fbWidth = 0;
 int Window::fbHeight = 0;
+std::unordered_map<int, bool> Window::mKeyStatusMap{};
+
 
 extern ECSController controller;
 
@@ -16,9 +18,26 @@ void Window::keyMetaCallback(GLFWwindow* window, int key, int scancode, int acti
 	}*/
 
 	// If ImGui doesn't want to capture the keyboard, call the user-defined callback
-	Event event(Events::Window::INPUT);
-	event.SetParam<int>(Events::Window::Input::INPUT, key);
-	controller.SendEvent(event);	
+	/*Event event(Events::Window::INPUT);
+	event.SetParam<int>(Events::Window::Input::KEY, key);
+	controller.SendEvent(event);*/	
+	if (action == GLFW_PRESS)
+	{
+		mKeyStatusMap[key] = true;
+		std::cout << "Key pressed: " << key << std::endl;
+		Event event(Events::Window::INPUT);
+		event.SetParam<int>(Events::Window::Input::KEY, key);
+		event.SetParam<bool>(Events::Window::Input::ACTION, true);
+		controller.SendEvent(event);
+	}
+	else if (action == GLFW_RELEASE)
+	{
+		mKeyStatusMap[key] = false;
+		Event event(Events::Window::INPUT);
+		event.SetParam<int>(Events::Window::Input::KEY, key);
+		event.SetParam<bool>(Events::Window::Input::ACTION, false);
+		controller.SendEvent(event);
+	}
 }
 
 
@@ -32,6 +51,7 @@ void Window::mouseButtonMetaCallback(GLFWwindow* window, int button, int action,
 	}*/
 
 	// If ImGui doesn't want to capture the mouse, call the user-defined callback
+	
 	
 }
 

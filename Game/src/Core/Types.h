@@ -65,7 +65,8 @@ namespace Events::Window::Resized // parameters for window resized event
 
 namespace Events::Window::Input // parameters for keyboard input event
 {
-	const ParamId INPUT = "Events::Window::Input::INPUT"_hash;  // input data
+	const ParamId KEY = "Events::Window::Input::KEY"_hash;  // input data
+	const ParamId ACTION = "Events::Window::Input::ACTION"_hash; // action it took
 }
 
 namespace Events::Window::Scrolled // parameters for mouse scrolled event
