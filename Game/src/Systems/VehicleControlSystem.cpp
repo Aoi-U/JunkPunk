@@ -2,6 +2,7 @@
 #include <iostream>
 #include "../Components/Player.h"
 #include "../ECSController.h"
+#include "../Components/Physics.h"
 
 extern ECSController controller;
 
@@ -99,8 +100,5 @@ void VehicleControlSystem::KeyboardInputListener(Event& e)
 				controller.SendEvent(event);
 			}
 		}
-		
-
-		
 	}
 }

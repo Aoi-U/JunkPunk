@@ -11,6 +11,8 @@ extern ECSController controller;
 PhysicsSystem::PhysicsSystem()
 	: gVehicle()
 {
+	controller.AddEventListener(Events::Physics::RELEASE_ACTOR, [this](Event& e) { this->ReleaseActorListener(e); });
+	controller.AddEventListener(Events::Physics::CREATE_ACTOR, [this](Event& e) { this->CreateActorListener(e); });
 	controller.AddEventListener(Events::Player::PLAYER_JUMPED, [this](Event& e) { this->JumpEventListener(e); });
 	controller.AddEventListener(Events::Player::RESET_VEHICLE, [this](Event& e) { this->ResetVehicleEventListener(e); });
 
@@ -112,6 +114,11 @@ void PhysicsSystem::Update(float deltaTime)
 			transform.position = glm::vec3(pxTransform.p.x, pxTransform.p.y, pxTransform.p.z);
 			transform.quatRotation = glm::quat(pxTransform.q.w, pxTransform.q.x, pxTransform.q.y, pxTransform.q.z);
 
+			PxVec3 linearVelocity = rigidBody.actor->getLinearVelocity();
+			PxVec3 angularVelocity = rigidBody.actor->getAngularVelocity();
+			rigidBody.linearVelocity = glm::vec3(linearVelocity.x, linearVelocity.y, linearVelocity.z);
+			rigidBody.angularVelocity = glm::vec3(angularVelocity.x, angularVelocity.y, angularVelocity.z);
+
 			if (controller.HasComponent<MovingObstacle>(entity))
 			{
 				auto& obstacle = controller.GetComponent<MovingObstacle>(entity);
@@ -178,44 +185,6 @@ void PhysicsSystem::Update(float deltaTime)
 		}
 	}
 }
-
-void PhysicsSystem::Plane()
-{
-	gGroundPlane = PxCreatePlane(*gPhysics, PxPlane(0, 1, 0, 0), *gGroundMaterial);
-	for (PxU32 i = 0; i < gGroundPlane->getNbShapes(); i++)
-	{
-		PxShape* shape = NULL;
-		gGroundPlane->getShapes(&shape, 1, i);
-		shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, true);
-		shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
-		shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, false);
-	}
-
-	gPhysicsScene->addActor(*gGroundPlane);
-}
-
-void PhysicsSystem::Box(float halfLen, PxU32 size, PxVec3 position)
-{
-	PxShape* shape = gPhysics->createShape(PxBoxGeometry(halfLen, halfLen, halfLen), *gGroundMaterial);
-	PxTransform tran(position);
-
-	// Create a pyramid of physics-enabled boxes
-	for (PxU32 i = 0; i < size; i++)
-	{
-		for (PxU32 j = 0; j < size - i; j++)
-		{
-			PxTransform localTran(PxVec3(PxReal(j * 2) - PxReal(size - i), PxReal(i * 2 - 1), 0 * halfLen));
-			PxRigidDynamic* body = gPhysics->createRigidDynamic(tran.transform(localTran));
-
-
-			body->attachShape(*shape);
-			PxRigidBodyExt::updateMassAndInertia(*body, 10.0f);
-			gPhysicsScene->addActor(*body);
-		}
-	}
-	shape->release();
-}
-
 
 void PhysicsSystem::Simulate(float deltaTime)
 {
@@ -363,8 +332,6 @@ PxTriangleMesh* PhysicsSystem::CreateTriangleMesh(const Mesh& mesh)
 	meshDesc.triangles.stride = 3 * sizeof(GLuint);
 	meshDesc.triangles.data = mesh.getIndices().data();
 
-	
-
 	PxTolerancesScale scale = PxTolerancesScale();
 	PxCookingParams params(scale);
 
@@ -384,8 +351,71 @@ PxTriangleMesh* PhysicsSystem::CreateTriangleMesh(const Mesh& mesh)
 	return gPhysics->createTriangleMesh(readBuffer);
 }
 
-void PhysicsSystem::EntityRemovedListener(Event& e)
+void PhysicsSystem::ReleaseActorListener(Event& e)
 {
+	Entity entity = e.GetParam<Entity>(Events::Physics::Release_Actor::ENTITY);
+
+	if (controller.HasComponent<RigidBody>(entity)) // if the entity has a rigidbody, release it from the physics scene
+	{
+		RigidBody& rigidBodyComponent = controller.GetComponent<RigidBody>(entity);
+		rigidBodyComponent.actor->release();
+	}
+}
+
+void PhysicsSystem::CreateActorListener(Event& e)
+{
+	Entity entity = e.GetParam<Entity>(Events::Physics::Create_Actor::ENTITY);
+	auto& transform = controller.GetComponent<Transform>(entity);
+
+	if (controller.HasComponent<RigidBody>(entity))
+	{
+		// create dynamic rigid body
+		auto& rigidBodyComponent = controller.GetComponent<RigidBody>(entity);
+		PxBounds3 aabb = PxBounds3::empty();
+
+		// check if a bounding volume already exists for this model
+		if (rigidBodyComponent.boundingVolume)
+		{
+			AABB& bv = *rigidBodyComponent.boundingVolume;
+			std::array<glm::vec3, 8> vertices = bv.getVertices();
+			for (const glm::vec3& vertex : vertices)
+			{
+				aabb.include(PxVec3(vertex.x, vertex.y, vertex.z));
+			}
+		}
+		else // create aabb from collision mesh
+		{
+			for (const Mesh& mesh : rigidBodyComponent.collisionMesh->getMeshes())
+			{
+
+			}
+		}
+
+		PxVec3 extent = aabb.getExtents();
+		// scale by the transform scale
+		extent.x *= transform.scale.x;
+		extent.y *= transform.scale.y;
+		extent.z *= transform.scale.z;
+
+		PxBoxGeometry boxGeometry(extent);
+		PxTransform bodyTransform = PxTransform(PxVec3(transform.position.x, transform.position.y, transform.position.z),
+			PxQuat(transform.quatRotation.x, transform.quatRotation.y, transform.quatRotation.z, transform.quatRotation.w));
+
+		PxShape* shape = gPhysics->createShape(boxGeometry, *gGroundMaterial);
+		shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, true);
+		shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, true);
+		shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, false);
+		PxRigidDynamic* dynamicActor = gPhysics->createRigidDynamic(bodyTransform);
+		dynamicActor->attachShape(*shape);
+		dynamicActor->setActorFlag(PxActorFlag::eVISUALIZATION, false);
+
+		dynamicActor->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, controller.HasComponent<MovingObstacle>(entity));
+
+		PxRigidBodyExt::updateMassAndInertia(*dynamicActor, rigidBodyComponent.mass);
+		rigidBodyComponent.actor = dynamicActor;
+		gPhysicsScene->addActor(*dynamicActor);
+		shape->release();
+	}
 }
 
 void PhysicsSystem::JumpEventListener(Event& e)

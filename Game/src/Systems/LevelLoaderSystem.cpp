@@ -101,7 +101,7 @@ void LevelLoaderSystem::LoadLevel()
 	controller.AddComponent(entity, Render{ loaded.first, loaded.second });
 	controller.AddComponent(entity, PhysicsBody{});
 
-	for (int i = 0; i < 50; i++)
+	for (int i = 0; i < 10; i++)
 	{
 		entity = controller.createEntity();
 		loaded = LoadModel("assets/models/rubix_2.0/scene.gltf");
@@ -137,14 +137,12 @@ void LevelLoaderSystem::LoadLevel()
 std::pair<std::shared_ptr<Model>, std::shared_ptr<AABB>> LevelLoaderSystem::LoadModel(std::string path)
 {
 	// check if model is previously loaded
-	if (models.find(path) == models.end())
+	if (loadedModels.find(path) == loadedModels.end())
 	{
-		Entity camera = controller.GetEntityByTag("Camera");
-		auto& cameraComp = controller.GetComponent<ThirdPersonCamera>(camera);
-
-		models[path] = std::make_shared<Model>(path); // load the model
-		boundingVolumes[path] = std::make_shared<AABB>(generateAABB(*models[path])); // create bounding volume for the model
+		std::shared_ptr<Model> model = std::make_shared<Model>(path); // load the model
+		std::shared_ptr<AABB> bv = std::make_shared<AABB>(generateAABB(*model)); // create bounding volumes for the model
+		loadedModels[path] = { model, bv };
 	}
 
-	return { models[path], boundingVolumes[path] };
+	return loadedModels[path];
 }

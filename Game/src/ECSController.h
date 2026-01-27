@@ -5,7 +5,6 @@
 
 #include "Entity/EntityManager.h"
 #include "Components/ComponentManager.h"
-//#include "Components/Physics.h"
 #include "Systems/SystemManager.h"
 #include "EventManager.h"
 
@@ -36,6 +35,11 @@ public:
 		// notify component and system managers that entity is destroyed
 		componentManager->EntityDestroyed(entity);
 		systemManager->EntityDestroyed(entity);
+
+		// send release actor event to physics system to safely remove the actor from the scene
+		Event event(Events::Physics::RELEASE_ACTOR);
+		event.SetParam<Entity>(Events::Physics::Release_Actor::ENTITY, entity);
+		SendEvent(event);
 	}
 
 	template<typename T>
@@ -61,19 +65,12 @@ public:
 	template<typename T>
 	void RemoveComponent(Entity entity)
 	{
-		//const char* typeName = typeid(T).name();
-		//if (typeName == "RigidBody")
-		//{
-		//	//RigidBody& rigidbodyComponent = GetComponent<RigidBody>(entity);
-		//	//rigidbodyComponent.actor->release();
-		//}
-
 		componentManager->RemoveComponent<T>(entity);
 		Signature signature = entityManager->GetSignature(entity);
 		signature.set(componentManager->GetComponentType<T>(), false); // clear bit for this component
 		entityManager->SetSignature(entity, signature);
 
-		systemManager->EntitySignatureChanged(entity, signature); // notify system manager that this entitys signature changed
+		systemManager->EntitySignatureChanged(entity, signature); // notify system manager that this entitys signature changed	
 	}
 
 	template<typename T>

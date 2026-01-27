@@ -184,6 +184,10 @@ void Game::Run()
 	std::shared_ptr<CameraEditorPanelRenderer> cameraPanelRenderer = std::make_shared<CameraEditorPanelRenderer>(&mainCamera, &cameraTransform);
 	camera_debug_panel.setPanelRenderer(cameraPanelRenderer);
 
+	// when creating an entity that needs physics during runtime, add all necessary components 
+	// then create and send Events::Physics::CREATE_ACTOR event with the entity created as the parameter
+	// so the physics system can properly create the actor into the scene
+
   // main loop
 	while (!window->shouldClose())
 	{

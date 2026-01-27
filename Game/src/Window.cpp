@@ -24,7 +24,6 @@ void Window::keyMetaCallback(GLFWwindow* window, int key, int scancode, int acti
 	if (action == GLFW_PRESS)
 	{
 		mKeyStatusMap[key] = true;
-		std::cout << "Key pressed: " << key << std::endl;
 		Event event(Events::Window::INPUT);
 		event.SetParam<int>(Events::Window::Input::KEY, key);
 		event.SetParam<bool>(Events::Window::Input::ACTION, true);

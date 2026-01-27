@@ -44,10 +44,6 @@ private:
 
 	std::unordered_map<std::string, PxMaterial*> materialMap;
 
-	void Plane();
-
-	void Box(float halfLen, PxU32 size, PxVec3 position); // test
-
 	void Simulate(float deltaTime);
 
 	void CreateMap();
@@ -58,7 +54,9 @@ private:
 
 	// listeners
 
-	void EntityRemovedListener(Event& e);
+	void ReleaseActorListener(Event& e); // listens for a release actor event
+
+	void CreateActorListener(Event& e);
 
 	void JumpEventListener(Event& e); // listens for jump events
 

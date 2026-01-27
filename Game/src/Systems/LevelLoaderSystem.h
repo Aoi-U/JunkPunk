@@ -24,6 +24,6 @@ public:
 	std::pair<std::shared_ptr<Model>, std::shared_ptr<AABB>> LoadModel(std::string path);
 private:
 
-	std::unordered_map<std::string, std::shared_ptr<AABB>> boundingVolumes; // maps file name to bounding volume
-	std::unordered_map<std::string, std::shared_ptr<Model>> models; // maps file name to model
+	// maps file name to its corresponding model and its bounding volume
+	std::unordered_map<std::string, std::pair<std::shared_ptr<Model>, std::shared_ptr<AABB>>> loadedModels;
 };
