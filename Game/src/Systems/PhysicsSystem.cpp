@@ -50,13 +50,14 @@ PhysicsSystem::PhysicsSystem()
 	gPhysicsScene->setVisualizationParameter(PxVisualizationParameter::eSCALE, 1.0f);
 	gPhysicsScene->setVisualizationParameter(PxVisualizationParameter::eCOLLISION_SHAPES, 1.0f);
 
-	//gGroundMaterial = gPhysics->createMaterial(0.5f, 0.6f, 0.6f);
 
 	// initialize materials
 	materialMap["default"] = gPhysics->createMaterial(0.2f, 0.8f, 0.2f); 
 	materialMap["vehicle_tire"] = gPhysics->createMaterial(0.72f, 0.72f, 0.1f);
 	materialMap["ice"] = gPhysics->createMaterial(0.1f, 0.02f, 0.0f);
 	materialMap["bouncy"] = gPhysics->createMaterial(0.5f, 0.5f, 1.0f);
+
+	// initialize ground materials
 	gGroundMaterial = materialMap["default"];
 
 

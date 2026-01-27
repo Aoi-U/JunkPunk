@@ -125,7 +125,6 @@ void setPhysXIntegrationParams(const PxVehicleAxleDescription& axleDescription,
 	const PxTransform physxActorCMassLocalPose(PxVec3(0.0f, 0.0f, 0.2f), PxQuat(PxIdentity));
 	const PxVec3 physxActorBoxShapeHalfExtents(0.2f, 0.06f, 0.6f);
 	const PxTransform physxActorBoxShapeLocalPose(PxVec3(0.0f, 0.1f, 0.0f), PxQuat(PxIdentity));
-	// flip the box shape up so that the center of mass is at the origin
 
 	physXParams.create(
 		axleDescription,
