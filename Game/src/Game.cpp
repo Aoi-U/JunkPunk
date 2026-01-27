@@ -45,7 +45,6 @@ public:
 		ImGui::RadioButton("scroll theta", &camera_scroll_type, 2);
 		ImGui::RadioButton("scroll phi", &camera_scroll_type, 3);
 
-		
 	}
 
 private:
@@ -113,8 +112,8 @@ Game::Game()
 		// meaning, an entities component list must be a superset of the systems signature to be added to the system (an entity can have more components than a system requires)
 		// ex:
 		//	system signature: [Transform, Render]
-		//	entity A components: [Transform, Render, PhysicsBody] -> added to system
-		//	entity B components: [Transform] -> not added to system
+		//	entity A components: [Transform, Render, PhysicsBody] -> added to system, it has both Transform AND Render
+		//	entity B components: [Transform] -> not added to system, it is missing Render
 		Signature signature;
 		controller.SetSystemSignature<LevelLoaderSystem>(signature);
 	}

@@ -15,7 +15,7 @@ using EventId = std::uint32_t;
 using ParamId = std::uint32_t;
 
 
-// https://gist.github.com/Lee-R/3839813 hasing functions
+// https://gist.github.com/Lee-R/3839813 hashing functions
 constexpr std::uint32_t fnv1a_32(char const* s, std::size_t count)
 {
 	return ((count ? fnv1a_32(s, count - 1) : 2166136261u) ^ s[count]) * 16777619u; // NOLINT (hicpp-signed-bitwise)
@@ -29,6 +29,25 @@ constexpr std::uint32_t operator "" _hash(char const* s, std::size_t count)
 
 #define METHOD_LISTENER(EventType, Listener) EventType, std::bind(&Listener, this, std::placeholders::_1)
 #define FUNCTION_LISTENER(EventType, Listener) EventType, std::bind(&Listener, std::placeholders::_1)
+
+// how events work:
+//	Setting up the ECSController for a class:
+//		include "Core/Types.h", "Event.h" and "ECSController.h" in a class that wants to send or receive events
+//		include ECSController and define a global forward declaration "extern ECSController controller;" in that class (make sure it is declared globally, not within a class)
+//  Setting up an event listener:
+//		create a void listener function with the parameter (Event& e) in any class that wants to listen for events
+//		in the constructor of that class, register the event listener to the ecs with controller.AddEventListener(Events::Event_type::EVENT_NAME, [this](Event& e) { this->ListenerFunctionName(e); })
+//	Creating and sending an event:
+//		events can be sent from anywhere in the program as long as it has access to the global ecs controller
+//		create an Event object with the id of the event you want to send: Event event(Events::Event_type::EVENT_NAME);
+//		set the parameters of the event with: event.SetParam<ParamType>(Events::Event_type::Event_subtype::PARAM_NAME, value you want to send);
+//		send the event with: controller.SendEvent(event);
+//		you can also send events with just the EventId but i havnt tested it yet so not exactly sure if it works or not
+//	Receiving an event:
+//		in the listener function, retrieve the value with: ParamType variableName = e.GetParam<ParamType>(Events::Event_type::Event_subtype::PARAM_NAME);
+//		use this variable however you want
+//  Example usage in Window.cpp for sending scroll event and receiving the event in CameraEditroPanelRender in Game.cpp
+
 
 // window events
 namespace Events::Window // window related events

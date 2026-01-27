@@ -10,7 +10,7 @@ class Event
 public:
 	Event() = delete;
 
-	Event(EventId id) // create anevent with the given event id
+	Event(EventId id) // create an event with the given event id
 		: id(id)
 	{
 	}

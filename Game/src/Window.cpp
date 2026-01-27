@@ -16,7 +16,9 @@ void Window::keyMetaCallback(GLFWwindow* window, int key, int scancode, int acti
 	}*/
 
 	// If ImGui doesn't want to capture the keyboard, call the user-defined callback
-	
+	Event event(Events::Window::INPUT);
+	event.SetParam<int>(Events::Window::Input::INPUT, key);
+	controller.SendEvent(event);	
 }
 
 

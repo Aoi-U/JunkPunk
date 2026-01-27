@@ -4,6 +4,9 @@
 
 #include "System.h"
 #include "../../Gamepad.h"
+#include "../Core/Types.h"
+#include "../Event.h"
+
 
 class VehicleControlSystem : public System
 {
@@ -13,7 +16,9 @@ public:
 	void Update();
 
 private:
-		enum Buttons
+	void KeyboardInputListener(Event& e);
+
+	enum Buttons
 	{
 		JUMP			=		0, // A
 		POWERUP		=		1, // B
@@ -23,6 +28,16 @@ private:
 		RIGHTROLL	=		9, // RB
 		PAUSE			=		12, // START
 		RESET			=		13  // BACK
+	};
+		
+	enum Keys
+	{
+		KEY_FORWARD		= 'W',
+		KEY_BACKWARD	= 'S',
+		KEY_LEFT			= 'A',
+		KEY_RIGHT			= 'D',
+		KEY_JUMP			= ' ',
+		KEY_RESET			= 'R'
 	};
 
 	/*	A = 0;

@@ -8,6 +8,7 @@ extern ECSController controller;
 void VehicleControlSystem::Init(std::shared_ptr<Gamepad> gamepad)
 {
 	this->gamepad = gamepad;
+	controller.AddEventListener(Events::Window::INPUT, [this](Event& e) { this->KeyboardInputListener(e); });
 }
 
 void VehicleControlSystem::Update()
@@ -22,7 +23,6 @@ void VehicleControlSystem::Update()
 	{
 		auto& playerCommands = controller.GetComponent<VehicleCommands>(entity);
 		
-
 		if (gamepad->Connected())
 		{
 			playerCommands.throttle = gamepad->LeftTrigger();
@@ -49,5 +49,53 @@ void VehicleControlSystem::Update()
 				controller.SendEvent(event);
 			}
 		}
+	}
+}
+
+void VehicleControlSystem::KeyboardInputListener(Event& e)
+{
+	int keyRecieve = e.GetParam<int>(Events::Window::Input::INPUT);
+	char key = static_cast<char>(keyRecieve);
+
+	for (auto& entity : entities)
+	{
+		VehicleCommands& playerCommands = controller.GetComponent<VehicleCommands>(entity);
+		
+		if (key == Keys::KEY_FORWARD)
+		{
+			playerCommands.throttle = 1.0f;
+		}
+		if (key == Keys::KEY_BACKWARD)
+		{
+			playerCommands.brake = 1.0f;
+		}
+		if (key == Keys::KEY_LEFT)
+		{
+			playerCommands.steer = 1.0f;
+		}
+		if (key == Keys::KEY_RIGHT)
+		{
+			playerCommands.steer = -1.0f;
+		}
+		if (key == Keys::KEY_JUMP)
+		{
+			if (playerCommands.isGrounded)
+			{
+				std::cout << "Jump key pressed" << std::endl;
+				// send jump event to physics and audio (can add more)
+				Event event(Events::Player::PLAYER_JUMPED);
+				event.SetParam<Entity>(Events::Player::Player_Jumped::ENTITY, entity);
+				controller.SendEvent(event);
+			}
+		}
+		if (key == Keys::KEY_RESET)
+		{
+			// send event to physics system
+			Event event(Events::Player::RESET_VEHICLE);
+			event.SetParam<Entity>(Events::Player::Reset_Vehicle::ENTITY, entity);
+			controller.SendEvent(event);
+		}
+
+		
 	}
 }

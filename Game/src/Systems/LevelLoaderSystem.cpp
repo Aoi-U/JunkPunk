@@ -109,7 +109,7 @@ void LevelLoaderSystem::LoadLevel()
 		controller.AddComponent(entity, RigidBody{ nullptr, loaded.first, loaded.second, 50.0f, true, glm::vec3(0.0f), glm::vec3(0.0f) });
 		controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
 		controller.AddComponent(entity, PhysicsBody{});
-		/*controller.AddComponent(entity, MovingObstacle{
+		controller.AddComponent(entity, MovingObstacle{
 			std::vector<glm::vec3>{
 				{ 60.0f - i, -27.0f + i * 2 , 0.0f + i },
 				{ 60.0f - i, -27.0f + i * 2, -10.0f + i },
@@ -119,7 +119,7 @@ void LevelLoaderSystem::LoadLevel()
 			0.0f,
 			0,
 			5.0f
-			});*/
+			});
 	}
 
 
