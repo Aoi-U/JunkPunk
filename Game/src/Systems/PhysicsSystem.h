@@ -8,6 +8,7 @@
 #include "../Core/Mesh.h"
 #include "../Core/Types.h"
 #include "../Core/PhysicsCallbacks.h"
+#include "../Components/Physics.h"
 #include "System.h"
 
 class Event;
@@ -53,7 +54,6 @@ private:
 
 	// listeners
 
-	void ReleaseActorListener(Event& e); // listens for a release actor event
 
 	void CreateActorListener(Event& e); // listens for a create actor event
 
@@ -61,4 +61,7 @@ private:
 
 	void ResetVehicleEventListener(Event& e); // listens for vehicle reset events
 
+	// callbacks
+
+	void ReleaseActorCallback(Entity entity, RigidBody& rb); // automatically called when an entity is destroyed or rigidbody is removed
 };

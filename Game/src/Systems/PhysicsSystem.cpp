@@ -1,6 +1,6 @@
 #include "PhysicsSystem.h"
 #include "../Components/Transform.h"
-#include "../Components/Physics.h"
+//#include "../Components/Physics.h"
 #include "../Components/Player.h"
 #include "../Components/Obstacle.h"
 
@@ -11,10 +11,12 @@ extern ECSController controller;
 PhysicsSystem::PhysicsSystem()
 	: gVehicle()
 {
-	controller.AddEventListener(Events::Physics::RELEASE_ACTOR, [this](Event& e) { this->ReleaseActorListener(e); });
 	controller.AddEventListener(Events::Physics::CREATE_ACTOR, [this](Event& e) { this->CreateActorListener(e); });
 	controller.AddEventListener(Events::Player::PLAYER_JUMPED, [this](Event& e) { this->JumpEventListener(e); });
 	controller.AddEventListener(Events::Player::RESET_VEHICLE, [this](Event& e) { this->ResetVehicleEventListener(e); });
+
+	auto rigidBodyArray = controller.GetComponentArray<RigidBody>();
+	rigidBodyArray->BindOnRemoveCallback([this](Entity entity, RigidBody& rb) { this->ReleaseActorCallback(entity, rb); });
 
 	gFoundation = PxCreateFoundation(PX_PHYSICS_VERSION, gAllocator, gErrorCallback);
 	if (!gFoundation)
@@ -336,17 +338,6 @@ PxTriangleMesh* PhysicsSystem::CreateTriangleMesh(const Mesh& mesh)
 	return gPhysics->createTriangleMesh(readBuffer);
 }
 
-void PhysicsSystem::ReleaseActorListener(Event& e)
-{
-	Entity entity = e.GetParam<Entity>(Events::Physics::Release_Actor::ENTITY);
-
-	if (controller.HasComponent<RigidBody>(entity)) // if the entity has a rigidbody, release it from the physics scene
-	{
-		RigidBody& rigidBodyComponent = controller.GetComponent<RigidBody>(entity);
-		rigidBodyComponent.actor->release();
-	}
-}
-
 void PhysicsSystem::CreateActorListener(Event& e)
 {
 	Entity entity = e.GetParam<Entity>(Events::Physics::Create_Actor::ENTITY);
@@ -412,4 +403,16 @@ void PhysicsSystem::ResetVehicleEventListener(Event& e)
 {
 	//gVehicle.respawnAtCheckpoint();
 	gVehicle.resetTransform();
+}
+
+void PhysicsSystem::ReleaseActorCallback(Entity entity, RigidBody& rb)
+{
+	if (rb.actor)
+	{
+		gPhysicsScene->removeActor(*rb.actor);
+		rb.actor->release();
+		rb.actor = nullptr;
+
+		std::cout << "Entity: " << entity << ": Rigidbody removed" << std::endl;
+	}
 }

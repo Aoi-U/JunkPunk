@@ -3,6 +3,7 @@
 #include <array>
 #include <cassert>
 #include <unordered_map>
+#include <functional>
 
 #include "../Core/Types.h"
 
@@ -17,6 +18,8 @@ template<typename T>
 class ComponentArray : public IComponentArray
 {
 public:
+	using OnRemoveCallback = std::function<void(Entity, T&)>;
+
 	void InsertData(Entity entity, T component) // add component to an entity
 	{
 		assert(entityToIndexMap.find(entity) == entityToIndexMap.end() && "Failed to add component: Component added to same entity more than once");
@@ -31,6 +34,12 @@ public:
 	void RemoveData(Entity entity) // remove component from an entity
 	{
 		assert(entityToIndexMap.find(entity) != entityToIndexMap.end() && "Failed to remove component: Component not found in entity");
+
+		if (removeCallback) // check if this component type has a remove callback bound
+		{
+			size_t indexOfRemovedEntity = entityToIndexMap[entity];
+			removeCallback(entity, componentArray[indexOfRemovedEntity]); // call the systems remove callback function
+		}
 
 		// move element at end into deleted entitys place to stay contiguous
 		size_t indexOfRemovedEntity = entityToIndexMap[entity];
@@ -68,9 +77,16 @@ public:
 		}
 	}
 
+	void BindOnRemoveCallback(OnRemoveCallback callback)
+	{
+		removeCallback = callback;
+	}
+
 private:
 	std::array<T, MAX_ENTITIES> componentArray{}; // holds all components registered to this type
 	std::unordered_map<Entity, size_t> entityToIndexMap{}; // maps an entity to its index in the array
 	std::unordered_map<size_t, Entity> indexToEntityMap{}; // maps an index in the array to its entity
 	size_t size{};
+
+	OnRemoveCallback removeCallback = nullptr;
 };

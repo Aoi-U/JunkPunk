@@ -58,12 +58,6 @@ public:
 		}
 	}
 
-private:
-	std::unordered_map<const char*, ComponentType> componentTypes{};
-	std::unordered_map<const char*, std::shared_ptr<IComponentArray>> componentArrays{};
-
-	ComponentType nextComponentType{};
-
 	template<typename T>
 	std::shared_ptr<ComponentArray<T>> GetComponentArray()
 	{
@@ -73,4 +67,11 @@ private:
 
 		return std::static_pointer_cast<ComponentArray<T>>(componentArrays[typeName]);
 	}
+
+private:
+	std::unordered_map<const char*, ComponentType> componentTypes{};
+	std::unordered_map<const char*, std::shared_ptr<IComponentArray>> componentArrays{};
+
+	ComponentType nextComponentType{};
+
 };

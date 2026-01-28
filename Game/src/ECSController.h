@@ -35,11 +35,6 @@ public:
 		// notify component and system managers that entity is destroyed
 		componentManager->EntityDestroyed(entity);
 		systemManager->EntityDestroyed(entity);
-
-		// send release actor event to physics system to safely remove the actor from the scene
-		Event event(Events::Physics::RELEASE_ACTOR);
-		event.SetParam<Entity>(Events::Physics::Release_Actor::ENTITY, entity);
-		SendEvent(event);
 	}
 
 	template<typename T>
@@ -92,6 +87,12 @@ public:
 	ComponentType GetComponentType()
 	{
 		return componentManager->GetComponentType<T>();
+	}
+
+	template<typename T>
+	std::shared_ptr<ComponentArray<T>> GetComponentArray()
+	{
+		return componentManager->GetComponentArray<T>();
 	}
 
 	// system methods

@@ -106,7 +106,6 @@ namespace Events::Physics
 {
 	const EventId TRIGGER_ENTER = "Events::Physics::TRIGGER_ENTER"_hash; // trigger enter event
 	const EventId TRIGGER_EXIT = "Events::Physics::TRIGGER_EXIT"_hash; // trigger exit event
-	const EventId RELEASE_ACTOR = "Events::Physics::RELEASE_ACTOR"_hash; // notify the physics system to safely release the actor from the scene
 	const EventId CREATE_ACTOR = "Events::Physics::CREATE_ACTOR"_hash;
 }
 
@@ -120,11 +119,6 @@ namespace Events::Physics::Trigger_Exit // parameters for trigger exit event
 {
 	const ParamId ENTITY_ONE = "Events::Physics::TriggerExit::ENTITY_ONE"_hash; // first entity involved
 	const ParamId ENTITY_TWO = "Events::Physics::TriggerExit::ENTITY_TWO"_hash; // second entity involved
-}
-
-namespace Events::Physics::Release_Actor // parameter for entity removed event
-{
-	const ParamId ENTITY = "Events::Physics::Entity_Removed::ENTITY"_hash; // entity that was removed
 }
 
 namespace Events::Physics::Create_Actor

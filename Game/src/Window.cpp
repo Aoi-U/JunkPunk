@@ -10,18 +10,6 @@ std::unordered_map<int, bool> Window::mMouseStatusMap{};
 extern ECSController controller;
 
 void Window::keyMetaCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-
-	bool forward_to_user_callback = true;
-	// Forward the key event to ImGui
-	/*if (ImGui::GetCurrentContext()) {
-		ImGui_ImplGlfw_KeyCallback(window, key, scancode, action, mods);
-		forward_to_user_callback = !ImGui::GetIO().WantCaptureKeyboard;
-	}*/
-
-	// If ImGui doesn't want to capture the keyboard, call the user-defined callback
-	/*Event event(Events::Window::INPUT);
-	event.SetParam<int>(Events::Window::Input::KEY, key);
-	controller.SendEvent(event);*/	
 	if (action == GLFW_PRESS)
 	{
 		mKeyStatusMap[key] = true;
@@ -42,30 +30,11 @@ void Window::keyMetaCallback(GLFWwindow* window, int key, int scancode, int acti
 
 
 void Window::mouseButtonMetaCallback(GLFWwindow* window, int button, int action, int mods) {
-
-	bool forward_to_user_callback = true;
-	// Forward the event to ImGui
-	/*if (ImGui::GetCurrentContext()) {
-		ImGui_ImplGlfw_MouseButtonCallback(window, button, action, mods);
-		forward_to_user_callback = !ImGui::GetIO().WantCaptureMouse;
-	}*/
-
-	// If ImGui doesn't want to capture the mouse, call the user-defined callback
-	
 	mMouseStatusMap[button] = action;
-
 }
 
 
 void Window::cursorPosMetaCallback(GLFWwindow* window, double xpos, double ypos) {
-
-	bool forward_to_user_callback = true;
-	// Forward the event to ImGui
-	/*if (ImGui::GetCurrentContext()) {
-		ImGui_ImplGlfw_CursorPosCallback(window, xpos, ypos);
-		forward_to_user_callback = !ImGui::GetIO().WantCaptureMouse;
-	}*/
-
 	// Call user-defined cursor position callback only if ImGui isn't capturing the mouse
 
 	if (mMouseStatusMap[GLFW_MOUSE_BUTTON_RIGHT] == GLFW_PRESS) {
@@ -78,14 +47,6 @@ void Window::cursorPosMetaCallback(GLFWwindow* window, double xpos, double ypos)
 }
 
 void Window::scrollMetaCallback(GLFWwindow* window, double xoffset, double yoffset) {
-
-	bool forward_to_user_callback = true;
-	// Forward the scroll event to ImGui
-	//if (ImGui::GetCurrentContext()) {
-	//	ImGui_ImplGlfw_ScrollCallback(window, xoffset, yoffset);
-	//	forward_to_user_callback = !ImGui::GetIO().WantCaptureMouse;
-	//}
-	// If ImGui isn't capturing scroll input, call the user-defined scroll callback
 	Event event(Events::Window::SCROLLED);
 	event.SetParam<double>(Events::Window::Scrolled::XOFFSET, xoffset);
 	event.SetParam<double>(Events::Window::Scrolled::YOFFSET, yoffset);
