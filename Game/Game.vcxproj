@@ -178,6 +178,7 @@
     <ClCompile Include="src\Systems\AudioSystem.cpp" />
     <ClCompile Include="src\Systems\CameraControlSystem.cpp" />
     <ClCompile Include="src\Systems\LevelLoaderSystem.cpp" />
+    <ClCompile Include="src\Systems\ParticleSystem.cpp" />
     <ClCompile Include="src\Systems\PhysicsSystem.cpp" />
     <ClCompile Include="src\Systems\RenderSystem.cpp" />
     <ClCompile Include="src\Systems\VehicleControlSystem.cpp" />
@@ -197,6 +198,7 @@
     <ClInclude Include="src\Components\ComponentArray.h" />
     <ClInclude Include="src\Components\ComponentManager.h" />
     <ClInclude Include="src\Components\Obstacle.h" />
+    <ClInclude Include="src\Components\Particles.h" />
     <ClInclude Include="src\Components\Physics.h" />
     <ClInclude Include="src\Components\Player.h" />
     <ClInclude Include="src\Components\Render.h" />
@@ -238,6 +240,7 @@
     <ClInclude Include="src\Systems\AudioSystem.h" />
     <ClInclude Include="src\Systems\CameraControlSystem.h" />
     <ClInclude Include="src\Systems\LevelLoaderSystem.h" />
+    <ClInclude Include="src\Systems\ParticleSystem.h" />
     <ClInclude Include="src\Systems\PhysicsSystem.h" />
     <ClInclude Include="src\Systems\RenderSystem.h" />
     <ClInclude Include="src\Systems\System.h" />
@@ -259,6 +262,8 @@
     <None Include="assets\shaders\defaultInstanced.vert" />
     <None Include="assets\shaders\light.frag" />
     <None Include="assets\shaders\light.vert" />
+    <None Include="assets\shaders\particle.frag" />
+    <None Include="assets\shaders\particle.vert" />
     <None Include="assets\shaders\postProcess.frag" />
     <None Include="assets\shaders\postProcess.vert" />
     <None Include="assets\shaders\shadowMap.frag" />

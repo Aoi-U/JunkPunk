@@ -7,7 +7,11 @@ class EBO
 {
 public:
 	GLuint ID;
+	EBO() = default;
 	EBO(std::vector<GLuint>& indices);
+	EBO(unsigned int indices[], int size); // quad ebo
+	
+
 	void Bind();
 	void Unbind();
 	void Delete();

@@ -36,6 +36,8 @@ private:
 	void DrawShadowPass();
 
 	void DrawLightingPass();
+
+	void DrawParticlePass();
 	
 	void DrawSkybox(); // draw function for rendering skybox
 
@@ -47,6 +49,7 @@ private:
 
 	void BindTextures(Mesh& mesh); // bind textures for a mesh
 	void ShaderSetupDefaults(); // setup all shader constnat uniforms
+	void ParticleSetupDefaults();
 
 	void WindowSizeListener(Event& e);
 
@@ -57,12 +60,19 @@ private:
 	GLuint debugVao{}, debugVbo{};
 	const size_t maxDebugLines = 10000;
 
+	Entity camera = MAX_ENTITIES;
 
 	Text fonts;
 	VAO textVAO;
 	VBO textVBO;
 
+	VAO particleVAO;
+	GLuint particleVBO;
+	GLuint particleInstanceVBO;
+	GLuint particleColorVBO;
+	
 	Light light;
+
 	std::unique_ptr<PostProcessor> postProcessor; 
 	std::unique_ptr<ShadowMapper> shadowMapper;
 	std::unique_ptr<Skybox> skybox;
@@ -76,5 +86,6 @@ private:
 	std::shared_ptr<Shader> skyboxShader;
 	std::shared_ptr<Shader> physicsDebugShader;
 	std::shared_ptr<Shader> textShader;
+	std::shared_ptr<Shader> particleShader;
 
 };

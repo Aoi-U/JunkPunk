@@ -5,6 +5,7 @@
 #include "../Components/Camera.h"
 #include "../Components/Player.h"
 #include "../Components/Physics.h"
+#include "../Components/Particles.h"
 #include "../ECSController.h"
 
 extern ECSController controller;
@@ -27,6 +28,7 @@ void RenderSystem::Init()
 	skyboxShader = std::make_shared<Shader>("assets/shaders/skybox.vert", "assets/shaders/skybox.frag");
 	physicsDebugShader = std::make_shared<Shader>("assets/shaders/colliders.vert", "assets/shaders/colliders.frag");
 	textShader = std::make_shared<Shader>("assets/shaders/text.vert", "assets/shaders/text.frag");
+	particleShader = std::make_shared<Shader>("assets/shaders/particle.vert", "assets/shaders/particle.frag");
 
 
 	controller.AddEventListener(Events::Window::RESIZED, [this](Event& e){this->RenderSystem::WindowSizeListener(e); });
@@ -47,7 +49,7 @@ void RenderSystem::Init()
 	textShader->setMat4("u_projection", fonts.projMat);
 
 	// setup shadow mapper
-	Entity camera = controller.GetEntityByTag("Camera");
+	camera = controller.GetEntityByTag("Camera");
 	auto& tpp = controller.GetComponent<ThirdPersonCamera>(camera);
 	float zNear = tpp.zNear;
 	float zFar = tpp.zFar;
@@ -59,6 +61,8 @@ void RenderSystem::Init()
 
 	// setup post processor
 	postProcessor = std::make_unique<PostProcessor>(1280, 720);
+
+	ParticleSetupDefaults();
 
 	// setup debug line buffers
 	glGenVertexArrays(1, &debugVao);
@@ -88,6 +92,8 @@ void RenderSystem::Update(float fps, const PxRenderBuffer& buffer)
 
 	DrawLightingPass();
 
+	DrawParticlePass();
+
 	// draw physics colliders
 	DrawCollisionDebug(buffer);
 
@@ -110,7 +116,6 @@ void RenderSystem::DrawShadowPass()
 	glCullFace(GL_FRONT); 
 
 	// create cameras frustum for frustum culling
-	Entity camera = controller.GetEntityByTag("Camera");
 	auto& tpp = controller.GetComponent<ThirdPersonCamera>(camera);
 	glm::vec3 forward = glm::normalize(glm::vec3(glm::inverse(tpp.viewMatrix)[2]));
 	glm::vec3 right = glm::normalize(glm::vec3(glm::inverse(tpp.viewMatrix)[0]));
@@ -184,9 +189,7 @@ void RenderSystem::DrawLightingPass()
 	// set post processing framebuffer
 	postProcessor->BindFBO();
 	Clear(0.0f, 0.0f, 0.0f, 1.0f);
-	
-	Entity camera = controller.GetEntityByTag("Camera");
-	
+		
 	auto& tpp = controller.GetComponent<ThirdPersonCamera>(camera);
 
 	// create cameras frustum for frustum culling
@@ -296,6 +299,11 @@ void RenderSystem::DrawLightingPass()
 	//std::cout << "Culled entities this frame: " << cullCount << std::endl;
 }
 
+void RenderSystem::DrawParticlePass()
+{
+	
+}
+
 void RenderSystem::DrawPostProcessingPass()
 {
 	// setup post processing
@@ -364,7 +372,6 @@ void RenderSystem::DrawSkybox()
 {
 	glDepthFunc(GL_LEQUAL); // change depth function for skybox
 
-	Entity camera = controller.GetEntityByTag("Camera");
 	auto& cameraComp = controller.GetComponent<ThirdPersonCamera>(camera);
 
 	glm::mat4 projView = cameraComp.getProjectionMatrix() * glm::mat4(glm::mat3(cameraComp.viewMatrix)); // remove translation from view matrix
@@ -384,7 +391,6 @@ void RenderSystem::DrawSkybox()
 
 void RenderSystem::DrawCollisionDebug(const PxRenderBuffer& renderBuffer)
 {
-	Entity camera = controller.GetEntityByTag("Camera");
 	auto& tpp = controller.GetComponent<ThirdPersonCamera>(camera);
 
 	glm::mat4 projView = tpp.getProjectionMatrix() * tpp.viewMatrix;
@@ -511,12 +517,35 @@ void RenderSystem::ShaderSetupDefaults()
 	skyboxShader->setInt("u_skybox", 0);
 }
 
+void RenderSystem::ParticleSetupDefaults()
+{
+	float vertices[] = {
+		-0.5f, -0.5f, 0.0f,
+		0.5f, -0.5f, 0.0f,
+		0.5f, 0.5f, 0.0f,
+		-0.5f, 0.5f, 0.0f
+	};
+
+	glGenBuffers(1, &particleVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, particleVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+	glGenBuffers(1, &particleInstanceVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, particleInstanceVBO);
+	glBufferData(GL_ARRAY_BUFFER, 1000 * 4 * sizeof(GLfloat), NULL, GL_STREAM_DRAW);
+
+	glGenBuffers(1, &particleColorVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, particleColorVBO);
+	glBufferData(GL_ARRAY_BUFFER, 1000 * 4 * sizeof(GLfloat), NULL, GL_STREAM_DRAW);
+
+
+}
+
 void RenderSystem::WindowSizeListener(Event& e)
 {
 	screenWidth = e.GetParam<unsigned int>(Events::Window::Resized::WIDTH);
 	screenHeight = e.GetParam<unsigned int>(Events::Window::Resized::HEIGHT);
 
-	Entity camera = controller.GetEntityByTag("Camera");
 	auto& tpp = controller.GetComponent<ThirdPersonCamera>(camera);
 	shadowMapper->Update(screenWidth / (float)screenHeight, tpp.zNear, tpp.zFar, glm::radians(tpp.fov), tpp.viewMatrix);
 

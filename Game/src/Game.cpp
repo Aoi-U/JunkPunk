@@ -11,6 +11,7 @@
 #include "Components/Player.h"
 #include "Components/Physics.h"
 #include "Components/Obstacle.h"
+#include "Components/Particles.h"
 
 #include "ECSController.h"
 #include "Core/Types.h"
@@ -103,6 +104,8 @@ Game::Game()
 	controller.RegisterComponent<VehicleBody>();
 	controller.RegisterComponent<Trigger>();
 	controller.RegisterComponent<MovingObstacle>();
+	controller.RegisterComponent<Particle>();
+	controller.RegisterComponent<ParticleEmitter>();
 
 	// register systems (you must register systems before setting component signatures) 
 	loaderSystem = controller.RegisterSystem<LevelLoaderSystem>();
@@ -143,7 +146,6 @@ Game::Game()
 		controller.SetSystemSignature<PhysicsSystem>(signature);
 	}
 
-
 	vehicleControlSystem = controller.RegisterSystem<VehicleControlSystem>();
 	{
 		Signature signature;
@@ -157,12 +159,21 @@ Game::Game()
 		controller.SetSystemSignature<AudioSystem>(signature);
 	}
 
+	particleSystem = controller.RegisterSystem<ParticleSystem>();
+	{
+		Signature signature;
+		signature.set(controller.GetComponentType<ParticleEmitter>());
+		controller.SetSystemSignature<ParticleSystem>(signature);
+	}
+
+
 	loaderSystem->LoadLevel();
 	audioSystem->Init();
 	vehicleControlSystem->Init(gamepad);
 	camControlSystem->Init(gamepad);
 	renderSystem->Init();
 	physicsSystem->Init();
+	particleSystem->Init();
 }
 
 // main game function
@@ -205,6 +216,8 @@ void Game::Run()
 		vehicleControlSystem->Update(); // handle vehicle controls
 
 		camControlSystem->Update(time->frameTime); // handle camera controls
+
+		//particleSystem->Update(time->frameTime); // update particles
 
 		renderSystem->Update(time->fps(), physicsSystem->GetRenderBuffer()); // render physics debug data
 		

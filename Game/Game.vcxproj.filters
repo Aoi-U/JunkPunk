@@ -225,6 +225,9 @@
     <ClCompile Include="src\ImGuiPanel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\Systems\ParticleSystem.cpp">
+      <Filter>Source Files\Systems</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Game.h">
@@ -404,6 +407,12 @@
     <ClInclude Include="src\ImGuiPanel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\Systems\ParticleSystem.h">
+      <Filter>Header Files\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Components\Particles.h">
+      <Filter>Header Files\Components</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\shaders\default.vert">
@@ -452,6 +461,12 @@
       <Filter>Resource Files\shaders</Filter>
     </None>
     <None Include="assets\shaders\text.frag">
+      <Filter>Resource Files\shaders</Filter>
+    </None>
+    <None Include="assets\shaders\particle.vert">
+      <Filter>Resource Files\shaders</Filter>
+    </None>
+    <None Include="assets\shaders\particle.frag">
       <Filter>Resource Files\shaders</Filter>
     </None>
   </ItemGroup>

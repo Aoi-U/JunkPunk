@@ -30,6 +30,7 @@ public:
 	VBO(std::vector<Vertex>& vertices);
 	VBO(std::vector<glm::mat4>& matrices);
 	VBO(std::vector<PostProcessVertex>& vertices);
+	VBO(float vertices[], size_t size); // quad vbo
 	VBO(); // text vbo
 
 	void Bind();

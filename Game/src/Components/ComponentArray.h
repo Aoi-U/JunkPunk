@@ -82,6 +82,11 @@ public:
 		removeCallback = callback;
 	}
 
+	std::unordered_map<Entity, size_t>& GetEntityToIndexMap()
+	{
+		return entityToIndexMap;
+	}
+
 private:
 	std::array<T, MAX_ENTITIES> componentArray{}; // holds all components registered to this type
 	std::unordered_map<Entity, size_t> entityToIndexMap{}; // maps an entity to its index in the array

@@ -163,18 +163,17 @@ bool MainVehicle::IsGrounded(PxScene* scene) const
 	PxRaycastBuffer hit;
 	bool grounded = false;
 	PxVec3 rayOrigin = gVehicle.mPhysXState.physxActor.rigidBody->getGlobalPose().p;
-	rayOrigin.y -= gVehicle.mPhysXParams.physxActorBoxShapeHalfExtents.y - 2.0f;
+	rayOrigin.y -= (gVehicle.mPhysXParams.physxActorBoxShapeHalfExtents.y + 0.1f);
 	PxVec3 rayDir = PxVec3(0.0f, -1.0f, 0.0f);
-	PxReal rayLength = 1.0f;
+	PxReal rayLength = 0.5f;
 	
-	/*grounded = scene->raycast(rayOrigin, rayDir, rayLength, hit, PxHitFlag::eDEFAULT);
-	std::cout << "Raycast hit count: " << hit.getNbAnyHits() << std::endl;
-	std::cout << "Raycast hit object rigid body type: " << (hit.hasBlock ? hit.block.actor->getType() : -1) << std::endl;
-	if (grounded)
+	grounded = scene->raycast(rayOrigin, rayDir, rayLength, hit, PxHitFlag::eDEFAULT);
+	if (grounded && hit.hasBlock && hit.block.actor != gVehicle.mPhysXState.physxActor.rigidBody)
 	{
 		return true;
-	}*/
-	return true;
+	}
+
+	return false;
 }
 
 void MainVehicle::jump()
