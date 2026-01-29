@@ -9,6 +9,7 @@
 #include "Systems/VehicleControlSystem.h"
 #include "Systems/AudioSystem.h"
 #include "Systems/ParticleSystem.h"
+#include "Systems/ParticleRenderSystem.h"
 #include "Core/Time.h"
 
 class Game
@@ -33,6 +34,7 @@ private:
 	std::shared_ptr<VehicleControlSystem> vehicleControlSystem;
 	std::shared_ptr<AudioSystem> audioSystem;
 	std::shared_ptr<ParticleSystem> particleSystem;
+	std::shared_ptr<ParticleRenderSystem> particleRenderSystem;
 
 
 	void Cleanup();

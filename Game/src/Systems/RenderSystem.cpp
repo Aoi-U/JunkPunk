@@ -3,9 +3,6 @@
 #include "../Components/Render.h"
 #include "../Components/Transform.h"
 #include "../Components/Camera.h"
-#include "../Components/Player.h"
-#include "../Components/Physics.h"
-#include "../Components/Particles.h"
 #include "../ECSController.h"
 
 extern ECSController controller;
@@ -28,7 +25,6 @@ void RenderSystem::Init()
 	skyboxShader = std::make_shared<Shader>("assets/shaders/skybox.vert", "assets/shaders/skybox.frag");
 	physicsDebugShader = std::make_shared<Shader>("assets/shaders/colliders.vert", "assets/shaders/colliders.frag");
 	textShader = std::make_shared<Shader>("assets/shaders/text.vert", "assets/shaders/text.frag");
-	particleShader = std::make_shared<Shader>("assets/shaders/particle.vert", "assets/shaders/particle.frag");
 
 
 	controller.AddEventListener(Events::Window::RESIZED, [this](Event& e){this->RenderSystem::WindowSizeListener(e); });
@@ -62,8 +58,6 @@ void RenderSystem::Init()
 	// setup post processor
 	postProcessor = std::make_unique<PostProcessor>(1280, 720);
 
-	ParticleSetupDefaults();
-
 	// setup debug line buffers
 	glGenVertexArrays(1, &debugVao);
 	glGenBuffers(1, &debugVbo);
@@ -92,7 +86,9 @@ void RenderSystem::Update(float fps, const PxRenderBuffer& buffer)
 
 	DrawLightingPass();
 
-	DrawParticlePass();
+	//DrawParticlePass();
+
+	controller.SendEvent(Events::Render::PARTICLE_RENDER);
 
 	// draw physics colliders
 	DrawCollisionDebug(buffer);
@@ -144,16 +140,16 @@ void RenderSystem::DrawShadowPass()
 
 		bool isVisible = renderComp.boundingVolume->isOnFrustum(frust, modelMatrix);
 
-		if (renderComp.isInstanced && isVisible) // if the entity should be instanced and is visible, add it to the list to render
-		{
-			instancedModels[renderComp.model.get()].push_back(modelMatrix);
-			continue;
-		}
-		else if (renderComp.isInstanced) // else, if its not visible but still instanced, cull it and skip it
-		{
-			continue;
-		}
+	
 		// only using culling for instanced models in shadow pass 
+		if (renderComp.isInstanced)
+		{
+			if (isVisible)
+			{
+				instancedModels[renderComp.model.get()].push_back(modelMatrix);
+			}
+			continue;
+		}
 
 		shadowShader->setMat4("u_model", modelMatrix);
 		for (auto& mesh : renderComp.model->getMeshes())
@@ -237,48 +233,41 @@ void RenderSystem::DrawLightingPass()
 		
 		bool isVisible = renderComp.boundingVolume->isOnFrustum(frust, modelMatrix);
 
-		if (renderComp.isInstanced && isVisible) // check if the entity should be instanced and is visible
+		if (isVisible)
 		{
-			instancedModels[renderComp.model.get()].push_back(modelMatrix); // add this modelmatrix to the list of models to be instanced
-			continue;
-		}
-		else if (renderComp.isInstanced) // else, if its not visible but still instanced, cull it and skip it
-		{
-			//cullCount++;
-			continue;
-		}
-		else if (!isVisible) // else, if its not visible, cull it and skip it
-		{
-			//cullCount++;
-			continue;
-		}
+			if (renderComp.isInstanced)
+			{
+				instancedModels[renderComp.model.get()].push_back(modelMatrix);
+				continue;
+			}
 
-		// render non-instanced entities normally
-		defaultInstanceShader->setMat4("u_model", modelMatrix);
+			// render non-instanced entities normally
+			defaultInstanceShader->setMat4("u_model", modelMatrix);
 
-		for (auto& mesh : renderComp.model->getMeshes())
-		{
-			// bind textures
-			BindTextures(mesh);
-			mesh.BindVao();
-			glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(mesh.getIndices().size()), GL_UNSIGNED_INT, 0);
-			mesh.UnbindVao();
+			for (auto& mesh : renderComp.model->getMeshes())
+			{
+				// bind textures
+				BindTextures(mesh);
+				mesh.BindVao();
+				glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(mesh.getIndices().size()), GL_UNSIGNED_INT, 0);
+				mesh.UnbindVao();
+			}
 		}
+		//cullCount++;
 	}
 
 	// draw instanced entities
 	defaultInstanceShader->setBool("u_isInstanced", true);
 
-	for (size_t i = 0; i < shadowMapper->GetCascadeCount(); ++i)
+	/*for (size_t i = 0; i < shadowMapper->GetCascadeCount(); ++i)
 	{
 		defaultInstanceShader->setFloat("cascadePlaneDistances[" + std::to_string(i) + "]", shadowMapper->GetCascadeLevels()[i]);
-	}
-	/*glActiveTexture(GL_TEXTURE6);
-	shadowMapper->BindDepthMapTexture();*/
+	}*/
+
 	Mesh* previousMesh = nullptr;
 	for (auto& [model, matrices] : instancedModels) // loop through each unique model that is instanced
 	{
-		for (auto& mesh : model->getMeshes()) // instance render each mesh in the model
+		for (Mesh& mesh : model->getMeshes()) // instance render each mesh in the model
 		{
 			if (previousMesh != &mesh) // only bind textures if the mesh is different from the previous one since instanced meshes will share the same texture
 			{
@@ -287,8 +276,8 @@ void RenderSystem::DrawLightingPass()
 				previousMesh = &mesh;
 			}
 
-			mesh.UpdateInstanceBuffer(matrices);
-			mesh.SetupInstanceMesh();
+			//mesh.UpdateInstanceBuffer(matrices);
+			//mesh.SetupInstanceMesh();
 			mesh.BindVao();
 			glDrawElementsInstanced(GL_TRIANGLES, static_cast<GLsizei>(mesh.getIndices().size()), GL_UNSIGNED_INT, 0, static_cast<GLsizei>(matrices.size()));
 			mesh.UnbindVao();
@@ -297,11 +286,6 @@ void RenderSystem::DrawLightingPass()
 
 	DrawSkybox();
 	//std::cout << "Culled entities this frame: " << cullCount << std::endl;
-}
-
-void RenderSystem::DrawParticlePass()
-{
-	
 }
 
 void RenderSystem::DrawPostProcessingPass()
@@ -462,30 +446,46 @@ void RenderSystem::BindTextures(Mesh& mesh)
 	defaultInstanceShader->setBool("hasHeightTex", mesh.hasHeightTexture());
 
 	// bind each texture for the model
-	for (unsigned int i = 0; i < mesh.getTextures().size(); i++)
+	std::vector<Texture>& textures = mesh.getTextures();
+	for (unsigned int i = 0; i < textures.size(); i++)
 	{
-		std::string number;
-		std::string name = mesh.getTextures()[i].getType();
-		if (name == "texture_diffuse")
+		const std::string& type = textures[i].getType();
+		const char* uniformName = nullptr;
+		if (type == "texture_diffuse")
 		{
-			number = std::to_string(diffuseNr++);
+			if (diffuseNr == 1) uniformName = "texture_diffuse1";
+			else if (diffuseNr == 2) uniformName = "texture_diffuse2";
+			else if (diffuseNr == 3) uniformName = "texture_diffuse3";
+			diffuseNr++;
 		}
-		else if (name == "texture_specular")
+		else if (type == "texture_specular")
 		{
-			number = std::to_string(specularNr++); // transfer unsigned int to string
+			if (specularNr == 1) uniformName = "texture_specular1";
+			else if (specularNr == 2) uniformName = "texture_specular2";
+			else if (specularNr == 3) uniformName = "texture_specular3";
+			specularNr++;
 		}
-		else if (name == "texture_normal")
+		else if (type == "texture_normal")
 		{
-			number = std::to_string(normalNr++); // transfer unsigned int to string
-		}
-		else if (name == "texture_height")
-		{
-			number = std::to_string(heightNr++); // transfer unsigned int to string
-		}
-		
-		name = name + number; 
-		defaultInstanceShader->setInt(name, i); // set the texture unit in the shader
+			if (normalNr == 1) uniformName = "texture_normal1";
+			else if (normalNr == 2) uniformName = "texture_normal2";
+			else if (normalNr == 3) uniformName = "texture_normal3";
+			normalNr++;
 
+		}
+		else if (type == "texture_height")
+		{
+			if (heightNr == 1) uniformName = "texture_height1";
+			else if (heightNr == 2) uniformName = "texture_height2";
+			else if (heightNr == 3) uniformName = "texture_height3";
+			heightNr++;
+		}
+
+		if (uniformName)
+		{
+			defaultInstanceShader->setInt(uniformName, i); // set the texture unit in the shader
+		}
+	
 		mesh.getTextures()[i].Bind(GL_TEXTURE0 + i); // activate and bind texture
 	}
 }
@@ -515,30 +515,6 @@ void RenderSystem::ShaderSetupDefaults()
 	// setup skybox shader
 	skyboxShader->use();
 	skyboxShader->setInt("u_skybox", 0);
-}
-
-void RenderSystem::ParticleSetupDefaults()
-{
-	float vertices[] = {
-		-0.5f, -0.5f, 0.0f,
-		0.5f, -0.5f, 0.0f,
-		0.5f, 0.5f, 0.0f,
-		-0.5f, 0.5f, 0.0f
-	};
-
-	glGenBuffers(1, &particleVBO);
-	glBindBuffer(GL_ARRAY_BUFFER, particleVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-	glGenBuffers(1, &particleInstanceVBO);
-	glBindBuffer(GL_ARRAY_BUFFER, particleInstanceVBO);
-	glBufferData(GL_ARRAY_BUFFER, 1000 * 4 * sizeof(GLfloat), NULL, GL_STREAM_DRAW);
-
-	glGenBuffers(1, &particleColorVBO);
-	glBindBuffer(GL_ARRAY_BUFFER, particleColorVBO);
-	glBufferData(GL_ARRAY_BUFFER, 1000 * 4 * sizeof(GLfloat), NULL, GL_STREAM_DRAW);
-
-
 }
 
 void RenderSystem::WindowSizeListener(Event& e)

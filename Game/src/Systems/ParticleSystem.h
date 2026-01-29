@@ -1,11 +1,6 @@
 #pragma once
 
-#include <glad/glad.h>
-#include <glm/glm.hpp>
-#include <memory>
-
 #include "../Components/Particles.h"
-#include "../Core/Types.h"
 #include "System.h"
 
 

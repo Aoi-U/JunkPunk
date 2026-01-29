@@ -1,15 +1,9 @@
 #pragma once
 
 #include <string>
-#include <iostream>
-#include <fstream>
-#include <sstream>
 
-#include <glad/glad.h>
-
-// add glm mat4 and value_ptr
 #include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp>
+
 
 
 class Shader

@@ -1,6 +1,8 @@
 #include "ParticleSystem.h"
 
-#include "../Components/Particles.h"
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/norm.hpp>
+
 #include "../Components/Transform.h"
 #include "../Components/Physics.h"
 #include "../ECSController.h"
@@ -23,46 +25,57 @@ void ParticleSystem::Update(float deltaTime)
 		auto& emitter = controller.GetComponent<ParticleEmitter>(entity);
 
 		glm::vec3 entityPos = glm::vec3(0.0f);
-		float linearVelocityZ = 0.0f;
+		float linearVelocity = 0.0f;
 
 		if (controller.HasComponent<Transform>(emitter.targetEntity))
 		{
 			auto& targetTransform = controller.GetComponent<Transform>(emitter.targetEntity);
 			entityPos = targetTransform.position;
 		}
-		if (controller.HasComponent<PhysicsBody>(emitter.targetEntity))
+		if (controller.HasComponent<VehicleBody>(emitter.targetEntity))
 		{
-			auto& targetBody = controller.GetComponent<RigidBody>(emitter.targetEntity);
-			linearVelocityZ = targetBody.linearVelocity.z;
+			auto& targetBody = controller.GetComponent<VehicleBody>(emitter.targetEntity);
+			linearVelocity = glm::length(targetBody.linearVelocity);
 		}
 
-		emitter.spawnAccumulator += deltaTime;
-		int newParticles = static_cast<int>(emitter.spawnAccumulator * emitter.spawnRate);
-		emitter.spawnAccumulator -= newParticles / emitter.spawnRate;
-
-		if (linearVelocityZ > 1.0f)
+		int newParticles = 0;
+		float minSpeed = 0.2f;
+		float maxSpeed = 60.0f;
+		if (linearVelocity > minSpeed) // scale the amount of particles spawning with vehicle speed (not working)
 		{
-			for (int i = 0; i < newParticles; i++)
-			{
-				int particleIndex = FindUnusedParticle(emitter);
-
-				Particle& p = emitter.particles[particleIndex];
-				p.life = emitter.life;
-				p.position = entityPos + emitter.offset;
-				p.speed = glm::vec3(
-					((rand() % 100) - 50.0f) / 100.0f,
-					((rand() % 100) - 50.0f) / 100.0f,
-					-1.0f * (linearVelocityZ * 0.5f + ((rand() % 100) / 100.0f))
-				);
-				p.r = 100 + (rand() % 156);
-				p.g = 100 + (rand() % 156);
-				p.b = 100 + (rand() % 156);
-				p.a = 200 + (rand() % 56);
-				p.size = 0.1f + ((rand() % 100) / 1000.0f);
-			}
+			float speedFactor = (linearVelocity - minSpeed) / (maxSpeed - minSpeed);
+			if (speedFactor > 1.0f)
+				speedFactor = 1.0f;
+			newParticles = (int)(deltaTime * emitter.spawnRate * speedFactor);
+		}
+		if (newParticles > (int)(0.016f * 10000.0))
+		{
+			newParticles = (int)(0.016f * 10000.0);
 		}
 
-		emitter.particleCount = 0;
+		for (int i = 0; i < newParticles; i++)
+		{
+			int particleIndex = FindUnusedParticle(emitter);
+			emitter.particles[particleIndex].life = emitter.life; // This particle will live for 2 seconds.
+			emitter.particles[particleIndex].position = entityPos + emitter.offset;
+			glm::vec3 mainDir = glm::vec3(0.0f, 1.0f, -1.0f);
+			glm::vec3 randomDir = glm::vec3(
+				(rand() % 2000 - 1000.0f) / 1000.0f,
+				(rand() % 2000 - 1000.0f) / 1000.0f,
+				(rand() % 2000 - 1000.0f) / 1000.0f
+			);
+
+			emitter.particles[particleIndex].speed = mainDir + randomDir * 0.5f;
+
+			emitter.particles[particleIndex].r = rand() % 256;
+			emitter.particles[particleIndex].g = rand() % 256;
+			emitter.particles[particleIndex].b = rand() % 256;
+			emitter.particles[particleIndex].a = 255;
+
+			emitter.particles[particleIndex].size = (rand() % 1000) / 5000.0f + 0.1f;
+		}
+
+		int particleCount = 0;
 		for (int i = 0; i < emitter.maxParticles; i++)
 		{
 			Particle& p = emitter.particles[i];
@@ -75,31 +88,32 @@ void ParticleSystem::Update(float deltaTime)
 				{
 					p.speed += glm::vec3(0.0f, -9.81f, 0.0f) * deltaTime * 0.5f;
 					p.position += p.speed * deltaTime;
-					p.cameraDistance = std::pow(glm::length(p.position - cameraTransform.position), 2.0);
+					p.cameraDistance = glm::length2(p.position - cameraTransform.position);
 
-					// fill GPU data arrays
-					emitter.particlePositionData[4 * emitter.particleCount + 0] = p.position.x;
-					emitter.particlePositionData[4 * emitter.particleCount + 1] = p.position.y;
-					emitter.particlePositionData[4 * emitter.particleCount + 2] = p.position.z;
-					emitter.particlePositionData[4 * emitter.particleCount + 3] = p.size;
+					emitter.particlePositionData[4 * particleCount + 0] = p.position.x;
+					emitter.particlePositionData[4 * particleCount + 1] = p.position.y;
+					emitter.particlePositionData[4 * particleCount + 2] = p.position.z;
+					emitter.particlePositionData[4 * particleCount + 3] = p.size;
 
-					emitter.particleColorData[4 * emitter.particleCount + 0] = p.r;
-					emitter.particleColorData[4 * emitter.particleCount + 1] = p.g;
-					emitter.particleColorData[4 * emitter.particleCount + 2] = p.b;
-					emitter.particleColorData[4 * emitter.particleCount + 3] = p.a;
+					emitter.particleColorData[4 * particleCount + 0] = p.r;
+					emitter.particleColorData[4 * particleCount + 1] = p.g;
+					emitter.particleColorData[4 * particleCount + 2] = p.b;
 
-					emitter.particleCount++;
+					float lifeRatio = p.life / emitter.life;
+					p.a = (unsigned char)(lifeRatio * 255.0f);
+					emitter.particleColorData[4 * particleCount + 3] = p.a;
 				}
 				else
 				{
-					// dead particle
 					p.cameraDistance = -1.0f;
 				}
+				particleCount++;
 			}
 		}
+		emitter.particleCount = particleCount;
+		std::sort(emitter.particles.begin(), emitter.particles.end());
+
 	}
-
-
 }
 
 int ParticleSystem::FindUnusedParticle(ParticleEmitter& emitter)

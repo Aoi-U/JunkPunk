@@ -185,6 +185,8 @@ std::vector<glm::vec4> ShadowMapper::GetFrustumCornersWorldSpace(const glm::mat4
 	const auto inv = glm::inverse(projView);
 
 	std::vector<glm::vec4> frustumCorners;
+	frustumCorners.reserve(8);
+
 	for (unsigned int x = 0; x < 2; ++x)
 	{
 		for (unsigned int y = 0; y < 2; ++y)

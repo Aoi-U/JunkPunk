@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <glm/glm.hpp>
+#include <glad/glad.h>
 
 #include "../Core/Types.h"
 
@@ -13,10 +14,10 @@ struct Particle
 	float size;
 	float angle;
 	float weight;
-	float life;
-	float cameraDistance;
+	float life = -1.0f;
+	float cameraDistance = -1.0f;
 
-	bool operator<(const Particle& other)
+	bool operator<(const Particle& other) const
 	{
 		// sort in reverse order: far particles drawn first
 		return this->cameraDistance > other.cameraDistance;
@@ -26,17 +27,16 @@ struct Particle
 struct ParticleEmitter
 {
 	Entity targetEntity; // entity the particle emitter is attached to (if any)
-	int maxParticles = 1000;
-	float spawnRate = 1.0f;
-	float life = 2.0f;
+	int maxParticles = 2000;
+	float spawnRate = 1000.0f;
+	float life = 1.0f;
 	glm::vec3 offset = glm::vec3(0.0f); // offset from vehicles rear wheel position
 
 	std::vector<Particle> particles;
-	float spawnAccumulator = 0.0f;
 	int lastUsedParticle = 0;
 
-	std::vector<float> particlePositionData;
-	std::vector<unsigned char> particleColorData;
+	std::vector<GLfloat> particlePositionData;
+	std::vector<GLubyte> particleColorData;
 	int particleCount = 0;
 
 	void Init(int max)

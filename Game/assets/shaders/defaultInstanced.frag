@@ -74,8 +74,8 @@ float ShadowCalculation(vec3 fragPosWorldSpace, vec3 norm)
 		return 0.0;
 	}
 
-	float bias = max(0.05 * (1.0 - dot(norm, u_lightDir)), 0.005);
-	const float biasModifier = 0.5f;
+	float bias = max(0.01 * (1.0 - dot(norm, u_lightDir)), 0.001);
+	const float biasModifier = 0.8f;
 	if (layer == u_cascadeCount)
 	{
 		bias *= 1 / (u_farPlane * biasModifier);

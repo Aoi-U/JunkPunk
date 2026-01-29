@@ -1,3 +1,8 @@
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <glm/gtc/type_ptr.hpp>
+#include <glad/glad.h>
 #include "Shader.h"
 
 Shader::Shader(const char* vertPath, const char* fragPath)

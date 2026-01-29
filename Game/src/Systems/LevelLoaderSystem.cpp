@@ -83,7 +83,7 @@ void LevelLoaderSystem::LoadLevel()
 	float pitch = 00.0f;
 	float fov = 45.0f;
 	float zNear = 0.1f;
-	float zFar = 1000.0f;
+	float zFar = 800.0f;
 	glm::vec3 cameraPos = glm::vec3(0.0f, -5.0f, 0.0f) + glm::vec3(0.0f, heightOffset, -radius);
 	glm::mat4 viewMatrix = glm::lookAt(cameraPos, glm::vec3(0.0f, -5.0f, 0.0f) + glm::vec3(0.0f, heightOffset, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	glm::mat4 projectionMatrix = glm::perspective(glm::radians(fov), 1280 / (float)720, zNear, zFar);
@@ -123,7 +123,7 @@ void LevelLoaderSystem::LoadLevel()
 			});
 	}
 
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < 50; i++)
 	{
 		entity = controller.createEntity();
 		loaded = LoadModel("assets/models/rubix_2.0/scene.gltf");
@@ -142,6 +142,24 @@ void LevelLoaderSystem::LoadLevel()
 	controller.AddComponent(entity, Render{ loaded.first, loaded.second });
 	controller.AddComponent(entity, PhysicsBody{});
 	controller.AssignTag(entity, "VehicleCommands");
+
+	ParticleEmitter rightWheel = ParticleEmitter{};
+	rightWheel.Init(2000);
+	rightWheel.targetEntity = controller.GetEntityByTag("VehicleCommands");
+	rightWheel.offset = glm::vec3(-2.0f, 0.0f, 0.0f);
+	entity = controller.createEntity();
+	controller.AddComponent(entity, ParticleEmitter{
+		rightWheel
+		});
+
+	ParticleEmitter leftWheel = ParticleEmitter{};
+	leftWheel.Init(2000);
+	leftWheel.targetEntity = controller.GetEntityByTag("VehicleCommands");
+	leftWheel.offset = glm::vec3(2.0f, 0.0f, 0.0f);
+	entity = controller.createEntity();
+	controller.AddComponent(entity, ParticleEmitter{
+		leftWheel
+		});
 
 }
 

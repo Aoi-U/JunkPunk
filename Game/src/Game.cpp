@@ -104,7 +104,6 @@ Game::Game()
 	controller.RegisterComponent<VehicleBody>();
 	controller.RegisterComponent<Trigger>();
 	controller.RegisterComponent<MovingObstacle>();
-	controller.RegisterComponent<Particle>();
 	controller.RegisterComponent<ParticleEmitter>();
 
 	// register systems (you must register systems before setting component signatures) 
@@ -166,6 +165,13 @@ Game::Game()
 		controller.SetSystemSignature<ParticleSystem>(signature);
 	}
 
+	particleRenderSystem = controller.RegisterSystem<ParticleRenderSystem>();
+	{
+		Signature signature;
+		signature.set(controller.GetComponentType<ParticleEmitter>());
+		controller.SetSystemSignature<ParticleRenderSystem>(signature);
+	}
+
 
 	loaderSystem->LoadLevel();
 	audioSystem->Init();
@@ -174,6 +180,7 @@ Game::Game()
 	renderSystem->Init();
 	physicsSystem->Init();
 	particleSystem->Init();
+	particleRenderSystem->Init();
 }
 
 // main game function
@@ -217,7 +224,7 @@ void Game::Run()
 
 		camControlSystem->Update(time->frameTime); // handle camera controls
 
-		//particleSystem->Update(time->frameTime); // update particles
+		particleSystem->Update(time->frameTime); // update particles
 
 		renderSystem->Update(time->fps(), physicsSystem->GetRenderBuffer()); // render physics debug data
 		

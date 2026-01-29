@@ -82,6 +82,12 @@ namespace Events::Window::Mouse_Moved
 	const ParamId YPOS = "Events::Window::Mouse_Moved::YPOS"_hash;
 }
 
+namespace Events::Render
+{
+	const EventId PARTICLE_RENDER = "Events::Render::PARTICLE_RENDER"_hash;
+}
+
+
 // audio events
 namespace Events::Audio // audio related events
 {
