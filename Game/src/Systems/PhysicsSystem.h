@@ -40,7 +40,7 @@ private:
 	PxRigidStatic* gGroundPlane = NULL;
 	MainVehicle gVehicle;
 
-	PhysicsCallbacks* gPhysicsCallbacks;
+	PhysicsCallbacks gPhysicsCallbacks;
 
 	std::unordered_map<std::string, PxMaterial*> materialMap; // holds different physics materials
 

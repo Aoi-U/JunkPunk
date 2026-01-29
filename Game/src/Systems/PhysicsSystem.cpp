@@ -47,8 +47,10 @@ PhysicsSystem::PhysicsSystem()
 
 	//PhysicsSceneDesc.filterShader = VehicleFilterShader;
 	gPhysicsScene = gPhysics->createScene(PhysicsSceneDesc);
+	
+	gPhysicsCallbacks = PhysicsCallbacks();
 
-	gPhysicsScene->setSimulationEventCallback(gPhysicsCallbacks);
+	gPhysicsScene->setSimulationEventCallback(&gPhysicsCallbacks);
 
 	// https://nvidia-omniverse.github.io/PhysX/physx/5.6.1/docs/DebugVisualization.html
 	gPhysicsScene->setVisualizationParameter(PxVisualizationParameter::eSCALE, 1.0f);
@@ -301,8 +303,9 @@ void PhysicsSystem::CreateMap()
 			PxTransform boxTransform = PxTransform(PxVec3(transform.position.x, transform.position.y, transform.position.y), PxQuat(transform.quatRotation.x, transform.quatRotation.y, transform.quatRotation.z, transform.quatRotation.w));
 
 			PxShape* shape = gPhysics->createShape(box, *materialMap["default"]);
-			shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, true);
 			shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
+			shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, true);
+			shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, false);
 			
 			PxRigidStatic* staticActor = gPhysics->createRigidStatic(boxTransform);
 			staticActor->attachShape(*shape);

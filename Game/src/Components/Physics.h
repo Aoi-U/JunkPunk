@@ -44,7 +44,6 @@ struct Trigger
 {
 	PxRigidStatic* actor;
 	float width; // half extents of the width in x direction
-	float length; // half extents of the length in z direction
 	float height; // half extents of height in y direction
-
+	float length; // half extents of the length in z direction
 };

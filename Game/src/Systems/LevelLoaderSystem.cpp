@@ -161,6 +161,15 @@ void LevelLoaderSystem::LoadLevel()
 		leftWheel
 		});
 
+	// test trigger box
+	entity = controller.createEntity();
+	controller.AddComponent(entity, PhysicsBody{});
+	controller.AddComponent(entity, Trigger{ nullptr, 10.0f, 2.0f, 10.0f });
+	controller.AddComponent(entity, Transform{
+		glm::vec3(40.0f, -28.0f, 20.0f),
+		glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
+		glm::vec3(1.0f)
+		});
 }
 
 std::pair<std::shared_ptr<Model>, std::shared_ptr<AABB>> LevelLoaderSystem::LoadModel(std::string path)
