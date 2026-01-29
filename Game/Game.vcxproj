@@ -149,6 +149,7 @@
     <ClCompile Include="src\Core\Light.cpp" />
     <ClCompile Include="src\Core\Mesh.cpp" />
     <ClCompile Include="src\Core\Model.cpp" />
+    <ClCompile Include="src\Core\PhysicsCallbacks.cpp" />
     <ClCompile Include="src\Core\PostProcessor.cpp" />
     <ClCompile Include="src\Core\Shader.cpp" />
     <ClCompile Include="src\Core\ShadowMapper.cpp" />
@@ -210,6 +211,7 @@
     <ClInclude Include="src\Core\Light.h" />
     <ClInclude Include="src\Core\Mesh.h" />
     <ClInclude Include="src\Core\Model.h" />
+    <ClInclude Include="src\Core\PhysicsCallbacks.h" />
     <ClInclude Include="src\Core\PostProcessor.h" />
     <ClInclude Include="src\Core\Shader.h" />
     <ClInclude Include="src\Core\ShadowMapper.h" />

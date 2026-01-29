@@ -33,7 +33,7 @@ constexpr std::uint32_t operator "" _hash(char const* s, std::size_t count)
 // how events work:
 //	Setting up the ECSController for a class:
 //		include "Core/Types.h", "Event.h" and "ECSController.h" in a class that wants to send or receive events
-//		include ECSController and define a global forward declaration "extern ECSController controller;" in that class (make sure it is declared globally, not within a class)
+//		define a global forward declaration "extern ECSController controller;" in that class (make sure it is declared globally, not within a class)
 //  Setting up an event listener:
 //		create a void listener function with the parameter (Event& e) in any class that wants to listen for events
 //		in the constructor of that class, register the event listener to the ecs with controller.AddEventListener(Events::Event_type::EVENT_NAME, [this](Event& e) { this->ListenerFunctionName(e); })

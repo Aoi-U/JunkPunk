@@ -15,6 +15,8 @@
 #include "../Core/ShadowMapper.h"
 #include "../Core/Light.h"
 #include "../Core/Text.h"
+#include "../Core/BoundingVolumes.h"
+#include "../Components/Camera.h"
 #include "PxPhysicsAPI.h"
 
 using namespace physx;
@@ -33,9 +35,9 @@ public:
 	void Update(float fps, const PxRenderBuffer& buffer);
 
 private:
-	void DrawShadowPass();
+	void DrawShadowPass(const Frustum& frust);
 
-	void DrawLightingPass();
+	void DrawLightingPass(const Frustum& frust, const ThirdPersonCamera& tpp, glm::vec3 pos);
 	
 	void DrawSkybox(); // draw function for rendering skybox
 

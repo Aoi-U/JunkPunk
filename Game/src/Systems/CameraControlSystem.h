@@ -4,8 +4,7 @@
 
 #include "System.h"
 #include "../../Gamepad.h"
-
-class Event;
+#include "../Event.h"
 
 class Gamepad;
 

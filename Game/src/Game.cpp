@@ -78,7 +78,7 @@ private:
 };
 
 // some sources that explain ecs
-// https://austinmorlan.com/posts/entity_component_system/ // the ecs i wrote is based on this article so best to read this to understand how it works
+// https://austinmorlan.com/posts/entity_component_system/ // the ecs i wrote is based on this article so best to read this to understand how it works 
 // https://www.youtube.com/watch?v=dEdFM0uQpA0 
 
 Game::Game()
@@ -202,14 +202,13 @@ void Game::Run()
 	std::shared_ptr<CameraEditorPanelRenderer> cameraPanelRenderer = std::make_shared<CameraEditorPanelRenderer>(&mainCamera, &cameraTransform);
 	camera_debug_panel.setPanelRenderer(cameraPanelRenderer);
 
-	// when creating an entity that needs physics during runtime, add all necessary components 
+	// when creating an entity that needs physics during runtime, add all necessary components first
 	// then create and send Events::Physics::CREATE_ACTOR event with the entity created as the parameter
 	// so the physics system can properly create the actor into the scene
 
   // main loop
 	while (!window->shouldClose())
 	{
-		renderSystem->Clear(0.0f, 0.0f, 0.0f, 1.0f); // clear screen
 		time->Update();
 		
 		// physics update first to prevent twitching/jittering objects

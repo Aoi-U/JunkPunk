@@ -82,13 +82,20 @@ void RenderSystem::Clear(float r, float g, float b, float a)
 
 void RenderSystem::Update(float fps, const PxRenderBuffer& buffer)
 {
-	DrawShadowPass();
+	auto& tpp = controller.GetComponent<ThirdPersonCamera>(camera);
+	glm::vec3 forward = glm::normalize(glm::vec3(glm::inverse(tpp.viewMatrix)[2]));
+	glm::vec3 right = glm::normalize(glm::vec3(glm::inverse(tpp.viewMatrix)[0]));
+	glm::vec3 up = glm::normalize(glm::vec3(glm::inverse(tpp.viewMatrix)[1]));
+	glm::vec3 pos = glm::vec3(glm::inverse(tpp.viewMatrix)[3]);
+	Frustum frust = CreateFrustum(tpp.zFar, tpp.zNear, tpp.fov, tpp.screenWidth / (float)tpp.screenHeight, -forward, right, up, glm::vec3(glm::inverse(tpp.viewMatrix)[3]));
 
-	DrawLightingPass();
+	DrawShadowPass(frust);
+
+	DrawLightingPass(frust, tpp, pos);
 
 	//DrawParticlePass();
 
-	controller.SendEvent(Events::Render::PARTICLE_RENDER);
+	controller.SendEvent(Events::Render::PARTICLE_RENDER); // bad hack, fix later
 
 	// draw physics colliders
 	DrawCollisionDebug(buffer);
@@ -101,7 +108,7 @@ void RenderSystem::Update(float fps, const PxRenderBuffer& buffer)
 }
 
 
-void RenderSystem::DrawShadowPass()
+void RenderSystem::DrawShadowPass(const Frustum& frust)
 {
 	// setup shadow mapping and shaders
 	shadowShader->use();
@@ -110,13 +117,6 @@ void RenderSystem::DrawShadowPass()
 	shadowMapper->BindShadowMap();
 	glClear(GL_DEPTH_BUFFER_BIT);
 	glCullFace(GL_FRONT); 
-
-	// create cameras frustum for frustum culling
-	auto& tpp = controller.GetComponent<ThirdPersonCamera>(camera);
-	glm::vec3 forward = glm::normalize(glm::vec3(glm::inverse(tpp.viewMatrix)[2]));
-	glm::vec3 right = glm::normalize(glm::vec3(glm::inverse(tpp.viewMatrix)[0]));
-	glm::vec3 up = glm::normalize(glm::vec3(glm::inverse(tpp.viewMatrix)[1]));
-	Frustum frust = CreateFrustum(tpp.zFar, tpp.zNear, tpp.fov, tpp.screenWidth / (float)tpp.screenHeight, -forward, right, up, glm::vec3(glm::inverse(tpp.viewMatrix)[3]));
 
 	std::unordered_map<Model*, std::vector<glm::mat4>> instancedModels;
 	shadowShader->setBool("u_isInstanced", false);
@@ -179,22 +179,13 @@ void RenderSystem::DrawShadowPass()
 	glViewport(0, 0, screenWidth, screenHeight);
 }
 
-void RenderSystem::DrawLightingPass()
+void RenderSystem::DrawLightingPass(const Frustum& frust, const ThirdPersonCamera& tpp, glm::vec3 pos)
 {
 	//int cullCount = 0;
 	// set post processing framebuffer
 	postProcessor->BindFBO();
 	Clear(0.0f, 0.0f, 0.0f, 1.0f);
 		
-	auto& tpp = controller.GetComponent<ThirdPersonCamera>(camera);
-
-	// create cameras frustum for frustum culling
-	glm::vec3 forward = glm::normalize(glm::vec3(glm::inverse(tpp.viewMatrix)[2]));
-	glm::vec3 right = glm::normalize(glm::vec3(glm::inverse(tpp.viewMatrix)[0]));
-	glm::vec3 up = glm::normalize(glm::vec3(glm::inverse(tpp.viewMatrix)[1]));
-	glm::vec3 pos = glm::vec3(glm::inverse(tpp.viewMatrix)[3]);
-	Frustum frust = CreateFrustum(tpp.zFar, tpp.zNear, tpp.fov, tpp.screenWidth / (float)tpp.screenHeight, -forward, right, up, pos);
-
 	// setup uniforms
 	glm::vec3 lightDir = light.getDirection();
 
@@ -258,11 +249,6 @@ void RenderSystem::DrawLightingPass()
 
 	// draw instanced entities
 	defaultInstanceShader->setBool("u_isInstanced", true);
-
-	/*for (size_t i = 0; i < shadowMapper->GetCascadeCount(); ++i)
-	{
-		defaultInstanceShader->setFloat("cascadePlaneDistances[" + std::to_string(i) + "]", shadowMapper->GetCascadeLevels()[i]);
-	}*/
 
 	Mesh* previousMesh = nullptr;
 	for (auto& [model, matrices] : instancedModels) // loop through each unique model that is instanced
@@ -440,6 +426,7 @@ void RenderSystem::BindTextures(Mesh& mesh)
 	unsigned int normalNr = 1;
 	unsigned int heightNr = 1;
 
+	// set uniforms
 	defaultInstanceShader->setBool("hasDiffuseTex", mesh.hasDiffuseTexture());
 	defaultInstanceShader->setBool("hasSpecularTex", mesh.hasSpecularTexture());
 	defaultInstanceShader->setBool("hasNormalTex", mesh.hasNormalTexture());
