@@ -295,8 +295,24 @@ void PhysicsSystem::CreateMap()
 		else if (controller.HasComponent<Trigger>(entity))
 		{
 			// create trigger volume
-		}
+			auto& trigger = controller.GetComponent<Trigger>(entity);
 
+			PxBoxGeometry box = PxBoxGeometry(PxVec3(trigger.width, trigger.height, trigger.length));
+			PxTransform boxTransform = PxTransform(PxVec3(transform.position.x, transform.position.y, transform.position.y), PxQuat(transform.quatRotation.x, transform.quatRotation.y, transform.quatRotation.z, transform.quatRotation.w));
+
+			PxShape* shape = gPhysics->createShape(box, *materialMap["default"]);
+			shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, true);
+			shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
+			
+			PxRigidStatic* staticActor = gPhysics->createRigidStatic(boxTransform);
+			staticActor->attachShape(*shape);
+			staticActor->setActorFlag(PxActorFlag::eVISUALIZATION, true);
+
+			trigger.actor = staticActor;
+
+			gPhysicsScene->addActor(*staticActor);
+			shape->release();
+		}
 	}
 }
 
