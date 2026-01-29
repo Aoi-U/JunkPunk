@@ -163,9 +163,9 @@ bool MainVehicle::IsGrounded(PxScene* scene) const
 	PxRaycastBuffer hit;
 	bool grounded = false;
 	PxVec3 rayOrigin = gVehicle.mPhysXState.physxActor.rigidBody->getGlobalPose().p;
-	rayOrigin.y -= (gVehicle.mPhysXParams.physxActorBoxShapeHalfExtents.y + 0.1f);
+	rayOrigin.y -= (gVehicle.mPhysXParams.physxActorBoxShapeHalfExtents.y + 0.05f);
 	PxVec3 rayDir = PxVec3(0.0f, -1.0f, 0.0f);
-	PxReal rayLength = 0.5f;
+	PxReal rayLength = 0.3f;
 	
 	grounded = scene->raycast(rayOrigin, rayDir, rayLength, hit, PxHitFlag::eDEFAULT);
 	if (grounded && hit.hasBlock && hit.block.actor != gVehicle.mPhysXState.physxActor.rigidBody)
