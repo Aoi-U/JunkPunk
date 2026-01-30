@@ -144,7 +144,7 @@ void LevelLoaderSystem::LoadLevel()
 	controller.AssignTag(entity, "VehicleCommands");
 
 	ParticleEmitter rightWheel = ParticleEmitter{};
-	rightWheel.Init(2000);
+	rightWheel.Init(20000);
 	rightWheel.targetEntity = controller.GetEntityByTag("VehicleCommands");
 	rightWheel.offset = glm::vec3(-2.0f, 0.0f, 0.0f);
 	entity = controller.createEntity();
@@ -153,7 +153,7 @@ void LevelLoaderSystem::LoadLevel()
 		});
 
 	ParticleEmitter leftWheel = ParticleEmitter{};
-	leftWheel.Init(2000);
+	leftWheel.Init(20000);
 	leftWheel.targetEntity = controller.GetEntityByTag("VehicleCommands");
 	leftWheel.offset = glm::vec3(2.0f, 0.0f, 0.0f);
 	entity = controller.createEntity();

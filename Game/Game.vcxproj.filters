@@ -231,6 +231,9 @@
     <ClCompile Include="src\Systems\ParticleRenderSystem.cpp">
       <Filter>Source Files\Systems</Filter>
     </ClCompile>
+    <ClCompile Include="src\Core\PhysicsCallbacks.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Game.h">
@@ -418,6 +421,9 @@
     </ClInclude>
     <ClInclude Include="src\Systems\ParticleRenderSystem.h">
       <Filter>Header Files\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\PhysicsCallbacks.h">
+      <Filter>Header Files\Core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

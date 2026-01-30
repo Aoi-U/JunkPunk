@@ -13,6 +13,9 @@ void ParticleRenderSystem::Init()
 	controller.AddEventListener(Events::Render::PARTICLE_RENDER, [this](Event& e) { this->RenderParticleListener(e); });
 
 	particleShader = std::make_unique<Shader>("assets/shaders/particle.vert", "assets/shaders/particle.frag");
+	particleTexture = std::make_unique<Texture>("smoke.png");
+	particleTexture->Load("assets/textures");
+
 
 	glGenVertexArrays(1, &particleVAO);
 	glBindVertexArray(particleVAO);
@@ -40,6 +43,11 @@ void ParticleRenderSystem::Init()
 	glBindBuffer(GL_ARRAY_BUFFER, particleColorVBO);
 	// Initialize with empty (NULL) buffer : it will be updated later, each frame.
 	glBufferData(GL_ARRAY_BUFFER, 1000 * 4 * sizeof(GLubyte), NULL, GL_STREAM_DRAW);
+
+	// The VBO containing the life of the particles
+	glGenBuffers(1, &particleLifeVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, particleLifeVBO);
+	glBufferData(GL_ARRAY_BUFFER, 1000 * sizeof(GLfloat), NULL, GL_STREAM_DRAW);
 }
 
 void ParticleRenderSystem::RenderParticleListener(Event& e)
@@ -57,6 +65,10 @@ void ParticleRenderSystem::RenderParticleListener(Event& e)
 	particleShader->setMat4("u_view", tpp.viewMatrix);
 	particleShader->setMat4("u_projection", tpp.getProjectionMatrix());
 
+	particleShader->setInt("u_particleTexture", 0);
+	particleTexture->Bind(GL_TEXTURE0);
+
+
 	for (const auto& entity : entities)
 	{
 		glBindVertexArray(particleVAO);
@@ -71,6 +83,10 @@ void ParticleRenderSystem::RenderParticleListener(Event& e)
 		glBindBuffer(GL_ARRAY_BUFFER, particleColorVBO);
 		glBufferData(GL_ARRAY_BUFFER, emitter.maxParticles * 4 * sizeof(GLubyte), nullptr, GL_STREAM_DRAW);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, emitter.particleCount * 4 * sizeof(GLubyte), emitter.particleColorData.data());
+
+		glBindBuffer(GL_ARRAY_BUFFER, particleLifeVBO);
+		glBufferData(GL_ARRAY_BUFFER, emitter.maxParticles * sizeof(GLfloat), nullptr, GL_STREAM_DRAW);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, emitter.particleCount * sizeof(GLfloat), emitter.particleLifeData.data());
 
 		// bind the billboard
 		glEnableVertexAttribArray(0);
@@ -87,10 +103,17 @@ void ParticleRenderSystem::RenderParticleListener(Event& e)
 		glBindBuffer(GL_ARRAY_BUFFER, particleColorVBO);
 		glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, (void*)0);
 
+		// bind particle texture
+		glEnableVertexAttribArray(3);
+		glBindBuffer(GL_ARRAY_BUFFER, particleLifeVBO);
+		glVertexAttribPointer(3, 1, GL_FLOAT, GL_TRUE, 0, (void*)0);
+
+
 		// set attribute divisors
 		glVertexAttribDivisor(0, 0);
 		glVertexAttribDivisor(1, 1);
 		glVertexAttribDivisor(2, 1);
+		glVertexAttribDivisor(3, 1);
 
 		// draw particles
 		glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, emitter.particleCount);
@@ -99,6 +122,7 @@ void ParticleRenderSystem::RenderParticleListener(Event& e)
 		glDisableVertexAttribArray(0);
 		glDisableVertexAttribArray(1);
 		glDisableVertexAttribArray(2);
+		glDisableVertexAttribArray(3);
 		glBindVertexArray(0);
 	}
 

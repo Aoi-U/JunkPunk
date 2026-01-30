@@ -3,9 +3,11 @@
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec4 aPosSize;
 layout (location = 2) in vec4 aColor;
+layout (location = 3) in float aLife;
 
 out vec2 texCoords;
 out vec4 particleColor;
+out float particleLife;
 
 uniform mat4 u_projection;
 uniform mat4 u_view;
@@ -22,6 +24,7 @@ void main()
 
 	texCoords = aPos.xy + vec2(0.5);
 	particleColor = aColor;
+	particleLife = aLife;
 
 	gl_Position = u_projection * u_view * vec4(particleWorldPos, 1.0);
 }

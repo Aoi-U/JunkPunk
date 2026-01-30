@@ -72,7 +72,7 @@ void ParticleSystem::Update(float deltaTime)
 			emitter.particles[particleIndex].b = rand() % 256;
 			emitter.particles[particleIndex].a = 255;
 
-			emitter.particles[particleIndex].size = (rand() % 1000) / 5000.0f + 0.1f;
+			emitter.particles[particleIndex].size = (rand() % 1000) / 2000.0f + 0.1f;
 		}
 
 		int particleCount = 0;
@@ -98,6 +98,8 @@ void ParticleSystem::Update(float deltaTime)
 					emitter.particleColorData[4 * particleCount + 0] = p.r;
 					emitter.particleColorData[4 * particleCount + 1] = p.g;
 					emitter.particleColorData[4 * particleCount + 2] = p.b;
+
+					emitter.particleLifeData[particleCount] = p.life;
 
 					float lifeRatio = p.life / emitter.life;
 					p.a = (unsigned char)(lifeRatio * 255.0f);

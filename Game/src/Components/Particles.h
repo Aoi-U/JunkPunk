@@ -27,8 +27,8 @@ struct Particle
 struct ParticleEmitter
 {
 	Entity targetEntity; // entity the particle emitter is attached to (if any)
-	int maxParticles = 2000;
-	float spawnRate = 1000.0f;
+	int maxParticles = 10000;
+	float spawnRate = 5000.0f;
 	float life = 1.0f;
 	glm::vec3 offset = glm::vec3(0.0f); // offset from vehicles rear wheel position
 
@@ -37,6 +37,7 @@ struct ParticleEmitter
 
 	std::vector<GLfloat> particlePositionData;
 	std::vector<GLubyte> particleColorData;
+	std::vector<GLfloat> particleLifeData;
 	int particleCount = 0;
 
 	void Init(int max)
@@ -45,5 +46,6 @@ struct ParticleEmitter
 		particles.resize(maxParticles);
 		particlePositionData.resize(maxParticles * 4); // x, y, z, size
 		particleColorData.resize(maxParticles * 4);    // r, g, b, a
+		particleLifeData.resize(maxParticles);         // life
 	}
 };
