@@ -17,7 +17,11 @@ PhysicsSystem::PhysicsSystem()
 
 	auto rigidBodyArray = controller.GetComponentArray<RigidBody>();
 	rigidBodyArray->BindOnRemoveCallback([this](Entity entity, RigidBody& rb) { this->ReleaseActorCallback(entity, rb); });
+}
 
+void PhysicsSystem::Init()
+{
+ 
 	gFoundation = PxCreateFoundation(PX_PHYSICS_VERSION, gAllocator, gErrorCallback);
 	if (!gFoundation)
 	{
@@ -79,10 +83,6 @@ PhysicsSystem::PhysicsSystem()
 
 	PxInitVehicleExtension(*gFoundation); // initialize vehicle extension
 
-}
-
-void PhysicsSystem::Init()
-{
 	CreateMap();
 }
 

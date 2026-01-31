@@ -10,6 +10,7 @@
 #include "Systems/AudioSystem.h"
 #include "Systems/ParticleSystem.h"
 #include "Systems/ParticleRenderSystem.h"
+#include "Systems/MenuRenderSystem.h"
 #include "Core/Time.h"
 
 class Game
@@ -35,10 +36,15 @@ private:
 	std::shared_ptr<AudioSystem> audioSystem;
 	std::shared_ptr<ParticleSystem> particleSystem;
 	std::shared_ptr<ParticleRenderSystem> particleRenderSystem;
+	std::shared_ptr<MenuRenderSystem> menuRenderSystem;
 
 
 	void Cleanup();
 
 	// add game related stuff 
+	void ChangeGameStateListener(Event& e);
 
+
+	// current game state
+	GameState currentState = GameState::GAME;
 };

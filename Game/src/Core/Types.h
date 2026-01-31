@@ -48,6 +48,37 @@ constexpr std::uint32_t operator "" _hash(char const* s, std::size_t count)
 //		use this variable however you want
 //  Example usage in Window.cpp for sending scroll event and receiving the event in CameraEditroPanelRender in Game.cpp
 
+enum Buttons
+{
+	JUMP = 0, // A
+	POWERUP = 1, // B
+	X = 2, // X not using yet
+	Y = 3, // Y not using yet
+	LEFTROLL = 8, // LB
+	RIGHTROLL = 9, // RB
+	PAUSE = 12, // START
+	RESET = 13  // BACK
+};
+
+enum GameState
+{
+	GAME,
+	PAUSED,
+	STARTMENU,
+	ENDMENU,
+	SETTINGS
+};
+
+// game state events
+namespace Events::GameState
+{
+	const EventId NEW_STATE = "Events::GameState::NEW_STATE"_hash;
+}
+
+namespace Events::GameState::New_State
+{
+	const ParamId STATE = "Events::GameState::New_State"_hash;
+}
 
 // window events
 namespace Events::Window // window related events

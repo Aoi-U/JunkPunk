@@ -137,6 +137,18 @@ public:
 	{
 		return entityManager->GetEntityByTag(tag);
 	}
+
+	void ClearAllEntities()
+	{
+		for (Entity entity = 0; entity < MAX_ENTITIES; entity++)
+		{
+			Signature signature = entityManager->GetSignature(entity);
+			if (signature.any()) // if entity is in use
+			{
+				DestroyEntity(entity);
+			}
+		}
+	}
 	
 
 private:

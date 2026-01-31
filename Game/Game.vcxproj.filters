@@ -234,6 +234,9 @@
     <ClCompile Include="src\Core\PhysicsCallbacks.cpp">
       <Filter>Source Files\Core</Filter>
     </ClCompile>
+    <ClCompile Include="src\Systems\MenuRenderSystem.cpp">
+      <Filter>Source Files\Systems</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Game.h">
@@ -424,6 +427,9 @@
     </ClInclude>
     <ClInclude Include="src\Core\PhysicsCallbacks.h">
       <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Systems\MenuRenderSystem.h">
+      <Filter>Header Files\Systems</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

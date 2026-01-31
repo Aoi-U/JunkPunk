@@ -89,6 +89,7 @@ Game::Game()
 
 	window = std::make_shared<Window>(1280, 720, "JunkPunk");
 	gamepad = std::make_shared<Gamepad>(1); // initialize gamepad 
+	
 	time = std::make_unique<Time>();
 	glfwSwapInterval(1); // Enable vsync to limit fps
 
@@ -172,6 +173,12 @@ Game::Game()
 		controller.SetSystemSignature<ParticleRenderSystem>(signature);
 	}
 
+	menuRenderSystem = controller.RegisterSystem<MenuRenderSystem>();
+	{
+		Signature signature;
+		controller.SetSystemSignature<MenuRenderSystem>(signature);
+	}
+
 
 	loaderSystem->LoadLevel();
 	audioSystem->Init();
@@ -180,7 +187,8 @@ Game::Game()
 	renderSystem->Init(particleRenderSystem);
 	physicsSystem->Init();
 	particleSystem->Init();
-	//particleRenderSystem->Init();
+
+	controller.AddEventListener(Events::GameState::NEW_STATE, [this](Event& e) { this->ChangeGameStateListener(e); });
 }
 
 // main game function
@@ -211,23 +219,38 @@ void Game::Run()
 	{
 		time->Update();
 		
-		// physics update first to prevent twitching/jittering objects
-		while (time->accumulator >= time->deltaTime)
+		switch (currentState)
 		{
-			physicsSystem->Update(time->deltaTime);
-			time->accumulator -= time->deltaTime;
-			time->totalTime += time->deltaTime;
-		}
+		case GAME:
+			// physics update first to prevent twitching/jittering objects
+			while (time->accumulator >= time->deltaTime)
+			{
+				physicsSystem->Update(time->deltaTime);
+				time->accumulator -= time->deltaTime;
+				time->totalTime += time->deltaTime;
+			}
 
-		vehicleControlSystem->Update(); // handle vehicle controls
+			vehicleControlSystem->Update(); // handle vehicle controls
 
-		camControlSystem->Update(time->frameTime); // handle camera controls
+			camControlSystem->Update(time->frameTime); // handle camera controls
 
-		particleSystem->Update(time->frameTime); // update particles
+			particleSystem->Update(time->frameTime); // update particles
 
-		renderSystem->Update(time->fps(), physicsSystem->GetRenderBuffer()); // render physics debug data
+			renderSystem->Update(time->fps(), physicsSystem->GetRenderBuffer()); // render physics debug data
 		
-		camera_debug_panel.render(); // render debug panel
+			camera_debug_panel.render(); // render debug panel
+
+			break;
+
+		case PAUSED:
+			renderSystem->Update(time->fps(), physicsSystem->GetRenderBuffer());
+			// render some pause menu
+			camera_debug_panel.render();
+			break;
+		case STARTMENU:
+			// render main menu
+			break;
+		}
 
 		window->swapBuffers();
 		glfwPollEvents();
@@ -239,4 +262,37 @@ void Game::Run()
 void Game::Cleanup()
 {
 
+}
+
+void Game::ChangeGameStateListener(Event& e)
+{
+	auto state = e.GetParam<GameState>(Events::GameState::New_State::STATE);
+
+	switch (state)
+	{
+	case::GameState::STARTMENU:
+		controller.ClearAllEntities();
+		physicsSystem->Cleanup();
+
+		currentState = state;
+		break;
+	case::GameState::GAME:
+		// need to keep track of previous state so these arnt called when going from pause to resume
+		loaderSystem->LoadLevel(); 
+		physicsSystem->Init();
+		// -----------------------
+
+		currentState = state;
+		break;
+	case::GameState::ENDMENU:
+		// clear the scene or draw some menu on top of game screen?
+		currentState = state;
+		break;
+	case::GameState::PAUSED:
+		// should not clear anything, just stop regular rendering and simulation
+		currentState = state;
+		break;
+	case::GameState::SETTINGS:
+		break;
+	}
 }

@@ -35,6 +35,8 @@ public:
 
 	void Update(float fps, const PxRenderBuffer& buffer);
 
+	//void UpdateMenu(float fps); // update function for rendering menus
+
 private:
 	void DrawShadowPass(const Frustum& frust);
 

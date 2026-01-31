@@ -110,7 +110,6 @@ void RenderSystem::Update(float fps, const PxRenderBuffer& buffer)
 	RenderText(text, 0.05f, 0.9f, 0.7f, glm::vec3(0.5f, 0.8f, 0.2f));
 }
 
-
 void RenderSystem::DrawShadowPass(const Frustum& frust)
 {
 	// setup shadow mapping and shaders
