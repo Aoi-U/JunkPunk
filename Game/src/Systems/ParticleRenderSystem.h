@@ -5,8 +5,8 @@
 
 #include "../Core/Shader.h"
 #include "../Core/Texture.h"
+#include "../Components/Camera.h"
 #include "System.h"
-//#include "../Core/Types.h"
 
 class Event;
 
@@ -15,8 +15,8 @@ class ParticleRenderSystem : public System
 public:
 	void Init();
 
+	void Update(ThirdPersonCamera& camera);
 private:
-	void RenderParticleListener(Event& e);
 
 	std::unique_ptr<Shader> particleShader;
 	std::unique_ptr<Texture> particleTexture;

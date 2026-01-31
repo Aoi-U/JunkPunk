@@ -17,6 +17,7 @@
 #include "../Core/Text.h"
 #include "../Core/BoundingVolumes.h"
 #include "../Components/Camera.h"
+#include "ParticleRenderSystem.h"
 #include "PxPhysicsAPI.h"
 
 using namespace physx;
@@ -30,7 +31,7 @@ public:
 
 	void Clear(float r, float g, float b, float a); // clears screen and buffers
 
-	void Init();
+	void Init(std::shared_ptr<ParticleRenderSystem> prs);
 
 	void Update(float fps, const PxRenderBuffer& buffer);
 
@@ -80,4 +81,6 @@ private:
 	std::shared_ptr<Shader> skyboxShader;
 	std::shared_ptr<Shader> physicsDebugShader;
 	std::shared_ptr<Shader> textShader;
+
+	std::shared_ptr<ParticleRenderSystem> particleRenderSystem;
 };

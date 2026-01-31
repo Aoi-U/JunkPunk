@@ -1,17 +1,12 @@
 #include <glad/glad.h>
 #include "ParticleRenderSystem.h"
 #include "../Components/Particles.h"
-#include "../Components/Camera.h"
 #include "../ECSController.h"
-
-#include <iostream>
 
 extern ECSController controller;
 
 void ParticleRenderSystem::Init()
 {
-	controller.AddEventListener(Events::Render::PARTICLE_RENDER, [this](Event& e) { this->RenderParticleListener(e); });
-
 	particleShader = std::make_unique<Shader>("assets/shaders/particle.vert", "assets/shaders/particle.frag");
 	particleTexture = std::make_unique<Texture>("smoke.png");
 	particleTexture->Load("assets/textures");
@@ -50,12 +45,9 @@ void ParticleRenderSystem::Init()
 	glBufferData(GL_ARRAY_BUFFER, 1000 * sizeof(GLfloat), NULL, GL_STREAM_DRAW);
 }
 
-void ParticleRenderSystem::RenderParticleListener(Event& e)
+void ParticleRenderSystem::Update(ThirdPersonCamera& tpp)
 {
 	particleShader->use();
-
-	auto camera = controller.GetEntityByTag("Camera");
-	auto& tpp = controller.GetComponent<ThirdPersonCamera>(camera);
 
 	glm::vec3 right = glm::vec3(tpp.viewMatrix[0][0], tpp.viewMatrix[1][0], tpp.viewMatrix[2][0]);
 	glm::vec3 up = glm::vec3(tpp.viewMatrix[0][1], tpp.viewMatrix[1][1], tpp.viewMatrix[2][1]);
@@ -68,6 +60,7 @@ void ParticleRenderSystem::RenderParticleListener(Event& e)
 	particleShader->setInt("u_particleTexture", 0);
 	particleTexture->Bind(GL_TEXTURE0);
 
+	glDepthMask(GL_FALSE);
 
 	for (const auto& entity : entities)
 	{
@@ -126,6 +119,5 @@ void ParticleRenderSystem::RenderParticleListener(Event& e)
 		glBindVertexArray(0);
 	}
 
-	//glDepthMask(GL_FALSE);
-	//glDisable(GL_BLEND);
+	glDepthMask(GL_TRUE);
 }

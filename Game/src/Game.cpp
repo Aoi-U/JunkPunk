@@ -165,7 +165,7 @@ Game::Game()
 		controller.SetSystemSignature<ParticleSystem>(signature);
 	}
 
-	particleRenderSystem = controller.RegisterSystem<ParticleRenderSystem>();
+	std::shared_ptr<ParticleRenderSystem> particleRenderSystem = controller.RegisterSystem<ParticleRenderSystem>();
 	{
 		Signature signature;
 		signature.set(controller.GetComponentType<ParticleEmitter>());
@@ -177,10 +177,10 @@ Game::Game()
 	audioSystem->Init();
 	vehicleControlSystem->Init(gamepad);
 	camControlSystem->Init(gamepad);
-	renderSystem->Init();
+	renderSystem->Init(particleRenderSystem);
 	physicsSystem->Init();
 	particleSystem->Init();
-	particleRenderSystem->Init();
+	//particleRenderSystem->Init();
 }
 
 // main game function

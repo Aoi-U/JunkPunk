@@ -15,7 +15,7 @@ RenderSystem::RenderSystem()
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
-void RenderSystem::Init()
+void RenderSystem::Init(std::shared_ptr<ParticleRenderSystem> prs)
 {
 	postProcessShader = std::make_shared<Shader>("assets/shaders/postProcess.vert", "assets/shaders/postProcess.frag");
 	shadowShader = std::make_shared<Shader>("assets/shaders/shadowMap.vert", "assets/shaders/shadowMap.frag", "assets/shaders/shadowMap.geom");
@@ -58,6 +58,9 @@ void RenderSystem::Init()
 	// setup post processor
 	postProcessor = std::make_unique<PostProcessor>(1280, 720);
 
+	particleRenderSystem = prs;
+	particleRenderSystem->Init();
+
 	// setup debug line buffers
 	glGenVertexArrays(1, &debugVao);
 	glGenBuffers(1, &debugVbo);
@@ -93,9 +96,9 @@ void RenderSystem::Update(float fps, const PxRenderBuffer& buffer)
 
 	DrawLightingPass(frust, tpp, pos);
 
-	//DrawParticlePass();
+	DrawSkybox();
 
-	controller.SendEvent(Events::Render::PARTICLE_RENDER); // bad hack, fix later
+	particleRenderSystem->Update(tpp);
 
 	// draw physics colliders
 	DrawCollisionDebug(buffer);
@@ -270,7 +273,6 @@ void RenderSystem::DrawLightingPass(const Frustum& frust, const ThirdPersonCamer
 		}
 	}
 
-	DrawSkybox();
 	//std::cout << "Culled entities this frame: " << cullCount << std::endl;
 }
 
