@@ -10,7 +10,8 @@
 #include "Systems/AudioSystem.h"
 #include "Systems/ParticleSystem.h"
 #include "Systems/ParticleRenderSystem.h"
-#include "Systems/MenuRenderSystem.h"
+#include "Systems/MenuSystem.h"
+#include "Systems/PauseSystem.h"
 #include "Core/Time.h"
 
 class Game
@@ -36,7 +37,8 @@ private:
 	std::shared_ptr<AudioSystem> audioSystem;
 	std::shared_ptr<ParticleSystem> particleSystem;
 	std::shared_ptr<ParticleRenderSystem> particleRenderSystem;
-	std::shared_ptr<MenuRenderSystem> menuRenderSystem;
+	std::shared_ptr<MenuSystem> menuSystem;
+	std::shared_ptr<PauseSystem> pauseSystem;
 
 
 	void Cleanup();

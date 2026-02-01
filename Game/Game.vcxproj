@@ -179,9 +179,10 @@
     <ClCompile Include="src\Systems\AudioSystem.cpp" />
     <ClCompile Include="src\Systems\CameraControlSystem.cpp" />
     <ClCompile Include="src\Systems\LevelLoaderSystem.cpp" />
-    <ClCompile Include="src\Systems\MenuRenderSystem.cpp" />
+    <ClCompile Include="src\Systems\MenuSystem.cpp" />
     <ClCompile Include="src\Systems\ParticleRenderSystem.cpp" />
     <ClCompile Include="src\Systems\ParticleSystem.cpp" />
+    <ClCompile Include="src\Systems\PauseSystem.cpp" />
     <ClCompile Include="src\Systems\PhysicsSystem.cpp" />
     <ClCompile Include="src\Systems\RenderSystem.cpp" />
     <ClCompile Include="src\Systems\VehicleControlSystem.cpp" />
@@ -244,9 +245,10 @@
     <ClInclude Include="src\Systems\AudioSystem.h" />
     <ClInclude Include="src\Systems\CameraControlSystem.h" />
     <ClInclude Include="src\Systems\LevelLoaderSystem.h" />
-    <ClInclude Include="src\Systems\MenuRenderSystem.h" />
+    <ClInclude Include="src\Systems\MenuSystem.h" />
     <ClInclude Include="src\Systems\ParticleRenderSystem.h" />
     <ClInclude Include="src\Systems\ParticleSystem.h" />
+    <ClInclude Include="src\Systems\PauseSystem.h" />
     <ClInclude Include="src\Systems\PhysicsSystem.h" />
     <ClInclude Include="src\Systems\RenderSystem.h" />
     <ClInclude Include="src\Systems\System.h" />

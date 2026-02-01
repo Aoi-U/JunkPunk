@@ -5,6 +5,8 @@ in vec2 texCoords;
 
 uniform sampler2D screenTexture;
 
+uniform vec3 u_tintColor;
+
 const float offset = 1.0 / 300.0;  
 
 void main()
@@ -47,7 +49,7 @@ void main()
     for(int i = 0; i < 9; i++)
         col += sampleTex[i] * kernel[i];
     
-    FragColor = vec4(col, 1.0);
+    FragColor = vec4(col * u_tintColor, 1.0);
 
     // gamma correction
     float gamma = 2.2;

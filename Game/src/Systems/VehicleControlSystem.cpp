@@ -14,12 +14,6 @@ void VehicleControlSystem::Init(std::shared_ptr<Gamepad> gamepad)
 
 void VehicleControlSystem::Update()
 {
-	if (gamepad)
-	{
-		gamepad->RefreshState();
-		gamepad->Update();
-	}
-
 	for (auto& entity : entities)
 	{
 		auto& playerCommands = controller.GetComponent<VehicleCommands>(entity);

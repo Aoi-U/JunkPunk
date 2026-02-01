@@ -173,10 +173,16 @@ Game::Game()
 		controller.SetSystemSignature<ParticleRenderSystem>(signature);
 	}
 
-	menuRenderSystem = controller.RegisterSystem<MenuRenderSystem>();
+	menuSystem = controller.RegisterSystem<MenuSystem>();
 	{
 		Signature signature;
-		controller.SetSystemSignature<MenuRenderSystem>(signature);
+		controller.SetSystemSignature<MenuSystem>(signature);
+	}
+
+	pauseSystem = controller.RegisterSystem<PauseSystem>();
+	{
+		Signature signature;
+		controller.SetSystemSignature<PauseSystem>(signature);
 	}
 
 
@@ -187,6 +193,8 @@ Game::Game()
 	renderSystem->Init(particleRenderSystem);
 	physicsSystem->Init();
 	particleSystem->Init();
+	menuSystem->Init(gamepad);
+	pauseSystem->Init(gamepad);
 
 	controller.AddEventListener(Events::GameState::NEW_STATE, [this](Event& e) { this->ChangeGameStateListener(e); });
 }
@@ -240,17 +248,30 @@ void Game::Run()
 		
 			camera_debug_panel.render(); // render debug panel
 
+			if (gamepad->GetButtonDown(Buttons::PAUSE))
+			{
+				Event event(Events::GameState::NEW_STATE);
+				event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::PAUSED);
+				controller.SendEvent(event);
+			}
+
 			break;
 
 		case PAUSED:
 			renderSystem->Update(time->fps(), physicsSystem->GetRenderBuffer());
+			pauseSystem->Update();
 			// render some pause menu
 			camera_debug_panel.render();
+
 			break;
 		case STARTMENU:
 			// render main menu
+			menuSystem->Update();
 			break;
 		}
+		
+		gamepad->RefreshState();
+		gamepad->Update();
 
 		window->swapBuffers();
 		glfwPollEvents();
@@ -267,6 +288,7 @@ void Game::Cleanup()
 void Game::ChangeGameStateListener(Event& e)
 {
 	auto state = e.GetParam<GameState>(Events::GameState::New_State::STATE);
+	std::cout << "Changing game state to " << state << std::endl;
 
 	switch (state)
 	{
@@ -274,25 +296,31 @@ void Game::ChangeGameStateListener(Event& e)
 		controller.ClearAllEntities();
 		physicsSystem->Cleanup();
 
+		time->Pause();
 		currentState = state;
 		break;
 	case::GameState::GAME:
-		// need to keep track of previous state so these arnt called when going from pause to resume
-		loaderSystem->LoadLevel(); 
-		physicsSystem->Init();
-		// -----------------------
+		if (currentState == GameState::STARTMENU)
+		{
+			loaderSystem->LoadLevel(); 
+			physicsSystem->Init();
+		}
 
+		time->Unpause();
 		currentState = state;
 		break;
 	case::GameState::ENDMENU:
 		// clear the scene or draw some menu on top of game screen?
+		time->Pause();
 		currentState = state;
 		break;
 	case::GameState::PAUSED:
 		// should not clear anything, just stop regular rendering and simulation
+		time->Pause();
 		currentState = state;
 		break;
 	case::GameState::SETTINGS:
+		time->Pause();
 		break;
 	}
 }

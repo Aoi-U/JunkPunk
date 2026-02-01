@@ -10,6 +10,10 @@ public:
 	void Update();
 
 	float fps() const { return 1 / frameTime; }
+
+	void Pause() { paused = true; }
+	void Unpause() { paused = false; }
+	bool isPaused() const { return paused; }
 	
 	float totalTime = 0.0f;
 	const float deltaTime = 1.0f / 60.0f;
@@ -20,4 +24,5 @@ public:
 	float accumulator = 0.0f;
 	float frameTime = 0.0f;
 private:
+	bool paused = false;
 };

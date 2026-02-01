@@ -1,17 +1,22 @@
-#include "MenuRenderSystem.h"
+#include "MenuSystem.h"
 
 #include "../ECSController.h"
 
 extern ECSController controller;
 
-MenuRenderSystem::MenuRenderSystem()
+MenuSystem::MenuSystem()
 {
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	textShader = std::make_unique<Shader>("assets/shaders/text.vert", "assets/shaders/text.frag");
+
+	controller.AddEventListener(Events::Window::RESIZED, [this](Event& e) {this->WindowSizeListener(e); });
 }
 
-void MenuRenderSystem::Init()
+void MenuSystem::Init(std::shared_ptr<Gamepad> gamepad)
 {	
+	this->gamepad = gamepad;
+
 	fonts = Text();
 	textVAO = VAO();
 	textVBO = VBO();
@@ -22,20 +27,28 @@ void MenuRenderSystem::Init()
 	textShader->setMat4("u_projection", fonts.projMat);
 }
 
-void MenuRenderSystem::Clear(float r, float g, float b, float a)
+void MenuSystem::Clear(float r, float g, float b, float a)
 {
 	glClearColor(r, g, b, a);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-void MenuRenderSystem::Update(float fps)
+void MenuSystem::Update()
 {
-	int f = static_cast<int>(fps);
-	std::string text = "fps: " + std::to_string(f);
-	RenderText(text, 0.05f, 0.9f, 0.7f, glm::vec3(0.5f, 0.8f, 0.2f));
+	if (gamepad->GetButtonDown(Buttons::JUMP))
+	{
+		Event event(Events::GameState::NEW_STATE);
+		event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::GAME);
+		controller.SendEvent(event);
+	}
+
+	
+
+	Clear(0.1f, 0.1f, 0.1f, 1.0f);
+	RenderText("START", 5.0f, 5.0f, 1.0f, glm::vec3(0.5f, 0.8f, 0.2f));
 }
 
-void MenuRenderSystem::RenderText(std::string text, float x, float y, float scale, glm::vec3 color)
+void MenuSystem::RenderText(std::string text, float x, float y, float scale, glm::vec3 color)
 {
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -83,4 +96,13 @@ void MenuRenderSystem::RenderText(std::string text, float x, float y, float scal
 
 	textVAO.Unbind();
 	glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void MenuSystem::WindowSizeListener(Event& e)
+{
+	screenWidth = e.GetParam<unsigned int>(Events::Window::Resized::WIDTH);
+	screenHeight = e.GetParam<unsigned int>(Events::Window::Resized::HEIGHT);
+	fonts.projMat = glm::ortho(0.0f, static_cast<float>(screenWidth), 0.0f, static_cast<float>(screenHeight));
+	textShader->use();
+	textShader->setMat4("u_projection", fonts.projMat);
 }

@@ -234,7 +234,10 @@
     <ClCompile Include="src\Core\PhysicsCallbacks.cpp">
       <Filter>Source Files\Core</Filter>
     </ClCompile>
-    <ClCompile Include="src\Systems\MenuRenderSystem.cpp">
+    <ClCompile Include="src\Systems\MenuSystem.cpp">
+      <Filter>Source Files\Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Systems\PauseSystem.cpp">
       <Filter>Source Files\Systems</Filter>
     </ClCompile>
   </ItemGroup>
@@ -428,7 +431,10 @@
     <ClInclude Include="src\Core\PhysicsCallbacks.h">
       <Filter>Header Files\Core</Filter>
     </ClInclude>
-    <ClInclude Include="src\Systems\MenuRenderSystem.h">
+    <ClInclude Include="src\Systems\MenuSystem.h">
+      <Filter>Header Files\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Systems\PauseSystem.h">
       <Filter>Header Files\Systems</Filter>
     </ClInclude>
   </ItemGroup>

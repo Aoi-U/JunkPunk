@@ -1,30 +1,36 @@
 #pragma once
 
+#include <glad/glad.h>
+#include <glm/glm.hpp>
+
 #include "System.h"
 #include "../Core/Shader.h"
-#include "../Core/VAO.h"
-#include "../Core/VBO.h"
+#include "../Core/Types.h"
 #include "../Core/Text.h"
-#include "../Components/Camera.h"
+#include "../../Gamepad.h"
+
 
 class Event;
 
-class MenuRenderSystem : public System
+class PauseSystem : public System
 {
 public:
-	MenuRenderSystem();
-
-	void Clear(float r, float g, float b, float a); // clears screen and buffers
-	void Init();
-	void Update(float fps);
-
+	PauseSystem();
+	void Init(std::shared_ptr<Gamepad> gamepad);
+	void Update();
 
 private:
 	void RenderText(std::string text, float x, float y, float scale, glm::vec3 color);
+
+	void WindowSizeListener(Event& e);
+
 	unsigned int screenWidth = 1280;
 	unsigned int screenHeight = 720;
+
 	Text fonts;
 	VAO textVAO;
 	VBO textVBO;
 	std::shared_ptr<Shader> textShader;
+
+	std::shared_ptr<Gamepad> gamepad;
 };

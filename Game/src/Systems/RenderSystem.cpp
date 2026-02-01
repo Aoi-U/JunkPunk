@@ -28,6 +28,7 @@ void RenderSystem::Init(std::shared_ptr<ParticleRenderSystem> prs)
 
 
 	controller.AddEventListener(Events::Window::RESIZED, [this](Event& e){this->RenderSystem::WindowSizeListener(e); });
+	controller.AddEventListener(Events::GameState::NEW_STATE, [this](Event& e) {this->RenderSystem::ChangeGameStateListener(e); });
 
 	// setup skybox
 	skybox = std::make_unique<Skybox>();
@@ -282,6 +283,8 @@ void RenderSystem::DrawPostProcessingPass()
 	postProcessor->Unbind();
 	Clear(0.0f, 0.0f, 0.0f, 1.0f);
 	postProcessShader->use();
+	// set tint uniform
+	postProcessShader->setVec3("u_tintColor", &tintColor.x);
 
 	// render quad
 	postProcessor->BindVAO();
@@ -516,4 +519,17 @@ void RenderSystem::WindowSizeListener(Event& e)
 	postProcessor->Resize(screenWidth, screenHeight);
 
 	fonts.projMat = glm::ortho(0.0f, static_cast<float>(screenWidth), 0.0f, static_cast<float>(screenHeight));
+}
+
+void RenderSystem::ChangeGameStateListener(Event& e)
+{
+	GameState newState = e.GetParam<GameState>(Events::GameState::New_State::STATE);
+	if (newState == GameState::PAUSED)
+	{
+		tintColor = glm::vec3(0.3f, 0.3f, 0.3f);
+	}
+	else if (newState == GameState::GAME)
+	{
+		tintColor = glm::vec3(1.0f, 1.0f, 1.0f);
+	}
 }

@@ -54,6 +54,8 @@ private:
 	void ShaderSetupDefaults(); // setup all shader constnat uniforms
 
 	void WindowSizeListener(Event& e);
+	
+	void ChangeGameStateListener(Event& e);
 
 	unsigned int screenWidth = 1280;
 	unsigned int screenHeight = 720;
@@ -85,4 +87,6 @@ private:
 	std::shared_ptr<Shader> textShader;
 
 	std::shared_ptr<ParticleRenderSystem> particleRenderSystem;
+
+	glm::vec3 tintColor = glm::vec3(1.0f);
 };
