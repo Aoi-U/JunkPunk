@@ -54,6 +54,7 @@ void Window::scrollMetaCallback(GLFWwindow* window, double xoffset, double yoffs
 
 }
 
+
 void Window::framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
 	fbWidth = width;
@@ -95,6 +96,7 @@ Window::Window(int width, int height, const char* title)
 		return;
 	}	
 
+	controller.AddEventListener(Events::Window::CLOSE, [this](Event& e) { this->WindowCloseListener(e); });
 
 	setCallbacks();
 }
@@ -112,3 +114,8 @@ void Window::setCallbacks()
 	glfwSetScrollCallback(window.get(), scrollMetaCallback);
 }
 
+
+void Window::WindowCloseListener(Event& e)
+{
+	glfwSetWindowShouldClose(window.get(), GLFW_TRUE);
+}

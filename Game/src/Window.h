@@ -7,6 +7,8 @@
 
 #include "Core/Types.h"
 
+class Event;
+
 struct WindowDeleter {
 	void operator() (GLFWwindow* window) const {
 		glfwDestroyWindow(window);
@@ -46,4 +48,6 @@ private:
 	static void mouseButtonMetaCallback(GLFWwindow* window, int button, int action, int mods);
 	static void cursorPosMetaCallback(GLFWwindow* window, double xpos, double ypos);
 	static void scrollMetaCallback(GLFWwindow* window, double xoffset, double yoffset);
+
+	void WindowCloseListener(Event& e);
 };

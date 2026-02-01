@@ -5,6 +5,7 @@
 #include "../ECSController.h"
 
 
+
 extern ECSController controller;
 
 void AudioSystem::Init()
@@ -14,6 +15,7 @@ void AudioSystem::Init()
 	// preload sounds
 	aEngine.LoadSound("assets/audio/jazz-background-music-325355.mp3", false);
 	aEngine.LoadSound("assets/audio/mariojump.mp3", false);
+	aEngine.LoadSound("assets/audio/MenuNavigation.wav", false);
 
 	// event listeners
 	controller.AddEventListener(Events::Audio::PLAY_SOUND, [this](Event& e) {this->AudioEventListener(e); });
@@ -23,7 +25,8 @@ void AudioSystem::Init()
 void AudioSystem::AudioEventListener(Event& e)
 {
 	std::string soundPath = e.GetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME);
-	Vector3 position = e.GetParam<Vector3>(Events::Audio::Play_Sound::POSITION);
+	glm::vec3 vPos = e.GetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION);
+	Vector3 position = { vPos.x, vPos.y, vPos.z };
 	float volumeDb = e.GetParam<float>(Events::Audio::Play_Sound::VOLUME_DB);
 
 	aEngine.PlaySounds(soundPath, position, volumeDb);

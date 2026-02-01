@@ -35,17 +35,81 @@ void MenuSystem::Clear(float r, float g, float b, float a)
 
 void MenuSystem::Update()
 {
-	if (gamepad->GetButtonDown(Buttons::JUMP))
+	if (gamepad->LStick_InDeadzone())
 	{
-		Event event(Events::GameState::NEW_STATE);
-		event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::GAME);
-		controller.SendEvent(event);
+		canNavigate = true;
+	}
+	
+	if (canNavigate)
+	{
+		if (gamepad->LeftStick_X() < -0.5f) // navigate left
+		{
+			// navigate left
+			if (currentHover > 0)
+			{
+				Event event(Events::Audio::PLAY_SOUND);
+				event.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/MenuNavigation.wav");
+				event.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
+				event.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, 0.0f);
+				controller.SendEvent(event);
+
+				currentHover--;
+			}
+			canNavigate = false;
+		}
+		else if (gamepad->LeftStick_X() > 0.5f) // navigate right
+		{
+			if (currentHover < 2)
+			{
+				Event event(Events::Audio::PLAY_SOUND);
+				event.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/MenuNavigation.wav");
+				event.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
+				event.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, 0.0f);
+				controller.SendEvent(event); 
+
+				currentHover++;
+			}
+			canNavigate = false;
+		}
 	}
 
-	
+	if (gamepad->GetButtonDown(Buttons::JUMP))
+	{
+		switch (currentHover)
+		{
+		case Menus::START:
+		{
+			Event event(Events::GameState::NEW_STATE);
+			event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::GAME);
+			controller.SendEvent(event);
+		}
+		break;
+		case Menus::SETTINGS:
+		{
+			// settings menu
+		}
+		break;
+		case Menus::QUIT:
+		{
+			// quit game
+			controller.SendEvent(Events::Window::CLOSE);
+		}
+		break;
+		}
+	}
+
+
 
 	Clear(0.1f, 0.1f, 0.1f, 1.0f);
-	RenderText("START", 5.0f, 5.0f, 1.0f, glm::vec3(0.5f, 0.8f, 0.2f));
+	RenderText("START", 0.2 * screenWidth, 0.5 * screenHeight, 1.0f, currentHover == Menus::START ? hoverColor : defaultColor);
+	RenderText("SETTINGS", 0.4 * screenWidth, 0.5 * screenHeight, 1.0f, currentHover == Menus::SETTINGS ? hoverColor : defaultColor);
+	RenderText("QUIT", 0.7 * screenWidth, 0.5 * screenHeight, 1.0f, currentHover == Menus::QUIT ? hoverColor : defaultColor);
+}
+
+void MenuSystem::Reset()
+{
+	canNavigate = true;
+	currentHover = 0;
 }
 
 void MenuSystem::RenderText(std::string text, float x, float y, float scale, glm::vec3 color)

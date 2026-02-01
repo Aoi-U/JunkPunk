@@ -3,6 +3,7 @@
 #include "../Components/Render.h"
 #include "../Components/Transform.h"
 #include "../Components/Camera.h"
+#include "../Components/Particles.h"
 #include "../ECSController.h"
 
 extern ECSController controller;
@@ -13,10 +14,6 @@ RenderSystem::RenderSystem()
 	glEnable(GL_CULL_FACE);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-}
-
-void RenderSystem::Init(std::shared_ptr<ParticleRenderSystem> prs)
-{
 	postProcessShader = std::make_shared<Shader>("assets/shaders/postProcess.vert", "assets/shaders/postProcess.frag");
 	shadowShader = std::make_shared<Shader>("assets/shaders/shadowMap.vert", "assets/shaders/shadowMap.frag", "assets/shaders/shadowMap.geom");
 	defaultShader = std::make_shared<Shader>("assets/shaders/default.vert", "assets/shaders/default.frag");
@@ -26,16 +23,13 @@ void RenderSystem::Init(std::shared_ptr<ParticleRenderSystem> prs)
 	physicsDebugShader = std::make_shared<Shader>("assets/shaders/colliders.vert", "assets/shaders/colliders.frag");
 	textShader = std::make_shared<Shader>("assets/shaders/text.vert", "assets/shaders/text.frag");
 
-
 	controller.AddEventListener(Events::Window::RESIZED, [this](Event& e){this->RenderSystem::WindowSizeListener(e); });
 	controller.AddEventListener(Events::GameState::NEW_STATE, [this](Event& e) {this->RenderSystem::ChangeGameStateListener(e); });
 
 	// setup skybox
 	skybox = std::make_unique<Skybox>();
 	skybox->Init();
-
 	ShaderSetupDefaults();
-
 	// setup text rendering
 	fonts = Text();
 	textVAO = VAO();
@@ -45,22 +39,20 @@ void RenderSystem::Init(std::shared_ptr<ParticleRenderSystem> prs)
 	textShader->use();
 	textShader->setMat4("u_projection", fonts.projMat);
 
-	// setup shadow mapper
-	camera = controller.GetEntityByTag("Camera");
-	auto& tpp = controller.GetComponent<ThirdPersonCamera>(camera);
-	float zNear = tpp.zNear;
-	float zFar = tpp.zFar;
-	float fov = tpp.fov;
-	glm::mat4 viewMatrix = tpp.viewMatrix;
-	light = Light();
-	shadowMapper = std::make_unique<ShadowMapper>(screenWidth / (float)screenHeight, zNear, zFar, glm::radians(fov), viewMatrix, light);
-	shadowMapper->Init(shadowShader, defaultInstanceShader);
+	particleRenderSystem = controller.RegisterSystem<ParticleRenderSystem>();
+	{
+		Signature signature;
+		signature.set(controller.GetComponentType<ParticleEmitter>());
+		controller.SetSystemSignature<ParticleRenderSystem>(signature);
+	}
 
 	// setup post processor
 	postProcessor = std::make_unique<PostProcessor>(1280, 720);
 
-	particleRenderSystem = prs;
-	particleRenderSystem->Init();
+
+	shadowMapper = std::make_unique<ShadowMapper>(1280 / (float)720, 0.1f, 800.0f, glm::radians(45.0f), glm::mat4(1.0f), light);
+	shadowMapper->Init(shadowShader, defaultInstanceShader);
+	light = Light();
 
 	// setup debug line buffers
 	glGenVertexArrays(1, &debugVao);
@@ -76,6 +68,18 @@ void RenderSystem::Init(std::shared_ptr<ParticleRenderSystem> prs)
 	glVertexAttribPointer(1, 4, GL_FLOAT, GL_TRUE, 6 * sizeof(GLfloat), (void*)(3 * sizeof(GLfloat)));
 	glBindVertexArray(0);
 	// end setup debug line buffers			
+}
+
+void RenderSystem::Init()
+{
+	// setup shadow mapper
+	camera = controller.GetEntityByTag("Camera");
+	auto& tpp = controller.GetComponent<ThirdPersonCamera>(camera);
+	float zNear = tpp.zNear;
+	float zFar = tpp.zFar;
+	float fov = tpp.fov;
+	glm::mat4 viewMatrix = tpp.viewMatrix;
+	shadowMapper->Update(screenWidth / (float)screenHeight, zNear, zFar, fov, viewMatrix);
 }
 
 void RenderSystem::Clear(float r, float g, float b, float a)

@@ -5,8 +5,9 @@
 
 extern ECSController controller;
 
-void ParticleRenderSystem::Init()
+ParticleRenderSystem::ParticleRenderSystem()
 {
+	// constructor
 	particleShader = std::make_unique<Shader>("assets/shaders/particle.vert", "assets/shaders/particle.frag");
 	particleTexture = std::make_unique<Texture>("smoke.png");
 	particleTexture->Load("assets/textures");
@@ -43,6 +44,10 @@ void ParticleRenderSystem::Init()
 	glGenBuffers(1, &particleLifeVBO);
 	glBindBuffer(GL_ARRAY_BUFFER, particleLifeVBO);
 	glBufferData(GL_ARRAY_BUFFER, 1000 * sizeof(GLfloat), NULL, GL_STREAM_DRAW);
+}
+
+void ParticleRenderSystem::Init()
+{
 }
 
 void ParticleRenderSystem::Update(ThirdPersonCamera& tpp)

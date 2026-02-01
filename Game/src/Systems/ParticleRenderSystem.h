@@ -13,6 +13,7 @@ class Event;
 class ParticleRenderSystem : public System
 {
 public:
+	ParticleRenderSystem();
 	void Init();
 
 	void Update(ThirdPersonCamera& camera);

@@ -1,9 +1,6 @@
 ﻿#include "Game.h"
 
-#include "glm/glm.hpp"
-
-#include "ImGuiTest.h"
-#include "ImGuiPanel.h"
+#include <glm/glm.hpp>
 
 #include "Components/Render.h"
 #include "Components/Transform.h"
@@ -166,13 +163,6 @@ Game::Game()
 		controller.SetSystemSignature<ParticleSystem>(signature);
 	}
 
-	std::shared_ptr<ParticleRenderSystem> particleRenderSystem = controller.RegisterSystem<ParticleRenderSystem>();
-	{
-		Signature signature;
-		signature.set(controller.GetComponentType<ParticleEmitter>());
-		controller.SetSystemSignature<ParticleRenderSystem>(signature);
-	}
-
 	menuSystem = controller.RegisterSystem<MenuSystem>();
 	{
 		Signature signature;
@@ -186,13 +176,9 @@ Game::Game()
 	}
 
 
-	loaderSystem->LoadLevel();
 	audioSystem->Init();
 	vehicleControlSystem->Init(gamepad);
 	camControlSystem->Init(gamepad);
-	renderSystem->Init(particleRenderSystem);
-	physicsSystem->Init();
-	particleSystem->Init();
 	menuSystem->Init(gamepad);
 	pauseSystem->Init(gamepad);
 
@@ -204,19 +190,16 @@ void Game::Run()
 {
 	Event event(Events::Audio::PLAY_SOUND);
 	event.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/jazz-background-music-325355.mp3");
-	event.SetParam<Vector3>(Events::Audio::Play_Sound::POSITION, Vector3{ 0.0f, 0.0f, 0.0f });
+	event.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
 	event.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, -10.0f);
 	controller.SendEvent(event);
 
-
+	
 	// imgui panel for debugging
-	ImGuiPanel camera_debug_panel(window);
+	camera_debug_panel = std::make_unique<ImGuiPanel>(window);
 	// get main camera and transform to pass to panel
-	Entity cameraEntity = controller.GetEntityByTag("Camera");
-	ThirdPersonCamera& mainCamera = controller.GetComponent<ThirdPersonCamera>(cameraEntity);
-	Transform& cameraTransform = controller.GetComponent<Transform>(cameraEntity);
-	std::shared_ptr<CameraEditorPanelRenderer> cameraPanelRenderer = std::make_shared<CameraEditorPanelRenderer>(&mainCamera, &cameraTransform);
-	camera_debug_panel.setPanelRenderer(cameraPanelRenderer);
+
+	
 
 	// when creating an entity that needs physics during runtime, add all necessary components first
 	// then create and send Events::Physics::CREATE_ACTOR event with the entity created as the parameter
@@ -246,7 +229,7 @@ void Game::Run()
 
 			renderSystem->Update(time->fps(), physicsSystem->GetRenderBuffer()); // render physics debug data
 		
-			camera_debug_panel.render(); // render debug panel
+			camera_debug_panel->render(); // render debug panel
 
 			if (gamepad->GetButtonDown(Buttons::PAUSE))
 			{
@@ -261,7 +244,7 @@ void Game::Run()
 			renderSystem->Update(time->fps(), physicsSystem->GetRenderBuffer());
 			pauseSystem->Update();
 			// render some pause menu
-			camera_debug_panel.render();
+			camera_debug_panel->render();
 
 			break;
 		case STARTMENU:
@@ -295,6 +278,7 @@ void Game::ChangeGameStateListener(Event& e)
 	case::GameState::STARTMENU:
 		controller.Reset();
 		physicsSystem->Cleanup();
+		menuSystem->Reset();
 
 		time->Pause();
 		currentState = state;
@@ -303,7 +287,16 @@ void Game::ChangeGameStateListener(Event& e)
 		if (currentState == GameState::STARTMENU) // set up the world when coming from the main menu
 		{
 			loaderSystem->LoadLevel(); 
+			renderSystem->Init();
 			physicsSystem->Init();
+
+			// testing
+			Entity cameraEntity = controller.GetEntityByTag("Camera");
+			ThirdPersonCamera& mainCamera = controller.GetComponent<ThirdPersonCamera>(cameraEntity);
+			Transform& cameraTransform = controller.GetComponent<Transform>(cameraEntity);
+			std::shared_ptr<CameraEditorPanelRenderer> cameraPanelRenderer = std::make_shared<CameraEditorPanelRenderer>(&mainCamera, &cameraTransform);
+			camera_debug_panel->setPanelRenderer(cameraPanelRenderer);
+			// end testing
 		}
 
 		time->Unpause();
@@ -315,12 +308,9 @@ void Game::ChangeGameStateListener(Event& e)
 		currentState = state;
 		break;
 	case::GameState::PAUSED:
-		// should not clear anything, just stop regular rendering and simulation
+		// should not clear anything, just stop physics simulation
 		time->Pause();
 		currentState = state;
-		break;
-	case::GameState::SETTINGS:
-		time->Pause();
 		break;
 	}
 }

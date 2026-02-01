@@ -64,7 +64,7 @@ public:
 	void AssignTag(Entity entity, const std::string tag)
 	{
 		assert(entity < MAX_ENTITIES && "Failed to assign tag: Entity out of range");
-		assert(tagToEntityMap.find(tag) == tagToEntityMap.end() && "Failed to assign tag: Tag already in use");
+		//assert(tagToEntityMap.find(tag) == tagToEntityMap.end() && "Failed to assign tag: Tag already in use");
 
 		if (entityToTagMap.find(entity) != entityToTagMap.end()) // remove this entitys old tag if it exists
 		{

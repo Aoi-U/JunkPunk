@@ -65,8 +65,7 @@ enum GameState
 	GAME,
 	PAUSED,
 	STARTMENU,
-	ENDMENU,
-	SETTINGS
+	ENDMENU
 };
 
 // game state events
@@ -87,6 +86,7 @@ namespace Events::Window // window related events
 	const EventId INPUT = "Events::Window::INPUT"_hash; // keyboard input event
 	const EventId SCROLLED = "Events::Window::SCROLLED"_hash; // mouse scrolled event
 	const EventId MOUSEMOVED = "Events::Window::MOUSEMOVED"_hash; // mouse moved event
+	const EventId CLOSE = "Events::Window::CLOSE"_hash; // window close event
 }
 
 namespace Events::Window::Resized // parameters for window resized event

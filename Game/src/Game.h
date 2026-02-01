@@ -14,6 +14,8 @@
 #include "Systems/PauseSystem.h"
 #include "Core/Time.h"
 
+#include "ImGuiPanel.h"
+
 class Game
 {
 public:
@@ -46,7 +48,10 @@ private:
 	// add game related stuff 
 	void ChangeGameStateListener(Event& e);
 
-
+	std::unique_ptr<ImGuiPanel> camera_debug_panel; // testing
+	
 	// current game state
-	GameState currentState = GameState::GAME;
+	GameState currentState = GameState::STARTMENU;
+
+
 };

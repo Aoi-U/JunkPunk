@@ -31,7 +31,7 @@ public:
 
 	void Clear(float r, float g, float b, float a); // clears screen and buffers
 
-	void Init(std::shared_ptr<ParticleRenderSystem> prs);
+	void Init();
 
 	void Update(float fps, const PxRenderBuffer& buffer);
 
