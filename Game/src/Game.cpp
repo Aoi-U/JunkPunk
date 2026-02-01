@@ -276,6 +276,7 @@ void Game::ChangeGameStateListener(Event& e)
 	switch (state)
 	{
 	case::GameState::STARTMENU:
+	{
 		controller.Reset();
 		physicsSystem->Cleanup();
 		menuSystem->Reset();
@@ -283,7 +284,9 @@ void Game::ChangeGameStateListener(Event& e)
 		time->Pause();
 		currentState = state;
 		break;
+	}
 	case::GameState::GAME:
+	{
 		if (currentState == GameState::STARTMENU) // set up the world when coming from the main menu
 		{
 			loaderSystem->LoadLevel(); 
@@ -302,15 +305,32 @@ void Game::ChangeGameStateListener(Event& e)
 		time->Unpause();
 		currentState = state;
 		break;
+	}
 	case::GameState::ENDMENU:
+	{
 		// clear the scene or draw some menu on top of game screen?
 		time->Pause();
 		currentState = state;
 		break;
+	}
 	case::GameState::PAUSED:
+	{
+		pauseSystem->Reset();
 		// should not clear anything, just stop physics simulation
 		time->Pause();
 		currentState = state;
 		break;
+	}
+	case::GameState::RESTART:
+	{
+		controller.Reset();
+		physicsSystem->Cleanup();
+		loaderSystem->LoadLevel();
+		renderSystem->Init();
+		physicsSystem->Init();
+		time->Unpause();
+		currentState = GameState::GAME;
+		break;
+	}
 	}
 }

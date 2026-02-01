@@ -65,7 +65,8 @@ enum GameState
 	GAME,
 	PAUSED,
 	STARTMENU,
-	ENDMENU
+	ENDMENU,
+	RESTART
 };
 
 // game state events

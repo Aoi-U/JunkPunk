@@ -82,19 +82,19 @@ void MenuSystem::Update()
 			Event event(Events::GameState::NEW_STATE);
 			event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::GAME);
 			controller.SendEvent(event);
+			break;
 		}
-		break;
 		case Menus::SETTINGS:
 		{
 			// settings menu
+			break;
 		}
-		break;
 		case Menus::QUIT:
 		{
 			// quit game
 			controller.SendEvent(Events::Window::CLOSE);
+			break;
 		}
-		break;
 		}
 	}
 

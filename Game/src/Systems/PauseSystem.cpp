@@ -28,20 +28,83 @@ void PauseSystem::Init(std::shared_ptr<Gamepad> gamepad)
 
 void PauseSystem::Update()
 {
-	if (gamepad->GetButtonDown(Buttons::PAUSE))
+	if (gamepad->LStick_InDeadzone())
 	{
-		Event event(Events::GameState::NEW_STATE);
-		event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::GAME);
-		controller.SendEvent(event);
-	}
-	else if (gamepad->GetButtonDown(Buttons::RESET))
-	{
-		Event event(Events::GameState::NEW_STATE);
-		event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::STARTMENU);
-		controller.SendEvent(event);
+		canNavigate = true;
 	}
 
-	RenderText("PAUSED", 0.5 * screenWidth, 0.5 * screenHeight, 1.0f, glm::vec3(0.5f, 0.8f, 0.2f));
+	if (canNavigate)
+	{
+		if (gamepad->LeftStick_X() < -0.5f) // navigate left
+		{
+			// navigate left
+			if (currentHover > 0)
+			{
+				Event event(Events::Audio::PLAY_SOUND);
+				event.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/MenuNavigation.wav");
+				event.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
+				event.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, 0.0f);
+				controller.SendEvent(event);
+
+				currentHover--;
+			}
+			canNavigate = false;
+		}
+		else if (gamepad->LeftStick_X() > 0.5f) // navigate right
+		{
+			if (currentHover < 2)
+			{
+				Event event(Events::Audio::PLAY_SOUND);
+				event.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/MenuNavigation.wav");
+				event.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
+				event.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, 0.0f);
+				controller.SendEvent(event);
+
+				currentHover++;
+			}
+			canNavigate = false;
+		}
+	}
+
+	if (gamepad->GetButtonDown(Buttons::JUMP))
+	{
+		switch (currentHover)
+		{
+		case Menus::RESUME:
+		{
+
+			Event event(Events::GameState::NEW_STATE);
+			event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::GAME);
+			controller.SendEvent(event);
+			break;
+		}
+		case Menus::RESTART:
+		{
+			Event event(Events::GameState::NEW_STATE);
+			event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::RESTART);
+			controller.SendEvent(event);
+			break;
+		}
+		case Menus::MENU:
+		{
+			Event event(Events::GameState::NEW_STATE);
+			event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::STARTMENU);
+			controller.SendEvent(event);
+			break;
+		}
+		}
+	}
+
+	RenderText("PAUSED", 0.4 * screenWidth, 0.6 * screenHeight, 1.0f, glm::vec3(0.5f, 0.8f, 0.2f));
+	RenderText("RESUME", 0.2 * screenWidth, 0.4 * screenHeight, 1.0f, currentHover == Menus::RESUME ? hoverColor : defaultColor);
+	RenderText("RESTART", 0.4 * screenWidth, 0.4 * screenHeight, 1.0f, currentHover == Menus::RESTART ? hoverColor : defaultColor);
+	RenderText("MENU", 0.6 * screenWidth, 0.4 * screenHeight, 1.0f, currentHover == Menus::MENU ? hoverColor : defaultColor);
+}
+
+void PauseSystem::Reset()
+{
+	canNavigate = true;
+	currentHover = 0;
 }
 
 void PauseSystem::RenderText(std::string text, float x, float y, float scale, glm::vec3 color)

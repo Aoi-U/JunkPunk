@@ -532,7 +532,7 @@ void RenderSystem::ChangeGameStateListener(Event& e)
 	{
 		tintColor = glm::vec3(0.3f, 0.3f, 0.3f);
 	}
-	else if (newState == GameState::GAME)
+	else if (newState == GameState::GAME ||  newState == GameState::RESTART)
 	{
 		tintColor = glm::vec3(1.0f, 1.0f, 1.0f);
 	}
