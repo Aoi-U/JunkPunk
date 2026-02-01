@@ -9,7 +9,6 @@
 extern ECSController controller;
 
 PhysicsSystem::PhysicsSystem()
-	: gVehicle()
 {
 	controller.AddEventListener(Events::Physics::CREATE_ACTOR, [this](Event& e) { this->CreateActorListener(e); });
 	controller.AddEventListener(Events::Player::PLAYER_JUMPED, [this](Event& e) { this->JumpEventListener(e); });
@@ -21,7 +20,7 @@ PhysicsSystem::PhysicsSystem()
 
 void PhysicsSystem::Init()
 {
- 
+	gVehicle = std::make_unique<MainVehicle>();
 	gFoundation = PxCreateFoundation(PX_PHYSICS_VERSION, gAllocator, gErrorCallback);
 	if (!gFoundation)
 	{
@@ -91,15 +90,15 @@ void PhysicsSystem::Update(float deltaTime)
 	// get the vehicle command from ECS
 	Entity vehicleEntity = controller.GetEntityByTag("VehicleCommands");
 	auto& vehicleCommands = controller.GetComponent<VehicleCommands>(vehicleEntity);
-	vehicleCommands.isGrounded = gVehicle.IsGrounded(gPhysicsScene);
+	vehicleCommands.isGrounded = gVehicle->IsGrounded(gPhysicsScene);
 
 	Command command;
 	command.throttle = vehicleCommands.throttle;
 	command.brake = vehicleCommands.brake;
 	command.steer = vehicleCommands.steer;
-	gVehicle.setCommand(command);
+	gVehicle->setCommand(command);
 
-	gVehicle.step(deltaTime);
+	gVehicle->step(deltaTime);
 	gPhysicsScene->simulate(deltaTime);
 	gPhysicsScene->fetchResults(true);
 
@@ -162,12 +161,12 @@ void PhysicsSystem::Update(float deltaTime)
 		else if (controller.HasComponent<VehicleBody>(entity))
 		{
 			auto& vehicleBody = controller.GetComponent<VehicleBody>(entity);
-			PxTransform pxTransform = gVehicle.getTransform();
+			PxTransform pxTransform = gVehicle->getTransform();
 			transform.position = glm::vec3(pxTransform.p.x, pxTransform.p.y, pxTransform.p.z);
 			transform.quatRotation = glm::quat(pxTransform.q.w, pxTransform.q.x, pxTransform.q.y, pxTransform.q.z);
 
-			PxVec3 linearVel = gVehicle.getLinearVelocity();
-			PxVec3 angularVel = gVehicle.getAngularVelocity();
+			PxVec3 linearVel = gVehicle->getLinearVelocity();
+			PxVec3 angularVel = gVehicle->getAngularVelocity();
 			vehicleBody.linearVelocity = glm::vec3(linearVel.x, linearVel.y, linearVel.z);
 			vehicleBody.angularVelocity = glm::vec3(angularVel.x, angularVel.y, angularVel.z);
 		}
@@ -176,7 +175,7 @@ void PhysicsSystem::Update(float deltaTime)
 
 void PhysicsSystem::Simulate(float deltaTime)
 {
-	gVehicle.step(deltaTime);
+	gVehicle->step(deltaTime);
 	gPhysicsScene->simulate(deltaTime);
 	gPhysicsScene->fetchResults(true);
 }
@@ -184,6 +183,8 @@ void PhysicsSystem::Simulate(float deltaTime)
 void PhysicsSystem::Cleanup()
 {
 	PxCloseVehicleExtension();
+	gVehicle->cleanup();
+	gVehicle.reset();
 	gPhysicsScene->release();
 	gDispatcher->release();
 	gPhysics->release();
@@ -288,7 +289,7 @@ void PhysicsSystem::CreateMap()
 		}
 		else if (controller.HasComponent<VehicleBody>(entity))
 		{
-			if (!gVehicle.setup(gPhysicsScene, gPhysics, materialMap["vehicle_tire"]))
+			if (!gVehicle->setup(gPhysicsScene, gPhysics, materialMap["vehicle_tire"]))
 			{
 				std::cout << "Vehicle failed to initialize!" << std::endl;
 				return;
@@ -415,13 +416,13 @@ void PhysicsSystem::CreateActorListener(Event& e)
 
 void PhysicsSystem::JumpEventListener(Event& e)
 {
-	gVehicle.jump();
+	gVehicle->jump();
 }
 
 void PhysicsSystem::ResetVehicleEventListener(Event& e)
 {
-	//gVehicle.respawnAtCheckpoint();
-	gVehicle.resetTransform();
+	//gVehicle->respawnAtCheckpoint();
+	gVehicle->resetTransform();
 }
 
 void PhysicsSystem::ReleaseActorCallback(Entity entity, RigidBody& rb)

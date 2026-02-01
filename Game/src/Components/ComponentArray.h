@@ -12,6 +12,7 @@ class IComponentArray
 public:
 	virtual ~IComponentArray() = default;
 	virtual void EntityDestroyed(Entity entity) = 0;
+	virtual void Reset() = 0;
 };
 
 template<typename T>
@@ -85,6 +86,13 @@ public:
 	std::unordered_map<Entity, size_t>& GetEntityToIndexMap()
 	{
 		return entityToIndexMap;
+	}
+
+	void Reset() override
+	{
+		entityToIndexMap.clear();
+		indexToEntityMap.clear();
+		size = 0;
 	}
 
 private:

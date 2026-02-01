@@ -58,6 +58,14 @@ public:
 		}
 	}
 
+	void Reset()
+	{
+		for (auto const& [_, component] : componentArrays)
+		{
+			component->Reset();
+		}
+	}
+
 	template<typename T>
 	std::shared_ptr<ComponentArray<T>> GetComponentArray()
 	{

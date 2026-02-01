@@ -38,7 +38,7 @@ private:
 	PxPvd* gPvd = NULL;
 
 	PxRigidStatic* gGroundPlane = NULL;
-	MainVehicle gVehicle;
+	std::unique_ptr<MainVehicle> gVehicle = NULL;
 
 	PhysicsCallbacks gPhysicsCallbacks;
 

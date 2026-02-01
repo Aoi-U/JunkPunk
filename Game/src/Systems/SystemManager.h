@@ -59,6 +59,14 @@ public:
 		}
 	}
 
+	void Reset()
+	{
+		for (auto const& [_, system] : systems)
+		{
+			system->entities.clear();
+		}
+	}
+
 private:
 	std::unordered_map<const char*, Signature> signatures{}; // map from system type string pointer to a signature
 	std::unordered_map<const char*, std::shared_ptr<System>> systems{}; // map from system type string pointer to a system pointer

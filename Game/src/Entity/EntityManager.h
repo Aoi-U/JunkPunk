@@ -101,6 +101,27 @@ public:
 		return tagToEntityMap.find(tag) != tagToEntityMap.end();
 	}
 
+	void Reset()
+	{
+		livingEntityCount = 0;
+
+		std::queue<Entity> empty;
+		std::swap(availableEntities, empty);
+
+		for (Entity entity = 0; entity < MAX_ENTITIES; entity++)
+		{
+			availableEntities.push(entity);
+		}
+
+		for (auto& signature : signatures)
+		{
+			signature.reset();
+		}
+
+		tagToEntityMap.clear();
+		entityToTagMap.clear();
+	}
+
 private:
 	std::queue<Entity> availableEntities{}; // queue of unused entity IDs
 	std::array<Signature, MAX_ENTITIES> signatures{}; //  array of entity signatures

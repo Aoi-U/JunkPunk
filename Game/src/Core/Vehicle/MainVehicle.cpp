@@ -104,6 +104,7 @@ void MainVehicle::step(float deltaTime)
 void MainVehicle::cleanup()
 {
 	gVehicle.destroy();
+
 }
 
 void MainVehicle::setCommand(Command commands)

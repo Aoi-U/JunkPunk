@@ -225,7 +225,7 @@ void Game::Run()
   // main loop
 	while (!window->shouldClose())
 	{
-		time->Update();
+		time->Update();			
 		
 		switch (currentState)
 		{
@@ -293,14 +293,14 @@ void Game::ChangeGameStateListener(Event& e)
 	switch (state)
 	{
 	case::GameState::STARTMENU:
-		controller.ClearAllEntities();
+		controller.Reset();
 		physicsSystem->Cleanup();
 
 		time->Pause();
 		currentState = state;
 		break;
 	case::GameState::GAME:
-		if (currentState == GameState::STARTMENU)
+		if (currentState == GameState::STARTMENU) // set up the world when coming from the main menu
 		{
 			loaderSystem->LoadLevel(); 
 			physicsSystem->Init();
