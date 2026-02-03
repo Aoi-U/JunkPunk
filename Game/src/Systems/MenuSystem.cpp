@@ -9,6 +9,7 @@ MenuSystem::MenuSystem()
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	textShader = std::make_unique<Shader>("assets/shaders/text.vert", "assets/shaders/text.frag");
+	uiShader = std::make_unique<Shader>("assets/shaders/ui.vert", "assets/shaders/ui.frag");
 
 	controller.AddEventListener(Events::Window::RESIZED, [this](Event& e) {this->WindowSizeListener(e); });
 }
@@ -25,6 +26,28 @@ void MenuSystem::Init(std::shared_ptr<Gamepad> gamepad)
 
 	textShader->use();
 	textShader->setMat4("u_projection", fonts.projMat);
+
+	uiVAO = VAO();
+	uiVBO = VBO();
+	uiVAO.Bind();
+	uiVBO.Bind();
+
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, nullptr, GL_DYNAMIC_DRAW);
+	
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+
+	uiVAO.Unbind();
+	uiVBO.Unbind();
+
+	uiShader->use();
+	uiShader->setMat4("u_projection", fonts.projMat);
+	uiShader->setInt("u_texture", 0);
+
+	InitUI();
 }
 
 void MenuSystem::Clear(float r, float g, float b, float a)
@@ -42,7 +65,7 @@ void MenuSystem::Update()
 	
 	if (canNavigate)
 	{
-		if (gamepad->LeftStick_X() < -0.5f) // navigate left
+		if (gamepad->LeftStick_Y() > 0.5f) // navigate left
 		{
 			// navigate left
 			if (currentHover > 0)
@@ -57,7 +80,7 @@ void MenuSystem::Update()
 			}
 			canNavigate = false;
 		}
-		else if (gamepad->LeftStick_X() > 0.5f) // navigate right
+		else if (gamepad->LeftStick_Y() < -0.5f) // navigate right
 		{
 			if (currentHover < 2)
 			{
@@ -100,16 +123,130 @@ void MenuSystem::Update()
 
 
 
+	glDisable(GL_DEPTH_TEST);
 	Clear(0.1f, 0.1f, 0.1f, 1.0f);
-	RenderText("START", 0.2 * screenWidth, 0.5 * screenHeight, 1.0f, currentHover == Menus::START ? hoverColor : defaultColor);
-	RenderText("SETTINGS", 0.4 * screenWidth, 0.5 * screenHeight, 1.0f, currentHover == Menus::SETTINGS ? hoverColor : defaultColor);
-	RenderText("QUIT", 0.7 * screenWidth, 0.5 * screenHeight, 1.0f, currentHover == Menus::QUIT ? hoverColor : defaultColor);
+
+	for (size_t i = 0; i < uiElements.size(); i++)
+	{
+		UIElement& elem = uiElements[i];
+
+		glm::vec2 scaledPos = ScaledPosition(elem.x, elem.y);
+		glm::vec2 scaledSize = ScaledSize(elem.width, elem.height);
+
+		if (elem.tex)
+		{
+			RenderUITexture(scaledPos.x, scaledPos.y, scaledSize.x, scaledSize.y, elem.tex.get(), elem.color);
+		}
+		else
+		{
+			RenderUIRect(scaledPos.x, scaledPos.y, scaledSize.x, scaledSize.y, elem.color);
+		}
+	}
+
+	// Render text with scaled positions and uniform scale for text size
+	float buttonSpacing = 120.0f;
+	float textScale = uniformScale;
+	RenderText("START", ScaledX(550.0f), ScaledY(480.0f), textScale,
+		currentHover == Menus::START ? hoverColor : defaultColor);
+	RenderText("SETTINGS", ScaledX(510.0f), ScaledY(480.0f - buttonSpacing), textScale,
+		currentHover == Menus::SETTINGS ? hoverColor : defaultColor);
+	RenderText("QUIT", ScaledX(570.0f), ScaledY(480.0f - buttonSpacing * 2), textScale,
+		currentHover == Menus::QUIT ? hoverColor : defaultColor);
+
 }
 
 void MenuSystem::Reset()
 {
 	canNavigate = true;
 	currentHover = 0;
+}
+
+void MenuSystem::RenderUIRect(float x, float y, float width, float height, glm::vec4 color)
+{
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	uiShader->use();
+	uiShader->setVec4("u_color", &color.x);
+	uiShader->setInt("u_useTexture", 0);
+	uiShader->setMat4("u_projection", fonts.projMat);
+
+	float vertices[6][4] =
+	{
+		{ x, y + height, 0.0f, 0.0f },
+		{ x, y, 0.0f, 1.0f },
+		{ x + width, y, 1.0f, 1.0f },
+
+		{ x, y + height, 0.0f, 0.0f },
+		{x + width, y, 1.0f, 1.0f },
+		{x + width, y + height, 1.0f, 0.0f},
+	};
+
+	uiVAO.Bind();
+	uiVBO.Bind();
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
+
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+
+	uiVAO.Unbind();
+}
+
+void MenuSystem::RenderUITexture(float x, float y, float width, float height, Texture* tex, glm::vec4 tint)
+{
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	uiShader->use();
+	uiShader->setVec4("u_color", &tint.x);
+	uiShader->setInt("u_useTexture", 1);
+	uiShader->setMat4("u_projection", fonts.projMat);
+
+	float vertices[6][4] = {
+		{ x,         y + height, 0.0f, 0.0f },
+		{ x,         y,          0.0f, 1.0f },
+		{ x + width, y,          1.0f, 1.0f },
+
+		{ x,         y + height, 0.0f, 0.0f },
+		{ x + width, y,          1.0f, 1.0f },
+		{ x + width, y + height, 1.0f, 0.0f }
+	};
+
+	tex->Bind(GL_TEXTURE0);
+
+	uiVAO.Bind();
+	uiVBO.Bind();
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
+	
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+
+	uiVAO.Unbind();
+	glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void MenuSystem::InitUI()
+{
+	uiElements.clear();
+	Texture tex("background.png");	
+	tex.Load("assets/textures");
+	uiElements.emplace_back(0.0f, 0.0f, 1280.0f, 720.0f, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), std::make_unique<Texture>(tex));
+
+
+	float buttonWidth = 300.0f;
+	float buttonHeight = 80.0f;
+	float buttonX = 640.0f - buttonWidth * 0.5f;
+	float buttonSpacing = 120.0f;
+
+	float startY = 500.0f - buttonHeight * 0.5f;
+	float settingsY = startY - buttonSpacing;
+	float quitY = settingsY - buttonSpacing;
+
+	// Create UI elements for each button
+	uiElements.emplace_back(buttonX, startY, buttonWidth, buttonHeight,
+		glm::vec4(0.2f, 0.2f, 0.2f, 0.9f));
+	uiElements.emplace_back(buttonX, settingsY, buttonWidth, buttonHeight,
+		glm::vec4(0.2f, 0.2f, 0.2f, 0.9f));
+	uiElements.emplace_back(buttonX, quitY, buttonWidth, buttonHeight,
+		glm::vec4(0.2f, 0.2f, 0.2f, 0.9f));
 }
 
 void MenuSystem::RenderText(std::string text, float x, float y, float scale, glm::vec3 color)
@@ -162,11 +299,70 @@ void MenuSystem::RenderText(std::string text, float x, float y, float scale, glm
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
+void MenuSystem::UpdateUIScale()
+{
+	float screenAspect = static_cast<float>(screenWidth) / static_cast<float>(screenHeight);
+	float baseAspect = 1280.0f / 720.0f;
+
+	if (screenAspect > baseAspect)
+	{
+		uniformScale = static_cast<float>(screenHeight) / 720.0f;
+		
+		offsetX = (screenWidth - (1280.0f * uniformScale)) * 0.5f;
+		offsetY = 0.0f;
+	}
+	else
+	{
+		uniformScale = static_cast<float>(screenWidth) / 1280.0f;
+
+		offsetX = 0.0f;
+		offsetY = (screenHeight - 720.0f * uniformScale) * 0.5f;
+	}
+	scaleX = uniformScale;
+	scaleY = uniformScale;
+}
+
+float MenuSystem::ScaledX(float x)
+{
+	return x * scaleX + offsetX;
+}
+
+float MenuSystem::ScaledY(float y)
+{
+	return y * scaleY + offsetY;
+}
+
+float MenuSystem::ScaledWidth(float width)
+{
+	return width * scaleX;
+}
+
+float MenuSystem::ScaledHeight(float height)
+{
+	return height * scaleY;
+}
+
+glm::vec2 MenuSystem::ScaledPosition(float x, float y)
+{
+	return glm::vec2(ScaledX(x), ScaledY(y));
+}
+
+glm::vec2 MenuSystem::ScaledSize(float width, float height)
+{
+	return glm::vec2(ScaledWidth(width), ScaledHeight(height));
+}
+
 void MenuSystem::WindowSizeListener(Event& e)
 {
 	screenWidth = e.GetParam<unsigned int>(Events::Window::Resized::WIDTH);
 	screenHeight = e.GetParam<unsigned int>(Events::Window::Resized::HEIGHT);
 	fonts.projMat = glm::ortho(0.0f, static_cast<float>(screenWidth), 0.0f, static_cast<float>(screenHeight));
+
 	textShader->use();
 	textShader->setMat4("u_projection", fonts.projMat);
+
+	uiShader->use();
+	uiShader->setMat4("u_projection", fonts.projMat);
+
+	UpdateUIScale();
 }

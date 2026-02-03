@@ -493,5 +493,11 @@
     <None Include="assets\shaders\particle.frag">
       <Filter>Resource Files\shaders</Filter>
     </None>
+    <None Include="assets\shaders\ui.vert">
+      <Filter>Resource Files\shaders</Filter>
+    </None>
+    <None Include="assets\shaders\ui.frag">
+      <Filter>Resource Files\shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -281,6 +281,8 @@
     <None Include="assets\shaders\skybox.vert" />
     <None Include="assets\shaders\text.frag" />
     <None Include="assets\shaders\text.vert" />
+    <None Include="assets\shaders\ui.frag" />
+    <None Include="assets\shaders\ui.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
