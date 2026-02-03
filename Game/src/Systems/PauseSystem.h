@@ -24,6 +24,7 @@ private:
 	void RenderText(std::string text, float x, float y, float scale, glm::vec3 color);
 
 	void WindowSizeListener(Event& e);
+	void KeyboardInputListener(Event& e);
 
 	enum Menus
 	{

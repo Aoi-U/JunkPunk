@@ -47,11 +47,10 @@ private:
 
 	// add game related stuff 
 	void ChangeGameStateListener(Event& e);
+	void KeyboardInputListener(Event& e);
 
 	std::unique_ptr<ImGuiPanel> camera_debug_panel; // testing
 	
 	// current game state
 	GameState currentState = GameState::STARTMENU;
-
-
 };

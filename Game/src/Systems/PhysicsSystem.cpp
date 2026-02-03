@@ -182,9 +182,9 @@ void PhysicsSystem::Simulate(float deltaTime)
 
 void PhysicsSystem::Cleanup()
 {
-	PxCloseVehicleExtension();
 	gVehicle->cleanup();
 	gVehicle.reset();
+	PxCloseVehicleExtension();
 	gPhysicsScene->release();
 	gDispatcher->release();
 	gPhysics->release();

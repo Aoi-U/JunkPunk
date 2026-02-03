@@ -50,6 +50,7 @@ private:
 	glm::vec2 ScaledSize(float width, float height);
 
 	void WindowSizeListener(Event& e);
+	void KeyboardInputListener(Event& e);
 
 	enum Menus
 	{

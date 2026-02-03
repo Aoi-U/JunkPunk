@@ -10,6 +10,7 @@ PauseSystem::PauseSystem()
 	textShader = std::make_unique<Shader>("assets/shaders/text.vert", "assets/shaders/text.frag");
 
 	controller.AddEventListener(Events::Window::RESIZED, [this](Event& e) {this->WindowSizeListener(e); });
+	controller.AddEventListener(Events::Window::INPUT, [this](Event& e) { this->KeyboardInputListener(e); });
 }
 
 void PauseSystem::Init(std::shared_ptr<Gamepad> gamepad)
@@ -164,4 +165,72 @@ void PauseSystem::WindowSizeListener(Event& e)
 	fonts.projMat = glm::ortho(0.0f, static_cast<float>(screenWidth), 0.0f, static_cast<float>(screenHeight));
 	textShader->use();
 	textShader->setMat4("u_projection", fonts.projMat);
+}
+
+void PauseSystem::KeyboardInputListener(Event& e)
+{
+	int keyRecieve = e.GetParam<int>(Events::Window::Input::KEY);
+	int action = e.GetParam<bool>(Events::Window::Input::ACTION);
+	char key = static_cast<char>(keyRecieve);
+
+	if (canNavigate && currentStateGlobal == GameState::PAUSED)
+	{
+		if (key == Keys::KEY_LEFT && action == true)
+		{
+			if (currentHover > 0)
+			{
+				Event event(Events::Audio::PLAY_SOUND);
+				event.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/MenuNavigation.wav");
+				event.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
+				event.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, 0.0f);
+				controller.SendEvent(event);
+
+				currentHover--;
+			}
+			canNavigate = false;
+		}
+		else if (key == Keys::KEY_RIGHT && action == true)
+		{
+			if (currentHover < 2)
+			{
+				Event event(Events::Audio::PLAY_SOUND);
+				event.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/MenuNavigation.wav");
+				event.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
+				event.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, 0.0f);
+				controller.SendEvent(event);
+
+				currentHover++;
+			}
+			canNavigate = false;
+		}
+	}
+
+	if (key == Keys::KEY_JUMP && action == true && currentStateGlobal == GameState::PAUSED)
+	{
+		switch (currentHover)
+		{
+		case Menus::RESUME:
+		{
+
+			Event event(Events::GameState::NEW_STATE);
+			event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::GAME);
+			controller.SendEvent(event);
+			break;
+		}
+		case Menus::RESTART:
+		{
+			Event event(Events::GameState::NEW_STATE);
+			event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::RESTART);
+			controller.SendEvent(event);
+			break;
+		}
+		case Menus::MENU:
+		{
+			Event event(Events::GameState::NEW_STATE);
+			event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::STARTMENU);
+			controller.SendEvent(event);
+			break;
+		}
+		}
+	}
 }

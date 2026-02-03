@@ -60,6 +60,17 @@ enum Buttons
 	RESET = 13  // BACK
 };
 
+enum Keys
+{
+	KEY_FORWARD = 'W',
+	KEY_BACKWARD = 'S',
+	KEY_LEFT = 'A',
+	KEY_RIGHT = 'D',
+	KEY_JUMP = ' ',
+	KEY_RESET = 'R',
+	KEY_PAUSE = 'Q'
+};
+
 enum GameState
 {
 	GAME,
@@ -68,6 +79,8 @@ enum GameState
 	ENDMENU,
 	RESTART
 };
+
+extern GameState currentStateGlobal;
 
 // game state events
 namespace Events::GameState
@@ -84,7 +97,7 @@ namespace Events::GameState::New_State
 namespace Events::Window // window related events
 {
 	const EventId RESIZED = "Events::Window::RESIZED"_hash; // window resized event
-	const EventId INPUT = "Events::Window::INPUT"_hash; // keyboard input event
+	const EventId INPUT = "Events::Window::INPUT"_hash; // keyboard input event (sends for press and release)
 	const EventId SCROLLED = "Events::Window::SCROLLED"_hash; // mouse scrolled event
 	const EventId MOUSEMOVED = "Events::Window::MOUSEMOVED"_hash; // mouse moved event
 	const EventId CLOSE = "Events::Window::CLOSE"_hash; // window close event

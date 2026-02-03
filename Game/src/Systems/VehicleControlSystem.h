@@ -18,15 +18,7 @@ public:
 private:
 	void KeyboardInputListener(Event& e);
 
-	enum Keys
-	{
-		KEY_FORWARD		= 'W',
-		KEY_BACKWARD	= 'S',
-		KEY_LEFT			= 'A',
-		KEY_RIGHT			= 'D',
-		KEY_JUMP			= ' ',
-		KEY_RESET			= 'R'
-	};
+
 
 	/*	A = 0;
 		B = 1;

@@ -20,6 +20,7 @@ static bool first_time_held_right_click = false;
 
 // Define a global ECSController instance so systems can access it
 ECSController controller;
+GameState currentStateGlobal = GameState::STARTMENU;
 
 
 //Setup ImGui panel for camera, putting it here to quick access 
@@ -183,6 +184,7 @@ Game::Game()
 	pauseSystem->Init(gamepad);
 
 	controller.AddEventListener(Events::GameState::NEW_STATE, [this](Event& e) { this->ChangeGameStateListener(e); });
+	controller.AddEventListener(Events::Window::INPUT, [this](Event& e) { this->KeyboardInputListener(e); });
 }
 
 // main game function
@@ -283,6 +285,7 @@ void Game::ChangeGameStateListener(Event& e)
 
 		time->Pause();
 		currentState = state;
+		currentStateGlobal = state;
 		break;
 	}
 	case::GameState::GAME:
@@ -304,6 +307,7 @@ void Game::ChangeGameStateListener(Event& e)
 
 		time->Unpause();
 		currentState = state;
+		currentStateGlobal = state;
 		break;
 	}
 	case::GameState::ENDMENU:
@@ -311,6 +315,8 @@ void Game::ChangeGameStateListener(Event& e)
 		// clear the scene or draw some menu on top of game screen?
 		time->Pause();
 		currentState = state;
+		currentStateGlobal = state;
+
 		break;
 	}
 	case::GameState::PAUSED:
@@ -319,6 +325,8 @@ void Game::ChangeGameStateListener(Event& e)
 		// should not clear anything, just stop physics simulation
 		time->Pause();
 		currentState = state;
+		currentStateGlobal = state;
+
 		break;
 	}
 	case::GameState::RESTART:
@@ -330,7 +338,26 @@ void Game::ChangeGameStateListener(Event& e)
 		physicsSystem->Init();
 		time->Unpause();
 		currentState = GameState::GAME;
+		currentStateGlobal = GameState::GAME;
+
 		break;
 	}
+	}
+}
+
+void Game::KeyboardInputListener(Event& e)
+{
+	int keyRecieve = e.GetParam<int>(Events::Window::Input::KEY);
+	int action = e.GetParam<bool>(Events::Window::Input::ACTION);
+	char key = static_cast<char>(keyRecieve);
+
+	if (currentState == GameState::GAME)
+	{
+		if (key == Keys::KEY_PAUSE && action == true)
+		{
+			Event event(Events::GameState::NEW_STATE);
+			event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::PAUSED);
+			controller.SendEvent(event);
+		}
 	}
 }

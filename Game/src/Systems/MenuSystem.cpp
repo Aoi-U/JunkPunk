@@ -12,6 +12,7 @@ MenuSystem::MenuSystem()
 	uiShader = std::make_unique<Shader>("assets/shaders/ui.vert", "assets/shaders/ui.frag");
 
 	controller.AddEventListener(Events::Window::RESIZED, [this](Event& e) {this->WindowSizeListener(e); });
+	controller.AddEventListener(Events::Window::INPUT, [this](Event& e) { this->KeyboardInputListener(e); });
 }
 
 void MenuSystem::Init(std::shared_ptr<Gamepad> gamepad)
@@ -366,3 +367,68 @@ void MenuSystem::WindowSizeListener(Event& e)
 
 	UpdateUIScale();
 }
+
+void MenuSystem::KeyboardInputListener(Event& e)
+{
+	int keyRecieve = e.GetParam<int>(Events::Window::Input::KEY);
+	int action = e.GetParam<bool>(Events::Window::Input::ACTION);
+	char key = static_cast<char>(keyRecieve);
+
+	if (canNavigate && currentStateGlobal == GameState::STARTMENU)
+	{
+		if (key == Keys::KEY_FORWARD && action == true)
+		{
+			if (currentHover > 0)
+			{
+				Event event(Events::Audio::PLAY_SOUND);
+				event.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/MenuNavigation.wav");
+				event.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
+				event.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, 0.0f);
+				controller.SendEvent(event);
+
+				currentHover--;
+			}
+			canNavigate = false;
+		}
+		if (key == Keys::KEY_BACKWARD && action == true)
+		{
+			if (currentHover < 2)
+			{
+				Event event(Events::Audio::PLAY_SOUND);
+				event.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/MenuNavigation.wav");
+				event.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
+				event.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, 0.0f);
+				controller.SendEvent(event);
+
+				currentHover++;
+			}
+			canNavigate = false;
+		}
+	}
+
+	if (key == Keys::KEY_JUMP && action == true && currentStateGlobal == GameState::STARTMENU)
+	{
+		switch (currentHover)
+		{
+		case Menus::START:
+		{
+			Event event(Events::GameState::NEW_STATE);
+			event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::GAME);
+			controller.SendEvent(event);
+			break;
+		}
+		case Menus::SETTINGS:
+		{
+			// settings menu
+			break;
+		}
+		case Menus::QUIT:
+		{
+			// quit game
+			controller.SendEvent(Events::Window::CLOSE);
+			break;
+		}
+		}
+	}
+}
+
