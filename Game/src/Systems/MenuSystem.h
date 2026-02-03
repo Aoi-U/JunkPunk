@@ -10,15 +10,23 @@
 
 class Event;
 
+enum ScaleMode
+{
+	FIT,
+	FILL,
+	STRETCH
+};
+
 struct UIElement
 {
 	float x, y; // position
 	float width, height; // size
 	glm::vec4 color; // color
+	ScaleMode scaleMode = FIT;
 	std::unique_ptr<Texture> tex; // texture (optional)
 
-	UIElement(float x, float y, float width, float height, glm::vec4 color, std::unique_ptr<Texture> tex = nullptr)
-		: x(x), y(y), width(width), height(height), color(color), tex(std::move(tex))
+	UIElement(float x, float y, float width, float height, glm::vec4 color, ScaleMode scaleMode = ScaleMode::FIT, std::unique_ptr<Texture> tex = nullptr)
+		: x(x), y(y), width(width), height(height), color(color), scaleMode(scaleMode), tex(std::move(tex))
 	{}
 };
 

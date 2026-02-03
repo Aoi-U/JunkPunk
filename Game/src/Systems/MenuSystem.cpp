@@ -131,8 +131,49 @@ void MenuSystem::Update()
 	{
 		UIElement& elem = uiElements[i];
 
-		glm::vec2 scaledPos = ScaledPosition(elem.x, elem.y);
-		glm::vec2 scaledSize = ScaledSize(elem.width, elem.height);
+		glm::vec2 scaledPos;
+		glm::vec2 scaledSize;
+
+		switch (elem.scaleMode)
+		{
+		case ScaleMode::FIT:
+		{
+			scaledPos = ScaledPosition(elem.x, elem.y);
+			scaledSize = ScaledSize(elem.width, elem.height);
+			break;
+		}
+		case ScaleMode::FILL:
+		{
+			float screenAspect = static_cast<float>(screenWidth) / static_cast<float>(screenHeight);
+			float elemAspect = elem.width / elem.height;
+
+			float fillScale;
+			float fillOffsetX = 0.0f;
+			float fillOffsetY = 0.0f;
+
+			if (screenAspect > elemAspect)
+			{
+				fillScale = static_cast<float>(screenWidth) / elem.width;
+				fillOffsetY = (screenHeight - elem.height * fillScale) * 0.5f;
+			}
+			else
+			{
+				fillScale = static_cast<float>(screenHeight) / elem.height;
+				fillOffsetX = (screenWidth - elem.width * fillScale) * 0.5f;
+			}
+
+			scaledPos = glm::vec2(elem.x * fillScale + fillOffsetX, elem.y * fillScale + fillOffsetY);
+			scaledSize = glm::vec2(elem.width * fillScale, elem.height * fillScale);
+			break;
+		}
+		case ScaleMode::STRETCH:
+		{
+			scaledPos = glm::vec2((elem.x / 1280.0f) * screenWidth, (elem.y / 720.0f) * screenHeight);
+			scaledSize = glm::vec2((elem.width / 1280.0f) * screenWidth, (elem.height / 720.0f) * screenHeight);
+			break;
+		}
+		}
+
 
 		if (elem.tex)
 		{
@@ -229,7 +270,7 @@ void MenuSystem::InitUI()
 	uiElements.clear();
 	Texture tex("background.png");	
 	tex.Load("assets/textures");
-	uiElements.emplace_back(0.0f, 0.0f, 1280.0f, 720.0f, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), std::make_unique<Texture>(tex));
+	uiElements.emplace_back(0.0f, 0.0f, 1280.0f, 720.0f, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), ScaleMode::FILL, std::make_unique<Texture>(tex));
 
 
 	float buttonWidth = 300.0f;
