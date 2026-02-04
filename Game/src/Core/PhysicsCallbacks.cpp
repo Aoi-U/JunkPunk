@@ -1,6 +1,8 @@
 #include "PhysicsCallbacks.h"
-
+#include "../ECSController.h"
 #include <iostream>
+
+extern ECSController controller;
 
 void PhysicsCallbacks::onTrigger(PxTriggerPair* pairs, PxU32 count)
 {
@@ -10,6 +12,17 @@ void PhysicsCallbacks::onTrigger(PxTriggerPair* pairs, PxU32 count)
 	// other systems can execute their logic
 	// since we will probably use triggers for other stuff like picking up powerups, getting checkpoints, etc.
 	// i put guides for using events in Core/Types.h
-	std::cout << "trigger event was called" << std::endl;
+	
+	for (PxU32 i = 0; i < count; i++) {
+		const PxTriggerPair& pair = pairs[i];
+		if (!(pair.status & PxPairFlag::eNOTIFY_TOUCH_FOUND))
+			continue;
 
+		std::cout << "trigger event was called" << std::endl;
+
+		Entity triggerEntity = reinterpret_cast<Entity>(pair.triggerActor->userData);
+		Entity finishLineEntity = controller.GetEntityByTag("FinishLine");
+		if (triggerEntity == finishLineEntity)
+			std::cout << "You Win!" << std::endl;
+	}
 }
