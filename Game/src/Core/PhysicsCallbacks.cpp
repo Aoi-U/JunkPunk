@@ -2,6 +2,11 @@
 
 #include <iostream>
 
+void PhysicsCallbacks::onContact(const PxContactPairHeader& pairHeader, const PxContactPair* pairs, PxU32 nbPairs)
+{
+	std::cout << "contact event was called" << std::endl;
+}
+
 void PhysicsCallbacks::onTrigger(PxTriggerPair* pairs, PxU32 count)
 {
 	// https://nvidia-omniverse.github.io/PhysX/physx/5.6.1/_api_build/classPxSimulationEventCallback.html

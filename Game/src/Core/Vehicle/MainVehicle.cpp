@@ -59,6 +59,34 @@ bool MainVehicle::initVehicles(PxScene* gScene, PxPhysics* gPhysics, PxMaterial*
 	pose.q = rot;
 	gVehicle.setUpActor(*gScene, pose, gVehicleName);
 
+	PxFilterData vehicleFilter(COLLISION_FLAG_CHASSIS, COLLISION_FLAG_CHASSIS_AGAINST, 0, 0);
+	PxFilterData wheelFilter(COLLISION_FLAG_WHEEL, COLLISION_FLAG_WHEEL_AGAINST, 0, 0);
+	PxU32 shapes = gVehicle.mPhysXState.physxActor.rigidBody->getNbShapes();
+	for (PxU32 i = 0; i < shapes; i++)
+	{
+		PxShape* shape = NULL;
+		gVehicle.mPhysXState.physxActor.rigidBody->getShapes(&shape, 1, i);
+
+		if (i == 0)
+		{
+			shape->setSimulationFilterData(vehicleFilter);
+			shape->setQueryFilterData(vehicleFilter);
+
+			shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, true);
+			shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, true);
+			shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, false);
+		}
+		else
+		{
+			shape->setSimulationFilterData(wheelFilter);
+			shape->setQueryFilterData(wheelFilter);
+
+			shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, true);
+			shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
+			shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, false);
+		}
+	}
+
 	gVehicle.mEngineDriveState.gearboxState.currentGear = gVehicle.mEngineDriveParams.gearBoxParams.neutralGear + 1;
 	gVehicle.mEngineDriveState.gearboxState.targetGear = gVehicle.mEngineDriveParams.gearBoxParams.neutralGear + 1;
 

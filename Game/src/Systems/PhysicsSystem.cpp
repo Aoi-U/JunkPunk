@@ -45,10 +45,10 @@ void PhysicsSystem::Init()
 	PhysicsSceneDesc.gravity = PxVec3(0.0f, -20.0f, 0.0f); // double gravity for vehicle testing
 	gDispatcher = PxDefaultCpuDispatcherCreate(2);
 	PhysicsSceneDesc.cpuDispatcher = gDispatcher;
-	PhysicsSceneDesc.filterShader = PxDefaultSimulationFilterShader;
+	//PhysicsSceneDesc.filterShader = PxDefaultSimulationFilterShader;
+	PhysicsSceneDesc.filterShader = VehicleFilterShader;
 
 
-	//PhysicsSceneDesc.filterShader = VehicleFilterShader;
 	gPhysicsScene = gPhysics->createScene(PhysicsSceneDesc);
 	
 	gPhysicsCallbacks = PhysicsCallbacks();
@@ -226,6 +226,9 @@ void PhysicsSystem::CreateMap()
 				shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, true);
 				shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, false);
 
+				PxFilterData filterData(COLLISION_FLAG_GROUND, COLLISION_FLAG_GROUND_AGAINST, 0, 0);
+				shape->setSimulationFilterData(filterData);
+
 				PxRigidStatic* staticActor = gPhysics->createRigidStatic(meshTransform);
 				staticActor->attachShape(*shape);
 				staticActor->setActorFlag(PxActorFlag::eVISUALIZATION, false);
@@ -273,9 +276,14 @@ void PhysicsSystem::CreateMap()
 				PxQuat(transform.quatRotation.x, transform.quatRotation.y, transform.quatRotation.z, transform.quatRotation.w));
 
 			PxShape* shape = gPhysics->createShape(boxGeometry, *gGroundMaterial);
+
+			PxFilterData filterData(COLLISION_FLAG_OBSTACLE, COLLISION_FLAG_OBSTACLE_AGAINST, 0, 0);
+			shape->setSimulationFilterData(filterData);
+
 			shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, true);
 			shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, true);
 			shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, false);
+
 			PxRigidDynamic* dynamicActor = gPhysics->createRigidDynamic(bodyTransform);
 			dynamicActor->attachShape(*shape);
 			dynamicActor->setActorFlag(PxActorFlag::eVISUALIZATION, false);
@@ -307,6 +315,9 @@ void PhysicsSystem::CreateMap()
 			shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
 			shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, true);
 			shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, false);
+
+			PxFilterData filterData(COLLISION_FLAG_TRIGGER, COLLISION_FLAG_TRIGGER_AGAINST, 0, 0);
+			shape->setSimulationFilterData(filterData);
 			
 			PxRigidStatic* staticActor = gPhysics->createRigidStatic(boxTransform);
 			staticActor->attachShape(*shape);
