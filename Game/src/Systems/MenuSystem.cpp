@@ -473,3 +473,16 @@ void MenuSystem::KeyboardInputListener(Event& e)
 	}
 }
 
+void MenuSystem::RenderWinText() {
+	if (!playerWon)
+		return;
+	glDisable(GL_DEPTH_TEST);
+	float scale = uniformScale * 2.0f;
+	RenderText(
+		"YOU WIN!",
+		ScaledX(500.0f),
+		ScaledY(600.0f),
+		scale,
+		glm::vec3(0.2f, 1.0f, 0.2f)
+	);
+}

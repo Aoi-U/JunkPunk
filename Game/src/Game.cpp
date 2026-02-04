@@ -17,6 +17,7 @@
 static int camera_scroll_type = 0;
 static bool split_camera = false;
 static bool first_time_held_right_click = false;
+bool playerWon = false;
 
 // Define a global ECSController instance so systems can access it
 ECSController controller;
@@ -185,6 +186,14 @@ Game::Game()
 
 	controller.AddEventListener(Events::GameState::NEW_STATE, [this](Event& e) { this->ChangeGameStateListener(e); });
 	controller.AddEventListener(Events::Window::INPUT, [this](Event& e) { this->KeyboardInputListener(e); });
+	controller.AddEventListener(Events::Physics::TRIGGER_ENTER, [this](Event& e) {
+		Entity triggerEntity = e.GetParam<Entity>(Events::Physics::Trigger_Enter::ENTITY_ONE);
+		Entity finishLine = controller.GetEntityByTag("FinishLine");
+		if (triggerEntity == finishLine) {
+			playerWon = true;
+			std::cout << "you win!" << std::endl;
+		}
+		});
 }
 
 // main game function
@@ -230,7 +239,7 @@ void Game::Run()
 			particleSystem->Update(time->frameTime); // update particles
 
 			renderSystem->Update(time->fps(), physicsSystem->GetRenderBuffer()); // render physics debug data
-		
+			menuSystem->RenderWinText();
 			camera_debug_panel->render(); // render debug panel
 
 			if (gamepad->GetButtonDown(Buttons::PAUSE))

@@ -38,6 +38,7 @@ public:
 	void Init(std::shared_ptr<Gamepad> gamepad);
 	void Update();
 	void Reset();
+	void RenderWinText();
 
 
 private:

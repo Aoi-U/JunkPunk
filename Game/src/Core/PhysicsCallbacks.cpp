@@ -1,5 +1,6 @@
 #include "PhysicsCallbacks.h"
 #include "../ECSController.h"
+#include "../Core/Types.h"
 #include <iostream>
 
 extern ECSController controller;
@@ -18,11 +19,12 @@ void PhysicsCallbacks::onTrigger(PxTriggerPair* pairs, PxU32 count)
 		if (!(pair.status & PxPairFlag::eNOTIFY_TOUCH_FOUND))
 			continue;
 
-		std::cout << "trigger event was called" << std::endl;
-
 		Entity triggerEntity = reinterpret_cast<Entity>(pair.triggerActor->userData);
-		Entity finishLineEntity = controller.GetEntityByTag("FinishLine");
-		if (triggerEntity == finishLineEntity)
-			std::cout << "You Win!" << std::endl;
+		Entity otherEntity = reinterpret_cast<Entity>(pair.otherActor->userData);
+		Event e(Events::Physics::TRIGGER_ENTER);
+		e.SetParam<Entity>(Events::Physics::Trigger_Enter::ENTITY_ONE, triggerEntity);
+		e.SetParam<Entity>(Events::Physics::Trigger_Enter::ENTITY_TWO, otherEntity);
+		controller.SendEvent(e);
+		std::cout << "trigger event was called" << std::endl;
 	}
 }
