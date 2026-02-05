@@ -64,4 +64,6 @@ private:
 	// callbacks
 
 	void ReleaseActorCallback(Entity entity, RigidBody& rb); // automatically called when an entity is destroyed or rigidbody is removed
+
+	void ReleaseTriggerCallback(Entity entity, Trigger& trig); // automatically called when an entity is destroyed or trigger is removed
 };
