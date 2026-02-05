@@ -45,6 +45,7 @@ public:
 private:
 	void Clear(float r, float g, float b, float a); // clears screen and buffers
 
+	void RenderElements(std::vector<UIElement>& elements);
 	void RenderText(std::string text, float x, float y, float scale, glm::vec3 color);
 	void RenderUIRect(float x, float y, float width, float height, glm::vec4 color);
 	void RenderUITexture(float x, float y, float width, float height, Texture* tex, glm::vec4 tint);
