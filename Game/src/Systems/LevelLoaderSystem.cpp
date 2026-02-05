@@ -170,6 +170,17 @@ void LevelLoaderSystem::LoadLevel()
 		glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
 		glm::vec3(1.0f)
 		});
+
+	// finish line
+	entity = controller.createEntity();
+	controller.AddComponent(entity, PhysicsBody{});
+	controller.AddComponent(entity, Trigger{ nullptr, 0.5f, 5.0f, 10.0f });
+	controller.AddComponent(entity, Transform{
+		glm::vec3(71.0f, -29.0f, -31.0f),
+		glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
+		glm::vec3(1.0f)
+		});
+	controller.AssignTag(entity, "FinishLine");
 }
 
 std::pair<std::shared_ptr<Model>, std::shared_ptr<AABB>> LevelLoaderSystem::LoadModel(std::string path)

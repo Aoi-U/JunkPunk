@@ -1,11 +1,9 @@
 #include "PhysicsCallbacks.h"
-
+#include "../ECSController.h"
+#include "../Core/Types.h"
 #include <iostream>
 
-void PhysicsCallbacks::onContact(const PxContactPairHeader& pairHeader, const PxContactPair* pairs, PxU32 nbPairs)
-{
-	std::cout << "contact event was called" << std::endl;
-}
+extern ECSController controller;
 
 void PhysicsCallbacks::onTrigger(PxTriggerPair* pairs, PxU32 count)
 {
@@ -15,5 +13,18 @@ void PhysicsCallbacks::onTrigger(PxTriggerPair* pairs, PxU32 count)
 	// other systems can execute their logic
 	// since we will probably use triggers for other stuff like picking up powerups, getting checkpoints, etc.
 	// i put guides for using events in Core/Types.h
-	std::cout << "trigger event was called" << std::endl;
+	
+	for (PxU32 i = 0; i < count; i++) {
+		const PxTriggerPair& pair = pairs[i];
+		if (!(pair.status & PxPairFlag::eNOTIFY_TOUCH_FOUND))
+			continue;
+
+		Entity triggerEntity = reinterpret_cast<Entity>(pair.triggerActor->userData);
+		Entity otherEntity = reinterpret_cast<Entity>(pair.otherActor->userData);
+		Event e(Events::Physics::TRIGGER_ENTER);
+		e.SetParam<Entity>(Events::Physics::Trigger_Enter::ENTITY_ONE, triggerEntity);
+		e.SetParam<Entity>(Events::Physics::Trigger_Enter::ENTITY_TWO, otherEntity);
+		controller.SendEvent(e);
+		std::cout << "trigger event was called" << std::endl;
+	}
 }

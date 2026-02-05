@@ -17,6 +17,10 @@
 static int camera_scroll_type = 0;
 static bool split_camera = false;
 static bool first_time_held_right_click = false;
+bool playerWon = false;
+float winTimer = 0.0f;
+const float WIN_DELAY = 5.0f;
+float fadeAlpha = 0.0f;
 
 // Define a global ECSController instance so systems can access it
 ECSController controller;
@@ -185,6 +189,16 @@ Game::Game()
 
 	controller.AddEventListener(Events::GameState::NEW_STATE, [this](Event& e) { this->ChangeGameStateListener(e); });
 	controller.AddEventListener(Events::Window::INPUT, [this](Event& e) { this->KeyboardInputListener(e); });
+	controller.AddEventListener(Events::Physics::TRIGGER_ENTER, [this](Event& e) {
+		Entity triggerEntity = e.GetParam<Entity>(Events::Physics::Trigger_Enter::ENTITY_ONE);
+		Entity finishLine = controller.GetEntityByTag("FinishLine");
+		if (triggerEntity == finishLine && !playerWon) {
+			playerWon = true;
+			fadeAlpha = 0.0f;
+			winTimer = 0.0f;
+			std::cout << "you win!" << std::endl;
+		}
+		});
 }
 
 // main game function
@@ -230,8 +244,23 @@ void Game::Run()
 			particleSystem->Update(time->frameTime); // update particles
 
 			renderSystem->Update(time->fps(), physicsSystem->GetRenderBuffer()); // render physics debug data
-		
+			menuSystem->RenderWinText();
 			camera_debug_panel->render(); // render debug panel
+
+
+			if (playerWon) {
+				winTimer += time->frameTime;
+				if (winTimer >= 1.0f) {
+					fadeAlpha += time->frameTime * 0.25f;
+					fadeAlpha = glm::clamp(fadeAlpha, 0.0f, 1.0f);
+					menuSystem->RenderFadeOverlay(fadeAlpha);
+				}
+				if (winTimer >= WIN_DELAY) {
+					Event event(Events::GameState::NEW_STATE);
+					event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::ENDMENU);
+					controller.SendEvent(event);
+				}
+			}
 
 			if (gamepad->GetButtonDown(Buttons::PAUSE))
 			{
@@ -252,6 +281,11 @@ void Game::Run()
 		case STARTMENU:
 			// render main menu
 			menuSystem->Update();
+			break;
+
+		case ENDMENU:
+			renderSystem->Update(time->fps(), physicsSystem->GetRenderBuffer());
+			menuSystem->RenderEndScreen();
 			break;
 		}
 		
@@ -287,6 +321,9 @@ void Game::ChangeGameStateListener(Event& e)
 		time->Pause();
 		currentState = state;
 		currentStateGlobal = state;
+		playerWon = false;
+		winTimer = 0.0f;
+		fadeAlpha = 0.0f;
 		break;
 	}
 	case::GameState::GAME:

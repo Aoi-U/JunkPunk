@@ -325,6 +325,7 @@ void PhysicsSystem::CreateMap()
 			PxRigidStatic* staticActor = gPhysics->createRigidStatic(boxTransform);
 			staticActor->attachShape(*shape);
 			staticActor->setActorFlag(PxActorFlag::eVISUALIZATION, true);
+			staticActor->userData = reinterpret_cast<void*>(entity);
 
 			trigger.actor = staticActor;
 

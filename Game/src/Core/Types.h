@@ -187,3 +187,5 @@ namespace Events::Player::Reset_Vehicle // parameters for reset vehicle event
 {
 	const ParamId ENTITY = "Events::Player::Reset_Vehicle::ENTITY"_hash;
 }
+
+extern bool playerWon;
