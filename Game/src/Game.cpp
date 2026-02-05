@@ -375,6 +375,10 @@ void Game::ChangeGameStateListener(Event& e)
 		renderSystem->Init();
 		physicsSystem->Init();
 		time->Unpause();
+		winTimer = 0.0f;
+		fadeAlpha = 0.0f;
+		playerWon = false;
+
 		currentState = GameState::GAME;
 		currentStateGlobal = GameState::GAME;
 
