@@ -16,6 +16,9 @@ PhysicsSystem::PhysicsSystem()
 
 	auto rigidBodyArray = controller.GetComponentArray<RigidBody>();
 	rigidBodyArray->BindOnRemoveCallback([this](Entity entity, RigidBody& rb) { this->ReleaseActorCallback(entity, rb); });
+
+	auto triggerArray = controller.GetComponentArray<Trigger>();
+	triggerArray->BindOnRemoveCallback([this](Entity entity, Trigger& trig) { this->ReleaseTriggerCallback(entity, trig); });
 }
 
 void PhysicsSystem::Init()
@@ -445,5 +448,17 @@ void PhysicsSystem::ReleaseActorCallback(Entity entity, RigidBody& rb)
 		rb.actor = nullptr;
 
 		std::cout << "Entity: " << entity << ": Rigidbody removed" << std::endl;
+	}
+}
+
+void PhysicsSystem::ReleaseTriggerCallback(Entity entity, Trigger& trig)
+{
+	if (trig.actor)
+	{
+		gPhysicsScene->removeActor(*trig.actor);
+		trig.actor->release();
+		trig.actor = nullptr;
+
+		std::cout << "Entity: " << entity << ": Trigger removed" << std::endl;
 	}
 }

@@ -16,5 +16,4 @@ void PhysicsCallbacks::onTrigger(PxTriggerPair* pairs, PxU32 count)
 	// since we will probably use triggers for other stuff like picking up powerups, getting checkpoints, etc.
 	// i put guides for using events in Core/Types.h
 	std::cout << "trigger event was called" << std::endl;
-
 }
