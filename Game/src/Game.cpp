@@ -282,6 +282,7 @@ void Game::ChangeGameStateListener(Event& e)
 		controller.Reset();
 		physicsSystem->Cleanup();
 		menuSystem->Reset();
+		renderSystem->Reset();
 
 		time->Pause();
 		currentState = state;
