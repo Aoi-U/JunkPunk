@@ -39,6 +39,7 @@ public:
 	void Update();
 	void Reset();
 	void RenderWinText();
+	void RenderEndScreen();
 
 
 private:
@@ -49,6 +50,7 @@ private:
 	void RenderUITexture(float x, float y, float width, float height, Texture* tex, glm::vec4 tint);
 
 	void InitUI();
+	void InitEndUI();
 
 	void UpdateUIScale();
 	float ScaledX(float x);
@@ -95,4 +97,5 @@ private:
 	glm::vec3 hoverColor = glm::vec3(0.7f, 1.0f, 0.2f);
 
 	std::vector<UIElement> uiElements;
+	std::vector<UIElement> endUIElements;
 };

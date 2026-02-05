@@ -18,6 +18,8 @@ static int camera_scroll_type = 0;
 static bool split_camera = false;
 static bool first_time_held_right_click = false;
 bool playerWon = false;
+float winTimer = 0.0f;
+const float WIN_DELAY = 5.0f;
 
 // Define a global ECSController instance so systems can access it
 ECSController controller;
@@ -189,8 +191,9 @@ Game::Game()
 	controller.AddEventListener(Events::Physics::TRIGGER_ENTER, [this](Event& e) {
 		Entity triggerEntity = e.GetParam<Entity>(Events::Physics::Trigger_Enter::ENTITY_ONE);
 		Entity finishLine = controller.GetEntityByTag("FinishLine");
-		if (triggerEntity == finishLine) {
+		if (triggerEntity == finishLine && !playerWon) {
 			playerWon = true;
+			winTimer = 0.0f;
 			std::cout << "you win!" << std::endl;
 		}
 		});
@@ -232,6 +235,15 @@ void Game::Run()
 				time->totalTime += time->deltaTime;
 			}
 
+			if (playerWon) {
+				winTimer += time->frameTime;
+				if (winTimer >= WIN_DELAY) {
+					Event event(Events::GameState::NEW_STATE);
+					event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::ENDMENU);
+					controller.SendEvent(event);
+				}
+			}
+
 			vehicleControlSystem->Update(); // handle vehicle controls
 
 			camControlSystem->Update(time->frameTime); // handle camera controls
@@ -261,6 +273,11 @@ void Game::Run()
 		case STARTMENU:
 			// render main menu
 			menuSystem->Update();
+			break;
+
+		case ENDMENU:
+			renderSystem->Update(time->fps(), physicsSystem->GetRenderBuffer());
+			menuSystem->RenderEndScreen();
 			break;
 		}
 		

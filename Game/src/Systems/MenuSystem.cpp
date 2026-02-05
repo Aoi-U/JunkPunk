@@ -49,6 +49,7 @@ void MenuSystem::Init(std::shared_ptr<Gamepad> gamepad)
 	uiShader->setInt("u_texture", 0);
 
 	InitUI();
+	InitEndUI();
 }
 
 void MenuSystem::Clear(float r, float g, float b, float a)
@@ -471,6 +472,13 @@ void MenuSystem::KeyboardInputListener(Event& e)
 		}
 		}
 	}
+
+	if (key == Keys::KEY_JUMP && action == true && currentStateGlobal == GameState::ENDMENU) {
+		playerWon = false;
+		Event event(Events::GameState::NEW_STATE);
+		event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::STARTMENU);
+		controller.SendEvent(event);
+	}
 }
 
 void MenuSystem::RenderWinText() {
@@ -484,5 +492,57 @@ void MenuSystem::RenderWinText() {
 		ScaledY(600.0f),
 		scale,
 		glm::vec3(0.2f, 1.0f, 0.2f)
+	);
+}
+
+void MenuSystem::RenderEndScreen() {
+	glDisable(GL_DEPTH_TEST);
+	Clear(0.05f, 0.05f, 0.05f, 1.0f);
+	float titleScale = uniformScale * 2.0f;
+
+	for (auto& elem : endUIElements) {
+		glm::vec2 pos = ScaledPosition(elem.x, elem.y);
+		glm::vec2 size = ScaledSize(elem.width, elem.height);
+		if (elem.tex) {
+			RenderUITexture(pos.x, pos.y, size.x, size.y, elem.tex.get(), elem.color);
+		}
+	}
+	RenderText(
+		"YOU WIN!",
+		ScaledX(480.0f),
+		ScaledY(500.0f),
+		titleScale,
+		glm::vec3(0.2f, 1.0f, 0.2f)
+	);
+
+	RenderText(
+		"Press A to return to Main Menu",
+		ScaledX(380.0f),
+		ScaledY(150.0f),
+		uniformScale,
+		glm::vec3(1.0f)
+	);
+
+	if (gamepad->GetButtonDown(Buttons::JUMP))
+	{
+		playerWon = false;
+		Event event(Events::GameState::NEW_STATE);
+		event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::STARTMENU);
+		controller.SendEvent(event);
+	}
+}
+
+void MenuSystem::InitEndUI() {
+	endUIElements.clear();
+	Texture tex("dumpster sunset.jpg");
+	tex.Load("assets/textures");
+	endUIElements.emplace_back(
+		0.0f,
+		0.0f,
+		1280.0f,
+		720.0f,
+		glm::vec4(1.0f),
+		ScaleMode::FILL,
+		std::make_unique<Texture>(tex)
 	);
 }
