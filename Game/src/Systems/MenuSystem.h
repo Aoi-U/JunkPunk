@@ -40,7 +40,7 @@ public:
 	void Reset();
 	void RenderWinText();
 	void RenderEndScreen();
-
+	void RenderFadeOverlay(float alpha);
 
 private:
 	void Clear(float r, float g, float b, float a); // clears screen and buffers

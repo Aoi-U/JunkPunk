@@ -546,3 +546,18 @@ void MenuSystem::InitEndUI() {
 		std::make_unique<Texture>(tex)
 	);
 }
+
+void MenuSystem::RenderFadeOverlay(float alpha) {
+	if (alpha <= 0.0f)
+		return;
+
+	glDisable(GL_DEPTH_TEST);
+
+	RenderUIRect(
+		0.0f,
+		0.0f,
+		(float)screenWidth,
+		(float)screenHeight,
+		glm::vec4(0.0f, 0.0f, 0.0f, alpha)
+	);
+}

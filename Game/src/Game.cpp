@@ -20,6 +20,7 @@ static bool first_time_held_right_click = false;
 bool playerWon = false;
 float winTimer = 0.0f;
 const float WIN_DELAY = 5.0f;
+float fadeAlpha = 0.0f;
 
 // Define a global ECSController instance so systems can access it
 ECSController controller;
@@ -193,6 +194,7 @@ Game::Game()
 		Entity finishLine = controller.GetEntityByTag("FinishLine");
 		if (triggerEntity == finishLine && !playerWon) {
 			playerWon = true;
+			fadeAlpha = 0.0f;
 			winTimer = 0.0f;
 			std::cout << "you win!" << std::endl;
 		}
@@ -235,15 +237,6 @@ void Game::Run()
 				time->totalTime += time->deltaTime;
 			}
 
-			if (playerWon) {
-				winTimer += time->frameTime;
-				if (winTimer >= WIN_DELAY) {
-					Event event(Events::GameState::NEW_STATE);
-					event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::ENDMENU);
-					controller.SendEvent(event);
-				}
-			}
-
 			vehicleControlSystem->Update(); // handle vehicle controls
 
 			camControlSystem->Update(time->frameTime); // handle camera controls
@@ -253,6 +246,21 @@ void Game::Run()
 			renderSystem->Update(time->fps(), physicsSystem->GetRenderBuffer()); // render physics debug data
 			menuSystem->RenderWinText();
 			camera_debug_panel->render(); // render debug panel
+
+
+			if (playerWon) {
+				winTimer += time->frameTime;
+				if (winTimer >= 1.0f) {
+					fadeAlpha += time->frameTime * 0.25f;
+					fadeAlpha = glm::clamp(fadeAlpha, 0.0f, 1.0f);
+					menuSystem->RenderFadeOverlay(fadeAlpha);
+				}
+				if (winTimer >= WIN_DELAY) {
+					Event event(Events::GameState::NEW_STATE);
+					event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::ENDMENU);
+					controller.SendEvent(event);
+				}
+			}
 
 			if (gamepad->GetButtonDown(Buttons::PAUSE))
 			{
@@ -312,6 +320,9 @@ void Game::ChangeGameStateListener(Event& e)
 		time->Pause();
 		currentState = state;
 		currentStateGlobal = state;
+		playerWon = false;
+		winTimer = 0.0f;
+		fadeAlpha = 0.0f;
 		break;
 	}
 	case::GameState::GAME:
