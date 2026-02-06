@@ -95,6 +95,13 @@ bool MainVehicle::initVehicles(PxScene* gScene, PxPhysics* gPhysics, PxMaterial*
 	//PxShape* chassisShape = gPhysics->createShape(PxBoxGeometry(vph.physxActorBoxShapeHalfExtents), *gMaterial);
 	PxShape* chassisShape = gPhysics->createShape(PxBoxGeometry(gVehicle.mPhysXParams.physxActorBoxShapeHalfExtents), *gMaterial);
 	chassisShape->setFlag(PxShapeFlag::eVISUALIZATION, true);
+
+	PxFilterData chassisFilter(COLLISION_FLAG_CHASSIS, COLLISION_FLAG_CHASSIS_AGAINST, 0, 0);
+	chassisShape->setSimulationFilterData(chassisFilter);
+	chassisShape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, true);
+	chassisShape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, true);
+	chassisShape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, false);
+
 	gVehicle.mPhysXState.physxActor.rigidBody->attachShape(*chassisShape);
 	chassisShape->release();
 

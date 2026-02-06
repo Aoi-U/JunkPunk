@@ -413,14 +413,22 @@ void PhysicsSystem::CreateActorListener(Event& e)
 			PxQuat(transform.quatRotation.x, transform.quatRotation.y, transform.quatRotation.z, transform.quatRotation.w));
 
 		PxShape* shape = gPhysics->createShape(boxGeometry, *gGroundMaterial);
+
+		PxFilterData filterData(COLLISION_FLAG_OBSTACLE, COLLISION_FLAG_OBSTACLE_AGAINST, 0, 0);
+		shape->setSimulationFilterData(filterData);
+
 		shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, true);
 		shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, true);
 		shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, false);
+
 		PxRigidDynamic* dynamicActor = gPhysics->createRigidDynamic(bodyTransform);
 		dynamicActor->attachShape(*shape);
 		dynamicActor->setActorFlag(PxActorFlag::eVISUALIZATION, false);
 
-		dynamicActor->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, controller.HasComponent<MovingObstacle>(entity));
+		if (controller.HasComponent<MovingObstacle>(entity))
+		{
+			dynamicActor->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, true);
+		}
 
 		PxRigidBodyExt::updateMassAndInertia(*dynamicActor, rigidBodyComponent.mass);
 		rigidBodyComponent.actor = dynamicActor;
