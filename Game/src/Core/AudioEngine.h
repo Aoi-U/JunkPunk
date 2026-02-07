@@ -64,6 +64,7 @@ public:
 	bool IsEventPlaying(const string& strEventName) const;
 	float dbToVolume(float dB);
 	float VolumeTodB(float volume);
+	void SetChannelPitch(int nChannelId, float fPitch);
 	FMOD_VECTOR VectorToFmod(const Vector3& vPosition);
 
 };

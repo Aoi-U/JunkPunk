@@ -226,7 +226,8 @@ void Game::Run()
 	event.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, -10.0f);
 	controller.SendEvent(event);
 
-	
+
+
 	// imgui panel for debugging
 	camera_debug_panel = std::make_unique<ImGuiPanel>(window);
 	cameraPanelRenderer = std::make_shared<CameraEditorPanelRenderer>();
@@ -277,6 +278,7 @@ void Game::Run()
 					controller.SendEvent(event);
 				}
 			}
+			audioSystem->Update();
 
 			if (gamepad->GetButtonDown(Buttons::PAUSE))
 			{
