@@ -11,9 +11,11 @@ class AudioSystem : public System
 {
 public:
 	void Init();
+	void Update();
 
 private:
 	CAudioEngine aEngine;
+	int engineSoundChannelId = -1;
 
 	void AudioEventListener(Event& e);
 

@@ -221,6 +221,15 @@ float  CAudioEngine::VolumeTodB(float volume)
 	return 20.0f * log10f(volume);
 }
 
+void CAudioEngine::SetChannelPitch(int nChannelId, float fPitch)
+{
+	auto tFoundIt = sgpImplementation->mChannels.find(nChannelId);
+	if (tFoundIt == sgpImplementation->mChannels.end())
+		return;
+
+	CAudioEngine::ErrorCheck(tFoundIt->second->setPitch(fPitch));
+}
+
 void CAudioEngine::Shutdown() {
 	delete sgpImplementation;
 }

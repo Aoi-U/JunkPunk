@@ -196,7 +196,8 @@ void Game::Run()
 	event.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, -10.0f);
 	controller.SendEvent(event);
 
-	
+
+
 	// imgui panel for debugging
 	camera_debug_panel = std::make_unique<ImGuiPanel>(window);
 	// get main camera and transform to pass to panel
@@ -232,6 +233,8 @@ void Game::Run()
 			renderSystem->Update(time->fps(), physicsSystem->GetRenderBuffer()); // render physics debug data
 		
 			camera_debug_panel->render(); // render debug panel
+
+			audioSystem->Update();
 
 			if (gamepad->GetButtonDown(Buttons::PAUSE))
 			{
