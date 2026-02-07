@@ -102,6 +102,15 @@ void LevelLoaderSystem::LoadLevel()
 	controller.AddComponent(entity, Render{ loaded.first, loaded.second });
 	controller.AddComponent(entity, PhysicsBody{});
 
+	// create dumpster
+	//glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::pi<float>() / 4.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+	//entity = controller.createEntity();
+	//loaded = LoadModel("assets/models/dumpster/dumpster.gltf");
+	//controller.AddComponent(entity, Transform{ glm::vec3(0.0f, -10.0f, 0.0f), glm::quat_cast(rotation), glm::vec3(50.0f) });
+	//controller.AddComponent(entity, StaticBody{ nullptr, loaded.first });
+	//controller.AddComponent(entity, Render{ loaded.first, loaded.second });
+	//controller.AddComponent(entity, PhysicsBody{});
+
 	for (int i = 0; i < 10; i++)
 	{
 		entity = controller.createEntity();
@@ -173,6 +182,8 @@ void LevelLoaderSystem::LoadLevel()
 
 	// finish line
 	entity = controller.createEntity();
+	//loaded = LoadModel("assets/models/finishline/finishline1.gltf");
+	//controller.AddComponent(entity, StaticBody{ nullptr, loaded.first });
 	controller.AddComponent(entity, PhysicsBody{});
 	controller.AddComponent(entity, Trigger{ nullptr, 0.5f, 5.0f, 10.0f });
 	controller.AddComponent(entity, Transform{
@@ -180,7 +191,16 @@ void LevelLoaderSystem::LoadLevel()
 		glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
 		glm::vec3(1.0f)
 		});
+	//controller.AddComponent(entity, Render{ loaded.first, loaded.second });
 	controller.AssignTag(entity, "FinishLine");
+
+	//create finish line model
+	entity = controller.createEntity();
+	loaded = LoadModel("assets/models/finishline/finishline1.gltf");
+	controller.AddComponent(entity, Transform{ glm::vec3(71.0f, -35.0f, -29.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(5.f, 5.0f, 5.0f)});
+	controller.AddComponent(entity, StaticBody{ nullptr, loaded.first });
+	controller.AddComponent(entity, Render{ loaded.first, loaded.second });
+	controller.AddComponent(entity, PhysicsBody{});
 }
 
 std::pair<std::shared_ptr<Model>, std::shared_ptr<AABB>> LevelLoaderSystem::LoadModel(std::string path)
