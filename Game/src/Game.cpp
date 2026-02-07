@@ -223,7 +223,7 @@ void Game::Run()
 	Event event(Events::Audio::PLAY_SOUND);
 	event.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/jazz-background-music-325355.mp3");
 	event.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
-	event.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, -70.0f);
+	event.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, -20.0f);
 	controller.SendEvent(event);
 
 

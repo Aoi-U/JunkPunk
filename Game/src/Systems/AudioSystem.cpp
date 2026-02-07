@@ -29,7 +29,6 @@ void AudioSystem::Update() {
 	aEngine.Update();
 	if (currentStateGlobal == GameState::GAME)
 	{
-	std::cout << "Inside if: Current Global State: " << currentStateGlobal << std::endl;
 		Entity player = controller.GetEntityByTag("VehicleCommands");
 		auto& vehicleVelocity = controller.GetComponent<VehicleBody>(player);
 		float speed = glm::length(vehicleVelocity.linearVelocity);
@@ -46,7 +45,6 @@ void AudioSystem::Update() {
 	}
 	else
 	{
-		std::cout << currentStateGlobal << std::endl;
 		// Stop engine sound when not in game (menu, pause, etc.)
 		// Reset channel ID when exiting game state
 		if (engineSoundChannelId != -1)  // Only stop if valid channel exists
