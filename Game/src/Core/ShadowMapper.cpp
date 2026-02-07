@@ -75,11 +75,14 @@ void ShadowMapper::BindShadowMap()
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_POLYGON_OFFSET_FILL);
+	glPolygonOffset(1.5f, 4.0f);
 }
 
 void ShadowMapper::UnbindShadowMap()
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glDisable(GL_POLYGON_OFFSET_FILL);
 	glEnable(GL_DEPTH_TEST);
 }
 
@@ -91,7 +94,7 @@ void ShadowMapper::BindDepthMapTexture()
 
 void ShadowMapper::BindFramebufferTextures()
 {
-	glFramebufferTexture(GL_FRAMEBUFFER, GL_TEXTURE_2D_ARRAY, depthMaps, 0);
+	glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthMaps, 0);
 }
 
 void ShadowMapper::SetupUBO()
@@ -137,7 +140,7 @@ glm::mat4 ShadowMapper::GetLightSpaceMatrix(const float nearPlane, const float f
 		maxZ = std::max(maxZ, trf.z);
 	}
 
-	constexpr float zMult = 5.0f;
+	constexpr float zMult = 10.0f;
 	if (minZ < 0)
 	{
 		minZ *= zMult;
