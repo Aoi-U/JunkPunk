@@ -95,21 +95,21 @@ void LevelLoaderSystem::LoadLevel()
 	// end camera entity
 
 	// create scene entities
-	entity = controller.createEntity();
-	auto loaded = LoadModel("assets/models/snowy_mountain_-_terrain/scene.gltf");
-	controller.AddComponent(entity, Transform{ glm::vec3(0.0f, 0.0f, 0.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(500.0f) });
-	controller.AddComponent(entity, StaticBody{ nullptr, loaded.first });
-	controller.AddComponent(entity, Render{ loaded.first, loaded.second });
-	controller.AddComponent(entity, PhysicsBody{});
-
-	// create dumpster
-	//glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::pi<float>() / 4.0f, glm::vec3(0.0f, 1.0f, 0.0f));
 	//entity = controller.createEntity();
-	//loaded = LoadModel("assets/models/dumpster/dumpster.gltf");
-	//controller.AddComponent(entity, Transform{ glm::vec3(0.0f, -10.0f, 0.0f), glm::quat_cast(rotation), glm::vec3(50.0f) });
+	//auto loaded = LoadModel("assets/models/snowy_mountain_-_terrain/scene.gltf");
+	//controller.AddComponent(entity, Transform{ glm::vec3(0.0f, 0.0f, 0.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(500.0f) });
 	//controller.AddComponent(entity, StaticBody{ nullptr, loaded.first });
 	//controller.AddComponent(entity, Render{ loaded.first, loaded.second });
 	//controller.AddComponent(entity, PhysicsBody{});
+
+	// create dumpster
+	glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), 0.f, glm::vec3(0.0f, 1.0f, 0.0f));
+	entity = controller.createEntity();
+	auto loaded = LoadModel("assets/models/dumpster/dumpster.gltf");
+	controller.AddComponent(entity, Transform{ glm::vec3(0.0f, -50.0f, 50.0f), glm::quat_cast(rotation), glm::vec3(50.0f) });
+	controller.AddComponent(entity, StaticBody{ nullptr, loaded.first });
+	controller.AddComponent(entity, Render{ loaded.first, loaded.second });
+	controller.AddComponent(entity, PhysicsBody{});
 
 	for (int i = 0; i < 10; i++)
 	{
