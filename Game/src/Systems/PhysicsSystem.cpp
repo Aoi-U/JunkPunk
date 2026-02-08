@@ -312,7 +312,7 @@ void PhysicsSystem::CreateMap()
 			auto& trigger = controller.GetComponent<Trigger>(entity);
 
 			PxBoxGeometry box = PxBoxGeometry(PxVec3(trigger.width, trigger.height, trigger.length));
-			PxTransform boxTransform = PxTransform(PxVec3(transform.position.x, transform.position.y, transform.position.y), PxQuat(transform.quatRotation.x, transform.quatRotation.y, transform.quatRotation.z, transform.quatRotation.w));
+			PxTransform boxTransform = PxTransform(PxVec3(transform.position.x, transform.position.y, transform.position.z), PxQuat(transform.quatRotation.x, transform.quatRotation.y, transform.quatRotation.z, transform.quatRotation.w));
 
 			PxShape* shape = gPhysics->createShape(box, *materialMap["default"]);
 			shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
