@@ -7,6 +7,8 @@
 #include "../ECSController.h"
 
 extern ECSController controller;
+extern bool powerupActive;
+extern int currentPowerup;
 
 PhysicsSystem::PhysicsSystem()
 {
@@ -96,7 +98,12 @@ void PhysicsSystem::Update(float deltaTime)
 	vehicleCommands.isGrounded = gVehicle->IsGrounded(gPhysicsScene);
 
 	Command command;
-	command.throttle = vehicleCommands.throttle;
+	if (powerupActive && currentPowerup == 1) {
+		command.throttle = vehicleCommands.throttle * 2.0f;
+	}
+	else {
+		command.throttle = vehicleCommands.throttle;
+	}
 	command.brake = vehicleCommands.brake;
 	command.steer = vehicleCommands.steer;
 	gVehicle->setCommand(command);

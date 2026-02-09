@@ -21,6 +21,10 @@ bool playerWon = false;
 float winTimer = 0.0f;
 const float WIN_DELAY = 5.0f;
 float fadeAlpha = 0.0f;
+int currentPowerup = 0;
+bool powerupActive = false;
+float powerupTimer = 0.0f;
+const float POWERUP_DURATION = 5.0f;
 
 // Define a global ECSController instance so systems can access it
 ECSController controller;
@@ -198,15 +202,10 @@ Game::Game()
 			winTimer = 0.0f;
 			std::cout << "you win!" << std::endl;
 		}
-		});
 
-	controller.AddEventListener(Events::Physics::TRIGGER_ENTER, [this](Event& e) {
-		Entity triggerEntity = e.GetParam<Entity>(Events::Physics::Trigger_Enter::ENTITY_ONE);
-		Entity otherEntity = e.GetParam<Entity>(Events::Physics::Trigger_Enter::ENTITY_TWO);
-		Entity boost = controller.GetEntityByTag("Boost");
-		if (triggerEntity == boost || otherEntity == boost) {
+		if (triggerEntity == controller.GetEntityByTag("Boost")) {
+			currentPowerup = 1;
 			std::cout << "Boost collected!" << std::endl;
-			controller.DestroyEntity(boost);
 		}
 		});
 }
@@ -272,11 +271,27 @@ void Game::Run()
 				}
 			}
 
+			if (powerupActive) {
+				powerupTimer += time->frameTime;
+				if (powerupTimer >= POWERUP_DURATION) {
+					powerupActive = false;
+					powerupTimer = 0.0f;
+					std::cout << "Powerup ended" << std::endl;
+				}
+			}
+
 			if (gamepad->GetButtonDown(Buttons::PAUSE))
 			{
 				Event event(Events::GameState::NEW_STATE);
 				event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::PAUSED);
 				controller.SendEvent(event);
+			}
+
+			if (gamepad->GetButtonDown(Buttons::POWERUP) && currentPowerup == 1 && !powerupActive) {
+				powerupActive = true;
+				powerupTimer = 0.0f;
+				currentPowerup = 0;
+				std::cout << "Boost Used" << std::endl;
 			}
 
 			break;
@@ -410,6 +425,14 @@ void Game::KeyboardInputListener(Event& e)
 			Event event(Events::GameState::NEW_STATE);
 			event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::PAUSED);
 			controller.SendEvent(event);
+		}
+		if (key == Keys::KEY_USE && action == true && currentPowerup != 0) {
+			if (currentPowerup == 1 && !powerupActive) {
+				powerupActive = true;
+				powerupTimer = 0.0f;
+				currentPowerup = 0;
+				std::cout << "Boost Used" << std::endl;
+			}
 		}
 	}
 }
