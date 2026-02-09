@@ -199,6 +199,16 @@ Game::Game()
 			std::cout << "you win!" << std::endl;
 		}
 		});
+
+	controller.AddEventListener(Events::Physics::TRIGGER_ENTER, [this](Event& e) {
+		Entity triggerEntity = e.GetParam<Entity>(Events::Physics::Trigger_Enter::ENTITY_ONE);
+		Entity otherEntity = e.GetParam<Entity>(Events::Physics::Trigger_Enter::ENTITY_TWO);
+		Entity boost = controller.GetEntityByTag("Boost");
+		if (triggerEntity == boost || otherEntity == boost) {
+			std::cout << "Boost collected!" << std::endl;
+			controller.DestroyEntity(boost);
+		}
+		});
 }
 
 // main game function

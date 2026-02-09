@@ -181,6 +181,14 @@ void LevelLoaderSystem::LoadLevel()
 		glm::vec3(1.0f)
 		});
 	controller.AssignTag(entity, "FinishLine");
+
+	entity = controller.createEntity();
+	loaded = LoadModel("assets/models/lightning_capsule/scene.gltf");
+	controller.AddComponent(entity, Transform{ glm::vec3(36.0f, -30.0f, 7.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.25f) });
+	controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 2.0f, 1.0f });
+	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
+	controller.AddComponent(entity, PhysicsBody{});
+	controller.AssignTag(entity, "Boost");
 }
 
 std::pair<std::shared_ptr<Model>, std::shared_ptr<AABB>> LevelLoaderSystem::LoadModel(std::string path)
