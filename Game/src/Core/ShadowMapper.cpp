@@ -75,15 +75,12 @@ void ShadowMapper::BindShadowMap()
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
 	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_POLYGON_OFFSET_FILL);
-	glPolygonOffset(1.5f, 4.0f);
 }
 
 void ShadowMapper::UnbindShadowMap()
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glDisable(GL_POLYGON_OFFSET_FILL);
-	glEnable(GL_DEPTH_TEST);
+	//glEnable(GL_DEPTH_TEST);
 }
 
 void ShadowMapper::BindDepthMapTexture()

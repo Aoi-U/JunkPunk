@@ -105,6 +105,14 @@ void PhysicsSystem::Update(float deltaTime)
 	gPhysicsScene->simulate(deltaTime);
 	gPhysicsScene->fetchResults(true);
 
+	// delete any actors that were marked for deletion during the simulation step
+	for (PxActor* actor : actorsToDelete)
+	{
+		gPhysicsScene->removeActor(*actor);
+		actor->release();
+	}
+	actorsToDelete.clear();
+
 	// Update dynamic actor transforms in ECS
 	for (auto& entity : entities)
 	{
@@ -174,6 +182,10 @@ void PhysicsSystem::Update(float deltaTime)
 			vehicleBody.angularVelocity = glm::vec3(angularVel.x, angularVel.y, angularVel.z);
 		}
 	}
+}
+
+void PhysicsSystem::DeleteActors()
+{
 }
 
 void PhysicsSystem::Simulate(float deltaTime)
@@ -452,11 +464,7 @@ void PhysicsSystem::ReleaseActorCallback(Entity entity, RigidBody& rb)
 {
 	if (rb.actor)
 	{
-		gPhysicsScene->removeActor(*rb.actor);
-		rb.actor->release();
-		rb.actor = nullptr;
-
-		std::cout << "Entity: " << entity << ": Rigidbody removed" << std::endl;
+		actorsToDelete.push_back(rb.actor);
 	}
 }
 
@@ -464,10 +472,12 @@ void PhysicsSystem::ReleaseTriggerCallback(Entity entity, Trigger& trig)
 {
 	if (trig.actor)
 	{
+		actorsToDelete.push_back(trig.actor);
+		/*trig.actor->userData = nullptr; 
 		gPhysicsScene->removeActor(*trig.actor);
 		trig.actor->release();
 		trig.actor = nullptr;
 
-		std::cout << "Entity: " << entity << ": Trigger removed" << std::endl;
+		std::cout << "Entity: " << entity << ": Trigger removed" << std::endl;*/
 	}
 }

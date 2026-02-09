@@ -44,6 +44,10 @@ private:
 
 	std::unordered_map<std::string, PxMaterial*> materialMap; // holds different physics materials
 
+	std::vector<PxActor*> actorsToDelete; // list of actors to delete 
+
+	void DeleteActors();
+
 	void Simulate(float deltaTime); // run a physics simulation step
 
 	void CreateMap(); // initialize physics map
