@@ -22,10 +22,6 @@ bool playerWon = false;
 float winTimer = 0.0f;
 const float WIN_DELAY = 5.0f;
 float fadeAlpha = 0.0f;
-int currentPowerup = 0;
-bool powerupActive = false;
-float powerupTimer = 0.0f;
-const float POWERUP_DURATION = 5.0f;
 Entity playerEntity;
 bool playerExists = false;
 

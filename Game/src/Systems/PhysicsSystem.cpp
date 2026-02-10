@@ -8,8 +8,7 @@
 #include "../ECSController.h"
 
 extern ECSController controller;
-extern bool powerupActive;
-extern int currentPowerup;
+bool usedBoost = false;
 
 PhysicsSystem::PhysicsSystem()
 {
@@ -100,14 +99,17 @@ void PhysicsSystem::Update(float deltaTime)
 
 	Command command;
 	command.throttle = vehicleCommands.throttle;
+	
 	if (controller.HasComponent<Powerup>(vehicleEntity)) {
 		auto& p = controller.GetComponent<Powerup>(vehicleEntity);
 		if (p.active && p.type == 1) {
 			gVehicle->ApplyBoost(2.0f);
+			usedBoost = true;
 		}
-		else if (p.type == 1 && !p.active) {
-			gVehicle->ClearBoost();
-		}
+	}
+	else if (usedBoost) {
+		gVehicle->ClearBoost();
+		usedBoost = false;
 	}
 	command.brake = vehicleCommands.brake;
 	command.steer = vehicleCommands.steer;
