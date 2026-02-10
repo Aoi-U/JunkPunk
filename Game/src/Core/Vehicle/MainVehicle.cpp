@@ -210,3 +210,16 @@ void MainVehicle::jump()
 	gVehicle.mPhysXState.physxActor.rigidBody->addForce(jumpForce, PxForceMode::eIMPULSE);
 }
 
+void MainVehicle::ApplyBoost(float multiplier) {
+	auto& engine = gVehicle.mEngineDriveParams.engineParams;
+	if (basePeakTorque < 0.0f)
+		basePeakTorque = engine.peakTorque;
+
+	engine.peakTorque = basePeakTorque * multiplier;
+}
+
+void MainVehicle::ClearBoost() {
+	if (basePeakTorque < 0.0f)
+		return;
+	gVehicle.mEngineDriveParams.engineParams.peakTorque = basePeakTorque;
+}

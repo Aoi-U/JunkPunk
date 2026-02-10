@@ -103,7 +103,10 @@ void PhysicsSystem::Update(float deltaTime)
 	if (controller.HasComponent<Powerup>(vehicleEntity)) {
 		auto& p = controller.GetComponent<Powerup>(vehicleEntity);
 		if (p.active && p.type == 1) {
-			command.throttle *= 2.0f;
+			gVehicle->ApplyBoost(10.0f);
+		}
+		else if (p.type == 1 && !p.active) {
+			gVehicle->ClearBoost();
 		}
 	}
 	command.brake = vehicleCommands.brake;

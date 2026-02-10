@@ -65,6 +65,8 @@ public:
 
 	void jump(); // makes the vehicle jump
 
+	void ApplyBoost(float multiplier);
+	void ClearBoost();
 
 private:
 	//DirectDriveVehicle gVehicle;
@@ -95,4 +97,6 @@ private:
 	PxVec3 jumpForce = PxVec3(0.0f, 20000.0f, 0.0f);
 
 	void setTransform(const glm::vec3& position, const glm::vec3& rotation); // set the position and rotation of the vehicle (use for checkpoints/respawning)
+	
+	float basePeakTorque = -1.0f;
 };
