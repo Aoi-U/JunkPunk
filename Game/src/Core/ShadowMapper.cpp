@@ -80,7 +80,7 @@ void ShadowMapper::BindShadowMap()
 void ShadowMapper::UnbindShadowMap()
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glEnable(GL_DEPTH_TEST);
+	//glEnable(GL_DEPTH_TEST);
 }
 
 void ShadowMapper::BindDepthMapTexture()

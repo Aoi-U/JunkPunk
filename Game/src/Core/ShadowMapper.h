@@ -46,7 +46,7 @@ private:
 	float fovY;
 	glm::mat4 view;
 
-	std::vector<float> shadowCascadeLevels = { 800.0f / 30.0f, 800.0f / 20.0f, 800.0 / 10.0f, 800.0f / 5.0f };
+	std::vector<float> shadowCascadeLevels = { 800.0f / 50.0f, 800.0f / 25.0f, 800.0 / 10.0f, 800.0f / 3.0f };
 	Light light;
 
 	std::vector<glm::mat4> GetLightSpaceMatrices();

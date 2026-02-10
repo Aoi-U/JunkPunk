@@ -3,6 +3,7 @@
 //#include "../Components/Physics.h"
 #include "../Components/Player.h"
 #include "../Components/Obstacle.h"
+#include "../Components/Powerup.h"
 
 #include "../ECSController.h"
 
@@ -98,11 +99,12 @@ void PhysicsSystem::Update(float deltaTime)
 	vehicleCommands.isGrounded = gVehicle->IsGrounded(gPhysicsScene);
 
 	Command command;
-	if (powerupActive && currentPowerup == 1) {
-		command.throttle = vehicleCommands.throttle * 2.0f;
-	}
-	else {
-		command.throttle = vehicleCommands.throttle;
+	command.throttle = vehicleCommands.throttle;
+	if (controller.HasComponent<Powerup>(vehicleEntity)) {
+		auto& p = controller.GetComponent<Powerup>(vehicleEntity);
+		if (p.active && p.type == 1) {
+			command.throttle *= 2.0f;
+		}
 	}
 	command.brake = vehicleCommands.brake;
 	command.steer = vehicleCommands.steer;
@@ -111,6 +113,15 @@ void PhysicsSystem::Update(float deltaTime)
 	gVehicle->step(deltaTime);
 	gPhysicsScene->simulate(deltaTime);
 	gPhysicsScene->fetchResults(true);
+
+	// delete any actors that were marked for deletion during the simulation step
+	for (PxActor* actor : actorsToDelete)
+	{
+		gPhysicsScene->removeActor(*actor);
+		actor->release();
+	}
+	actorsToDelete.clear();
+
 
 	// Update dynamic actor transforms in ECS
 	for (auto& entity : entities)
@@ -182,6 +193,11 @@ void PhysicsSystem::Update(float deltaTime)
 		}
 	}
 }
+
+void PhysicsSystem::DeleteActors()
+{
+}
+
 
 void PhysicsSystem::Simulate(float deltaTime)
 {
@@ -456,6 +472,7 @@ void PhysicsSystem::ReleaseActorCallback(Entity entity, RigidBody& rb)
 		rb.actor = nullptr;
 
 		std::cout << "Entity: " << entity << ": Rigidbody removed" << std::endl;
+		actorsToDelete.push_back(rb.actor);
 	}
 }
 
@@ -463,10 +480,12 @@ void PhysicsSystem::ReleaseTriggerCallback(Entity entity, Trigger& trig)
 {
 	if (trig.actor)
 	{
+		actorsToDelete.push_back(trig.actor);
+		/*trig.actor->userData = nullptr;
 		gPhysicsScene->removeActor(*trig.actor);
 		trig.actor->release();
 		trig.actor = nullptr;
 
-		std::cout << "Entity: " << entity << ": Trigger removed" << std::endl;
+	std::cout << "Entity: " << entity << ": Trigger removed" << std::endl;*/
 	}
 }

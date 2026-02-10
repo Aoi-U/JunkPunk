@@ -6,6 +6,8 @@
 #include "../Components/Obstacle.h"
 #include "../Components/Transform.h"
 #include "../Components/Particles.h"
+#include "../Components/Powerup.h"
+
 
 
 #include "../ECSController.h"
@@ -188,7 +190,12 @@ void LevelLoaderSystem::LoadLevel()
 	controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 2.0f, 1.0f });
 	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
 	controller.AddComponent(entity, PhysicsBody{});
-	controller.AssignTag(entity, "Boost");
+	controller.AddComponent(entity, Powerup{
+		1,
+		false,
+		5.0f,
+		0.0f
+		});
 }
 
 std::pair<std::shared_ptr<Model>, std::shared_ptr<AABB>> LevelLoaderSystem::LoadModel(std::string path)
