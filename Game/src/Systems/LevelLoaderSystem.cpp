@@ -181,26 +181,18 @@ void LevelLoaderSystem::LoadLevel()
 		});
 
 	// finish line
-	entity = controller.createEntity();
-	loaded = LoadModel("assets/models/finishline/finishline1.gltf");
-	//controller.AddComponent(entity, StaticBody{ nullptr, loaded.first });
-	controller.AddComponent(entity, Render{ loaded.first, loaded.second });
-	controller.AddComponent(entity, PhysicsBody{});
-	controller.AddComponent(entity, Trigger{ nullptr, 0.5f, 5.0f, 10.0f });
-	controller.AddComponent(entity, Transform{
-		glm::vec3(25.0f, 40.0f, 120.0f),
-		glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
-		glm::vec3(5.f, 5.0f, 5.0f)
-		});
-	controller.AssignTag(entity, "FinishLine");
-
-	//create finish line model
-	/*entity = controller.createEntity();
-	loaded = LoadModel("assets/models/finishline/finishline1.gltf");
-	controller.AddComponent(entity, Transform{ glm::vec3(25.0f, 32.0f, 120.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(5.f, 5.0f, 5.0f)});
-	controller.AddComponent(entity, StaticBody{ nullptr, loaded.first });
-	controller.AddComponent(entity, Render{ loaded.first, loaded.second });
-	controller.AddComponent(entity, PhysicsBody{});*/
+  entity = controller.createEntity();
+  loaded = LoadModel("assets/models/finishline/finishline.gltf");
+  //controller.AddComponent(entity, StaticBody{ nullptr, loaded.first });
+  controller.AddComponent(entity, Render{ loaded.first, loaded.second });
+  controller.AddComponent(entity, PhysicsBody{});
+  controller.AddComponent(entity, Trigger{ nullptr, 0.5f, 4.0f, 10.0f });
+  controller.AddComponent(entity, Transform{
+    glm::vec3(25.0f, -3.5f, 120.0f),
+    glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
+    glm::vec3(5.0f, 5.0f, 5.0f)
+    });
+  controller.AssignTag(entity, "FinishLine");
 }
 
 std::pair<std::shared_ptr<Model>, std::shared_ptr<AABB>> LevelLoaderSystem::LoadModel(std::string path)
