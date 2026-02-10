@@ -5,6 +5,7 @@
 #include "System.h"
 #include "../../Gamepad.h"
 #include "../Event.h"
+#include "../Components/Camera.h"
 
 class Gamepad;
 
@@ -15,11 +16,14 @@ public:
 
 	void Update(float deltaTime);
 
-
 private:
 	void WindowSizeListener(Event& e);
 
 	void MouseMovedListener(Event& e);
+
+	void BoostCamera(ThirdPersonCamera& camera, float deltaTime);
+
+	void ReturnCamera(ThirdPersonCamera& camera, float deltaTime);
 
 	std::shared_ptr<Gamepad> gamepad;
 	int screenWidth = 1280;
