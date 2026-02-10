@@ -196,8 +196,8 @@ void LevelLoaderSystem::LoadLevel()
 
 	//create finish line model
 	entity = controller.createEntity();
-	loaded = LoadModel("assets/models/finishline/finishline1.gltf");
-	controller.AddComponent(entity, Transform{ glm::vec3(71.0f, -35.0f, -29.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(5.f, 5.0f, 5.0f)});
+	loaded = LoadModel("assets/models/finishline/finishline.gltf");
+	controller.AddComponent(entity, Transform{ glm::vec3(71.0f, -25.0f, -29.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(5.f, 5.0f, 5.0f)});
 	controller.AddComponent(entity, StaticBody{ nullptr, loaded.first });
 	controller.AddComponent(entity, Render{ loaded.first, loaded.second });
 	controller.AddComponent(entity, PhysicsBody{});
