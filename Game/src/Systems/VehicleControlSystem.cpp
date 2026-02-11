@@ -20,9 +20,22 @@ void VehicleControlSystem::Update()
 		
 		if (gamepad->Connected())
 		{
-			playerCommands.throttle = gamepad->LeftTrigger();
-			playerCommands.brake = gamepad->RightTrigger();
 			playerCommands.steer = gamepad->LStick_InDeadzone() ? 0.0f : -gamepad->LeftStick_X();
+			if (gamepad->LeftTrigger() > 0.1f)
+			{
+				playerCommands.throttle = gamepad->LeftTrigger();
+				playerCommands.brake = 0.0f;
+			}
+			else if (gamepad->RightTrigger() > 0.1f)
+			{
+				playerCommands.brake = gamepad->RightTrigger();
+				playerCommands.throttle = 0.0f;
+			}
+			else
+			{
+				playerCommands.throttle = 0.0f;
+				playerCommands.brake = 0.0f;
+			}
 
 			// send a jump event only when the jump button is pressed and the player is grounded
 			if (playerCommands.isGrounded && gamepad->GetButtonDown(Buttons::JUMP))

@@ -127,10 +127,24 @@ bool MainVehicle::initVehicles(PxScene* gScene, PxPhysics* gPhysics, PxMaterial*
 void MainVehicle::step(float deltaTime)
 {
 	//Apply the brake, throttle and steer to the command state of the direct drive vehicle.
-	gVehicle.mCommandState.brakes[0] = gCommand.brake;
 	gVehicle.mCommandState.nbBrakes = 1;
-	gVehicle.mCommandState.throttle = gCommand.throttle;
 	gVehicle.mCommandState.steer = gCommand.steer;
+
+	if (gCommand.throttle > 0.0f)
+	{
+		gVehicle.mTransmissionCommandState.targetGear = PxVehicleEngineDriveTransmissionCommandState::eAUTOMATIC_GEAR;
+		gVehicle.mCommandState.throttle = gCommand.throttle;
+	}
+	else if (gCommand.brake > 0.0f) 
+	{
+		gVehicle.mCommandState.steer = gCommand.steer * 0.5f; // reduce steer sensitivity when reversing
+		gVehicle.mTransmissionCommandState.targetGear = gVehicle.mEngineDriveParams.gearBoxParams.neutralGear - 1;
+		gVehicle.mCommandState.throttle = gCommand.brake;
+	}
+	else
+	{
+		gVehicle.mCommandState.throttle = 0.0f;
+	}
 
 	//Forward integrate the vehicle by a single timestep.
 	gVehicle.step(deltaTime, gVehicleSimulationContext);
