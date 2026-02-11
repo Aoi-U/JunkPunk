@@ -79,7 +79,7 @@ void RenderSystem::Init()
 	zFar = tpp.zFar;
 	fov = tpp.fov;
 	viewMatrix = tpp.viewMatrix;
-	shadowMapper->Update(screenWidth / (float)screenHeight, zNear, zFar, fov, viewMatrix);
+	shadowMapper->Update(screenWidth / (float)screenHeight, zNear, zFar, glm::radians(fov), viewMatrix);
 }
 
 void RenderSystem::Reset()
@@ -100,7 +100,7 @@ void RenderSystem::Update(float fps, const PxRenderBuffer& buffer)
 	glm::vec3 right = glm::normalize(glm::vec3(glm::inverse(tpp.viewMatrix)[0]));
 	glm::vec3 up = glm::normalize(glm::vec3(glm::inverse(tpp.viewMatrix)[1]));
 	glm::vec3 pos = glm::vec3(glm::inverse(tpp.viewMatrix)[3]);
-	Frustum frust = CreateFrustum(tpp.zFar, tpp.zNear, tpp.fov, tpp.screenWidth / (float)tpp.screenHeight, -forward, right, up, glm::vec3(glm::inverse(tpp.viewMatrix)[3]));
+	Frustum frust = CreateFrustum(tpp.zFar, tpp.zNear, glm::radians(tpp.fov), tpp.screenWidth / (float)tpp.screenHeight, -forward, right, up, glm::vec3(glm::inverse(tpp.viewMatrix)[3]));
 
 	DrawShadowPass(frust);
 

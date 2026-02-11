@@ -34,10 +34,22 @@ GameState currentStateGlobal = GameState::STARTMENU;
 class CameraEditorPanelRenderer : public ImGuiPanelRendererInterface {
 public:
 	//CameraEditorPanelRenderer(){}
-	CameraEditorPanelRenderer(ThirdPersonCamera* mainCamera, Transform* cameraTransform) : mainCamera_ptr(mainCamera), cameraTransform_ptr(cameraTransform) 
+	CameraEditorPanelRenderer()
 	{
 		controller.AddEventListener(Events::Window::SCROLLED, [this](Event& e) { ScrollEventListener(e); });
 	}
+	void setCamera(ThirdPersonCamera* camera, Transform* transform)
+	{
+		mainCamera_ptr = camera;
+		cameraTransform_ptr = transform;
+	}
+
+	void Reset()
+	{
+		mainCamera_ptr = nullptr;
+		cameraTransform_ptr = nullptr;
+	}
+
 	virtual void render() override {
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 		ImGui::Text("Position: (%f,%f,%f)", cameraTransform_ptr->position.x, cameraTransform_ptr->position.y, cameraTransform_ptr->position.z);
@@ -54,8 +66,8 @@ public:
 	}
 
 private:
-	ThirdPersonCamera* mainCamera_ptr;
-	Transform* cameraTransform_ptr;
+	ThirdPersonCamera* mainCamera_ptr = nullptr;
+	Transform* cameraTransform_ptr = nullptr;
 
 	void ScrollEventListener(Event& e)
 	{
@@ -63,24 +75,28 @@ private:
 		double xoffset = e.GetParam<double>(Events::Window::Scrolled::XOFFSET);
 		double yoffset = e.GetParam<double>(Events::Window::Scrolled::YOFFSET);
 
-		switch (camera_scroll_type)
+		if (mainCamera_ptr)
 		{
-		case 0:
-			mainCamera_ptr->radius = glm::clamp(mainCamera_ptr->radius + static_cast<float>(yoffset) * 0.1f, 1.0f, 10.0f);
-			break;
-		case 1:
-			mainCamera_ptr->fov = glm::clamp(mainCamera_ptr->fov + static_cast<float>(yoffset) * 0.5f, 30.0f, 120.0f);
-			break;
-		case 2:
-			mainCamera_ptr->yaw += static_cast<float>(yoffset) * 0.1f;
-			break;
-		case 3:
-			mainCamera_ptr->pitch = glm::clamp(mainCamera_ptr->pitch + static_cast<float>(yoffset) * 0.1f, glm::radians(-89.0f), glm::radians(89.0f));
-			break;
+			switch (camera_scroll_type)
+			{
+			case 0:
+				mainCamera_ptr->radius = glm::clamp(mainCamera_ptr->radius + static_cast<float>(yoffset) * 0.1f, 1.0f, 10.0f);
+				break;
+			case 1:
+				mainCamera_ptr->fov = glm::clamp(mainCamera_ptr->fov + static_cast<float>(yoffset) * 0.5f, 30.0f, 120.0f);
+				break;
+			case 2:
+				mainCamera_ptr->yaw += static_cast<float>(yoffset) * 0.1f;
+				break;
+			case 3:
+				mainCamera_ptr->pitch = glm::clamp(mainCamera_ptr->pitch + static_cast<float>(yoffset) * 0.1f, glm::radians(-89.0f), glm::radians(89.0f));
+				break;
+			}
 		}
 	}
 
 };
+std::shared_ptr<CameraEditorPanelRenderer> cameraPanelRenderer; // testing
 
 // some sources that explain ecs
 // https://austinmorlan.com/posts/entity_component_system/ // the ecs i wrote is based on this article so best to read this to understand how it works 
@@ -220,14 +236,15 @@ void Game::Run()
 	Event event(Events::Audio::PLAY_SOUND);
 	event.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/jazz-background-music-325355.mp3");
 	event.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
-	event.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, -10.0f);
+	event.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, -20.0f);
 	controller.SendEvent(event);
 
-	
+
+
 	// imgui panel for debugging
 	camera_debug_panel = std::make_unique<ImGuiPanel>(window);
-	// get main camera and transform to pass to panel
-
+	cameraPanelRenderer = std::make_shared<CameraEditorPanelRenderer>();
+	camera_debug_panel->setPanelRenderer(cameraPanelRenderer);
 	
 
 	// when creating an entity that needs physics during runtime, add all necessary components first
@@ -287,6 +304,7 @@ void Game::Run()
 					}
 				}
 			}
+			audioSystem->Update();
 
 			if (gamepad->GetButtonDown(Buttons::PAUSE))
 			{
@@ -310,11 +328,13 @@ void Game::Run()
 			pauseSystem->Update();
 			// render some pause menu
 			camera_debug_panel->render();
+			audioSystem->Update();
 
 			break;
 		case STARTMENU:
 			// render main menu
 			menuSystem->Update();
+			audioSystem->Update();
 			break;
 
 		case ENDMENU:
@@ -377,8 +397,7 @@ void Game::ChangeGameStateListener(Event& e)
 			Entity cameraEntity = controller.GetEntityByTag("Camera");
 			ThirdPersonCamera& mainCamera = controller.GetComponent<ThirdPersonCamera>(cameraEntity);
 			Transform& cameraTransform = controller.GetComponent<Transform>(cameraEntity);
-			std::shared_ptr<CameraEditorPanelRenderer> cameraPanelRenderer = std::make_shared<CameraEditorPanelRenderer>(&mainCamera, &cameraTransform);
-			camera_debug_panel->setPanelRenderer(cameraPanelRenderer);
+			cameraPanelRenderer->setCamera(&mainCamera, &cameraTransform);
 			// end testing
 		}
 

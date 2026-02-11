@@ -97,9 +97,18 @@ void LevelLoaderSystem::LoadLevel()
 	// end camera entity
 
 	// create scene entities
+	//entity = controller.createEntity();
+	//auto loaded = LoadModel("assets/models/snowy_mountain_-_terrain/scene.gltf");
+	//controller.AddComponent(entity, Transform{ glm::vec3(0.0f, 0.0f, 0.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(500.0f) });
+	//controller.AddComponent(entity, StaticBody{ nullptr, loaded.first });
+	//controller.AddComponent(entity, Render{ loaded.first, loaded.second });
+	//controller.AddComponent(entity, PhysicsBody{});
+
+	// create dumpster
+	glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::pi<float>()/4.0f, glm::vec3(0.0f, 1.0f, 0.0f));
 	entity = controller.createEntity();
-	auto loaded = LoadModel("assets/models/snowy_mountain_-_terrain/scene.gltf");
-	controller.AddComponent(entity, Transform{ glm::vec3(0.0f, 0.0f, 0.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(500.0f) });
+	auto loaded = LoadModel("assets/models/dumpster/dumpster.gltf");
+	controller.AddComponent(entity, Transform{ glm::vec3(0.0f, -50.0f, 50.0f), glm::quat_cast(rotation), glm::vec3(50.0f) });
 	controller.AddComponent(entity, StaticBody{ nullptr, loaded.first });
 	controller.AddComponent(entity, Render{ loaded.first, loaded.second });
 	controller.AddComponent(entity, PhysicsBody{});
@@ -108,16 +117,16 @@ void LevelLoaderSystem::LoadLevel()
 	{
 		entity = controller.createEntity();
 		loaded = LoadModel("assets/models/rubix_2.0/scene.gltf");
-		controller.AddComponent(entity, Transform{ glm::vec3(0.0f, -30.0f + i * 10.0f, -20.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.7f) });
+		controller.AddComponent(entity, Transform{ glm::vec3(0.0f, -40.0f + i * 8.0f, -20.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.7f) });
 		controller.AddComponent(entity, RigidBody{ nullptr, loaded.first, loaded.second, 50.0f, true, glm::vec3(0.0f), glm::vec3(0.0f) });
 		controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
 		controller.AddComponent(entity, PhysicsBody{});
 		controller.AddComponent(entity, MovingObstacle{
 			std::vector<glm::vec3>{
-				{ 60.0f - i, -27.0f + i * 2 , 0.0f + i },
-				{ 60.0f - i, -27.0f + i * 2, -10.0f + i },
-				{ 50.0f - i, -27.0f + i * 2, -10.0f + i },
-				{ 50.0f - i, -27.0f + i * 2, 0.0f + i }
+				{ 60.0f - i, -30.0f + i * 2 , 0.0f + i },
+				{ 60.0f - i, -30.0f + i * 2, -10.0f + i },
+				{ 50.0f - i, -30.0f + i * 2, -10.0f + i },
+				{ 50.0f - i, -30.0f + i * 2, 0.0f + i }
 			},
 			0.0f,
 			0,
@@ -168,22 +177,12 @@ void LevelLoaderSystem::LoadLevel()
 	controller.AddComponent(entity, PhysicsBody{});
 	controller.AddComponent(entity, Trigger{ nullptr, 10.0f, 2.0f, 10.0f });
 	controller.AddComponent(entity, Transform{
-		glm::vec3(40.0f, -28.0f, 20.0f),
+		glm::vec3(25.0f, 35.0f, 120.0f),
 		glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
 		glm::vec3(1.0f)
 		});
 
 	// finish line
-	entity = controller.createEntity();
-	controller.AddComponent(entity, PhysicsBody{});
-	controller.AddComponent(entity, Trigger{ nullptr, 0.5f, 5.0f, 10.0f });
-	controller.AddComponent(entity, Transform{
-		glm::vec3(71.0f, -29.0f, -31.0f),
-		glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
-		glm::vec3(1.0f)
-		});
-	controller.AssignTag(entity, "FinishLine");
-
 	entity = controller.createEntity();
 	loaded = LoadModel("assets/models/lightning_capsule/scene.gltf");
 	controller.AddComponent(entity, Transform{ glm::vec3(36.0f, -30.0f, 7.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.25f) });
@@ -196,6 +195,18 @@ void LevelLoaderSystem::LoadLevel()
 		5.0f,
 		0.0f
 		});
+  entity = controller.createEntity();
+  loaded = LoadModel("assets/models/finishline/finishline.gltf");
+  //controller.AddComponent(entity, StaticBody{ nullptr, loaded.first });
+  controller.AddComponent(entity, Render{ loaded.first, loaded.second });
+  controller.AddComponent(entity, PhysicsBody{});
+  controller.AddComponent(entity, Trigger{ nullptr, 0.5f, 4.0f, 10.0f });
+  controller.AddComponent(entity, Transform{
+    glm::vec3(25.0f, -3.5f, 120.0f),
+    glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
+    glm::vec3(5.0f, 5.0f, 5.0f)
+    });
+  controller.AssignTag(entity, "FinishLine");
 }
 
 std::pair<std::shared_ptr<Model>, std::shared_ptr<AABB>> LevelLoaderSystem::LoadModel(std::string path)

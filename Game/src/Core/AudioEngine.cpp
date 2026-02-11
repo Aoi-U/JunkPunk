@@ -153,6 +153,14 @@ void CAudioEngine::PlayEvent(const string& strEventName) {
 	tFoundit->second->start();
 }
 
+void CAudioEngine::StopChannel(int nChannelId) {
+	auto tFoundIt = sgpImplementation->mChannels.find(nChannelId);
+	if (tFoundIt == sgpImplementation->mChannels.end())
+		return;
+	CAudioEngine::ErrorCheck(tFoundIt->second->stop());
+	sgpImplementation->mChannels.erase(tFoundIt);
+}
+
 void CAudioEngine::StopEvent(const string& strEventName, bool bImmediate) {
 	auto tFoundIt = sgpImplementation->mEvents.find(strEventName);
 	if (tFoundIt == sgpImplementation->mEvents.end())
@@ -219,6 +227,15 @@ float  CAudioEngine::dbToVolume(float dB)
 float  CAudioEngine::VolumeTodB(float volume)
 {
 	return 20.0f * log10f(volume);
+}
+
+void CAudioEngine::SetChannelPitch(int nChannelId, float fPitch)
+{
+	auto tFoundIt = sgpImplementation->mChannels.find(nChannelId);
+	if (tFoundIt == sgpImplementation->mChannels.end())
+		return;
+
+	CAudioEngine::ErrorCheck(tFoundIt->second->setPitch(fPitch));
 }
 
 void CAudioEngine::Shutdown() {

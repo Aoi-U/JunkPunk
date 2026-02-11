@@ -110,7 +110,7 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene, const glm::mat4& tra
 			vector.y = mesh->mNormals[i].y;
 			vector.z = mesh->mNormals[i].z;
 
-			vertex.normal = vector;
+			vertex.normal = normalMat * vector;
 		}
 		else
 		{

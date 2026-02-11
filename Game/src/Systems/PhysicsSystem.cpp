@@ -127,7 +127,6 @@ void PhysicsSystem::Update(float deltaTime)
 	}
 	actorsToDelete.clear();
 
-
 	// Update dynamic actor transforms in ECS
 	for (auto& entity : entities)
 	{
@@ -202,7 +201,6 @@ void PhysicsSystem::Update(float deltaTime)
 void PhysicsSystem::DeleteActors()
 {
 }
-
 
 void PhysicsSystem::Simulate(float deltaTime)
 {
@@ -441,14 +439,22 @@ void PhysicsSystem::CreateActorListener(Event& e)
 			PxQuat(transform.quatRotation.x, transform.quatRotation.y, transform.quatRotation.z, transform.quatRotation.w));
 
 		PxShape* shape = gPhysics->createShape(boxGeometry, *gGroundMaterial);
+
+		PxFilterData filterData(COLLISION_FLAG_OBSTACLE, COLLISION_FLAG_OBSTACLE_AGAINST, 0, 0);
+		shape->setSimulationFilterData(filterData);
+
 		shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, true);
 		shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, true);
 		shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, false);
+
 		PxRigidDynamic* dynamicActor = gPhysics->createRigidDynamic(bodyTransform);
 		dynamicActor->attachShape(*shape);
 		dynamicActor->setActorFlag(PxActorFlag::eVISUALIZATION, false);
 
-		dynamicActor->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, controller.HasComponent<MovingObstacle>(entity));
+		if (controller.HasComponent<MovingObstacle>(entity))
+		{
+			dynamicActor->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, true);
+		}
 
 		PxRigidBodyExt::updateMassAndInertia(*dynamicActor, rigidBodyComponent.mass);
 		rigidBodyComponent.actor = dynamicActor;
@@ -472,11 +478,6 @@ void PhysicsSystem::ReleaseActorCallback(Entity entity, RigidBody& rb)
 {
 	if (rb.actor)
 	{
-		gPhysicsScene->removeActor(*rb.actor);
-		rb.actor->release();
-		rb.actor = nullptr;
-
-		std::cout << "Entity: " << entity << ": Rigidbody removed" << std::endl;
 		actorsToDelete.push_back(rb.actor);
 	}
 }
@@ -486,11 +487,11 @@ void PhysicsSystem::ReleaseTriggerCallback(Entity entity, Trigger& trig)
 	if (trig.actor)
 	{
 		actorsToDelete.push_back(trig.actor);
-		/*trig.actor->userData = nullptr;
+		/*trig.actor->userData = nullptr; 
 		gPhysicsScene->removeActor(*trig.actor);
 		trig.actor->release();
 		trig.actor = nullptr;
 
-	std::cout << "Entity: " << entity << ": Trigger removed" << std::endl;*/
+		std::cout << "Entity: " << entity << ": Trigger removed" << std::endl;*/
 	}
 }

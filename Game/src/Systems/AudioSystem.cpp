@@ -3,6 +3,7 @@
 #include "AudioSystem.h"
 #include "../Components/Transform.h"
 #include "../ECSController.h"
+#include "../Components/Physics.h"
 
 
 
@@ -16,10 +17,42 @@ void AudioSystem::Init()
 	aEngine.LoadSound("assets/audio/jazz-background-music-325355.mp3", false);
 	aEngine.LoadSound("assets/audio/mariojump.mp3", false);
 	aEngine.LoadSound("assets/audio/MenuNavigation.wav", false);
+	aEngine.LoadSound("assets/audio/carAudio/carEngineIdle.mp3", false, true);
 
 	// event listeners
 	controller.AddEventListener(Events::Audio::PLAY_SOUND, [this](Event& e) {this->AudioEventListener(e); });
 	controller.AddEventListener(Events::Player::PLAYER_JUMPED, [this](Event& e) {this->JumpEventListener(e); });
+
+}
+
+void AudioSystem::Update() {
+	aEngine.Update();
+	if (currentStateGlobal == GameState::GAME)
+	{
+		Entity player = controller.GetEntityByTag("VehicleCommands");
+		auto& vehicleVelocity = controller.GetComponent<VehicleBody>(player);
+		float speed = glm::length(vehicleVelocity.linearVelocity);
+
+		if (engineSoundChannelId == -1)
+		{
+			engineSoundChannelId = aEngine.PlaySounds("assets/audio/carAudio/carEngineIdle.mp3", Vector3{ 0, 0, 0 }, -20.0f);
+		}
+
+		// Adjust pitch based on speed
+		float pitchValue = 0.5f + speed * 0.05f;
+		aEngine.SetChannelPitch(engineSoundChannelId, pitchValue);
+
+	}
+	else
+	{
+		// Stop engine sound when not in game (menu, pause, etc.)
+		// Reset channel ID when exiting game state
+		if (engineSoundChannelId != -1)  // Only stop if valid channel exists
+		{
+			aEngine.StopChannel(engineSoundChannelId);
+			engineSoundChannelId = -1;
+		}
+	}
 }
 
 void AudioSystem::AudioEventListener(Event& e)
