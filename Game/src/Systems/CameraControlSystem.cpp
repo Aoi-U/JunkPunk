@@ -9,8 +9,7 @@
 #include "../Components/Player.h"
 #include "../ECSController.h"
 #include "../Components/Powerup.h"
-
-static float baseRadius = -1.0f;
+#include "../Components/Physics.h"
 
 extern ECSController controller;
 
@@ -25,8 +24,6 @@ void CameraControlSystem::Init(std::shared_ptr<Gamepad> gamepad)
 void CameraControlSystem::Update(float deltaTime)
 {
 	Entity player = controller.GetEntityByTag("VehicleCommands");
-	auto& playerTransform = controller.GetComponent<Transform>(player);
-	auto& playerComp = controller.GetComponent<VehicleCommands>(player);
 
 	bool boosting = false;
 	if (controller.HasComponent<Powerup>(player)) {
@@ -38,11 +35,11 @@ void CameraControlSystem::Update(float deltaTime)
 	{
 		auto& camera = controller.GetComponent<ThirdPersonCamera>(entity);
 		auto& transform = controller.GetComponent<Transform>(entity);
+		auto& playerTransform = controller.GetComponent<Transform>(camera.playerEntity);
+		auto& vehicleComp = controller.GetComponent<VehicleBody>(camera.playerEntity);
 
-		if (boosting)
-			BoostCamera(camera, deltaTime);
-		else
-			ReturnCamera(camera, deltaTime);
+		float speed = glm::length(vehicleComp.linearVelocity);
+		camera.radius = glm::mix(camera.baseRadius, camera.baseRadius * 1.5f, glm::smoothstep(0.0f, 20.0f, speed)); // zoom out the camera based on speed using smoothstep for a smoother transition
 
 		if (gamepad->Connected())
 		{
@@ -114,17 +111,4 @@ void CameraControlSystem::MouseMovedListener(Event& e)
 		camera.pitch = glm::clamp(camera.pitch, glm::radians(-89.0f), glm::radians(89.0f));
 
 	}
-}
-
-void CameraControlSystem::BoostCamera(ThirdPersonCamera& camera, float deltaTime) {
-	if (baseRadius < 0.0f)
-		baseRadius = camera.radius;
-	float boostRadius = baseRadius * 1.5f;
-	camera.radius = glm::mix(camera.radius, boostRadius, 8.0f * deltaTime);
-}
-
-void CameraControlSystem::ReturnCamera(ThirdPersonCamera& camera, float deltaTime) {
-	if (baseRadius < 0.0f)
-		baseRadius = camera.radius;
-	camera.radius = glm::mix(camera.radius, baseRadius, 2.5f * deltaTime);
 }

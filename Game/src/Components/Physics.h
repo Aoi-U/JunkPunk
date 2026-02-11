@@ -4,11 +4,12 @@
 #include <PxPhysicsAPI.h>
 
 #include "glm/glm.hpp"
-#include "../Core/Model.h"
-#include "../Core/BoundingVolumes.h"
 #include "../Core/Vehicle/MainVehicle.h"
 
 using namespace physx;
+
+class Model;
+struct AABB;
 
 struct PhysicsBody
 {

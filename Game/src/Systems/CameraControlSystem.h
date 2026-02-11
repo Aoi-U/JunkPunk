@@ -21,10 +21,6 @@ private:
 
 	void MouseMovedListener(Event& e);
 
-	void BoostCamera(ThirdPersonCamera& camera, float deltaTime);
-
-	void ReturnCamera(ThirdPersonCamera& camera, float deltaTime);
-
 	std::shared_ptr<Gamepad> gamepad;
 	int screenWidth = 1280;
 	int screenHeight = 720;

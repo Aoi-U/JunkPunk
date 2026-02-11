@@ -90,10 +90,10 @@ void LevelLoaderSystem::LoadLevel()
 	glm::mat4 viewMatrix = glm::lookAt(cameraPos, glm::vec3(0.0f, -5.0f, 0.0f) + glm::vec3(0.0f, heightOffset, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	glm::mat4 projectionMatrix = glm::perspective(glm::radians(fov), 1280 / (float)720, zNear, zFar);
 
-	Entity entity = controller.createEntity();
-	controller.AddComponent(entity, ThirdPersonCamera{ radius, heightOffset, lerpSpeed, horizontalLookSpeed, verticalLookSpeed, yaw, pitch, fov, zNear, zFar, 1280, 720, viewMatrix, projectionMatrix });
-	controller.AddComponent(entity, Transform{ cameraPos, glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(1.0f) });
-	controller.AssignTag(entity, "Camera");
+	Entity camera = controller.createEntity();
+	controller.AddComponent(camera, ThirdPersonCamera{ radius, radius, heightOffset, lerpSpeed, horizontalLookSpeed, verticalLookSpeed, yaw, pitch, fov, zNear, zFar, 1280, 720, viewMatrix, projectionMatrix });
+	controller.AddComponent(camera, Transform{ cameraPos, glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(1.0f) });
+	controller.AssignTag(camera, "Camera");
 	// end camera entity
 
 	// create scene entities
@@ -106,7 +106,7 @@ void LevelLoaderSystem::LoadLevel()
 
 	// create dumpster
 	glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::pi<float>()/4.0f, glm::vec3(0.0f, 1.0f, 0.0f));
-	entity = controller.createEntity();
+	Entity entity = controller.createEntity();
 	auto loaded = LoadModel("assets/models/dumpster/dumpster.gltf");
 	controller.AddComponent(entity, Transform{ glm::vec3(0.0f, -50.0f, 50.0f), glm::quat_cast(rotation), glm::vec3(50.0f) });
 	controller.AddComponent(entity, StaticBody{ nullptr, loaded.first });
@@ -153,6 +153,8 @@ void LevelLoaderSystem::LoadLevel()
 	controller.AddComponent(entity, Render{ loaded.first, loaded.second });
 	controller.AddComponent(entity, PhysicsBody{});
 	controller.AssignTag(entity, "VehicleCommands");
+	auto& cameraComp = controller.GetComponent<ThirdPersonCamera>(camera); // set the camera's player entity to the vehicle
+	cameraComp.playerEntity = entity;
 
 	ParticleEmitter rightWheel = ParticleEmitter{};
 	rightWheel.Init(20000);

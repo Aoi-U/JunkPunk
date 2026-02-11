@@ -2,6 +2,7 @@
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/norm.hpp>
+#include <algorithm>
 
 #include "../Components/Transform.h"
 #include "../Components/Physics.h"

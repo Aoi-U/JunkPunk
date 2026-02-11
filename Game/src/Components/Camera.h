@@ -2,9 +2,11 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include "../Core/Types.h"
 
 struct ThirdPersonCamera
 {
+	float baseRadius;
 	float radius;
 	float heightOffset;
 	float lerpSpeed;
@@ -22,6 +24,8 @@ struct ThirdPersonCamera
 
 	glm::mat4 viewMatrix;
 	glm::mat4 projectionMatrix;
+
+	Entity playerEntity = MAX_ENTITIES; // entity that the camera will follow
 	
 	glm::mat4 getProjectionMatrix() const {
 		return glm::perspective(glm::radians(fov), screenWidth / (float)screenHeight, zNear, zFar);

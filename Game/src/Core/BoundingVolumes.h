@@ -10,9 +10,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-#include "../Components/Transform.h"
-#include "../Core/Model.h"
-
+struct Transform;
 class Model;
 
 struct Plane

@@ -1,4 +1,6 @@
 #include "PhysicsSystem.h"
+#include "../Core/Model.h"
+#include "../Core/BoundingVolumes.h"
 #include "../Components/Transform.h"
 //#include "../Components/Physics.h"
 #include "../Components/Player.h"
