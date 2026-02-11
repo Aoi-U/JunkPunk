@@ -8,6 +8,9 @@
 #include "../Components/Camera.h"
 #include "../Components/Player.h"
 #include "../ECSController.h"
+#include "../Components/Powerup.h"
+
+static float baseRadius = -1.0f;
 
 extern ECSController controller;
 
@@ -25,10 +28,21 @@ void CameraControlSystem::Update(float deltaTime)
 	auto& playerTransform = controller.GetComponent<Transform>(player);
 	auto& playerComp = controller.GetComponent<VehicleCommands>(player);
 
+	bool boosting = false;
+	if (controller.HasComponent<Powerup>(player)) {
+		auto& p = controller.GetComponent<Powerup>(player);
+		boosting = p.active;
+	}
+
 	for (auto const& entity : entities)
 	{
 		auto& camera = controller.GetComponent<ThirdPersonCamera>(entity);
 		auto& transform = controller.GetComponent<Transform>(entity);
+
+		if (boosting)
+			BoostCamera(camera, deltaTime);
+		else
+			ReturnCamera(camera, deltaTime);
 
 		if (gamepad->Connected())
 		{
@@ -102,3 +116,15 @@ void CameraControlSystem::MouseMovedListener(Event& e)
 	}
 }
 
+void CameraControlSystem::BoostCamera(ThirdPersonCamera& camera, float deltaTime) {
+	if (baseRadius < 0.0f)
+		baseRadius = camera.radius;
+	float boostRadius = baseRadius * 1.5f;
+	camera.radius = glm::mix(camera.radius, boostRadius, 8.0f * deltaTime);
+}
+
+void CameraControlSystem::ReturnCamera(ThirdPersonCamera& camera, float deltaTime) {
+	if (baseRadius < 0.0f)
+		baseRadius = camera.radius;
+	camera.radius = glm::mix(camera.radius, baseRadius, 2.5f * deltaTime);
+}

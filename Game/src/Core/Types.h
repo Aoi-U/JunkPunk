@@ -68,7 +68,8 @@ enum Keys
 	KEY_RIGHT = 'D',
 	KEY_JUMP = ' ',
 	KEY_RESET = 'R',
-	KEY_PAUSE = 'Q'
+	KEY_PAUSE = 'Q',
+	KEY_USE = 'E'
 };
 
 enum GameState

@@ -3,10 +3,12 @@
 //#include "../Components/Physics.h"
 #include "../Components/Player.h"
 #include "../Components/Obstacle.h"
+#include "../Components/Powerup.h"
 
 #include "../ECSController.h"
 
 extern ECSController controller;
+bool usedBoost = false;
 
 PhysicsSystem::PhysicsSystem()
 {
@@ -97,6 +99,18 @@ void PhysicsSystem::Update(float deltaTime)
 
 	Command command;
 	command.throttle = vehicleCommands.throttle;
+	
+	if (controller.HasComponent<Powerup>(vehicleEntity)) {
+		auto& p = controller.GetComponent<Powerup>(vehicleEntity);
+		if (p.active && p.type == 1) {
+			gVehicle->ApplyBoost(2.0f);
+			usedBoost = true;
+		}
+	}
+	else if (usedBoost) {
+		gVehicle->ClearBoost();
+		usedBoost = false;
+	}
 	command.brake = vehicleCommands.brake;
 	command.steer = vehicleCommands.steer;
 	gVehicle->setCommand(command);

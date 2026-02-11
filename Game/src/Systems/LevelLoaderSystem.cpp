@@ -6,6 +6,8 @@
 #include "../Components/Obstacle.h"
 #include "../Components/Transform.h"
 #include "../Components/Particles.h"
+#include "../Components/Powerup.h"
+
 
 
 #include "../ECSController.h"
@@ -181,6 +183,18 @@ void LevelLoaderSystem::LoadLevel()
 		});
 
 	// finish line
+	entity = controller.createEntity();
+	loaded = LoadModel("assets/models/lightning_capsule/scene.gltf");
+	controller.AddComponent(entity, Transform{ glm::vec3(36.0f, -30.0f, 7.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.25f) });
+	controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 2.0f, 1.0f });
+	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
+	controller.AddComponent(entity, PhysicsBody{});
+	controller.AddComponent(entity, Powerup{
+		1,
+		false,
+		5.0f,
+		0.0f
+		});
   entity = controller.createEntity();
   loaded = LoadModel("assets/models/finishline/finishline.gltf");
   //controller.AddComponent(entity, StaticBody{ nullptr, loaded.first });

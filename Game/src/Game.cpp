@@ -9,6 +9,7 @@
 #include "Components/Physics.h"
 #include "Components/Obstacle.h"
 #include "Components/Particles.h"
+#include "Components/Powerup.h"
 
 #include "ECSController.h"
 #include "Core/Types.h"
@@ -21,6 +22,8 @@ bool playerWon = false;
 float winTimer = 0.0f;
 const float WIN_DELAY = 5.0f;
 float fadeAlpha = 0.0f;
+Entity playerEntity;
+bool playerExists = false;
 
 // Define a global ECSController instance so systems can access it
 ECSController controller;
@@ -124,6 +127,7 @@ Game::Game()
 	controller.RegisterComponent<Trigger>();
 	controller.RegisterComponent<MovingObstacle>();
 	controller.RegisterComponent<ParticleEmitter>();
+	controller.RegisterComponent<Powerup>();
 
 	// register systems (you must register systems before setting component signatures) 
 	loaderSystem = controller.RegisterSystem<LevelLoaderSystem>();
@@ -214,6 +218,15 @@ Game::Game()
 			winTimer = 0.0f;
 			std::cout << "you win!" << std::endl;
 		}
+
+		if (controller.HasComponent<Powerup>(triggerEntity)) {
+			if (!playerExists) return;
+			Entity player = playerEntity;
+			auto pickup = controller.GetComponent<Powerup>(triggerEntity);
+			controller.AddComponent(player, pickup);
+			std::cout << "Boost collected!" << std::endl;
+			controller.DestroyEntity(triggerEntity);
+		}
 		});
 }
 
@@ -246,6 +259,9 @@ void Game::Run()
 		switch (currentState)
 		{
 		case GAME:
+		{
+			if (!playerExists) return;
+			Entity player = playerEntity;
 			// physics update first to prevent twitching/jittering objects
 			while (time->accumulator >= time->deltaTime)
 			{
@@ -278,6 +294,16 @@ void Game::Run()
 					controller.SendEvent(event);
 				}
 			}
+			if (controller.HasComponent<Powerup>(player)) {
+				auto& p = controller.GetComponent<Powerup>(player);
+				if (p.active) {
+					p.elapsed += time->frameTime;
+					if (p.elapsed >= p.duration) {
+						controller.RemoveComponent<Powerup>(player);
+						std::cout << "Powerup ended" << std::endl;
+					}
+				}
+			}
 			audioSystem->Update();
 
 			if (gamepad->GetButtonDown(Buttons::PAUSE))
@@ -286,9 +312,17 @@ void Game::Run()
 				event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::PAUSED);
 				controller.SendEvent(event);
 			}
+			if (controller.HasComponent<Powerup>(player)) {
+				auto& p = controller.GetComponent<Powerup>(player);
+				if (gamepad->GetButtonDown(Buttons::POWERUP) && !p.active) {
+					p.active = true;
+					p.elapsed = 0.0f;
+					std::cout << "Boost Used" << std::endl;
+				}
+			}
 
 			break;
-
+		}
 		case PAUSED:
 			renderSystem->Update(time->fps(), physicsSystem->GetRenderBuffer());
 			pauseSystem->Update();
@@ -338,6 +372,8 @@ void Game::ChangeGameStateListener(Event& e)
 		menuSystem->Reset();
 		renderSystem->Reset();
 
+		playerExists = false;
+
 		time->Pause();
 		currentState = state;
 		currentStateGlobal = state;
@@ -353,6 +389,9 @@ void Game::ChangeGameStateListener(Event& e)
 			loaderSystem->LoadLevel(); 
 			renderSystem->Init();
 			physicsSystem->Init();
+			
+			playerEntity = controller.GetEntityByTag("VehicleCommands");
+			playerExists = true;
 
 			// testing
 			Entity cameraEntity = controller.GetEntityByTag("Camera");
@@ -390,6 +429,8 @@ void Game::ChangeGameStateListener(Event& e)
 	{
 		controller.Reset();
 		physicsSystem->Cleanup();
+
+
 		loaderSystem->LoadLevel();
 		renderSystem->Init();
 		physicsSystem->Init();
@@ -412,6 +453,9 @@ void Game::KeyboardInputListener(Event& e)
 	int action = e.GetParam<bool>(Events::Window::Input::ACTION);
 	char key = static_cast<char>(keyRecieve);
 
+	if (!playerExists) return;
+	Entity player = playerEntity;
+
 	if (currentState == GameState::GAME)
 	{
 		if (key == Keys::KEY_PAUSE && action == true)
@@ -419,6 +463,14 @@ void Game::KeyboardInputListener(Event& e)
 			Event event(Events::GameState::NEW_STATE);
 			event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::PAUSED);
 			controller.SendEvent(event);
+		}
+		if (controller.HasComponent<Powerup>(player)) {
+			auto& p = controller.GetComponent<Powerup>(player);
+			if (key == Keys::KEY_USE && action == true && !p.active) {
+				p.active = true;
+				p.elapsed = 0.0f;
+				std::cout << "Boost Used" << std::endl;
+			}
 		}
 	}
 }

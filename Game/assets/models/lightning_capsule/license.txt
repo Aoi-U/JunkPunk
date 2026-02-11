@@ -1,0 +1,11 @@
+Model Information:
+* title:	LIGHTNING CAPSULE
+* source:	https://sketchfab.com/3d-models/lightning-capsule-1477900e393d468ebfef7e7540ed69b6
+* author:	carlosbarrera_10 (https://sketchfab.com/carlosbarrera_10)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "LIGHTNING CAPSULE" (https://sketchfab.com/3d-models/lightning-capsule-1477900e393d468ebfef7e7540ed69b6) by carlosbarrera_10 (https://sketchfab.com/carlosbarrera_10) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
