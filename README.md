@@ -15,30 +15,30 @@ Setup:
 The visual studio configurations should all be set, but if you get errors let me know - Aoi
 
 Controls:
-  Controller:
-    In game:
-      A: Jump
-      B: Use Item
-      Joysticks: Turn/Look around
-      Triggers: Throttle/Brake
-      Start: Pause
-      Back: Reset vehicle
-    In UI:
-      Left joystick: Navigate UI
-      A: Confirm
-  Keyboard:
-    In Game:
-      Space: Jump
-      E: Use Item
-      W: Throttle
-      S: Brake
-      A: Steer Left
-      D: Steer Right
-      R: Reset vehicle
-      Q: Pause
-    In UI:
-      W: Navigate up
-      S: Navigate down
-      A: Navigate Left
-      D: Navigate Right
-      Space: Confirm
+   Controller:
+      In game:
+         A: Jump
+         B: Use Item
+         Joysticks: Turn/Look around
+         Triggers: Throttle/Brake
+         Start: Pause
+         Back: Reset vehicle
+      In UI:
+         Left joystick: Navigate UI   
+         A: Confirm
+   Keyboard:
+      In Game:
+         Space: Jump   
+         E: Use Item
+         W: Throttle
+         S: Brake
+         A: Steer Left
+         D: Steer Right
+         R: Reset vehicle
+         Q: Pause
+      In UI:
+         W: Navigate up
+         S: Navigate down
+         A: Navigate Left
+         D: Navigate Right
+         Space: Confirm
