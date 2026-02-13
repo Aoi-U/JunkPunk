@@ -17,6 +17,7 @@ PhysicsSystem::PhysicsSystem()
 	controller.AddEventListener(Events::Physics::CREATE_ACTOR, [this](Event& e) { this->CreateActorListener(e); });
 	controller.AddEventListener(Events::Player::PLAYER_JUMPED, [this](Event& e) { this->JumpEventListener(e); });
 	controller.AddEventListener(Events::Player::RESET_VEHICLE, [this](Event& e) { this->ResetVehicleEventListener(e); });
+	controller.AddEventListener(Events::Checkpoint::REACHED, [this](Event& e) {this->CheckpointReachedListener(e); });
 
 	auto rigidBodyArray = controller.GetComponentArray<RigidBody>();
 	rigidBodyArray->BindOnRemoveCallback([this](Entity entity, RigidBody& rb) { this->ReleaseActorCallback(entity, rb); });
@@ -117,17 +118,9 @@ void PhysicsSystem::Update(float deltaTime)
 	command.steer = vehicleCommands.steer;
 	gVehicle->setCommand(command);
 
-	gVehicle->step(deltaTime);
-	gPhysicsScene->simulate(deltaTime);
-	gPhysicsScene->fetchResults(true);
+	Simulate(deltaTime);
 
-	// delete any actors that were marked for deletion during the simulation step
-	for (PxActor* actor : actorsToDelete)
-	{
-		gPhysicsScene->removeActor(*actor);
-		actor->release();
-	}
-	actorsToDelete.clear();
+	DeleteActorsQueue();
 
 	// Update dynamic actor transforms in ECS
 	for (auto& entity : entities)
@@ -200,8 +193,15 @@ void PhysicsSystem::Update(float deltaTime)
 	}
 }
 
-void PhysicsSystem::DeleteActors()
+void PhysicsSystem::DeleteActorsQueue()
 {
+	// delete any actors that were marked for deletion during the simulation step
+	for (PxActor* actor : actorsToDelete)
+	{
+		gPhysicsScene->removeActor(*actor);
+		actor->release();
+	}
+	actorsToDelete.clear();
 }
 
 void PhysicsSystem::Simulate(float deltaTime)
@@ -472,8 +472,20 @@ void PhysicsSystem::JumpEventListener(Event& e)
 
 void PhysicsSystem::ResetVehicleEventListener(Event& e)
 {
-	//gVehicle->respawnAtCheckpoint();
-	gVehicle->resetTransform();
+	gVehicle->respawnAtCheckpoint();
+	//gVehicle->resetTransform();
+}
+
+void PhysicsSystem::CheckpointReachedListener(Event& e)
+{
+	Entity playerEntity = e.GetParam<Entity>(Events::Checkpoint::Reached::PLAYER_ENTITY);
+	Entity checkpointEntity = e.GetParam<Entity>(Events::Checkpoint::Reached::CHECKPOINT_ENTITY);
+
+	auto& transform = controller.GetComponent<Transform>(checkpointEntity);
+	auto& checkpoint = controller.GetComponent<CheckPoint>(checkpointEntity);
+	glm::vec3 position = transform.position;
+	glm::quat rotation = checkpoint.orientation;
+	gVehicle->setCheckpoint(position, rotation);
 }
 
 void PhysicsSystem::ReleaseActorCallback(Entity entity, RigidBody& rb)

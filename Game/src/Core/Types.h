@@ -127,6 +127,7 @@ namespace Events::Window::Mouse_Moved
 	const ParamId XPOS = "Events::Window::Mouse_Moved::XPOS"_hash; 
 	const ParamId YPOS = "Events::Window::Mouse_Moved::YPOS"_hash;
 }
+// end window events
 
 // audio events
 namespace Events::Audio // audio related events
@@ -146,6 +147,7 @@ namespace Events::Audio::Stop_Sound // parameter for stop sound event
 {
 	const ParamId SOUND_NAME = "Events::Audio::StopSound::SOUND_NAME"_hash; // sound file name
 }
+// end audio events
 
 // physics events
 namespace Events::Physics 
@@ -171,6 +173,7 @@ namespace Events::Physics::Create_Actor
 {
 	const ParamId ENTITY = "Events::Physics::Create_Actor::ENTITY"_hash;
 }
+// end physics events
 
 // player events
 namespace Events::Player // player related events
@@ -187,6 +190,19 @@ namespace Events::Player::Player_Jumped // parameters for player jumped event
 namespace Events::Player::Reset_Vehicle // parameters for reset vehicle event
 {
 	const ParamId ENTITY = "Events::Player::Reset_Vehicle::ENTITY"_hash;
+}
+// end player events
+
+// checkpoint events
+namespace Events::Checkpoint
+{
+	const EventId REACHED = "Events::Checkpoint::REACHED"_hash;
+}
+
+namespace Events::Checkpoint::Reached
+{
+	const ParamId PLAYER_ENTITY = "Events::Checkpoint::Reached::PLAYER_ENTITY"_hash;
+	const ParamId CHECKPOINT_ENTITY = "Events::Checkpoint::Reached::CHECKPOINT_ENTITY"_hash;
 }
 
 extern bool playerWon;

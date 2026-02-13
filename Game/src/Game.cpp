@@ -128,6 +128,7 @@ Game::Game()
 	controller.RegisterComponent<MovingObstacle>();
 	controller.RegisterComponent<ParticleEmitter>();
 	controller.RegisterComponent<Powerup>();
+	controller.RegisterComponent<CheckPoint>();
 
 	// register systems (you must register systems before setting component signatures) 
 	loaderSystem = controller.RegisterSystem<LevelLoaderSystem>();
@@ -211,6 +212,8 @@ Game::Game()
 	controller.AddEventListener(Events::Window::INPUT, [this](Event& e) { this->KeyboardInputListener(e); });
 	controller.AddEventListener(Events::Physics::TRIGGER_ENTER, [this](Event& e) {
 		Entity triggerEntity = e.GetParam<Entity>(Events::Physics::Trigger_Enter::ENTITY_ONE);
+		Entity playerEntity = e.GetParam<Entity>(Events::Physics::Trigger_Enter::ENTITY_TWO);
+
 		Entity finishLine = controller.GetEntityByTag("FinishLine");
 		if (triggerEntity == finishLine && !playerWon) {
 			playerWon = true;
@@ -218,13 +221,21 @@ Game::Game()
 			winTimer = 0.0f;
 			std::cout << "you win!" << std::endl;
 		}
-
-		if (controller.HasComponent<Powerup>(triggerEntity)) {
+		else if (controller.HasComponent<Powerup>(triggerEntity)) {
 			if (!playerExists) return;
 			Entity player = playerEntity;
 			auto pickup = controller.GetComponent<Powerup>(triggerEntity);
 			controller.AddComponent(player, pickup);
 			std::cout << "Boost collected!" << std::endl;
+			controller.DestroyEntity(triggerEntity);
+		}
+		else if (controller.HasComponent<CheckPoint>(triggerEntity))
+		{
+			Event e(Events::Checkpoint::REACHED);
+			e.SetParam<Entity>(Events::Checkpoint::Reached::PLAYER_ENTITY, playerEntity);
+			e.SetParam<Entity>(Events::Checkpoint::Reached::CHECKPOINT_ENTITY, triggerEntity);
+			controller.SendEvent(e);
+
 			controller.DestroyEntity(triggerEntity);
 		}
 		});
@@ -236,7 +247,7 @@ void Game::Run()
 	Event event(Events::Audio::PLAY_SOUND);
 	event.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/jazz-background-music-325355.mp3");
 	event.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
-	event.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, -20.0f);
+	event.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, -50.0f);
 	controller.SendEvent(event);
 
 

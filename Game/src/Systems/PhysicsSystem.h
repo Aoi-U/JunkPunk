@@ -46,7 +46,7 @@ private:
 
 	std::vector<PxActor*> actorsToDelete; // list of actors to delete 
 
-	void DeleteActors();
+	void DeleteActorsQueue();
 
 	void Simulate(float deltaTime); // run a physics simulation step
 
@@ -64,6 +64,8 @@ private:
 	void JumpEventListener(Event& e); // listens for jump events
 
 	void ResetVehicleEventListener(Event& e); // listens for vehicle reset events
+	
+	void CheckpointReachedListener(Event& e); // listens for checkpoint events
 
 	// callbacks
 
