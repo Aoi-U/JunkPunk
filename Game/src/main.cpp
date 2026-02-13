@@ -4,7 +4,6 @@
 
 #include "Game.h"
 
-
 int main()
 {
 	glfwInit();
@@ -13,5 +12,4 @@ int main()
 		game.Run();
 	}
 	glfwTerminate();
-
 }

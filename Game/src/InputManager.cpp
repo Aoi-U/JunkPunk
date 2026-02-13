@@ -1,11 +1,15 @@
 #include "InputManager.h"
+#include "../Gamepad.h"
 
 //#include <utility>
 
-InputManager::InputManager(ResizeCallback resizeCallback)
-  : mResizeCallback(std::move(resizeCallback)), dirty_scroll_value(0), current_scroll_value(0)
+InputManager::InputManager()
+  : dirty_scroll_value(0), current_scroll_value(0)
 {
+
 }
+
+InputManager::~InputManager() = default;
 
 void InputManager::keyCallback(int const key, int const scancode, int const action, int const mods)
 {
@@ -16,14 +20,6 @@ void InputManager::keyCallback(int const key, int const scancode, int const acti
   else if (action == GLFW_RELEASE)
   {
     mKeyStatusMap[key] = false;
-  }
-}
-
-void InputManager::windowSizeCallback(int const width, int const height)
-{
-  if (mResizeCallback != nullptr)
-  {
-    mResizeCallback(width, height);
   }
 }
 

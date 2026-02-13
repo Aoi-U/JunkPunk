@@ -1,89 +1,85 @@
 #include "Window.h"
+#include "ECSController.h"
+
+int Window::fbWidth = 0;
+int Window::fbHeight = 0;
+std::unordered_map<int, bool> Window::mKeyStatusMap{};
+std::unordered_map<int, bool> Window::mMouseStatusMap{};
+
+
+extern ECSController controller;
 
 void Window::keyMetaCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-	InputManager* callbacks = static_cast<InputManager*>(glfwGetWindowUserPointer(window));
-
-	bool forward_to_user_callback = true;
-	// Forward the key event to ImGui
-	/*if (ImGui::GetCurrentContext()) {
-		ImGui_ImplGlfw_KeyCallback(window, key, scancode, action, mods);
-		forward_to_user_callback = !ImGui::GetIO().WantCaptureKeyboard;
-	}*/
-
-	// If ImGui doesn't want to capture the keyboard, call the user-defined callback
-	if (forward_to_user_callback && callbacks) {
-		callbacks->keyCallback(key, scancode, action, mods);
+	if (action == GLFW_PRESS)
+	{
+		mKeyStatusMap[key] = true;
+		Event event(Events::Window::INPUT);
+		event.SetParam<int>(Events::Window::Input::KEY, key);
+		event.SetParam<bool>(Events::Window::Input::ACTION, true);
+		controller.SendEvent(event);
+	}
+	else if (action == GLFW_RELEASE)
+	{
+		mKeyStatusMap[key] = false;
+		Event event(Events::Window::INPUT);
+		event.SetParam<int>(Events::Window::Input::KEY, key);
+		event.SetParam<bool>(Events::Window::Input::ACTION, false);
+		controller.SendEvent(event);
 	}
 }
 
 
 void Window::mouseButtonMetaCallback(GLFWwindow* window, int button, int action, int mods) {
-	InputManager* callbacks = static_cast<InputManager*>(glfwGetWindowUserPointer(window));
-
-	bool forward_to_user_callback = true;
-	// Forward the event to ImGui
-	/*if (ImGui::GetCurrentContext()) {
-		ImGui_ImplGlfw_MouseButtonCallback(window, button, action, mods);
-		forward_to_user_callback = !ImGui::GetIO().WantCaptureMouse;
-	}*/
-
-	// If ImGui doesn't want to capture the mouse, call the user-defined callback
-	if (forward_to_user_callback && callbacks) {
-		callbacks->mouseButtonCallback(button, action, mods);
-	}
+	mMouseStatusMap[button] = action;
 }
 
 
 void Window::cursorPosMetaCallback(GLFWwindow* window, double xpos, double ypos) {
-	InputManager* callbacks = static_cast<InputManager*>(glfwGetWindowUserPointer(window));
-
-	bool forward_to_user_callback = true;
-	// Forward the event to ImGui
-	/*if (ImGui::GetCurrentContext()) {
-		ImGui_ImplGlfw_CursorPosCallback(window, xpos, ypos);
-		forward_to_user_callback = !ImGui::GetIO().WantCaptureMouse;
-	}*/
-
 	// Call user-defined cursor position callback only if ImGui isn't capturing the mouse
-	if (forward_to_user_callback && callbacks) {
-		callbacks->cursorPosCallback(xpos, ypos);
-	}
-}
 
-void Window::windowSizeMetaCallback(GLFWwindow* window, int width, int height) {
-	InputManager* callbacks = static_cast<InputManager*>(glfwGetWindowUserPointer(window));
-
-	// Call the user-defined callback for window resizing
-	if (callbacks) {
-		callbacks->windowSizeCallback(width, height);
+	if (mMouseStatusMap[GLFW_MOUSE_BUTTON_RIGHT] == GLFW_PRESS) {
+		// User is dragging with right mouse button held down
+		Event event(Events::Window::MOUSEMOVED);
+		event.SetParam<double>(Events::Window::Mouse_Moved::XPOS, xpos);
+		event.SetParam<double>(Events::Window::Mouse_Moved::YPOS, ypos);
+		controller.SendEvent(event);
 	}
 }
 
 void Window::scrollMetaCallback(GLFWwindow* window, double xoffset, double yoffset) {
-	InputManager* callbacks = static_cast<InputManager*>(glfwGetWindowUserPointer(window));
+	Event event(Events::Window::SCROLLED);
+	event.SetParam<double>(Events::Window::Scrolled::XOFFSET, xoffset);
+	event.SetParam<double>(Events::Window::Scrolled::YOFFSET, yoffset);
+	controller.SendEvent(event);
 
-	bool forward_to_user_callback = true;
-	// Forward the scroll event to ImGui
-	//if (ImGui::GetCurrentContext()) {
-	//	ImGui_ImplGlfw_ScrollCallback(window, xoffset, yoffset);
-	//	forward_to_user_callback = !ImGui::GetIO().WantCaptureMouse;
-	//}
-
-	// If ImGui isn't capturing scroll input, call the user-defined scroll callback
-	if (forward_to_user_callback && callbacks) {
-		callbacks->scrollCallback(xoffset, yoffset);
-	}
 }
 
-Window::Window(int width, int height, const char* title, std::shared_ptr<InputManager> im)
-	: window(nullptr), inputManager(im)
+
+void Window::framebuffer_size_callback(GLFWwindow* window, int width, int height)
+{
+	fbWidth = width;
+	fbHeight = height;
+	glViewport(0, 0, width, height);
+
+	Event event(Events::Window::RESIZED);
+	event.SetParam<unsigned int>(Events::Window::Resized::WIDTH, static_cast<unsigned int>(width));
+	event.SetParam<unsigned int>(Events::Window::Resized::HEIGHT, static_cast<unsigned int>(height));
+	controller.SendEvent(event);
+}
+
+Window::Window(int width, int height, const char* title)
+	: window(nullptr)
 {
 	// specify OpenGL version
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); 
 	glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
+	glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
+
+	glfwWindowHint(GLFW_SAMPLES, 4); // 4x MSAA
+
 
 	// create window
 	window = std::unique_ptr<GLFWwindow, WindowDeleter>(glfwCreateWindow(width, height, title, NULL, NULL));
@@ -92,6 +88,7 @@ Window::Window(int width, int height, const char* title, std::shared_ptr<InputMa
 		return;
 	}
 	makeContextCurrent();
+	
 
 	// initialize OpenGL extensions for the current context (this window)
 	if (!gladLoadGL()) {
@@ -99,32 +96,26 @@ Window::Window(int width, int height, const char* title, std::shared_ptr<InputMa
 		return;
 	}	
 
-	glfwSetWindowSizeCallback(window.get(), defaultWindowSizeCallback);
+	controller.AddEventListener(Events::Window::CLOSE, [this](Event& e) { this->WindowCloseListener(e); });
 
 	setCallbacks();
 }
 
-glm::ivec2 Window::getWindowPos() const {
-	int x, y;
-	glfwGetWindowPos(window.get(), &x, &y);
-	return glm::ivec2(x, y);
-}
-
-
-glm::ivec2 Window::getWindowSize() const {
-	int w, h;
-	glfwGetWindowSize(window.get(), &w, &h);
-	return glm::ivec2(w, h);
-}
 
 void Window::setCallbacks()
 {
-	glfwSetWindowUserPointer(window.get(), inputManager.get());
+	glfwSetFramebufferSizeCallback(window.get(), framebuffer_size_callback);
+	glfwSetWindowSizeCallback(window.get(), defaultWindowSizeCallback);
 
+	glfwGetFramebufferSize(window.get(), &fbWidth, &fbHeight);
 	glfwSetKeyCallback(window.get(), keyMetaCallback);
-	glfwSetWindowSizeCallback(window.get(), windowSizeMetaCallback);
 	glfwSetMouseButtonCallback(window.get(), mouseButtonMetaCallback);
 	glfwSetCursorPosCallback(window.get(), cursorPosMetaCallback);
 	glfwSetScrollCallback(window.get(), scrollMetaCallback);
 }
 
+
+void Window::WindowCloseListener(Event& e)
+{
+	glfwSetWindowShouldClose(window.get(), GLFW_TRUE);
+}

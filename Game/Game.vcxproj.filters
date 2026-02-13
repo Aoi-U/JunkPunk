@@ -22,23 +22,71 @@
     <Filter Include="Header Files\imgui">
       <UniqueIdentifier>{d4255b95-a7b8-4627-8931-1fdabe066682}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\stb">
-      <UniqueIdentifier>{0ad0c0f3-e7a9-4422-afde-e6b6989ada72}</UniqueIdentifier>
+    <Filter Include="Header Files\Entity">
+      <UniqueIdentifier>{30358ca3-1031-4bd1-908d-0fa56a49bc6e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Rendering">
-      <UniqueIdentifier>{bc14bf24-5185-4cc0-ab69-b40114ef96b8}</UniqueIdentifier>
+    <Filter Include="Header Files\Components">
+      <UniqueIdentifier>{9075b52b-1e2c-48cb-9be0-e6abba023277}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Rendering">
+    <Filter Include="Header Files\Systems">
+      <UniqueIdentifier>{f1f92914-778e-4783-8108-60532533d098}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Core">
+      <UniqueIdentifier>{3d650287-2da6-4fbd-a85c-be24eab7e316}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Systems">
+      <UniqueIdentifier>{ed31050d-9b61-475c-a97b-1563a4c31e84}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Core">
+      <UniqueIdentifier>{c4e804ce-ebd0-46d9-8894-5060a2dc7f2b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Core\Vehicle">
+      <UniqueIdentifier>{949fbe44-f620-4191-8f2c-f6c2a081ed5c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Core\Vehicle\base">
+      <UniqueIdentifier>{3c841342-af3f-445d-bd5b-5643ea923536}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Core\Vehicle\directdrivetrain">
+      <UniqueIdentifier>{dcc37db3-c48b-4234-bc36-00fcdca4f650}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Core\Vehicle\enginedrivetrain">
+      <UniqueIdentifier>{388a317f-56fa-463d-a329-088894f91f11}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Core\Vehicle\physxintegration">
+      <UniqueIdentifier>{5724d3a6-be91-4cb0-a315-d638e3b024bc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Core\Vehicle\serialization">
+      <UniqueIdentifier>{8d53b767-a994-4c1d-ac85-5c3489e751ac}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Core\Vehicle">
+      <UniqueIdentifier>{6f6da323-6004-47a8-bbc8-97e78068c023}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Core\Vehicle\base">
+      <UniqueIdentifier>{a760157c-cc30-43d1-8235-6922b8f6d205}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Core\Vehicle\directdrivetrain">
+      <UniqueIdentifier>{4defd6cf-11f9-4222-8d01-f4c30d866e9e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Core\Vehicle\enginedrivetrain">
+      <UniqueIdentifier>{65ccb647-6583-418b-bc8a-6b1ed1999276}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Core\Vehicle\serialization">
+      <UniqueIdentifier>{78584466-455d-4973-bbda-03ecf3931f77}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Core\Vehicle\physxintegration">
+      <UniqueIdentifier>{4d2edb3b-9e17-4ee9-a8af-af80fc819539}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Core\Rendering">
+      <UniqueIdentifier>{34114f59-9888-4406-a206-839aba42d24f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Core\Rendering">
       <UniqueIdentifier>{1d06648f-3303-4175-ad95-2454e316ecf5}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\stb">
-      <UniqueIdentifier>{5e1a055d-9bdd-4d2b-b95e-78b2fae0539d}</UniqueIdentifier>
+    <Filter Include="Header Files\Events">
+      <UniqueIdentifier>{c3be6dc5-e315-41f7-bed2-2ffbc085f806}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\Camera.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\Game.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -52,15 +100,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Window.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Mesh.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Model.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Texture.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="thirdparty\include\imgui\imgui.cpp">
@@ -87,60 +126,126 @@
     <ClCompile Include="src\ImGuiTest.cpp">
       <Filter>Source Files\imgui</Filter>
     </ClCompile>
+    <ClCompile Include="Gamepad.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Systems\CameraControlSystem.cpp">
+      <Filter>Source Files\Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Systems\RenderSystem.cpp">
+      <Filter>Source Files\Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\stb.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\Time.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Systems\PhysicsSystem.cpp">
+      <Filter>Source Files\Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\Vehicle\base\Base.cpp">
+      <Filter>Source Files\Core\Vehicle\base</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\Vehicle\directdrivetrain\DirectDrivetrain.cpp">
+      <Filter>Source Files\Core\Vehicle\directdrivetrain</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\Vehicle\enginedrivetrain\EngineDrivetrain.cpp">
+      <Filter>Source Files\Core\Vehicle\enginedrivetrain</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\Vehicle\physxintegration\PhysXIntegration.cpp">
+      <Filter>Source Files\Core\Vehicle\physxintegration</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\Vehicle\serialization\DirectDrivetrainSerialization.cpp">
+      <Filter>Source Files\Core\Vehicle\serialization</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\Vehicle\serialization\EngineDrivetrainSerialization.cpp">
+      <Filter>Source Files\Core\Vehicle\serialization</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\Vehicle\serialization\SerializationCommon.cpp">
+      <Filter>Source Files\Core\Vehicle\serialization</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\Vehicle\serialization\BaseSerialization.cpp">
+      <Filter>Source Files\Core\Vehicle\serialization</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\Vehicle\SnippetVehicleHelpers.cpp">
+      <Filter>Source Files\Core\Vehicle</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Systems\LevelLoaderSystem.cpp">
+      <Filter>Source Files\Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\Vehicle\MainVehicle.cpp">
+      <Filter>Source Files\Core\Vehicle</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Systems\VehicleControlSystem.cpp">
+      <Filter>Source Files\Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\VBO.cpp">
+      <Filter>Source Files\Core\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\VAO.cpp">
+      <Filter>Source Files\Core\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\Texture.cpp">
+      <Filter>Source Files\Core\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\Text.cpp">
+      <Filter>Source Files\Core\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\SkyBox.cpp">
+      <Filter>Source Files\Core\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\ShadowMapper.cpp">
+      <Filter>Source Files\Core\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\Shader.cpp">
+      <Filter>Source Files\Core\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\PostProcessor.cpp">
+      <Filter>Source Files\Core\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\Model.cpp">
+      <Filter>Source Files\Core\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\Mesh.cpp">
+      <Filter>Source Files\Core\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\Light.cpp">
+      <Filter>Source Files\Core\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\EBO.cpp">
+      <Filter>Source Files\Core\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\AudioEngine.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Systems\AudioSystem.cpp">
+      <Filter>Source Files\Systems</Filter>
+    </ClCompile>
     <ClCompile Include="src\ImGuiPanel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\VAO.cpp">
-      <Filter>Source Files\Rendering</Filter>
+    <ClCompile Include="src\Systems\ParticleSystem.cpp">
+      <Filter>Source Files\Systems</Filter>
     </ClCompile>
-    <ClCompile Include="src\VBO.cpp">
-      <Filter>Source Files\Rendering</Filter>
+    <ClCompile Include="src\Systems\ParticleRenderSystem.cpp">
+      <Filter>Source Files\Systems</Filter>
     </ClCompile>
-    <ClCompile Include="src\EBO.cpp">
-      <Filter>Source Files\Rendering</Filter>
+    <ClCompile Include="src\Core\PhysicsCallbacks.cpp">
+      <Filter>Source Files\Core</Filter>
     </ClCompile>
-    <ClCompile Include="src\Renderer.cpp">
-      <Filter>Source Files\Rendering</Filter>
+    <ClCompile Include="src\Systems\MenuSystem.cpp">
+      <Filter>Source Files\Systems</Filter>
     </ClCompile>
-    <ClCompile Include="src\Shader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\SkyBox.cpp">
-      <Filter>Source Files\Rendering</Filter>
-    </ClCompile>
-    <ClCompile Include="src\stb.cpp">
-      <Filter>Source Files\stb</Filter>
-    </ClCompile>
-    <ClCompile Include="src\PVDtest.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="src\Systems\PauseSystem.cpp">
+      <Filter>Source Files\Systems</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\Camera.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\Game.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\InputManager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Shader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\Window.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Mesh.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Time.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Model.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Texture.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="thirdparty\include\imgui\imgui_impl_glfw.h">
@@ -164,35 +269,173 @@
     <ClInclude Include="thirdparty\include\imgui\imgui.h">
       <Filter>Header Files\imgui</Filter>
     </ClInclude>
-    <ClInclude Include="thirdparty\include\imgui\imstb_rectpack.h">
-      <Filter>Header Files\stb</Filter>
-    </ClInclude>
-    <ClInclude Include="thirdparty\include\imgui\imstb_textedit.h">
-      <Filter>Header Files\stb</Filter>
-    </ClInclude>
-    <ClInclude Include="thirdparty\include\imgui\imstb_truetype.h">
-      <Filter>Header Files\stb</Filter>
-    </ClInclude>
-    <ClInclude Include="src\EBO.h">
-      <Filter>Header Files\Rendering</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Renderer.h">
-      <Filter>Header Files\Rendering</Filter>
-    </ClInclude>
-    <ClInclude Include="src\VAO.h">
-      <Filter>Header Files\Rendering</Filter>
-    </ClInclude>
-    <ClInclude Include="src\VBO.h">
-      <Filter>Header Files\Rendering</Filter>
-    </ClInclude>
-    <ClInclude Include="src\SkyBox.h">
-      <Filter>Header Files\Rendering</Filter>
-    </ClInclude>
-    <ClInclude Include="src\PVDDebugger.h">
+    <ClInclude Include="Gamepad.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="assets\shaders\colliders.vert">
+      <Filter>Resource Files\shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ECSController.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Entity\EntityManager.h">
+      <Filter>Header Files\Entity</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Components\ComponentArray.h">
+      <Filter>Header Files\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Components\ComponentManager.h">
+      <Filter>Header Files\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Components\Render.h">
+      <Filter>Header Files\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Components\Camera.h">
+      <Filter>Header Files\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Components\Player.h">
+      <Filter>Header Files\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Components\Transform.h">
+      <Filter>Header Files\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Systems\CameraControlSystem.h">
+      <Filter>Header Files\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Systems\RenderSystem.h">
+      <Filter>Header Files\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Systems\SystemManager.h">
+      <Filter>Header Files\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Systems\System.h">
+      <Filter>Header Files\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\Time.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\Types.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\InputManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Systems\PhysicsSystem.h">
+      <Filter>Header Files\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\Vehicle\base\Base.h">
+      <Filter>Header Files\Core\Vehicle\base</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\Vehicle\directdrivetrain\DirectDrivetrain.h">
+      <Filter>Header Files\Core\Vehicle\directdrivetrain</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\Vehicle\enginedrivetrain\EngineDrivetrain.h">
+      <Filter>Header Files\Core\Vehicle\enginedrivetrain</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\Vehicle\physxintegration\PhysXIntegration.h">
+      <Filter>Header Files\Core\Vehicle\physxintegration</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\Vehicle\serialization\BaseSerialization.h">
+      <Filter>Header Files\Core\Vehicle\serialization</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\Vehicle\serialization\DirectDrivetrainSerialization.h">
+      <Filter>Header Files\Core\Vehicle\serialization</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\Vehicle\serialization\EngineDrivetrainSerialization.h">
+      <Filter>Header Files\Core\Vehicle\serialization</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\Vehicle\serialization\SerializationCommon.h">
+      <Filter>Header Files\Core\Vehicle\serialization</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\Vehicle\SnippetVehicleHelpers.h">
+      <Filter>Header Files\Core\Vehicle</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\EBO.h">
+      <Filter>Header Files\Core\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\Light.h">
+      <Filter>Header Files\Core\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\Mesh.h">
+      <Filter>Header Files\Core\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\Model.h">
+      <Filter>Header Files\Core\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\PostProcessor.h">
+      <Filter>Header Files\Core\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\Shader.h">
+      <Filter>Header Files\Core\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\ShadowMapper.h">
+      <Filter>Header Files\Core\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\SkyBox.h">
+      <Filter>Header Files\Core\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\Text.h">
+      <Filter>Header Files\Core\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\Texture.h">
+      <Filter>Header Files\Core\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\VAO.h">
+      <Filter>Header Files\Core\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\VBO.h">
+      <Filter>Header Files\Core\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Components\Physics.h">
+      <Filter>Header Files\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Systems\LevelLoaderSystem.h">
+      <Filter>Header Files\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\Vehicle\MainVehicle.h">
+      <Filter>Header Files\Core\Vehicle</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Systems\VehicleControlSystem.h">
+      <Filter>Header Files\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\BoundingVolumes.h">
+      <Filter>Header Files\Core\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\AudioEngine.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Systems\AudioSystem.h">
+      <Filter>Header Files\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Event.h">
+      <Filter>Header Files\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="src\EventManager.h">
+      <Filter>Header Files\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Components\Obstacle.h">
+      <Filter>Header Files\Components</Filter>
     </ClInclude>
     <ClInclude Include="src\ImGuiPanel.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Systems\ParticleSystem.h">
+      <Filter>Header Files\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Components\Particles.h">
+      <Filter>Header Files\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Systems\ParticleRenderSystem.h">
+      <Filter>Header Files\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\PhysicsCallbacks.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Systems\MenuSystem.h">
+      <Filter>Header Files\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Systems\PauseSystem.h">
+      <Filter>Header Files\Systems</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -212,6 +455,48 @@
       <Filter>Resource Files\shaders</Filter>
     </None>
     <None Include="assets\shaders\skybox.vert">
+      <Filter>Resource Files\shaders</Filter>
+    </None>
+    <None Include="assets\shaders\defaultInstanced.vert">
+      <Filter>Resource Files\shaders</Filter>
+    </None>
+    <None Include="assets\shaders\defaultInstanced.frag">
+      <Filter>Resource Files\shaders</Filter>
+    </None>
+    <None Include="assets\shaders\postProcess.frag">
+      <Filter>Resource Files\shaders</Filter>
+    </None>
+    <None Include="assets\shaders\postProcess.vert">
+      <Filter>Resource Files\shaders</Filter>
+    </None>
+    <None Include="assets\shaders\colliders.frag">
+      <Filter>Resource Files\shaders</Filter>
+    </None>
+    <None Include="assets\shaders\shadowMap.vert">
+      <Filter>Resource Files\shaders</Filter>
+    </None>
+    <None Include="assets\shaders\shadowMap.frag">
+      <Filter>Resource Files\shaders</Filter>
+    </None>
+    <None Include="assets\shaders\shadowMap.geom">
+      <Filter>Resource Files\shaders</Filter>
+    </None>
+    <None Include="assets\shaders\text.vert">
+      <Filter>Resource Files\shaders</Filter>
+    </None>
+    <None Include="assets\shaders\text.frag">
+      <Filter>Resource Files\shaders</Filter>
+    </None>
+    <None Include="assets\shaders\particle.vert">
+      <Filter>Resource Files\shaders</Filter>
+    </None>
+    <None Include="assets\shaders\particle.frag">
+      <Filter>Resource Files\shaders</Filter>
+    </None>
+    <None Include="assets\shaders\ui.vert">
+      <Filter>Resource Files\shaders</Filter>
+    </None>
+    <None Include="assets\shaders\ui.frag">
       <Filter>Resource Files\shaders</Filter>
     </None>
   </ItemGroup>

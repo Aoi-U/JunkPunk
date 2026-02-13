@@ -1,42 +1,56 @@
 #pragma once
 
 #include "Window.h"
-#include "Renderer.h"
-#include "Camera.h"
-#include "Mesh.h"
-#include "Model.h"
-#include "SkyBox.h"
-#include "PVDDebugger.h"
+#include "InputManager.h"
+#include "Systems/RenderSystem.h"
+#include "Systems/CameraControlSystem.h"
+#include "Systems/LevelLoaderSystem.h"
+#include "Systems/PhysicsSystem.h"
+#include "Systems/VehicleControlSystem.h"
+#include "Systems/AudioSystem.h"
+#include "Systems/ParticleSystem.h"
+#include "Systems/ParticleRenderSystem.h"
+#include "Systems/MenuSystem.h"
+#include "Systems/PauseSystem.h"
+#include "Core/Time.h"
+
+#include "ImGuiPanel.h"
 
 class Game
 {
 public:
 	Game();
 	~Game() = default;
+
 	void Run();
 
-
-
 private:
-	std::shared_ptr<InputManager> inputManager; 
+	std::shared_ptr<Gamepad> gamepad;
 	std::shared_ptr<Window> window;
-	std::unique_ptr<Renderer> renderer;
+	std::unique_ptr<Time> time;
 
-	glm::mat4 cameraTarget{ 0.0f }; // change to car position later
-	std::shared_ptr<Camera> camera;
-	std::shared_ptr<Skybox> skybox;
-
-	std::shared_ptr<Shader> defaultShader; 
-	std::shared_ptr<Shader> lightShader;
-	std::shared_ptr<Shader> skyboxShader;
 	
-	PVDDebugger pvdDebugger;
+	// systems
+	std::shared_ptr<RenderSystem> renderSystem;
+	std::shared_ptr<CameraControlSystem> camControlSystem;
+	std::shared_ptr<PhysicsSystem> physicsSystem;
+	std::shared_ptr<LevelLoaderSystem> loaderSystem;
+	std::shared_ptr<VehicleControlSystem> vehicleControlSystem;
+	std::shared_ptr<AudioSystem> audioSystem;
+	std::shared_ptr<ParticleSystem> particleSystem;
+	std::shared_ptr<ParticleRenderSystem> particleRenderSystem;
+	std::shared_ptr<MenuSystem> menuSystem;
+	std::shared_ptr<PauseSystem> pauseSystem;
 
-	// list of all game objects and its model matrices (maybe think of a better solution)
-	std::vector<std::pair<std::shared_ptr<Model>, glm::mat4>> gameObjects;
 
-	void DrawGameObjects(const glm::mat4& projView);
+	void Cleanup();
 
 	// add game related stuff 
-	void CalculateCameraPanning(float current_xpos, float current_ypos);
+	void ChangeGameStateListener(Event& e);
+	void KeyboardInputListener(Event& e);
+
+	std::unique_ptr<ImGuiPanel> camera_debug_panel; // testing
+	
+	// current game state
+	GameState currentState = GameState::STARTMENU;
 };

@@ -1,294 +1,476 @@
-#include "Game.h"
+﻿#include "Game.h"
 
-#include "glm/glm.hpp"
+#include <glm/glm.hpp>
 
-#include "ImGuiTest.h"
-#include "ImGuiPanel.h"
+#include "Components/Render.h"
+#include "Components/Transform.h"
+#include "Components/Camera.h"
+#include "Components/Player.h"
+#include "Components/Physics.h"
+#include "Components/Obstacle.h"
+#include "Components/Particles.h"
+#include "Components/Powerup.h"
+
+#include "ECSController.h"
+#include "Core/Types.h"
 
 
 static int camera_scroll_type = 0;
-static float camera_fov = 90.0f;
 static bool split_camera = false;
-static glm::dvec2 previous_mouse_position;
 static bool first_time_held_right_click = false;
-// Setup ImGui panel for camera, putting it here to quick access 
+bool playerWon = false;
+float winTimer = 0.0f;
+const float WIN_DELAY = 5.0f;
+float fadeAlpha = 0.0f;
+Entity playerEntity;
+bool playerExists = false;
+
+// Define a global ECSController instance so systems can access it
+ECSController controller;
+GameState currentStateGlobal = GameState::STARTMENU;
+
+
+//Setup ImGui panel for camera, putting it here to quick access 
 class CameraEditorPanelRenderer : public ImGuiPanelRendererInterface {
 public:
 	//CameraEditorPanelRenderer(){}
-	CameraEditorPanelRenderer(std::shared_ptr<Camera> mainCamera) : mainCamera_ptr(mainCamera) {}
+	CameraEditorPanelRenderer()
+	{
+		controller.AddEventListener(Events::Window::SCROLLED, [this](Event& e) { ScrollEventListener(e); });
+	}
+	void setCamera(ThirdPersonCamera* camera, Transform* transform)
+	{
+		mainCamera_ptr = camera;
+		cameraTransform_ptr = transform;
+	}
+
+	void Reset()
+	{
+		mainCamera_ptr = nullptr;
+		cameraTransform_ptr = nullptr;
+	}
+
 	virtual void render() override {
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-		ImGui::Text("Position: (%f,%f,%f)", mainCamera_ptr->GetPosition().x, mainCamera_ptr->GetPosition().y, mainCamera_ptr->GetPosition().z);
-		ImGui::Text("Distance: %f", mainCamera_ptr->GetDistance());
-		ImGui::Text("Phi: %f deg", glm::degrees(mainCamera_ptr->GetPhi()));
-		ImGui::Text("Theta: %f deg", glm::degrees(mainCamera_ptr->GetTheta()));
-		ImGui::Text("FOV: %f deg", camera_fov);
-		
+		ImGui::Text("Position: (%f,%f,%f)", cameraTransform_ptr->position.x, cameraTransform_ptr->position.y, cameraTransform_ptr->position.z);
+		ImGui::Text("Distance: %f", mainCamera_ptr->radius);
+		ImGui::Text("Phi: %f deg", glm::degrees(mainCamera_ptr->pitch));
+		ImGui::Text("Theta: %f deg", glm::degrees(mainCamera_ptr->yaw));
+		ImGui::Text("FOV: %f deg", mainCamera_ptr->fov);
+
 		ImGui::RadioButton("scroll distance", &camera_scroll_type, 0);
 		ImGui::RadioButton("scroll fov", &camera_scroll_type, 1);
 		ImGui::RadioButton("scroll theta", &camera_scroll_type, 2);
 		ImGui::RadioButton("scroll phi", &camera_scroll_type, 3);
 
-
-		ImGui::Checkbox("split camera", &split_camera);
 	}
+
 private:
-	std::shared_ptr<Camera> mainCamera_ptr = nullptr;
+	ThirdPersonCamera* mainCamera_ptr = nullptr;
+	Transform* cameraTransform_ptr = nullptr;
+
+	void ScrollEventListener(Event& e)
+	{
+		std::cout << "Scroll event received in camera panel" << std::endl;
+		double xoffset = e.GetParam<double>(Events::Window::Scrolled::XOFFSET);
+		double yoffset = e.GetParam<double>(Events::Window::Scrolled::YOFFSET);
+
+		if (mainCamera_ptr)
+		{
+			switch (camera_scroll_type)
+			{
+			case 0:
+				mainCamera_ptr->radius = glm::clamp(mainCamera_ptr->radius + static_cast<float>(yoffset) * 0.1f, 1.0f, 10.0f);
+				break;
+			case 1:
+				mainCamera_ptr->fov = glm::clamp(mainCamera_ptr->fov + static_cast<float>(yoffset) * 0.5f, 30.0f, 120.0f);
+				break;
+			case 2:
+				mainCamera_ptr->yaw += static_cast<float>(yoffset) * 0.1f;
+				break;
+			case 3:
+				mainCamera_ptr->pitch = glm::clamp(mainCamera_ptr->pitch + static_cast<float>(yoffset) * 0.1f, glm::radians(-89.0f), glm::radians(89.0f));
+				break;
+			}
+		}
+	}
+
 };
+std::shared_ptr<CameraEditorPanelRenderer> cameraPanelRenderer; // testing
 
-//might have to move to Camera.cpp to declutter later
-void Game::CalculateCameraPanning(float current_xpos, float current_ypos) {
-	//right now it snaps since the input manager only records the final mouse position rather than delta change
-	float screen_width = window->getWindowSize().x;
-	float screen_height = window->getWindowSize().y;
-	float aspect_ratio = screen_width / screen_height;
-	//get relative position based on center of screen
-	float xscreen = (current_xpos / (screen_width / 2)) - 1;
-	float yscreen = (current_ypos / (screen_height / 2)) - 1;
-
-	float cam_distance = camera->GetDistance();
-
-	//apply some aspect ratio to the movement
-	if (screen_width > screen_height) {
-		xscreen = ((xscreen) * aspect_ratio) / cam_distance;
-		yscreen = (yscreen) / cam_distance;
-	}
-	else {
-		xscreen = (xscreen) / cam_distance;
-		yscreen = ((yscreen) * aspect_ratio) / cam_distance;
-	}
-	if (first_time_held_right_click == false) {
-		first_time_held_right_click = true;
-		previous_mouse_position = glm::dvec2(xscreen, -yscreen);
-	}
-
-	float deltaX = (xscreen - previous_mouse_position.x) * cam_distance;
-	float deltaY = (yscreen + previous_mouse_position.y) * cam_distance;
-
-	previous_mouse_position = glm::dvec2(xscreen, -yscreen);
-
-	//apply to camera
-	camera->ChangeTheta(deltaX);
-	camera->ChangePhi(deltaY);
-}
+// some sources that explain ecs
+// https://austinmorlan.com/posts/entity_component_system/ // the ecs i wrote is based on this article so best to read this to understand how it works 
+// https://www.youtube.com/watch?v=dEdFM0uQpA0 
 
 Game::Game()
 {
-	glfwWindowHint(GLFW_SAMPLES, 32);
+	controller.Init();
+	//glfwWindowHint(GLFW_SAMPLES, 32);
 
-	inputManager = std::make_shared<InputManager>(
-		[](int width, int height) {
-			glViewport(0, 0, width, height);
-		}
-	); 
 
-	//window = std::make_unique<Window>(1280, 720, "JunkPunk", inputManager); 
-	window = std::make_shared<Window>(1280, 720, "JunkPunk", inputManager);
-
+	window = std::make_shared<Window>(1280, 720, "JunkPunk");
+	gamepad = std::make_shared<Gamepad>(1); // initialize gamepad 
+	
+	time = std::make_unique<Time>();
 	glfwSwapInterval(1); // Enable vsync to limit fps
 
-	renderer = std::make_unique<Renderer>(inputManager); 
 
-	camera = std::make_shared<Camera>(cameraTarget, Camera::Params{}); // replace with actual values later
-	skybox = std::make_shared<Skybox>();
+	// register components (you must register components first to use them so just register all components here)
+	controller.RegisterComponent<Render>();
+	controller.RegisterComponent<Transform>();
+	controller.RegisterComponent<ThirdPersonCamera>();
+	controller.RegisterComponent<VehicleCommands>();
+	controller.RegisterComponent<PhysicsBody>();
+	controller.RegisterComponent<RigidBody>();
+	controller.RegisterComponent<StaticBody>();
+	controller.RegisterComponent<VehicleBody>();
+	controller.RegisterComponent<Trigger>();
+	controller.RegisterComponent<MovingObstacle>();
+	controller.RegisterComponent<ParticleEmitter>();
+	controller.RegisterComponent<Powerup>();
 
-	defaultShader = std::make_shared<Shader>("assets/shaders/default.vert", "assets/shaders/default.frag");
-	lightShader = std::make_shared<Shader>("assets/shaders/light.vert", "assets/shaders/light.frag");
-	skyboxShader = std::make_shared<Shader>("assets/shaders/skybox.vert", "assets/shaders/skybox.frag");
+	// register systems (you must register systems before setting component signatures) 
+	loaderSystem = controller.RegisterSystem<LevelLoaderSystem>();
+	{
+		// signatures basically just tell the system which components to look for in an entity
+		// an entity must have all the components in the signature to be added to the systems entity list
+		// meaning, an entities component list must be a superset of the systems signature to be added to the system (an entity can have more components than a system requires)
+		// ex:
+		//	system signature: [Transform, Render]
+		//	entity A components: [Transform, Render, PhysicsBody] -> added to system, it has both Transform AND Render
+		//	entity B components: [Transform] -> not added to system, it is missing Render
+		Signature signature;
+		controller.SetSystemSignature<LevelLoaderSystem>(signature);
+	}
+
+	camControlSystem = controller.RegisterSystem<CameraControlSystem>();
+	{
+		Signature signature;
+		signature.set(controller.GetComponentType<ThirdPersonCamera>());
+		signature.set(controller.GetComponentType<Transform>());
+		controller.SetSystemSignature<CameraControlSystem>(signature);
+	}
+
+	renderSystem = controller.RegisterSystem<RenderSystem>();
+	{
+		Signature signature;
+		signature.set(controller.GetComponentType<Render>());
+		signature.set(controller.GetComponentType<Transform>());
+		
+		controller.SetSystemSignature<RenderSystem>(signature);
+	}
+	
+	physicsSystem = controller.RegisterSystem<PhysicsSystem>();
+	{
+		Signature signature;
+		signature.set(controller.GetComponentType<Transform>());
+		signature.set(controller.GetComponentType<PhysicsBody>()); 
+		controller.SetSystemSignature<PhysicsSystem>(signature);
+	}
+
+	vehicleControlSystem = controller.RegisterSystem<VehicleControlSystem>();
+	{
+		Signature signature;
+		signature.set(controller.GetComponentType<VehicleCommands>());
+		controller.SetSystemSignature<VehicleControlSystem>(signature);
+	}
+
+	audioSystem = controller.RegisterSystem<AudioSystem>();
+	{
+		Signature signature;
+		controller.SetSystemSignature<AudioSystem>(signature);
+	}
+
+	particleSystem = controller.RegisterSystem<ParticleSystem>();
+	{
+		Signature signature;
+		signature.set(controller.GetComponentType<ParticleEmitter>());
+		controller.SetSystemSignature<ParticleSystem>(signature);
+	}
+
+	menuSystem = controller.RegisterSystem<MenuSystem>();
+	{
+		Signature signature;
+		controller.SetSystemSignature<MenuSystem>(signature);
+	}
+
+	pauseSystem = controller.RegisterSystem<PauseSystem>();
+	{
+		Signature signature;
+		controller.SetSystemSignature<PauseSystem>(signature);
+	}
+
+
+	audioSystem->Init();
+	vehicleControlSystem->Init(gamepad);
+	camControlSystem->Init(gamepad);
+	menuSystem->Init(gamepad);
+	pauseSystem->Init(gamepad);
+
+	controller.AddEventListener(Events::GameState::NEW_STATE, [this](Event& e) { this->ChangeGameStateListener(e); });
+	controller.AddEventListener(Events::Window::INPUT, [this](Event& e) { this->KeyboardInputListener(e); });
+	controller.AddEventListener(Events::Physics::TRIGGER_ENTER, [this](Event& e) {
+		Entity triggerEntity = e.GetParam<Entity>(Events::Physics::Trigger_Enter::ENTITY_ONE);
+		Entity finishLine = controller.GetEntityByTag("FinishLine");
+		if (triggerEntity == finishLine && !playerWon) {
+			playerWon = true;
+			fadeAlpha = 0.0f;
+			winTimer = 0.0f;
+			std::cout << "you win!" << std::endl;
+		}
+
+		if (controller.HasComponent<Powerup>(triggerEntity)) {
+			if (!playerExists) return;
+			Entity player = playerEntity;
+			auto pickup = controller.GetComponent<Powerup>(triggerEntity);
+			controller.AddComponent(player, pickup);
+			std::cout << "Boost collected!" << std::endl;
+			controller.DestroyEntity(triggerEntity);
+		}
+		});
 }
-
-//Game::~Game()
-//{
-//
-//}
 
 // main game function
 void Game::Run()
 {
-	//renderer->Init();
-	skybox->Init();
-	pvdDebugger.Init();
+	Event event(Events::Audio::PLAY_SOUND);
+	event.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/jazz-background-music-325355.mp3");
+	event.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
+	event.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, -20.0f);
+	controller.SendEvent(event);
 
-	
-	glm::mat4 view;
-	glm::mat4 projView;
 
-	// light
-	glm::vec3 lightPos = glm::vec3(-5.0f, 2.0f, -5.0f);
-	glm::vec4 lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-	glm::mat4 lightModel = glm::mat4(1.0f);
-	lightModel = glm::translate(lightModel, lightPos);
-	lightModel = glm::scale(lightModel, glm::vec3(0.2f)); // small cube for light representation
-	defaultShader->use();
-	defaultShader->setVec3("u_lightPos", &lightPos.x);
-	defaultShader->setVec4("u_lightColor", &(lightColor.r));
 
-	// setup light shader
-	lightShader->use();
-	lightShader->setVec3("u_lightPos", &lightPos.x);
-	lightShader->setVec4("u_lightColor", &lightColor.r);
-
-	// setup skybox shader
-	skyboxShader->use();
-	skyboxShader->setInt("u_skybox", 0);
-
-	// test unit cube mesh
-	std::vector<Vertex> cubeVertices;
-	
-	for (float x = -0.5f; x <= 0.5f; x += 1.0f)
-	{
-		for (float y = -0.5f; y <= 0.5f; y += 1.0f)
-		{
-			for (float z = -0.5f; z <= 0.5f; z += 1.0f)
-			{
-				Vertex vertex;
-				vertex.position = glm::vec3(x, y, z);
-				vertex.color = glm::vec3((x + 0.5f), (y + 0.5f), (z + 0.5f)); // color based on position
-				vertex.normal = glm::normalize(vertex.position); // normal pointing outwards
-				cubeVertices.push_back(vertex);
-			}
-		}
-	}
-	
-	std::vector<GLuint> cubeIndices = {
-		// Left face (x = -0.5)
-		0, 1, 3, 3, 2, 0,
-		// Right face (x = 0.5)
-		4, 6, 7, 7, 5, 4,
-		// Bottom face (y = -0.5)
-		0, 4, 5, 5, 1, 0,
-		// Top face (y = 0.5)
-		2, 3, 7, 7, 6, 2,
-		// Back face (z = -0.5)
-		0, 2, 6, 6, 4, 0,
-		// Front face (z = 0.5)
-		1, 5, 7, 7, 3, 1
-	};
-	std::shared_ptr<Mesh> cubeMesh = std::make_shared<Mesh>(cubeVertices, cubeIndices);
-
-	// test car model
-	std::shared_ptr<Model> carModel = std::make_shared<Model>("assets/models/old_rusty_car/scene.gltf");
-	// to load any other model, just add the model file to assets/models/ and create a model class with the path to the model file
-
-	gameObjects.push_back(std::make_pair(carModel, glm::mat4(1.0f)));
+	// imgui panel for debugging
+	camera_debug_panel = std::make_unique<ImGuiPanel>(window);
+	cameraPanelRenderer = std::make_shared<CameraEditorPanelRenderer>();
+	camera_debug_panel->setPanelRenderer(cameraPanelRenderer);
 	
 
-	// ImGui for testing
-	//ImGuiTest gui(window);
+	// when creating an entity that needs physics during runtime, add all necessary components first
+	// then create and send Events::Physics::CREATE_ACTOR event with the entity created as the parameter
+	// so the physics system can properly create the actor into the scene
 
-	
-	ImGuiPanel camera_debug_panel(window);
-	auto camera_editor_panel_renderer = std::make_shared<CameraEditorPanelRenderer>(camera);
-	camera_debug_panel.setPanelRenderer(camera_editor_panel_renderer);
-	
-
-
-	// main loop
+  // main loop
 	while (!window->shouldClose())
 	{
-		glfwPollEvents();
-		renderer->Clear(0.0f, 0.3f, 0.3f, 1.0f); 
-
-		// example input handling, probably move to InputManager or some other class for readability later
-		if (inputManager->IsKeyboardButtonDown(GLFW_KEY_ESCAPE))
+		time->Update();			
+		
+		switch (currentState)
 		{
-			std::cout << "Escape pressed, exiting." << std::endl;
+		case GAME:
+		{
+			if (!playerExists) return;
+			Entity player = playerEntity;
+			// physics update first to prevent twitching/jittering objects
+			while (time->accumulator >= time->deltaTime)
+			{
+				physicsSystem->Update(time->deltaTime);
+				time->accumulator -= time->deltaTime;
+				time->totalTime += time->deltaTime;
+			}
+
+			vehicleControlSystem->Update(); // handle vehicle controls
+
+			camControlSystem->Update(time->frameTime); // handle camera controls
+
+			particleSystem->Update(time->frameTime); // update particles
+
+			renderSystem->Update(time->fps(), physicsSystem->GetRenderBuffer()); // render physics debug data
+			menuSystem->RenderWinText();
+			camera_debug_panel->render(); // render debug panel
+
+
+			if (playerWon) {
+				winTimer += time->frameTime;
+				if (winTimer >= 1.0f) {
+					fadeAlpha += time->frameTime * 0.25f;
+					fadeAlpha = glm::clamp(fadeAlpha, 0.0f, 1.0f);
+					menuSystem->RenderFadeOverlay(fadeAlpha);
+				}
+				if (winTimer >= WIN_DELAY) {
+					Event event(Events::GameState::NEW_STATE);
+					event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::ENDMENU);
+					controller.SendEvent(event);
+				}
+			}
+			if (controller.HasComponent<Powerup>(player)) {
+				auto& p = controller.GetComponent<Powerup>(player);
+				if (p.active) {
+					p.elapsed += time->frameTime;
+					if (p.elapsed >= p.duration) {
+						controller.RemoveComponent<Powerup>(player);
+						std::cout << "Powerup ended" << std::endl;
+					}
+				}
+			}
+			audioSystem->Update();
+
+			if (gamepad->GetButtonDown(Buttons::PAUSE))
+			{
+				Event event(Events::GameState::NEW_STATE);
+				event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::PAUSED);
+				controller.SendEvent(event);
+			}
+			if (controller.HasComponent<Powerup>(player)) {
+				auto& p = controller.GetComponent<Powerup>(player);
+				if (gamepad->GetButtonDown(Buttons::POWERUP) && !p.active) {
+					p.active = true;
+					p.elapsed = 0.0f;
+					std::cout << "Boost Used" << std::endl;
+				}
+			}
+
 			break;
 		}
-		int scroll_changed = inputManager->ScrollValueChanged();
-		if (scroll_changed != 0) {
-			if (camera_scroll_type == 0) {
-				camera->ChangeRadius(scroll_changed * 0.1f);
-			}
-			else if (camera_scroll_type == 1) {
-				camera_fov += scroll_changed * 0.5f;
-			}
-			else if (camera_scroll_type == 2) {
-				camera->ChangeTheta(scroll_changed * 0.01f);
-			}
-			else if (camera_scroll_type == 3) {
-				camera->ChangePhi(scroll_changed * 0.01f);
-			}
-		}
-		if (inputManager->IsMouseButtonDown(1)) {
-			glm::dvec2 mouse_movement = inputManager->CursorPosition();
-			CalculateCameraPanning(mouse_movement.x, mouse_movement.y);
-		}
-		else {
-			first_time_held_right_click = false;
+		case PAUSED:
+			renderSystem->Update(time->fps(), physicsSystem->GetRenderBuffer());
+			pauseSystem->Update();
+			// render some pause menu
+			camera_debug_panel->render();
+			audioSystem->Update();
+
+			break;
+		case STARTMENU:
+			// render main menu
+			menuSystem->Update();
+			audioSystem->Update();
+			break;
+
+		case ENDMENU:
+			renderSystem->Update(time->fps(), physicsSystem->GetRenderBuffer());
+			menuSystem->RenderEndScreen();
+			break;
 		}
 		
-		pvdDebugger.Update();
-
-		physx::PxVec3 boxPos = pvdDebugger.GetBoxPosition(50);
-		std::cout << "Box 5 position: " << boxPos.x << ", " << boxPos.y << ", " << boxPos.z << std::endl;
-
-		glm::ivec2 windowSize = window->getWindowSize();
-		float width = static_cast<float>(windowSize.x);
-		float height = static_cast<float>(windowSize.y);
-
-		if (split_camera) {
-			height /= 2;//temporary testing for split camera
-		}
-
-		// set up camera matrices 
-		glm::mat4 projection = glm::perspective(glm::radians(camera_fov), width / height, 0.1f, 100.0f);
-		view = camera->GetViewMatrix();
-		view = glm::rotate(view, (float)glfwGetTime() * 0.1f, glm::vec3(0.0f, 1.0f, 0.0f)); 
-		projView = projection * view;
-		// set light and camera info in renderer
-		renderer->SetCamera(camera->GetPosition());
-
-		glViewport(0, 0, width, height); //temporary testing for split camera
-
-		glm::mat4 model = glm::mat4(1.0f); // identity matrix for model
-
-		// rotating cube model
-		model = glm::scale(model, glm::vec3(0.5f));
-		model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.5f, 1.0f, 0.0f));
-		renderer->DrawMesh(model, projView, defaultShader, cubeMesh); // example draw rotating cube
-		// dont use the DrawMesh function, ill probably remove it later. its just here for drawing a simple manually created mesh
-
-		
-		model = glm::mat4(1.0f);
-
-		// car model 
-		model = glm::translate(model, glm::vec3(5.0f, 0.0f, -10.0f));
-		model = glm::scale(model, glm::vec3(0.005f)); 
-		model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
-		model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 1.0f, 0.0f));
-		gameObjects[0].second = model; // update car model matrix in gameObjects vector
-		//renderer->DrawModel(model, projView, defaultShader, carModel); // example draw car model
-		
-		DrawGameObjects(projView); // draw all game objects in the gameObjects vector
-
-
-
-		// render light as small cube
-		renderer->DrawMesh(lightModel, projView, lightShader, cubeMesh);
-
-		// skybox rendering
-		view = glm::mat4(glm::mat3(view)); // remove translation from the view matrix for skybox
-		projView = projection * view;
-		renderer->DrawSkybox(projView, skyboxShader, skybox); // draw skybox
-
-		
-		//gui.Render(); // render imgui test window
-		camera_debug_panel.render();// render imgui camera debugger
+		gamepad->RefreshState();
+		gamepad->Update();
 
 		window->swapBuffers();
+		glfwPollEvents();
 	}
 
-	//gui.Shutdown(); 
-	defaultShader->Delete();
-	lightShader->Delete();
-	skyboxShader->Delete();
+	Cleanup();
 }
 
-void Game::DrawGameObjects(const glm::mat4& projView)
+void Game::Cleanup()
 {
-	for (const auto& obj : gameObjects)
+
+}
+
+void Game::ChangeGameStateListener(Event& e)
+{
+	auto state = e.GetParam<GameState>(Events::GameState::New_State::STATE);
+	std::cout << "Changing game state to " << state << std::endl;
+
+	switch (state)
 	{
-		renderer->DrawModel(obj.second, projView, defaultShader, obj.first);
+	case::GameState::STARTMENU:
+	{
+		controller.Reset();
+		physicsSystem->Cleanup();
+		menuSystem->Reset();
+		renderSystem->Reset();
+
+		playerExists = false;
+
+		time->Pause();
+		currentState = state;
+		currentStateGlobal = state;
+		playerWon = false;
+		winTimer = 0.0f;
+		fadeAlpha = 0.0f;
+		break;
+	}
+	case::GameState::GAME:
+	{
+		if (currentState == GameState::STARTMENU) // set up the world when coming from the main menu
+		{
+			loaderSystem->LoadLevel(); 
+			renderSystem->Init();
+			physicsSystem->Init();
+			
+			playerEntity = controller.GetEntityByTag("VehicleCommands");
+			playerExists = true;
+
+			// testing
+			Entity cameraEntity = controller.GetEntityByTag("Camera");
+			ThirdPersonCamera& mainCamera = controller.GetComponent<ThirdPersonCamera>(cameraEntity);
+			Transform& cameraTransform = controller.GetComponent<Transform>(cameraEntity);
+			cameraPanelRenderer->setCamera(&mainCamera, &cameraTransform);
+			// end testing
+		}
+
+		time->Unpause();
+		currentState = state;
+		currentStateGlobal = state;
+		break;
+	}
+	case::GameState::ENDMENU:
+	{
+		// clear the scene or draw some menu on top of game screen?
+		time->Pause();
+		currentState = state;
+		currentStateGlobal = state;
+
+		break;
+	}
+	case::GameState::PAUSED:
+	{
+		pauseSystem->Reset();
+		// should not clear anything, just stop physics simulation
+		time->Pause();
+		currentState = state;
+		currentStateGlobal = state;
+
+		break;
+	}
+	case::GameState::RESTART:
+	{
+		controller.Reset();
+		physicsSystem->Cleanup();
+
+
+		loaderSystem->LoadLevel();
+		renderSystem->Init();
+		physicsSystem->Init();
+		time->Unpause();
+		winTimer = 0.0f;
+		fadeAlpha = 0.0f;
+		playerWon = false;
+
+		currentState = GameState::GAME;
+		currentStateGlobal = GameState::GAME;
+
+		break;
+	}
+	}
+}
+
+void Game::KeyboardInputListener(Event& e)
+{
+	int keyRecieve = e.GetParam<int>(Events::Window::Input::KEY);
+	int action = e.GetParam<bool>(Events::Window::Input::ACTION);
+	char key = static_cast<char>(keyRecieve);
+
+	if (!playerExists) return;
+	Entity player = playerEntity;
+
+	if (currentState == GameState::GAME)
+	{
+		if (key == Keys::KEY_PAUSE && action == true)
+		{
+			Event event(Events::GameState::NEW_STATE);
+			event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::PAUSED);
+			controller.SendEvent(event);
+		}
+		if (controller.HasComponent<Powerup>(player)) {
+			auto& p = controller.GetComponent<Powerup>(player);
+			if (key == Keys::KEY_USE && action == true && !p.active) {
+				p.active = true;
+				p.elapsed = 0.0f;
+				std::cout << "Boost Used" << std::endl;
+			}
+		}
 	}
 }

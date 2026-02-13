@@ -1,10 +1,13 @@
 #pragma once
 #include <memory>
-
+#include <iostream>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <unordered_map>
 
-#include "InputManager.h"
+#include "Core/Types.h"
+
+class Event;
 
 struct WindowDeleter {
 	void operator() (GLFWwindow* window) const {
@@ -15,11 +18,7 @@ struct WindowDeleter {
 class Window
 {
 public:
-	Window(int width, int height, const char* title, std::shared_ptr<InputManager> callbacks);
-
-
-	glm::ivec2 getWindowPos() const;
-	glm::ivec2 getWindowSize() const;
+	Window(int width, int height, const char* title);
 
 	int shouldClose() { return glfwWindowShouldClose(window.get()); }
 	void makeContextCurrent() { glfwMakeContextCurrent(window.get()); }
@@ -30,15 +29,25 @@ public:
 
 	GLFWwindow* getGLFWwindow() const { return window.get(); }
 
+	std::pair<int, int> getFrameBufferSize() const {
+		return { fbWidth, fbHeight };
+	}
+
 private:
 	std::unique_ptr<GLFWwindow, WindowDeleter> window;
-	std::shared_ptr<InputManager> inputManager; 
+
+	static int fbWidth;
+	static int fbHeight;
+	static std::unordered_map<int, bool> mKeyStatusMap;
+	static std::unordered_map<int, bool> mMouseStatusMap;
 
 	static void defaultWindowSizeCallback(GLFWwindow* window, int width, int height) { glViewport(0, 0, width, height); }
+	static void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
 	static void keyMetaCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 	static void mouseButtonMetaCallback(GLFWwindow* window, int button, int action, int mods);
 	static void cursorPosMetaCallback(GLFWwindow* window, double xpos, double ypos);
-	static void windowSizeMetaCallback(GLFWwindow* window, int width, int height);
 	static void scrollMetaCallback(GLFWwindow* window, double xoffset, double yoffset);
+
+	void WindowCloseListener(Event& e);
 };

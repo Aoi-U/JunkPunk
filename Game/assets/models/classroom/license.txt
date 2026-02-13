@@ -1,0 +1,11 @@
+Model Information:
+* title:	Classroom
+* source:	https://sketchfab.com/3d-models/classroom-d4553cc2008242849214e4cbf8ad8551
+* author:	Pino_156 (https://sketchfab.com/titi_156)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Classroom" (https://sketchfab.com/3d-models/classroom-d4553cc2008242849214e4cbf8ad8551) by Pino_156 (https://sketchfab.com/titi_156) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
