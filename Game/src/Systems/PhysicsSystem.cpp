@@ -118,7 +118,7 @@ void PhysicsSystem::Update(float deltaTime)
 	command.steer = vehicleCommands.steer;
 	gVehicle->setCommand(command);
 
-	Simulate(deltaTime);
+	Simulate(deltaTime); // run physics simulation
 
 	DeleteActorsQueue();
 
@@ -473,7 +473,6 @@ void PhysicsSystem::JumpEventListener(Event& e)
 void PhysicsSystem::ResetVehicleEventListener(Event& e)
 {
 	gVehicle->respawnAtCheckpoint();
-	//gVehicle->resetTransform();
 }
 
 void PhysicsSystem::CheckpointReachedListener(Event& e)
@@ -501,11 +500,5 @@ void PhysicsSystem::ReleaseTriggerCallback(Entity entity, Trigger& trig)
 	if (trig.actor)
 	{
 		actorsToDelete.push_back(trig.actor);
-		/*trig.actor->userData = nullptr; 
-		gPhysicsScene->removeActor(*trig.actor);
-		trig.actor->release();
-		trig.actor = nullptr;
-
-		std::cout << "Entity: " << entity << ": Trigger removed" << std::endl;*/
 	}
 }
