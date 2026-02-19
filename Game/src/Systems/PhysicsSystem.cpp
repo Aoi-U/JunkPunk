@@ -17,6 +17,7 @@ PhysicsSystem::PhysicsSystem()
 	controller.AddEventListener(Events::Physics::CREATE_ACTOR, [this](Event& e) { this->CreateActorListener(e); });
 	controller.AddEventListener(Events::Player::PLAYER_JUMPED, [this](Event& e) { this->JumpEventListener(e); });
 	controller.AddEventListener(Events::Player::RESET_VEHICLE, [this](Event& e) { this->ResetVehicleEventListener(e); });
+	controller.AddEventListener(Events::Checkpoint::REACHED, [this](Event& e) {this->CheckpointReachedListener(e); });
 
 	auto rigidBodyArray = controller.GetComponentArray<RigidBody>();
 	rigidBodyArray->BindOnRemoveCallback([this](Entity entity, RigidBody& rb) { this->ReleaseActorCallback(entity, rb); });
@@ -27,7 +28,9 @@ PhysicsSystem::PhysicsSystem()
 
 void PhysicsSystem::Init()
 {
-	gVehicle = std::make_unique<MainVehicle>();
+	//gVehicle = std::make_unique<MainVehicle>();
+
+
 	gFoundation = PxCreateFoundation(PX_PHYSICS_VERSION, gAllocator, gErrorCallback);
 	if (!gFoundation)
 	{
@@ -95,7 +98,7 @@ void PhysicsSystem::Init()
 void PhysicsSystem::Update(float deltaTime)
 {
 	// get the vehicle command from ECS
-	Entity vehicleEntity = controller.GetEntityByTag("VehicleCommands");
+	/*Entity vehicleEntity = controller.GetEntityByTag("VehicleCommands");
 	auto& vehicleCommands = controller.GetComponent<VehicleCommands>(vehicleEntity);
 	vehicleCommands.isGrounded = gVehicle->IsGrounded(gPhysicsScene);
 
@@ -115,19 +118,35 @@ void PhysicsSystem::Update(float deltaTime)
 	}
 	command.brake = vehicleCommands.brake;
 	command.steer = vehicleCommands.steer;
-	gVehicle->setCommand(command);
+	gVehicle->setCommand(command);*/
 
-	gVehicle->step(deltaTime);
-	gPhysicsScene->simulate(deltaTime);
-	gPhysicsScene->fetchResults(true);
-
-	// delete any actors that were marked for deletion during the simulation step
-	for (PxActor* actor : actorsToDelete)
+	for (auto& [entity, vehicle] : vehicles)
 	{
-		gPhysicsScene->removeActor(*actor);
-		actor->release();
+		auto& vehicleCommands = controller.GetComponent<VehicleCommands>(entity);
+		vehicleCommands.isGrounded = vehicle->IsGrounded(gPhysicsScene);
+
+		Command command;
+		command.throttle = vehicleCommands.throttle;
+		
+		if (controller.HasComponent<Powerup>(entity)) {
+			auto& p = controller.GetComponent<Powerup>(entity);
+			if (p.active && p.type == 1) {
+				vehicle->ApplyBoost(2.0f);
+				usedBoost = true;
+			}
+		}
+		else if (usedBoost) {
+			vehicle->ClearBoost();
+			usedBoost = false;
+		}
+		command.brake = vehicleCommands.brake;
+		command.steer = vehicleCommands.steer;
+		vehicle->setCommand(command);
 	}
-	actorsToDelete.clear();
+
+	Simulate(deltaTime); // run physics simulation
+
+	DeleteActorsQueue();
 
 	// Update dynamic actor transforms in ECS
 	for (auto& entity : entities)
@@ -188,33 +207,62 @@ void PhysicsSystem::Update(float deltaTime)
 		else if (controller.HasComponent<VehicleBody>(entity))
 		{
 			auto& vehicleBody = controller.GetComponent<VehicleBody>(entity);
-			PxTransform pxTransform = gVehicle->getTransform();
+			PxTransform pxTransform = vehicles[entity]->getTransform();
 			transform.position = glm::vec3(pxTransform.p.x, pxTransform.p.y, pxTransform.p.z);
 			transform.quatRotation = glm::quat(pxTransform.q.w, pxTransform.q.x, pxTransform.q.y, pxTransform.q.z);
 
-			PxVec3 linearVel = gVehicle->getLinearVelocity();
-			PxVec3 angularVel = gVehicle->getAngularVelocity();
+			PxVec3 linearVel = vehicles[entity]->getLinearVelocity();
+			PxVec3 angularVel = vehicles[entity]->getAngularVelocity();
 			vehicleBody.linearVelocity = glm::vec3(linearVel.x, linearVel.y, linearVel.z);
 			vehicleBody.angularVelocity = glm::vec3(angularVel.x, angularVel.y, angularVel.z);
+
+			//auto& vehicleBody = controller.GetComponent<VehicleBody>(entity);
+			//PxTransform pxTransform = gVehicle->getTransform();
+			//transform.position = glm::vec3(pxTransform.p.x, pxTransform.p.y, pxTransform.p.z);
+			//transform.quatRotation = glm::quat(pxTransform.q.w, pxTransform.q.x, pxTransform.q.y, pxTransform.q.z);
+
+			//PxVec3 linearVel = gVehicle->getLinearVelocity();
+			//PxVec3 angularVel = gVehicle->getAngularVelocity();
+			//vehicleBody.linearVelocity = glm::vec3(linearVel.x, linearVel.y, linearVel.z);
+			//vehicleBody.angularVelocity = glm::vec3(angularVel.x, angularVel.y, angularVel.z);
 		}
 	}
 }
 
-void PhysicsSystem::DeleteActors()
+void PhysicsSystem::DeleteActorsQueue()
 {
+	// delete any actors that were marked for deletion during the simulation step
+	for (PxActor* actor : actorsToDelete)
+	{
+		gPhysicsScene->removeActor(*actor);
+		actor->release();
+	}
+	actorsToDelete.clear();
 }
 
 void PhysicsSystem::Simulate(float deltaTime)
 {
-	gVehicle->step(deltaTime);
+	//gVehicle->step(deltaTime);
+
+	for (auto& [_, vehicle] : vehicles)
+	{
+		vehicle->step(deltaTime);
+	}
 	gPhysicsScene->simulate(deltaTime);
 	gPhysicsScene->fetchResults(true);
 }
 
 void PhysicsSystem::Cleanup()
 {
-	gVehicle->cleanup();
-	gVehicle.reset();
+	/*gVehicle->cleanup();
+	gVehicle.reset();*/
+
+	for (auto& [_, vehicle] : vehicles)
+	{
+		vehicle->cleanup();
+		vehicle.reset();
+	}
+
 	PxCloseVehicleExtension();
 	gPhysicsScene->release();
 	gDispatcher->release();
@@ -328,11 +376,18 @@ void PhysicsSystem::CreateMap()
 		}
 		else if (controller.HasComponent<VehicleBody>(entity))
 		{
-			if (!gVehicle->setup(gPhysicsScene, gPhysics, materialMap["vehicle_tire"]))
+			/*if (!gVehicle->setup(gPhysicsScene, gPhysics, materialMap["vehicle_tire"]))
 			{
 				std::cout << "Vehicle failed to initialize!" << std::endl;
 				return;
+			}*/
+			vehicles[entity] = std::make_unique<MainVehicle>();
+			if (!vehicles[entity]->setup(gPhysicsScene, gPhysics, materialMap["vehicle_tire"]))
+			 {
+				 std::cout << "Vehicle failed to initialize!" << std::endl;
+				 return;
 			}
+			vehicles[entity]->setEntityUserData(entity);
 		}
 		else if (controller.HasComponent<Trigger>(entity))
 		{
@@ -467,13 +522,29 @@ void PhysicsSystem::CreateActorListener(Event& e)
 
 void PhysicsSystem::JumpEventListener(Event& e)
 {
-	gVehicle->jump();
+	Entity entity = e.GetParam<Entity>(Events::Player::Player_Jumped::ENTITY);
+	
+	vehicles[entity]->jump();
 }
 
 void PhysicsSystem::ResetVehicleEventListener(Event& e)
 {
-	//gVehicle->respawnAtCheckpoint();
-	gVehicle->resetTransform();
+	Entity entity = e.GetParam<Entity>(Events::Player::Reset_Vehicle::ENTITY);
+	
+	vehicles[entity]->respawnAtCheckpoint();
+}
+
+void PhysicsSystem::CheckpointReachedListener(Event& e)
+{
+	Entity playerEntity = e.GetParam<Entity>(Events::Checkpoint::Reached::PLAYER_ENTITY);
+	Entity checkpointEntity = e.GetParam<Entity>(Events::Checkpoint::Reached::CHECKPOINT_ENTITY);
+
+	auto& transform = controller.GetComponent<Transform>(checkpointEntity);
+	auto& checkpoint = controller.GetComponent<CheckPoint>(checkpointEntity);
+	glm::vec3 position = transform.position;
+	glm::quat rotation = checkpoint.orientation;
+	
+	vehicles[playerEntity]->setCheckpoint(position, rotation);
 }
 
 void PhysicsSystem::ReleaseActorCallback(Entity entity, RigidBody& rb)
@@ -489,11 +560,5 @@ void PhysicsSystem::ReleaseTriggerCallback(Entity entity, Trigger& trig)
 	if (trig.actor)
 	{
 		actorsToDelete.push_back(trig.actor);
-		/*trig.actor->userData = nullptr; 
-		gPhysicsScene->removeActor(*trig.actor);
-		trig.actor->release();
-		trig.actor = nullptr;
-
-		std::cout << "Entity: " << entity << ": Trigger removed" << std::endl;*/
 	}
 }

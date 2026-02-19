@@ -23,14 +23,15 @@ float winTimer = 0.0f;
 const float WIN_DELAY = 5.0f;
 float fadeAlpha = 0.0f;
 Entity playerEntity;
-bool playerExists = false;
+
+int numPlayers = 1;
 
 // Define a global ECSController instance so systems can access it
 ECSController controller;
 GameState currentStateGlobal = GameState::STARTMENU;
 
 
-//Setup ImGui panel for camera, putting it here to quick access 
+//Setup ImGui panel for camera, putting it here to quick access
 class CameraEditorPanelRenderer : public ImGuiPanelRendererInterface {
 public:
 	//CameraEditorPanelRenderer(){}
@@ -99,8 +100,8 @@ private:
 std::shared_ptr<CameraEditorPanelRenderer> cameraPanelRenderer; // testing
 
 // some sources that explain ecs
-// https://austinmorlan.com/posts/entity_component_system/ // the ecs i wrote is based on this article so best to read this to understand how it works 
-// https://www.youtube.com/watch?v=dEdFM0uQpA0 
+// https://austinmorlan.com/posts/entity_component_system/ // the ecs i wrote is based on this article so best to read this to understand how it works
+// https://www.youtube.com/watch?v=dEdFM0uQpA0
 
 Game::Game()
 {
@@ -109,8 +110,12 @@ Game::Game()
 
 
 	window = std::make_shared<Window>(1280, 720, "JunkPunk");
-	gamepad = std::make_shared<Gamepad>(1); // initialize gamepad 
-	
+	//gamepad = std::make_shared<Gamepad>(1); // initialize gamepad
+	for (int i = 0; i < numPlayers; i++)
+	{
+		gamepads.push_back(std::make_shared<Gamepad>(i + 1)); // initialize all connected gamepads
+	}
+
 	time = std::make_unique<Time>();
 	glfwSwapInterval(1); // Enable vsync to limit fps
 
@@ -128,8 +133,10 @@ Game::Game()
 	controller.RegisterComponent<MovingObstacle>();
 	controller.RegisterComponent<ParticleEmitter>();
 	controller.RegisterComponent<Powerup>();
+	controller.RegisterComponent<CheckPoint>();
+	controller.RegisterComponent<PlayerController>();
 
-	// register systems (you must register systems before setting component signatures) 
+	// register systems (you must register systems before setting component signatures)
 	loaderSystem = controller.RegisterSystem<LevelLoaderSystem>();
 	{
 		// signatures basically just tell the system which components to look for in an entity
@@ -156,15 +163,15 @@ Game::Game()
 		Signature signature;
 		signature.set(controller.GetComponentType<Render>());
 		signature.set(controller.GetComponentType<Transform>());
-		
+
 		controller.SetSystemSignature<RenderSystem>(signature);
 	}
-	
+
 	physicsSystem = controller.RegisterSystem<PhysicsSystem>();
 	{
 		Signature signature;
 		signature.set(controller.GetComponentType<Transform>());
-		signature.set(controller.GetComponentType<PhysicsBody>()); 
+		signature.set(controller.GetComponentType<PhysicsBody>());
 		controller.SetSystemSignature<PhysicsSystem>(signature);
 	}
 
@@ -172,6 +179,7 @@ Game::Game()
 	{
 		Signature signature;
 		signature.set(controller.GetComponentType<VehicleCommands>());
+		signature.set(controller.GetComponentType<PlayerController>());
 		controller.SetSystemSignature<VehicleControlSystem>(signature);
 	}
 
@@ -209,51 +217,32 @@ Game::Game()
 
 
 	audioSystem->Init();
-	vehicleControlSystem->Init(gamepad);
-	camControlSystem->Init(gamepad);
-	menuSystem->Init(gamepad);
-	pauseSystem->Init(gamepad);
+	vehicleControlSystem->Init(gamepads);
+	camControlSystem->Init(gamepads);
+	menuSystem->Init(gamepads[0]);
+	pauseSystem->Init(gamepads[0]);
 	aiSystem->Init();
 
 	controller.AddEventListener(Events::GameState::NEW_STATE, [this](Event& e) { this->ChangeGameStateListener(e); });
 	controller.AddEventListener(Events::Window::INPUT, [this](Event& e) { this->KeyboardInputListener(e); });
-	controller.AddEventListener(Events::Physics::TRIGGER_ENTER, [this](Event& e) {
-		Entity triggerEntity = e.GetParam<Entity>(Events::Physics::Trigger_Enter::ENTITY_ONE);
-		Entity finishLine = controller.GetEntityByTag("FinishLine");
-		if (triggerEntity == finishLine && !playerWon) {
-			playerWon = true;
-			fadeAlpha = 0.0f;
-			winTimer = 0.0f;
-			std::cout << "you win!" << std::endl;
-		}
-
-		if (controller.HasComponent<Powerup>(triggerEntity)) {
-			if (!playerExists) return;
-			Entity player = playerEntity;
-			auto pickup = controller.GetComponent<Powerup>(triggerEntity);
-			controller.AddComponent(player, pickup);
-			std::cout << "Boost collected!" << std::endl;
-			controller.DestroyEntity(triggerEntity);
-		}
-		});
+	controller.AddEventListener(Events::Physics::TRIGGER_ENTER, [this](Event& e) { this->TriggerEnterListener(e); });
 }
 
 // main game function
 void Game::Run()
 {
+	// temporary background music. add separate menu bgm, game bgm, etc in their proper states
 	Event event(Events::Audio::PLAY_SOUND);
 	event.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/jazz-background-music-325355.mp3");
 	event.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
-	event.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, -20.0f);
+	event.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, -50.0f);
 	controller.SendEvent(event);
-
-
 
 	// imgui panel for debugging
 	camera_debug_panel = std::make_unique<ImGuiPanel>(window);
 	cameraPanelRenderer = std::make_shared<CameraEditorPanelRenderer>();
 	camera_debug_panel->setPanelRenderer(cameraPanelRenderer);
-	
+
 
 	// when creating an entity that needs physics during runtime, add all necessary components first
 	// then create and send Events::Physics::CREATE_ACTOR event with the entity created as the parameter
@@ -262,13 +251,12 @@ void Game::Run()
   // main loop
 	while (!window->shouldClose())
 	{
-		time->Update();			
-		
+		time->Update();
+
 		switch (currentState)
 		{
 		case GAME:
 		{
-			if (!playerExists) return;
 			Entity player = playerEntity;
 			// physics update first to prevent twitching/jittering objects
 			while (time->accumulator >= time->deltaTime)
@@ -315,7 +303,7 @@ void Game::Run()
 			}
 			audioSystem->Update();
 
-			if (gamepad->GetButtonDown(Buttons::PAUSE))
+			if (gamepads[0]->GetButtonDown(Buttons::PAUSE))
 			{
 				Event event(Events::GameState::NEW_STATE);
 				event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::PAUSED);
@@ -323,7 +311,7 @@ void Game::Run()
 			}
 			if (controller.HasComponent<Powerup>(player)) {
 				auto& p = controller.GetComponent<Powerup>(player);
-				if (gamepad->GetButtonDown(Buttons::POWERUP) && !p.active) {
+				if (gamepads[0]->GetButtonDown(Buttons::POWERUP) && !p.active) {
 					p.active = true;
 					p.elapsed = 0.0f;
 					std::cout << "Boost Used" << std::endl;
@@ -335,7 +323,6 @@ void Game::Run()
 		case PAUSED:
 			renderSystem->Update(time->fps(), physicsSystem->GetRenderBuffer());
 			pauseSystem->Update();
-			// render some pause menu
 			camera_debug_panel->render();
 			audioSystem->Update();
 
@@ -351,9 +338,14 @@ void Game::Run()
 			menuSystem->RenderEndScreen();
 			break;
 		}
-		
-		gamepad->RefreshState();
-		gamepad->Update();
+
+		//gamepad->RefreshState();
+		//gamepad->Update();
+		for (auto& gamepad : gamepads)
+		{
+			gamepad->RefreshState();
+			gamepad->Update();
+		}
 
 		window->swapBuffers();
 		glfwPollEvents();
@@ -381,8 +373,6 @@ void Game::ChangeGameStateListener(Event& e)
 		menuSystem->Reset();
 		renderSystem->Reset();
 
-		playerExists = false;
-
 		time->Pause();
 		currentState = state;
 		currentStateGlobal = state;
@@ -395,12 +385,11 @@ void Game::ChangeGameStateListener(Event& e)
 	{
 		if (currentState == GameState::STARTMENU) // set up the world when coming from the main menu
 		{
-			loaderSystem->LoadLevel(); 
+			loaderSystem->LoadLevel();
 			renderSystem->Init();
 			physicsSystem->Init();
-			
+
 			playerEntity = controller.GetEntityByTag("VehicleCommands");
-			playerExists = true;
 
 			// testing
 			Entity cameraEntity = controller.GetEntityByTag("Camera");
@@ -462,7 +451,6 @@ void Game::KeyboardInputListener(Event& e)
 	int action = e.GetParam<bool>(Events::Window::Input::ACTION);
 	char key = static_cast<char>(keyRecieve);
 
-	if (!playerExists) return;
 	Entity player = playerEntity;
 
 	if (currentState == GameState::GAME)
@@ -481,5 +469,35 @@ void Game::KeyboardInputListener(Event& e)
 				std::cout << "Boost Used" << std::endl;
 			}
 		}
+	}
+}
+
+void Game::TriggerEnterListener(Event& e)
+{
+	Entity triggerEntity = e.GetParam<Entity>(Events::Physics::Trigger_Enter::ENTITY_ONE);
+	Entity playerEntity = e.GetParam<Entity>(Events::Physics::Trigger_Enter::ENTITY_TWO);
+
+	Entity finishLine = controller.GetEntityByTag("FinishLine");
+	if (triggerEntity == finishLine && !playerWon) {
+		playerWon = true;
+		fadeAlpha = 0.0f;
+		winTimer = 0.0f;
+		std::cout << "you win!" << std::endl;
+	}
+	else if (controller.HasComponent<Powerup>(triggerEntity)) {
+		Entity player = playerEntity;
+		auto pickup = controller.GetComponent<Powerup>(triggerEntity);
+		controller.AddComponent(player, pickup);
+		std::cout << "Boost collected!" << std::endl;
+		controller.DestroyEntity(triggerEntity);
+	}
+	else if (controller.HasComponent<CheckPoint>(triggerEntity))
+	{
+		Event e(Events::Checkpoint::REACHED);
+		e.SetParam<Entity>(Events::Checkpoint::Reached::PLAYER_ENTITY, playerEntity);
+		e.SetParam<Entity>(Events::Checkpoint::Reached::CHECKPOINT_ENTITY, triggerEntity);
+		controller.SendEvent(e);
+
+		controller.DestroyEntity(triggerEntity);
 	}
 }

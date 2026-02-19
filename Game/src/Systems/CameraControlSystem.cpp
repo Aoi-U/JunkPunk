@@ -13,9 +13,12 @@
 
 extern ECSController controller;
 
-void CameraControlSystem::Init(std::shared_ptr<Gamepad> gamepad)
+void CameraControlSystem::Init(std::vector<std::shared_ptr<Gamepad>> gamepads)
 {
-	this->gamepad = gamepad;
+	for (int i = 0; i < (int)gamepads.size(); i++)
+	{
+		this->gamepads[i + 1] = gamepads[i]; // playerNum is 1-based
+	}
 	controller.AddEventListener(Events::Window::RESIZED, [this](Event& e) { this->WindowSizeListener(e); });
 	controller.AddEventListener(Events::Window::MOUSEMOVED, [this](Event& e) { this->MouseMovedListener(e); });
 }
@@ -40,6 +43,8 @@ void CameraControlSystem::Update(float deltaTime)
 
 		float speed = glm::length(vehicleComp.linearVelocity);
 		camera.radius = glm::mix(camera.baseRadius, camera.baseRadius * 1.5f, glm::smoothstep(0.0f, 20.0f, speed)); // zoom out the camera based on speed using smoothstep for a smoother transition
+
+		auto& gamepad = gamepads[1]; // assuming single player for now
 
 		if (gamepad->Connected())
 		{

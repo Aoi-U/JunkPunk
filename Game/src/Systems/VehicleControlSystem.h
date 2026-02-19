@@ -12,7 +12,7 @@ class VehicleControlSystem : public System
 {
 public:
 	VehicleControlSystem() = default;
-	void Init(std::shared_ptr<Gamepad> gamepad);
+	void Init(std::vector<std::shared_ptr<Gamepad>> gamepads);
 	void Update();
 
 private:
@@ -38,5 +38,5 @@ private:
 
 		Start = 12;
 		Back = 13;*/
-	std::shared_ptr<Gamepad> gamepad;
+	std::unordered_map<int, std::shared_ptr<Gamepad>> gamepads; // map of player entities to their gamepads 
 };

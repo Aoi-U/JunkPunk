@@ -17,8 +17,12 @@ struct VehicleCommands
 	bool isGrounded;
 };
 
+struct PlayerController
+{
+	int playerNum;
+};
+
 struct CheckPoint
 {
-	bool reached;
 	glm::quat orientation; // the direction the player should face when player resets their vehicle to checkpoint
 };

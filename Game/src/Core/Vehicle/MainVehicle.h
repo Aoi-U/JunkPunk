@@ -3,6 +3,7 @@
 #include <iostream>
 #include <PxPhysicsAPI.h>
 #include <vector>
+#include <iostream>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -18,6 +19,8 @@
 //#include "VehicleParamHelper.h"
 
 #include "glad/glad.h"
+
+#include "../Types.h"
 
 
 using namespace physx;
@@ -43,6 +46,8 @@ public:
 
 	void step(float deltaTime);
 
+	void setEntityUserData(Entity entity);
+
 	void cleanup();
 
 	void setCommand(Command command);
@@ -53,7 +58,7 @@ public:
 
 	void resetTransform(); // use when vehicle is stuck (maybe dont need because of checkpoints)
 	
-	void setCheckpoint(const glm::vec3& position, const glm::vec3& rotation); // sets a new checkpoint position
+	void setCheckpoint(const glm::vec3& position, const glm::quat& rotation); // sets a new checkpoint position
 
 	void respawnAtCheckpoint(); // respawns the vehicle at the last checkpoint position
 
@@ -91,12 +96,12 @@ private:
 	
 	glm::mat4 gVehicleTransform = glm::mat4(1.0f);
 
-	glm::vec3 checkpointPosition = glm::vec3(0.0f);
-	glm::vec3 checkpointRotation = glm::vec3(0.0f);
+	glm::vec3 checkpointPosition = glm::vec3(0.0f, -30.0f, 0.0f);
+	glm::quat checkpointRotation = glm::vec3(0.0f);
 
 	PxVec3 jumpForce = PxVec3(0.0f, 20000.0f, 0.0f);
 
-	void setTransform(const glm::vec3& position, const glm::vec3& rotation); // set the position and rotation of the vehicle (use for checkpoints/respawning)
+	void setTransform(const glm::vec3& position, const glm::quat& rotation); // set the position and rotation of the vehicle (use for checkpoints/respawning)
 	
 	float basePeakTorque = -1.0f;
 };

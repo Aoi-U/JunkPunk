@@ -125,8 +125,8 @@ void RenderSystem::DrawShadowPass(const Frustum& frust)
 	// setup shadow mapping and shaders
 	shadowShader->use();
 	shadowMapper->SetupUBO();
-	glViewport(0, 0, shadowMapper->SHADOW_WIDTH, shadowMapper->SHADOW_HEIGHT);
 	shadowMapper->BindShadowMap();
+	glViewport(0, 0, shadowMapper->SHADOW_WIDTH, shadowMapper->SHADOW_HEIGHT);
 	glClear(GL_DEPTH_BUFFER_BIT);
 	glCullFace(GL_FRONT); 
 

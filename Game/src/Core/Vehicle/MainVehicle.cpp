@@ -150,10 +150,14 @@ void MainVehicle::step(float deltaTime)
 	gVehicle.step(deltaTime, gVehicleSimulationContext);
 }
 
+void MainVehicle::setEntityUserData(Entity entity)
+{
+	gVehicle.mPhysXState.physxActor.rigidBody->userData = reinterpret_cast<void*>(static_cast<uintptr_t>(entity));
+}
+
 void MainVehicle::cleanup()
 {
 	gVehicle.destroy();
-
 }
 
 void MainVehicle::setCommand(Command commands)
@@ -172,25 +176,25 @@ void MainVehicle::resetTransform()
 	PxTransform t = gVehicle.mPhysXState.physxActor.rigidBody->getGlobalPose();
 
 	glm::vec3 position(t.p.x, t.p.y + 1.0f, t.p.z); 
-	glm::vec3 rotation(0.0f, 0.0f, 0.0f);
+	glm::quat rotation(1.0, 0.0, 0.0, 0.0);
 
 	setTransform(position, rotation);
 }
 
-void MainVehicle::setTransform(const glm::vec3& position, const glm::vec3& rotation)
+void MainVehicle::setTransform(const glm::vec3& position, const glm::quat& rotation)
 {
-	glm::quat rotQuat = glm::quat(rotation);
-	PxQuat pxQuat(rotQuat.x, rotQuat.y, rotQuat.z, rotQuat.w);
+	PxQuat pxQuat(rotation.x, rotation.y, rotation.z, rotation.w);
 	PxVec3 pxPosition(position.x, position.y, position.z);
 	PxTransform transform(pxPosition, pxQuat);
 
 	gVehicle.mPhysXState.physxActor.rigidBody->setGlobalPose(transform);
 }
 
-void MainVehicle::setCheckpoint(const glm::vec3& position, const glm::vec3& rotation)
+void MainVehicle::setCheckpoint(const glm::vec3& position, const glm::quat& rotation)
 {
 	checkpointPosition = position;
 	checkpointRotation = rotation;
+	std::cout << "checkpoint reached at: " << checkpointPosition.x << " " << checkpointPosition.y << " " << checkpointPosition.z << std::endl;
 }
 
 void MainVehicle::respawnAtCheckpoint()

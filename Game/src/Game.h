@@ -26,7 +26,8 @@ public:
 	void Run();
 
 private:
-	std::shared_ptr<Gamepad> gamepad;
+	//std::shared_ptr<Gamepad> gamepad;
+	std::vector<std::shared_ptr<Gamepad>> gamepads; // list of gamepads 
 	std::shared_ptr<Window> window;
 	std::unique_ptr<Time> time;
 
@@ -50,6 +51,7 @@ private:
 	// add game related stuff 
 	void ChangeGameStateListener(Event& e);
 	void KeyboardInputListener(Event& e);
+	void TriggerEnterListener(Event& e);
 
 	std::unique_ptr<ImGuiPanel> camera_debug_panel; // testing
 	
