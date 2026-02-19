@@ -240,6 +240,9 @@
     <ClCompile Include="src\Systems\PauseSystem.cpp">
       <Filter>Source Files\Systems</Filter>
     </ClCompile>
+    <ClCompile Include="src\Systems\AiSystem.cpp">
+      <Filter>Source Files\Systems</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Game.h">
@@ -435,6 +438,9 @@
       <Filter>Header Files\Systems</Filter>
     </ClInclude>
     <ClInclude Include="src\Systems\PauseSystem.h">
+      <Filter>Header Files\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Systems\AiSystem.h">
       <Filter>Header Files\Systems</Filter>
     </ClInclude>
   </ItemGroup>

@@ -200,12 +200,20 @@ Game::Game()
 		controller.SetSystemSignature<PauseSystem>(signature);
 	}
 
+	aiSystem = controller.RegisterSystem<AiSystem>();
+	{
+		Signature signature;
+		// For now, no specific component signature needed
+		controller.SetSystemSignature<AiSystem>(signature);
+	}
+
 
 	audioSystem->Init();
 	vehicleControlSystem->Init(gamepad);
 	camControlSystem->Init(gamepad);
 	menuSystem->Init(gamepad);
 	pauseSystem->Init(gamepad);
+	aiSystem->Init();
 
 	controller.AddEventListener(Events::GameState::NEW_STATE, [this](Event& e) { this->ChangeGameStateListener(e); });
 	controller.AddEventListener(Events::Window::INPUT, [this](Event& e) { this->KeyboardInputListener(e); });
@@ -279,6 +287,7 @@ void Game::Run()
 			renderSystem->Update(time->fps(), physicsSystem->GetRenderBuffer()); // render physics debug data
 			menuSystem->RenderWinText();
 			camera_debug_panel->render(); // render debug panel
+			aiSystem->RenderDebugWaypoints(); // render ai waypoints for debugging
 
 
 			if (playerWon) {

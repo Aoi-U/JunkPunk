@@ -176,6 +176,7 @@
     <ClCompile Include="src\ImGuiTest.cpp" />
     <ClCompile Include="src\InputManager.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\Systems\AiSystem.cpp" />
     <ClCompile Include="src\Systems\AudioSystem.cpp" />
     <ClCompile Include="src\Systems\CameraControlSystem.cpp" />
     <ClCompile Include="src\Systems\LevelLoaderSystem.cpp" />
@@ -242,6 +243,7 @@
     <ClInclude Include="src\ImGuiPanel.h" />
     <ClInclude Include="src\ImGuiTest.h" />
     <ClInclude Include="src\InputManager.h" />
+    <ClInclude Include="src\Systems\AiSystem.h" />
     <ClInclude Include="src\Systems\AudioSystem.h" />
     <ClInclude Include="src\Systems\CameraControlSystem.h" />
     <ClInclude Include="src\Systems\LevelLoaderSystem.h" />
