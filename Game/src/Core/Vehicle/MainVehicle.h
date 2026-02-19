@@ -20,6 +20,8 @@
 
 #include "glad/glad.h"
 
+#include "../Types.h"
+
 
 using namespace physx;
 using namespace physx::vehicle2;
@@ -43,6 +45,8 @@ public:
 
 
 	void step(float deltaTime);
+
+	void setEntityUserData(Entity entity);
 
 	void cleanup();
 
@@ -92,7 +96,7 @@ private:
 	
 	glm::mat4 gVehicleTransform = glm::mat4(1.0f);
 
-	glm::vec3 checkpointPosition = glm::vec3(0.0f);
+	glm::vec3 checkpointPosition = glm::vec3(0.0f, -30.0f, 0.0f);
 	glm::quat checkpointRotation = glm::vec3(0.0f);
 
 	PxVec3 jumpForce = PxVec3(0.0f, 20000.0f, 0.0f);

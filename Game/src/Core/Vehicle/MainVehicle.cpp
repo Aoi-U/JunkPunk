@@ -150,10 +150,14 @@ void MainVehicle::step(float deltaTime)
 	gVehicle.step(deltaTime, gVehicleSimulationContext);
 }
 
+void MainVehicle::setEntityUserData(Entity entity)
+{
+	gVehicle.mPhysXState.physxActor.rigidBody->userData = reinterpret_cast<void*>(static_cast<uintptr_t>(entity));
+}
+
 void MainVehicle::cleanup()
 {
 	gVehicle.destroy();
-
 }
 
 void MainVehicle::setCommand(Command commands)

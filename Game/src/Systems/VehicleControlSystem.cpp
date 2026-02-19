@@ -6,9 +6,13 @@
 
 extern ECSController controller;
 
-void VehicleControlSystem::Init(std::shared_ptr<Gamepad> gamepad)
+void VehicleControlSystem::Init(std::vector<std::shared_ptr<Gamepad>> gamepads)
 {
-	this->gamepad = gamepad;
+	//this->gamepad = gamepad;
+	for (int i = 0; i < (int)gamepads.size(); i++)
+	{
+		this->gamepads[i + 1] = gamepads[i]; 
+	}
 	controller.AddEventListener(Events::Window::INPUT, [this](Event& e) { this->KeyboardInputListener(e); });
 }
 
@@ -17,7 +21,13 @@ void VehicleControlSystem::Update()
 	for (auto& entity : entities)
 	{
 		auto& playerCommands = controller.GetComponent<VehicleCommands>(entity);
-		
+		auto& playerController = controller.GetComponent<PlayerController>(entity);
+
+		auto it = gamepads.find(playerController.playerNum);
+		if (it == gamepads.end()) continue; 
+
+		auto& gamepad = it->second;
+
 		if (gamepad->Connected())
 		{
 			playerCommands.steer = gamepad->LStick_InDeadzone() ? 0.0f : -gamepad->LeftStick_X();
@@ -68,6 +78,9 @@ void VehicleControlSystem::KeyboardInputListener(Event& e)
 
 	for (auto& entity : entities)
 	{
+		auto& playerController = controller.GetComponent<PlayerController>(entity);
+		if (playerController.playerNum != 1) continue; 
+
 		VehicleCommands& playerCommands = controller.GetComponent<VehicleCommands>(entity);
 		
 		if (key == Keys::KEY_FORWARD)

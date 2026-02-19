@@ -147,9 +147,10 @@ void LevelLoaderSystem::LoadLevel()
 
 	entity = controller.createEntity();
 	loaded = LoadModel("assets/models/2003_peugeot_hoggar_concept/scene.gltf");
-	controller.AddComponent(entity, Transform{ glm::vec3(0.0f, -5.0f, 0.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(40.0f) });
+	controller.AddComponent(entity, Transform{ glm::vec3(0.0f, -30.0f, 0.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(40.0f) });
 	controller.AddComponent(entity, VehicleBody{});
 	controller.AddComponent(entity, VehicleCommands{});
+	controller.AddComponent(entity, PlayerController{ 1 });
 	controller.AddComponent(entity, Render{ loaded.first, loaded.second });
 	controller.AddComponent(entity, PhysicsBody{});
 	controller.AssignTag(entity, "VehicleCommands");

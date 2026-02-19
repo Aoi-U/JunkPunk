@@ -12,7 +12,7 @@ class Gamepad;
 class CameraControlSystem : public System
 {
 public:
-	void Init(std::shared_ptr<Gamepad> gamepad);
+	void Init(std::vector<std::shared_ptr<Gamepad>> gamepads);
 
 	void Update(float deltaTime);
 
@@ -21,7 +21,8 @@ private:
 
 	void MouseMovedListener(Event& e);
 
-	std::shared_ptr<Gamepad> gamepad;
+	//std::shared_ptr<Gamepad> gamepad;
+	std::unordered_map<int, std::shared_ptr<Gamepad>> gamepads; // map of player entities to their gamepads 
 	int screenWidth = 1280;
 	int screenHeight = 720;
 

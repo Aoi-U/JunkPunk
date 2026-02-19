@@ -38,7 +38,9 @@ private:
 	PxPvd* gPvd = NULL;
 
 	PxRigidStatic* gGroundPlane = NULL;
-	std::unique_ptr<MainVehicle> gVehicle = NULL;
+	//std::unique_ptr<MainVehicle> gVehicle = NULL;
+
+	std::unordered_map<Entity, std::unique_ptr<MainVehicle>> vehicles; // map of vehicle entities to their MainVehicle instances 
 
 	PhysicsCallbacks gPhysicsCallbacks;
 

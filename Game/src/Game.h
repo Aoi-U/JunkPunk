@@ -25,7 +25,8 @@ public:
 	void Run();
 
 private:
-	std::shared_ptr<Gamepad> gamepad;
+	//std::shared_ptr<Gamepad> gamepad;
+	std::vector<std::shared_ptr<Gamepad>> gamepads; // list of gamepads 
 	std::shared_ptr<Window> window;
 	std::unique_ptr<Time> time;
 

@@ -24,6 +24,8 @@ const float WIN_DELAY = 5.0f;
 float fadeAlpha = 0.0f;
 Entity playerEntity;
 
+int numPlayers = 1;
+
 // Define a global ECSController instance so systems can access it
 ECSController controller;
 GameState currentStateGlobal = GameState::STARTMENU;
@@ -108,7 +110,11 @@ Game::Game()
 
 
 	window = std::make_shared<Window>(1280, 720, "JunkPunk");
-	gamepad = std::make_shared<Gamepad>(1); // initialize gamepad 
+	//gamepad = std::make_shared<Gamepad>(1); // initialize gamepad 
+	for (int i = 0; i < numPlayers; i++)
+	{
+		gamepads.push_back(std::make_shared<Gamepad>(i + 1)); // initialize all connected gamepads
+	}
 	
 	time = std::make_unique<Time>();
 	glfwSwapInterval(1); // Enable vsync to limit fps
@@ -128,6 +134,7 @@ Game::Game()
 	controller.RegisterComponent<ParticleEmitter>();
 	controller.RegisterComponent<Powerup>();
 	controller.RegisterComponent<CheckPoint>();
+	controller.RegisterComponent<PlayerController>();
 
 	// register systems (you must register systems before setting component signatures) 
 	loaderSystem = controller.RegisterSystem<LevelLoaderSystem>();
@@ -172,6 +179,7 @@ Game::Game()
 	{
 		Signature signature;
 		signature.set(controller.GetComponentType<VehicleCommands>());
+		signature.set(controller.GetComponentType<PlayerController>());
 		controller.SetSystemSignature<VehicleControlSystem>(signature);
 	}
 
@@ -202,10 +210,10 @@ Game::Game()
 
 
 	audioSystem->Init();
-	vehicleControlSystem->Init(gamepad);
-	camControlSystem->Init(gamepad);
-	menuSystem->Init(gamepad);
-	pauseSystem->Init(gamepad);
+	vehicleControlSystem->Init(gamepads);
+	camControlSystem->Init(gamepads);
+	menuSystem->Init(gamepads[0]);
+	pauseSystem->Init(gamepads[0]);
 
 	controller.AddEventListener(Events::GameState::NEW_STATE, [this](Event& e) { this->ChangeGameStateListener(e); });
 	controller.AddEventListener(Events::Window::INPUT, [this](Event& e) { this->KeyboardInputListener(e); });
@@ -286,7 +294,7 @@ void Game::Run()
 			}
 			audioSystem->Update();
 
-			if (gamepad->GetButtonDown(Buttons::PAUSE))
+			if (gamepads[0]->GetButtonDown(Buttons::PAUSE))
 			{
 				Event event(Events::GameState::NEW_STATE);
 				event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::PAUSED);
@@ -294,7 +302,7 @@ void Game::Run()
 			}
 			if (controller.HasComponent<Powerup>(player)) {
 				auto& p = controller.GetComponent<Powerup>(player);
-				if (gamepad->GetButtonDown(Buttons::POWERUP) && !p.active) {
+				if (gamepads[0]->GetButtonDown(Buttons::POWERUP) && !p.active) {
 					p.active = true;
 					p.elapsed = 0.0f;
 					std::cout << "Boost Used" << std::endl;
@@ -322,8 +330,13 @@ void Game::Run()
 			break;
 		}
 		
-		gamepad->RefreshState();
-		gamepad->Update();
+		//gamepad->RefreshState();
+		//gamepad->Update();
+		for (auto& gamepad : gamepads)
+		{
+			gamepad->RefreshState();
+			gamepad->Update();
+		}
 
 		window->swapBuffers();
 		glfwPollEvents();

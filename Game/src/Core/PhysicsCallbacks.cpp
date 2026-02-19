@@ -19,8 +19,12 @@ void PhysicsCallbacks::onTrigger(PxTriggerPair* pairs, PxU32 count)
 		if (!(pair.status & PxPairFlag::eNOTIFY_TOUCH_FOUND))
 			continue;
 
-		Entity triggerEntity = reinterpret_cast<Entity>(pair.triggerActor->userData);
-		Entity otherEntity = reinterpret_cast<Entity>(pair.otherActor->userData);
+		if (!pair.triggerActor->userData || !pair.otherActor->userData)
+			continue;
+
+		Entity triggerEntity = static_cast<Entity>(reinterpret_cast<uintptr_t>(pair.triggerActor->userData));
+		Entity otherEntity = static_cast<Entity>(reinterpret_cast<uintptr_t>(pair.otherActor->userData));
+
 		Event e(Events::Physics::TRIGGER_ENTER);
 		e.SetParam<Entity>(Events::Physics::Trigger_Enter::ENTITY_ONE, triggerEntity);
 		e.SetParam<Entity>(Events::Physics::Trigger_Enter::ENTITY_TWO, otherEntity);
