@@ -171,6 +171,7 @@ void LevelLoaderSystem::LoadLevel()
 	auto aiLoaded = LoadModel("assets/models/2003_peugeot_hoggar_concept/scene.gltf");
 	controller.AddComponent(entity, Transform{ glm::vec3(15.0f, -5.0f, 0.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(40.0f) });
 	controller.AddComponent(entity, VehicleBody{});
+	controller.AddComponent(entity, VehicleCommands{});
 	controller.AddComponent(entity, Render{ aiLoaded.first, aiLoaded.second });
 	controller.AddComponent(entity, PhysicsBody{});
 	controller.AssignTag(entity, "AIVehicle");
