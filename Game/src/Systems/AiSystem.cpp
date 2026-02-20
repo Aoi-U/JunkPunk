@@ -18,7 +18,7 @@ void AiSystem::Update(float deltaTime)
 
 void AiSystem::InitializeWaypoints()
 {
-	// Create waypoints in a circle at the bottom of the map
+	// Create waypoints in a circle
 	// Center of the circle near player spawn
 	glm::vec3 circleCenter(0.0f, -5.0f, 0.0f);
 	float circleRadius = 20.0f;
@@ -44,8 +44,7 @@ void AiSystem::InitializeWaypoints()
 
 void AiSystem::RenderDebugWaypoints()
 {
-	// This will draw waypoint positions to console for now
-	// Later we can add visual spheres if needed
+	// This will draw waypoint positions to console
 	static bool printed = false;
 	if (!printed)
 	{

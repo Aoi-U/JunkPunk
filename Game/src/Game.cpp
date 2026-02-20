@@ -211,7 +211,6 @@ Game::Game()
 	aiSystem = controller.RegisterSystem<AiSystem>();
 	{
 		Signature signature;
-		// For now, no specific component signature needed
 		controller.SetSystemSignature<AiSystem>(signature);
 	}
 
