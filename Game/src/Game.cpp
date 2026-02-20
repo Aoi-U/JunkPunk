@@ -469,6 +469,7 @@ void Game::TriggerEnterListener(Event& e)
 	Entity playerEntity = e.GetParam<Entity>(Events::Physics::Trigger_Enter::ENTITY_TWO);
 
 	Entity finishLine = controller.GetEntityByTag("FinishLine");
+	Entity bananaPeel = controller.GetEntityByTag("BananaPeel");
 	if (triggerEntity == finishLine && !playerWon) {
 		playerWon = true;
 		fadeAlpha = 0.0f;
@@ -490,5 +491,11 @@ void Game::TriggerEnterListener(Event& e)
 		controller.SendEvent(e);
 
 		controller.DestroyEntity(triggerEntity);
+	}
+	else if (triggerEntity == bananaPeel) {
+		std::cout << "Hit banana" << std::endl;
+		Event spinEvent(Events::Player::SPIN_OUT);
+		spinEvent.SetParam<Entity>(Events::Player::Spin_Out::Entity, playerEntity);
+		controller.SendEvent(spinEvent);
 	}
 }

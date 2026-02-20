@@ -248,3 +248,11 @@ void MainVehicle::ClearBoost() {
 		return;
 	gVehicle.mEngineDriveParams.engineParams.peakTorque = basePeakTorque;
 }
+
+void MainVehicle::SpinOut()
+{
+	auto* body = gVehicle.mPhysXState.physxActor.rigidBody;
+	if (!body) return;
+
+	body->addTorque(PxVec3(0.0f, 800.0f, 0.0f), PxForceMode::eIMPULSE);
+}

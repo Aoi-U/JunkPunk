@@ -180,6 +180,12 @@ namespace Events::Player // player related events
 {
 	const EventId PLAYER_JUMPED = "Events::Player::PLAYER_JUMPED"_hash; // player jumped event
 	const EventId RESET_VEHICLE = "Events::Player::RESET_VEHICLE"_hash; // reset vehicle event
+	const EventId SPIN_OUT = "Events::Player::SPIN_OUT"_hash; // Banana peel effect
+}
+
+namespace Events::Player::Spin_Out
+{
+	const ParamId Entity = "Events::Player::Spin_Out::ENTITY"_hash;
 }
 
 namespace Events::Player::Player_Jumped // parameters for player jumped event

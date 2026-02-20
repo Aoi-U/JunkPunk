@@ -176,7 +176,6 @@ void LevelLoaderSystem::LoadLevel()
 		glm::vec3(1.0f)
 		});
 
-	// finish line
 	entity = controller.createEntity();
 	loaded = LoadModel("assets/models/lightning_capsule/scene.gltf");
 	controller.AddComponent(entity, Transform{ glm::vec3(-80.0f, -93.0f, 19.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.25f) });
@@ -189,6 +188,16 @@ void LevelLoaderSystem::LoadLevel()
 		5.0f,
 		0.0f
 		});
+
+	entity = controller.createEntity();
+	loaded = LoadModel("assets/models/banana_peel/banana.gltf");
+	controller.AddComponent(entity, Transform{ glm::vec3(-62.0f, -94.0f, -7.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.5f) });
+	controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 1.0f, 1.0f });
+	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
+	controller.AddComponent(entity, PhysicsBody{});
+	controller.AssignTag(entity, "BananaPeel");
+
+	// finish line
   entity = controller.createEntity();
   loaded = LoadModel("assets/models/finishline/finishline.gltf");
   //controller.AddComponent(entity, StaticBody{ nullptr, loaded.first });
