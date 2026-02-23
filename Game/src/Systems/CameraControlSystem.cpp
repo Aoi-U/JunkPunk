@@ -51,8 +51,8 @@ void CameraControlSystem::Update(float deltaTime)
 			if (!gamepad->RStick_InDeadzone())
 			{
 				// orbit camera around player
-				camera.yaw +=  gamepad->RightStick_X() * camera.horizontalLookSpeed * deltaTime;
-				camera.pitch += gamepad->RightStick_Y() * camera.verticalLookSpeed * deltaTime;
+				camera.yaw +=  -gamepad->RightStick_X() * camera.horizontalLookSpeed * deltaTime;
+				camera.pitch += -gamepad->RightStick_Y() * camera.verticalLookSpeed * deltaTime;
 				camera.pitch = glm::clamp(camera.pitch, glm::radians(-89.0f), glm::radians(89.0f));
 			}
 		}
