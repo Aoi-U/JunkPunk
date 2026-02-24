@@ -61,11 +61,6 @@ private:
 
 	unsigned int screenWidth = 1280;
 	unsigned int screenHeight = 720;
-	float zNear = 0.1f;
-	float zFar = 800.0f;
-	float fov = 45.0f;
-	glm::mat4 viewMatrix = glm::lookAt(glm::vec3(0.0f, -5.0f, 0.0f) + glm::vec3(0.0f, 1.5f, 5.0f), glm::vec3(0.0f, -5.0f, 0.0f) + glm::vec3(0.0f, 1.5f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-
 
 	GLuint debugVao{}, debugVbo{};
 	const size_t maxDebugLines = 10000;

@@ -41,7 +41,7 @@ void CameraControlSystem::Update(float deltaTime)
 		auto& playerTransform = controller.GetComponent<Transform>(camera.playerEntity);
 		auto& vehicleComp = controller.GetComponent<VehicleBody>(camera.playerEntity);
 
-		float speed = glm::length(vehicleComp.linearVelocity);
+		float speed = glm::length(glm::vec2(vehicleComp.linearVelocity.x, vehicleComp.linearVelocity.z));
 		camera.radius = glm::mix(camera.baseRadius, camera.baseRadius * 1.5f, glm::smoothstep(0.0f, 20.0f, speed)); // zoom out the camera based on speed using smoothstep for a smoother transition
 
 		auto& gamepad = gamepads[1]; // assuming single player for now

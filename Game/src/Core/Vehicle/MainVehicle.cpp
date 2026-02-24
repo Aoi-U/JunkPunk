@@ -148,6 +148,24 @@ void MainVehicle::step(float deltaTime)
 
 	//Forward integrate the vehicle by a single timestep.
 	gVehicle.step(deltaTime, gVehicleSimulationContext);
+
+	// stabalize vehicle when in the air to reduce vehicle flipping
+	auto* dyn = gVehicle.mPhysXState.physxActor.rigidBody->is<PxRigidDynamic>();
+	if (dyn && !IsGrounded(gVehicleSimulationContext.physxScene))
+	{
+		const float dampRate = 1.0f;
+		const float dampFactor = expf(-dampRate * deltaTime);
+		PxVec3 angVel = dyn->getAngularVelocity();
+		angVel.x *= dampFactor;
+		angVel.z *= dampFactor;
+		dyn->setAngularVelocity(angVel);
+
+		// add torque to vehicle to align it with the up direction
+		PxTransform t = dyn->getGlobalPose();
+		PxVec3 vehicleUp = t.q.rotate(PxVec3(0.0f, 1.0f, 0.0f));
+		PxVec3 correctionTorque = vehicleUp.cross(PxVec3(0.0f, 1.0f, 0.0f)) * 10.0f;
+		dyn->addTorque(correctionTorque, PxForceMode::eACCELERATION);
+	}
 }
 
 void MainVehicle::setEntityUserData(Entity entity)
@@ -212,7 +230,7 @@ const PxVec3 MainVehicle::getAngularVelocity() const
 	return gVehicle.mPhysXState.physxActor.rigidBody->getAngularVelocity();
 }
 
-bool MainVehicle::IsGrounded(PxScene* scene) const
+bool MainVehicle::IsGrounded(const PxScene* scene) const
 {
 	PxRaycastBuffer hit;
 	bool grounded = false;
@@ -232,7 +250,18 @@ bool MainVehicle::IsGrounded(PxScene* scene) const
 
 void MainVehicle::jump()
 {
-	gVehicle.mPhysXState.physxActor.rigidBody->addForce(jumpForce, PxForceMode::eIMPULSE);
+	//gVehicle.mPhysXState.physxActor.rigidBody->addForce(jumpForce, PxForceMode::eIMPULSE);
+	//PxRigidBodyExt::addForceAtLocalPos(*gVehicle.mPhysXState.physxActor.rigidBody, jumpForce, PxVec3(0.0f, -0.5f, 0.0f), PxForceMode::eIMPULSE);
+	float jumpSpeed = sqrt(2.0 * 9.81 * 10.0);
+	auto* body = gVehicle.mPhysXState.physxActor.rigidBody;
+	auto dyn = body->is<PxRigidDynamic>();
+	
+	if (!dyn)
+		return;
+
+	PxVec3 velocity = dyn->getLinearVelocity();
+	velocity.y = PxMax(velocity.y, 0.0f) + jumpSpeed;
+	dyn->setLinearVelocity(velocity);
 }
 
 void MainVehicle::ApplyBoost(float multiplier) {

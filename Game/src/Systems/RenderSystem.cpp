@@ -75,11 +75,7 @@ void RenderSystem::Init()
 	// setup shadow mapper
 	camera = controller.GetEntityByTag("Camera");
 	auto& tpp = controller.GetComponent<ThirdPersonCamera>(camera);
-	zNear = tpp.zNear;
-	zFar = tpp.zFar;
-	fov = tpp.fov;
-	viewMatrix = tpp.viewMatrix;
-	shadowMapper->Update(screenWidth / (float)screenHeight, zNear, zFar, glm::radians(fov), viewMatrix);
+	shadowMapper->Update(screenWidth / (float)screenHeight, tpp.zNear, tpp.zFar, glm::radians(tpp.fov), tpp.viewMatrix);
 }
 
 void RenderSystem::Reset()
@@ -526,14 +522,10 @@ void RenderSystem::WindowSizeListener(Event& e)
 	if (!(camera == MAX_ENTITIES))
 	{
 		auto& tpp = controller.GetComponent<ThirdPersonCamera>(camera);
+		shadowMapper->Update(screenWidth / (float)screenHeight, tpp.zNear, tpp.zFar, glm::radians(tpp.fov), tpp.viewMatrix);
 
-		zNear = tpp.zNear;
-		zFar = tpp.zFar;
-		fov = tpp.fov;
-		viewMatrix = tpp.viewMatrix;
 	}
 
-	shadowMapper->Update(screenWidth / (float)screenHeight, zNear, zFar, glm::radians(fov), viewMatrix);
 
 	postProcessor->Resize(screenWidth, screenHeight);
 
