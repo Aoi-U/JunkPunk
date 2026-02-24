@@ -102,6 +102,8 @@ void RenderSystem::Update(float fps, const PxRenderBuffer& buffer)
 	glm::vec3 pos = glm::vec3(glm::inverse(tpp.viewMatrix)[3]);
 	Frustum frust = CreateFrustum(tpp.zFar, tpp.zNear, glm::radians(tpp.fov), tpp.screenWidth / (float)tpp.screenHeight, -forward, right, up, glm::vec3(glm::inverse(tpp.viewMatrix)[3]));
 
+	shadowMapper->Update(tpp.screenWidth / (float)tpp.screenHeight, tpp.zNear, tpp.zFar, glm::radians(tpp.fov), tpp.viewMatrix);
+
 	DrawShadowPass(frust);
 
 	DrawLightingPass(frust, tpp, pos);
