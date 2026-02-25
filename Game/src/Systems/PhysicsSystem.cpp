@@ -222,8 +222,10 @@ void PhysicsSystem::Update(float deltaTime)
 				Entity wheelEntity = vehicleBody.wheelEntities[i];
 				auto& wheelTransform = controller.GetComponent<Transform>(wheelEntity);
 				auto [wheelPos, wheelRot] = vehicles[entity]->getWheelTransform(i);
-				wheelTransform.position = wheelPos;
-				wheelTransform.quatRotation = wheelRot;
+
+				PxTransform t = vehicles[entity]->getWheelTransform(i);
+				wheelTransform.position = glm::vec3(t.p.x, t.p.y, t.p.z);
+				wheelTransform.quatRotation = glm::quat(t.q.w, t.q.x, t.q.y, t.q.z);
 			}
 		}
 	}
