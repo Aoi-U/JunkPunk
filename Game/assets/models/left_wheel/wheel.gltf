@@ -1,6 +1,6 @@
 {
 	"asset":{
-		"generator":"Khronos glTF Blender I/O v5.0.21",
+		"generator":"Khronos glTF Blender I/O v4.5.49",
 		"version":"2.0"
 	},
 	"scene":0,
@@ -15,24 +15,19 @@
 	"nodes":[
 		{
 			"mesh":0,
-			"name":"Wheel.003",
+			"name":"Wheel.004",
 			"rotation":[
 				0,
 				0,
-				0.7071068286895752,
-				0.7071068286895752
-			],
-			"translation":[
-				2,
-				0,
-				3
+				-0.7071069478988647,
+				0.7071065902709961
 			]
 		}
 	],
 	"materials":[
 		{
 			"doubleSided":true,
-			"name":"Material.005",
+			"name":"Material.002",
 			"pbrMetallicRoughness":{
 				"baseColorTexture":{
 					"index":0
@@ -44,7 +39,7 @@
 	],
 	"meshes":[
 		{
-			"name":"Cylinder.009",
+			"name":"Cylinder.001",
 			"primitives":[
 				{
 					"attributes":{
@@ -67,15 +62,15 @@
 	"images":[
 		{
 			"mimeType":"image/png",
-			"name":"Wheel_Base_Color",
-			"uri":"textures/Wheel_Base_Color.png"
+			"name":"Wheel_Base_Color.png",
+			"uri":"textures/Wheel_Base_Color.png.png"
 		}
 	],
 	"accessors":[
 		{
 			"bufferView":0,
 			"componentType":5126,
-			"count":466,
+			"count":470,
 			"max":[
 				1,
 				0.5,
@@ -91,13 +86,13 @@
 		{
 			"bufferView":1,
 			"componentType":5126,
-			"count":466,
+			"count":470,
 			"type":"VEC3"
 		},
 		{
 			"bufferView":2,
 			"componentType":5126,
-			"count":466,
+			"count":470,
 			"type":"VEC2"
 		},
 		{
@@ -110,26 +105,26 @@
 	"bufferViews":[
 		{
 			"buffer":0,
-			"byteLength":5592,
+			"byteLength":5640,
 			"byteOffset":0,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":5592,
-			"byteOffset":5592,
+			"byteLength":5640,
+			"byteOffset":5640,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":3728,
-			"byteOffset":11184,
+			"byteLength":3760,
+			"byteOffset":11280,
 			"target":34962
 		},
 		{
 			"buffer":0,
 			"byteLength":1608,
-			"byteOffset":14912,
+			"byteOffset":15040,
 			"target":34963
 		}
 	],
@@ -141,7 +136,7 @@
 	],
 	"buffers":[
 		{
-			"byteLength":16520,
+			"byteLength":16648,
 			"uri":"wheel.bin"
 		}
 	]

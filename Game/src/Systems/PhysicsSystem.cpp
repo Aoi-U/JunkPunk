@@ -216,15 +216,15 @@ void PhysicsSystem::Update(float deltaTime)
 			vehicleBody.linearVelocity = glm::vec3(linearVel.x, linearVel.y, linearVel.z);
 			vehicleBody.angularVelocity = glm::vec3(angularVel.x, angularVel.y, angularVel.z);
 
-			//auto& vehicleBody = controller.GetComponent<VehicleBody>(entity);
-			//PxTransform pxTransform = gVehicle->getTransform();
-			//transform.position = glm::vec3(pxTransform.p.x, pxTransform.p.y, pxTransform.p.z);
-			//transform.quatRotation = glm::quat(pxTransform.q.w, pxTransform.q.x, pxTransform.q.y, pxTransform.q.z);
-
-			//PxVec3 linearVel = gVehicle->getLinearVelocity();
-			//PxVec3 angularVel = gVehicle->getAngularVelocity();
-			//vehicleBody.linearVelocity = glm::vec3(linearVel.x, linearVel.y, linearVel.z);
-			//vehicleBody.angularVelocity = glm::vec3(angularVel.x, angularVel.y, angularVel.z);
+			// update wheel transforms
+			for (size_t i = 0; i < vehicleBody.wheelEntities.size(); i++)
+			{
+				Entity wheelEntity = vehicleBody.wheelEntities[i];
+				auto& wheelTransform = controller.GetComponent<Transform>(wheelEntity);
+				auto [wheelPos, wheelRot] = vehicles[entity]->getWheelTransform(i);
+				wheelTransform.position = wheelPos;
+				wheelTransform.quatRotation = wheelRot;
+			}
 		}
 	}
 }

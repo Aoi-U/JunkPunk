@@ -145,29 +145,59 @@ void LevelLoaderSystem::LoadLevel()
 	}
 
 
-	entity = controller.createEntity();
+	Entity vehicle = controller.createEntity();
 	loaded = LoadModel("assets/models/car_body_orange/car.gltf");
-	controller.AddComponent(entity, Transform{ glm::vec3(0.0f, -5.0f, 0.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.2f) });
-	controller.AddComponent(entity, VehicleBody{});
-	controller.AddComponent(entity, VehicleCommands{});
-	controller.AddComponent(entity, PlayerController{ 1 });
-	controller.AddComponent(entity, Render{ loaded.first, loaded.second });
-	controller.AddComponent(entity, PhysicsBody{});
-	controller.AssignTag(entity, "VehicleCommands");
+	controller.AddComponent(vehicle, Transform{ glm::vec3(0.0f, -5.0f, 0.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.2f) });
+	controller.AddComponent(vehicle, VehicleBody{});
+	controller.AddComponent(vehicle, VehicleCommands{});
+	controller.AddComponent(vehicle, PlayerController{ 1 });
+	controller.AddComponent(vehicle, Render{ loaded.first, loaded.second });
+	controller.AddComponent(vehicle, PhysicsBody{});
+	controller.AssignTag(vehicle, "VehicleCommands");
 	auto& cameraComp = controller.GetComponent<ThirdPersonCamera>(camera); // set the camera's player entity to the vehicle
-	cameraComp.playerEntity = entity;
+	cameraComp.playerEntity = vehicle;
+
+	entity = controller.createEntity(); // front left wheel
+	loaded = LoadModel("assets/models/left_wheel/wheel.gltf");
+	controller.AddComponent(entity, Transform{ glm::vec3(0.0f, -5.0f, 0.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.2f) });
+	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
+	controller.AddComponent(entity, PhysicsBody{});
+	controller.GetComponent<VehicleBody>(vehicle).wheelEntities.push_back(entity);
+	
+	entity = controller.createEntity(); // front right wheel
+	loaded = LoadModel("assets/models/right_wheel/wheel.gltf");
+	controller.AddComponent(entity, Transform{ glm::vec3(0.0f, -5.0f, 0.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.2f) });
+	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
+	controller.AddComponent(entity, PhysicsBody{});
+	controller.GetComponent<VehicleBody>(vehicle).wheelEntities.push_back(entity);
+
+	entity = controller.createEntity(); // back left wheel
+	loaded = LoadModel("assets/models/left_wheel/wheel.gltf");
+	controller.AddComponent(entity, Transform{ glm::vec3(0.0f, -5.0f, 0.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.2f) });
+	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
+	controller.AddComponent(entity, PhysicsBody{});
+	controller.GetComponent<VehicleBody>(vehicle).wheelEntities.push_back(entity); 
+
+	entity = controller.createEntity(); // back right wheel
+	loaded = LoadModel("assets/models/right_wheel/wheel.gltf");
+	controller.AddComponent(entity, Transform{ glm::vec3(0.0f, -5.0f, 0.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.2f) });
+	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
+	controller.AddComponent(entity, PhysicsBody{});
+	controller.GetComponent<VehicleBody>(vehicle).wheelEntities.push_back(entity);
+
+
 
 	/*entity = controller.createEntity();
 	loaded = LoadModel("assets/models/front_left_wheel/wheel.gltf");
 	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });*/
 
-	ParticleEmitter rightWheel = ParticleEmitter{};
-	rightWheel.Init(20000);
-	rightWheel.targetEntity = controller.GetEntityByTag("VehicleCommands");
-	rightWheel.offset = glm::vec3(-2.0f, 0.0f, 0.0f);
+	ParticleEmitter particles = ParticleEmitter{};
+	particles.Init(20000);
+	particles.targetEntity = controller.GetEntityByTag("VehicleCommands");
+	particles.offset = glm::vec3(-2.0f, 0.0f, 0.0f);
 	entity = controller.createEntity();
 	controller.AddComponent(entity, ParticleEmitter{
-		rightWheel
+		particles
 		});
 
 	// test trigger box

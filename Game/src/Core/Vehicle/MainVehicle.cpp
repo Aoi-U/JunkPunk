@@ -53,7 +53,7 @@ bool MainVehicle::initVehicles(PxScene* gScene, PxPhysics* gPhysics, PxMaterial*
 	}
 
 	// Apply a start pose to the physx actor and add it to the physx scene
-	PxTransform pose(PxVec3(0.0f, 10.0f, 0.0f), PxQuat(PxIdentity));
+	PxTransform pose(PxVec3(0.0f, -30.0f, 0.0f), PxQuat(PxIdentity));
 	// rotate around y 180 degrees
 	PxQuat rot = PxQuat(PxPi, PxVec3(0.0f, 1.0f, 0.0f));
 	pose.q = rot;
@@ -182,6 +182,25 @@ void MainVehicle::setCommand(Command commands)
 {
 	gCommand = commands;
 }
+
+std::pair<glm::vec3, glm::quat> MainVehicle::getWheelTransform(int wheelIndex) const
+{
+	if (wheelIndex < 0 || wheelIndex >= 4)
+	{
+		std::cerr << "Invalid wheel index: " << wheelIndex << std::endl;
+		return { glm::vec3(0.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f) };
+	}
+	PxTransform vehicleWorldPose = gVehicle.mPhysXState.physxActor.rigidBody->getGlobalPose();
+	PxTransform wheelLocalPose = gVehicle.mPhysXState.physxActor.wheelShapes[wheelIndex]->getLocalPose();
+	PxTransform wheelWorldPose = vehicleWorldPose.transform(wheelLocalPose);
+
+	glm::vec3 position(wheelWorldPose.p.x, wheelWorldPose.p.y, wheelWorldPose.p.z);
+	glm::quat rotation(wheelWorldPose.q.w, wheelWorldPose.q.x, wheelWorldPose.q.y, wheelWorldPose.q.z);
+
+	return { position, rotation };
+}
+
+
 
 const PxTransform MainVehicle::getTransform() const
 {

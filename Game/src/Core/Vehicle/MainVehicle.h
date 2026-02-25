@@ -52,6 +52,9 @@ public:
 
 	void setCommand(Command command);
 
+	// get wheel transforms for rendering
+	std::pair<glm::vec3, glm::quat> getWheelTransform(int wheelIndex) const;
+
 	// ----------- game related functions -------------
 
 	const PxTransform getTransform() const; // returns the vehicles transform matrix
