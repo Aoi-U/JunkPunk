@@ -83,7 +83,7 @@ void LevelLoaderSystem::LoadLevel()
 	float verticalLookSpeed = 1.5f;
 	float yaw = 0.0f;
 	float pitch = 00.0f;
-	float fov = 45.0f;
+	float fov = 60.0f;
 	float zNear = 0.1f;
 	float zFar = 800.0f;
 	glm::vec3 cameraPos = glm::vec3(0.0f, -5.0f, 0.0f) + glm::vec3(0.0f, heightOffset, -radius);
@@ -146,8 +146,8 @@ void LevelLoaderSystem::LoadLevel()
 
 
 	entity = controller.createEntity();
-	loaded = LoadModel("assets/models/2003_peugeot_hoggar_concept/scene.gltf");
-	controller.AddComponent(entity, Transform{ glm::vec3(0.0f, -30.0f, 0.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(40.0f) });
+	loaded = LoadModel("assets/models/car_body_orange/car.gltf");
+	controller.AddComponent(entity, Transform{ glm::vec3(0.0f, -5.0f, 0.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.2f) });
 	controller.AddComponent(entity, VehicleBody{});
 	controller.AddComponent(entity, VehicleCommands{});
 	controller.AddComponent(entity, PlayerController{ 1 });
@@ -156,6 +156,10 @@ void LevelLoaderSystem::LoadLevel()
 	controller.AssignTag(entity, "VehicleCommands");
 	auto& cameraComp = controller.GetComponent<ThirdPersonCamera>(camera); // set the camera's player entity to the vehicle
 	cameraComp.playerEntity = entity;
+
+	/*entity = controller.createEntity();
+	loaded = LoadModel("assets/models/front_left_wheel/wheel.gltf");
+	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });*/
 
 	ParticleEmitter rightWheel = ParticleEmitter{};
 	rightWheel.Init(20000);
