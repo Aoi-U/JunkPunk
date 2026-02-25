@@ -97,7 +97,7 @@ void CameraControlSystem::WindowSizeListener(Event& e)
 }
 
 void CameraControlSystem::MouseMovedListener(Event& e)
-{
+{	
 	double xpos = e.GetParam<double>(Events::Window::Mouse_Moved::XPOS);
 	double ypos = e.GetParam<double>(Events::Window::Mouse_Moved::YPOS);
 
@@ -106,6 +106,10 @@ void CameraControlSystem::MouseMovedListener(Event& e)
 
 	lastPosX = xpos;
 	lastPosY = ypos;
+
+	if (abs(deltaX) > 100.f || abs(deltaY) > 100.f) {//make less jumpy
+		return;
+	}
 
 	// rotate camera based on mouse movement
 	for (auto& entity : entities)
