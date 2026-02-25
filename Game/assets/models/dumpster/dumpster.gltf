@@ -169,7 +169,7 @@
 		{
 			"bufferView":0,
 			"componentType":5126,
-			"count":4243,
+			"count":3465,
 			"max":[
 				1,
 				1.5,
@@ -177,7 +177,7 @@
 			],
 			"min":[
 				-1.015778660774231,
-				-1,
+				-0.8999999761581421,
 				-2
 			],
 			"type":"VEC3"
@@ -185,19 +185,19 @@
 		{
 			"bufferView":1,
 			"componentType":5126,
-			"count":4243,
+			"count":3465,
 			"type":"VEC3"
 		},
 		{
 			"bufferView":2,
 			"componentType":5126,
-			"count":4243,
+			"count":3465,
 			"type":"VEC2"
 		},
 		{
 			"bufferView":3,
 			"componentType":5123,
-			"count":6828,
+			"count":5418,
 			"type":"SCALAR"
 		},
 		{
@@ -266,68 +266,68 @@
 	"bufferViews":[
 		{
 			"buffer":0,
-			"byteLength":50916,
+			"byteLength":41580,
 			"byteOffset":0,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":50916,
-			"byteOffset":50916,
+			"byteLength":41580,
+			"byteOffset":41580,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":33944,
-			"byteOffset":101832,
+			"byteLength":27720,
+			"byteOffset":83160,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":13656,
-			"byteOffset":135776,
+			"byteLength":10836,
+			"byteOffset":110880,
 			"target":34963
 		},
 		{
 			"buffer":0,
 			"byteLength":1296,
-			"byteOffset":149432,
+			"byteOffset":121716,
 			"target":34962
 		},
 		{
 			"buffer":0,
 			"byteLength":1296,
-			"byteOffset":150728,
+			"byteOffset":123012,
 			"target":34962
 		},
 		{
 			"buffer":0,
 			"byteLength":864,
-			"byteOffset":152024,
+			"byteOffset":124308,
 			"target":34962
 		},
 		{
 			"buffer":0,
 			"byteLength":408,
-			"byteOffset":152888,
+			"byteOffset":125172,
 			"target":34963
 		},
 		{
 			"buffer":0,
 			"byteLength":1296,
-			"byteOffset":153296,
+			"byteOffset":125580,
 			"target":34962
 		},
 		{
 			"buffer":0,
 			"byteLength":1296,
-			"byteOffset":154592,
+			"byteOffset":126876,
 			"target":34962
 		},
 		{
 			"buffer":0,
 			"byteLength":864,
-			"byteOffset":155888,
+			"byteOffset":128172,
 			"target":34962
 		}
 	],
@@ -339,7 +339,7 @@
 	],
 	"buffers":[
 		{
-			"byteLength":156752,
+			"byteLength":129036,
 			"uri":"dumpster.bin"
 		}
 	]
