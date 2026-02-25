@@ -208,7 +208,7 @@ void PhysicsSystem::Update(float deltaTime)
 		{
 			auto& vehicleBody = controller.GetComponent<VehicleBody>(entity);
 			PxTransform pxTransform = vehicles[entity]->getTransform();
-			transform.position = glm::vec3(pxTransform.p.x, pxTransform.p.y, pxTransform.p.z);
+			transform.position = glm::vec3(pxTransform.p.x, pxTransform.p.y - 0.3, pxTransform.p.z);
 			transform.quatRotation = glm::quat(pxTransform.q.w, pxTransform.q.x, pxTransform.q.y, pxTransform.q.z);
 
 			PxVec3 linearVel = vehicles[entity]->getLinearVelocity();
