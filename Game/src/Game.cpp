@@ -10,6 +10,7 @@
 #include "Components/Obstacle.h"
 #include "Components/Particles.h"
 #include "Components/Powerup.h"
+#include "Components/AiDriver.h"
 
 #include "ECSController.h"
 #include "Core/Types.h"
@@ -135,6 +136,7 @@ Game::Game()
 	controller.RegisterComponent<Powerup>();
 	controller.RegisterComponent<CheckPoint>();
 	controller.RegisterComponent<PlayerController>();
+	controller.RegisterComponent<AiDriver>();
 
 	// register systems (you must register systems before setting component signatures)
 	loaderSystem = controller.RegisterSystem<LevelLoaderSystem>();
@@ -211,6 +213,10 @@ Game::Game()
 	aiSystem = controller.RegisterSystem<AiSystem>();
 	{
 		Signature signature;
+		signature.set(controller.GetComponentType<AiDriver>());
+		signature.set(controller.GetComponentType<Transform>());
+		signature.set(controller.GetComponentType<VehicleCommands>());
+		signature.set(controller.GetComponentType<VehicleBody>());
 		controller.SetSystemSignature<AiSystem>(signature);
 	}
 
@@ -274,6 +280,7 @@ void Game::Run()
 			renderSystem->Update(time->fps(), physicsSystem->GetRenderBuffer()); // render physics debug data
 			menuSystem->RenderWinText();
 			camera_debug_panel->render(); // render debug panel
+			aiSystem->Update(time->frameTime); // update ai drivers
 			aiSystem->RenderDebugWaypoints(); // render ai waypoints for debugging
 
 

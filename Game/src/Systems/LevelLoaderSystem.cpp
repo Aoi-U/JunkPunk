@@ -7,6 +7,7 @@
 #include "../Components/Transform.h"
 #include "../Components/Particles.h"
 #include "../Components/Powerup.h"
+#include "../Components/AiDriver.h"
 
 
 
@@ -169,12 +170,20 @@ void LevelLoaderSystem::LoadLevel()
 	// AI Opponent vehicle
 	entity = controller.createEntity();
 	auto aiLoaded = LoadModel("assets/models/2003_peugeot_hoggar_concept/scene.gltf");
-	controller.AddComponent(entity, Transform{ glm::vec3(15.0f, -5.0f, 0.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(40.0f) });
+	controller.AddComponent(entity, Transform{ glm::vec3(-60.0f, -93.0f, 19.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(40.0f) });
 	controller.AddComponent(entity, VehicleBody{});
 	controller.AddComponent(entity, VehicleCommands{});
 	controller.AddComponent(entity, Render{ aiLoaded.first, aiLoaded.second });
 	controller.AddComponent(entity, PhysicsBody{});
 	controller.AssignTag(entity, "AIVehicle");
+
+	// Initial paramerters for the AI driver, these can be tweaked to change the difficulty of the AI
+	AiDriver ai{};
+	ai.desiredSpeed = 5.0f;
+	ai.arrivalRadius = 2.0f;
+	ai.maxSteerRadians = 1.0f;
+	ai.throttleKp = 0.6f;
+	controller.AddComponent(entity, ai);
 
 	// test trigger box
 	entity = controller.createEntity();

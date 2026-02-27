@@ -199,6 +199,7 @@
   <ItemGroup>
     <ClInclude Include="assets\shaders\colliders.vert" />
     <ClInclude Include="Gamepad.h" />
+    <ClInclude Include="src\Components\AiDriver.h" />
     <ClInclude Include="src\Components\Camera.h" />
     <ClInclude Include="src\Components\ComponentArray.h" />
     <ClInclude Include="src\Components\ComponentManager.h" />
