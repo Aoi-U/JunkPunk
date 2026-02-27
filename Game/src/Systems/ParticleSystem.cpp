@@ -26,17 +26,22 @@ void ParticleSystem::Update(float deltaTime)
 		auto& emitter = controller.GetComponent<ParticleEmitter>(entity);
 
 		glm::vec3 entityPos = glm::vec3(0.0f);
+		glm::quat targetRot = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
 		float linearVelocity = 0.0f;
 
 		if (controller.HasComponent<Transform>(emitter.targetEntity))
 		{
 			auto& targetTransform = controller.GetComponent<Transform>(emitter.targetEntity);
 			entityPos = targetTransform.position;
+			targetRot = targetTransform.quatRotation;
+
+			entityPos += targetRot * emitter.offset; // apply offset in the direction the vehicle is facing
 		}
 		if (controller.HasComponent<VehicleBody>(emitter.targetEntity))
 		{
 			auto& targetBody = controller.GetComponent<VehicleBody>(emitter.targetEntity);
 			linearVelocity = glm::length(targetBody.linearVelocity);
+			std::cout << "Vehicle speed: " << linearVelocity << std::endl;
 		}
 
 		int newParticles = 0;
@@ -49,16 +54,16 @@ void ParticleSystem::Update(float deltaTime)
 				speedFactor = 1.0f;
 			newParticles = (int)(deltaTime * emitter.spawnRate * speedFactor);
 		}
-		if (newParticles > (int)(0.016f * 10000.0))
+		if (newParticles > (int)(0.016f * 20000.0))
 		{
-			newParticles = (int)(0.016f * 10000.0);
+			newParticles = (int)(0.016f * 20000.0);
 		}
 
 		for (int i = 0; i < newParticles; i++)
 		{
 			int particleIndex = FindUnusedParticle(emitter);
 			emitter.particles[particleIndex].life = emitter.life; // This particle will live for 2 seconds.
-			emitter.particles[particleIndex].position = entityPos + emitter.offset;
+			emitter.particles[particleIndex].position = entityPos;
 			glm::vec3 mainDir = glm::vec3(0.0f, 1.0f, -1.0f);
 			glm::vec3 randomDir = glm::vec3(
 				(rand() % 2000 - 1000.0f) / 1000.0f,
@@ -73,7 +78,7 @@ void ParticleSystem::Update(float deltaTime)
 			emitter.particles[particleIndex].b = rand() % 256;
 			emitter.particles[particleIndex].a = 255;
 
-			emitter.particles[particleIndex].size = (rand() % 1000) / 2000.0f + 0.1f;
+			emitter.particles[particleIndex].size = (rand() % 1000) / 4000.0f + 0.1f;
 		}
 
 		int particleCount = 0;

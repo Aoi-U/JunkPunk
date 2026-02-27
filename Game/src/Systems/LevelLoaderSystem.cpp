@@ -185,16 +185,19 @@ void LevelLoaderSystem::LoadLevel()
 	controller.AddComponent(entity, PhysicsBody{});
 	controller.GetComponent<VehicleBody>(vehicle).wheelEntities.push_back(entity);
 
-
-
-	/*entity = controller.createEntity();
-	loaded = LoadModel("assets/models/front_left_wheel/wheel.gltf");
-	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });*/
-
 	ParticleEmitter particles = ParticleEmitter{};
 	particles.Init(20000);
 	particles.targetEntity = controller.GetEntityByTag("VehicleCommands");
-	particles.offset = glm::vec3(-2.0f, 0.0f, 0.0f);
+	particles.offset = glm::vec3(-0.3f, 0.0f, -1.3f);
+	entity = controller.createEntity();
+	controller.AddComponent(entity, ParticleEmitter{
+		particles
+		});
+
+	particles = ParticleEmitter{};
+	particles.Init(20000);
+	particles.targetEntity = controller.GetEntityByTag("VehicleCommands");
+	particles.offset = glm::vec3(0.3f, 0.0f, -1.3f);
 	entity = controller.createEntity();
 	controller.AddComponent(entity, ParticleEmitter{
 		particles
