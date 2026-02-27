@@ -382,7 +382,12 @@ void PhysicsSystem::CreateMap()
 				return;
 			}*/
 			vehicles[entity] = std::make_unique<MainVehicle>();
-			if (!vehicles[entity]->setup(gPhysicsScene, gPhysics, materialMap["vehicle_tire"]))
+			Transform initTransform = controller.GetComponent<Transform>(entity);
+
+			PxTransform it = PxTransform(PxVec3(initTransform.position.x, initTransform.position.y, initTransform.position.z),
+				PxQuat(initTransform.quatRotation.x, initTransform.quatRotation.y, initTransform.quatRotation.z, initTransform.quatRotation.w));
+
+			if (!vehicles[entity]->setup(gPhysicsScene, gPhysics, materialMap["vehicle_tire"], it))
 			 {
 				 std::cout << "Vehicle failed to initialize!" << std::endl;
 				 return;

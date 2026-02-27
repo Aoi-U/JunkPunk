@@ -4,11 +4,11 @@ MainVehicle::MainVehicle()
 {
 }
 
-bool MainVehicle::setup(PxScene* scene, PxPhysics* physics, PxMaterial* material)
+bool MainVehicle::setup(PxScene* scene, PxPhysics* physics, PxMaterial* material, PxTransform initTransform)
 {
 	initMaterialFrictionTable(material);
 
-	if (!initVehicles(scene, physics, material))
+	if (!initVehicles(scene, physics, material, initTransform))
 	{
 		std::cout << "Failed to setup vehicle!" << std::endl;
 		return false;
@@ -24,7 +24,7 @@ void MainVehicle::initMaterialFrictionTable(PxMaterial* gMaterial)
 	gNbPhysXmaterialFrictions = 1;
 }
 
-bool MainVehicle::initVehicles(PxScene* gScene, PxPhysics* gPhysics, PxMaterial* gMaterial)
+bool MainVehicle::initVehicles(PxScene* gScene, PxPhysics* gPhysics, PxMaterial* gMaterial, PxTransform initTransform)
 {
 	// Initialize the vehicle
 	readBaseParamsFromJsonFile("assets/vehicledata/", "Base.json", gVehicle.mBaseParams);
@@ -52,12 +52,7 @@ bool MainVehicle::initVehicles(PxScene* gScene, PxPhysics* gPhysics, PxMaterial*
 		return false;
 	}
 
-	// Apply a start pose to the physx actor and add it to the physx scene
-	PxTransform pose(PxVec3(0.0f, 10.0f, 0.0f), PxQuat(PxIdentity));
-	// rotate around y 180 degrees
-	PxQuat rot = PxQuat(PxPi, PxVec3(0.0f, 1.0f, 0.0f));
-	pose.q = rot;
-	gVehicle.setUpActor(*gScene, pose, gVehicleName);
+	gVehicle.setUpActor(*gScene, initTransform, gVehicleName);
 
 	PxFilterData vehicleFilter(COLLISION_FLAG_CHASSIS, COLLISION_FLAG_CHASSIS_AGAINST, 0, 0);
 	PxFilterData wheelFilter(COLLISION_FLAG_WHEEL, COLLISION_FLAG_WHEEL_AGAINST, 0, 0);
