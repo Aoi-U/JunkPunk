@@ -10,10 +10,10 @@
 #include "Components/Obstacle.h"
 #include "Components/Particles.h"
 #include "Components/Powerup.h"
+#include "Components/Banana.h"
 
 #include "ECSController.h"
 #include "Core/Types.h"
-
 
 static int camera_scroll_type = 0;
 static bool split_camera = false;
@@ -135,6 +135,7 @@ Game::Game()
 	controller.RegisterComponent<Powerup>();
 	controller.RegisterComponent<CheckPoint>();
 	controller.RegisterComponent<PlayerController>();
+	controller.RegisterComponent<Banana>();
 
 	// register systems (you must register systems before setting component signatures) 
 	loaderSystem = controller.RegisterSystem<LevelLoaderSystem>();
@@ -303,9 +304,15 @@ void Game::Run()
 			if (controller.HasComponent<Powerup>(player)) {
 				auto& p = controller.GetComponent<Powerup>(player);
 				if (gamepads[0]->GetButtonDown(Buttons::POWERUP) && !p.active) {
-					p.active = true;
-					p.elapsed = 0.0f;
-					std::cout << "Boost Used" << std::endl;
+					if (p.type == 2) {
+						SpawnBananaPeel(player);
+						controller.RemoveComponent<Powerup>(player);
+					}
+					else {
+						p.active = true;
+						p.elapsed = 0.0f;
+					}
+					std::cout << "Powerup Used" << std::endl;
 				}
 			}
 
@@ -455,9 +462,15 @@ void Game::KeyboardInputListener(Event& e)
 		if (controller.HasComponent<Powerup>(player)) {
 			auto& p = controller.GetComponent<Powerup>(player);
 			if (key == Keys::KEY_USE && action == true && !p.active) {
-				p.active = true;
-				p.elapsed = 0.0f;
-				std::cout << "Boost Used" << std::endl;
+				if (p.type == 2) {
+					SpawnBananaPeel(player);
+					controller.RemoveComponent<Powerup>(player);
+				}
+				else {
+					p.active = true;
+					p.elapsed = 0.0f;
+				}
+				std::cout << "Powerup Used" << std::endl;
 			}
 		}
 	}
@@ -475,11 +488,11 @@ void Game::TriggerEnterListener(Event& e)
 		winTimer = 0.0f;
 		std::cout << "you win!" << std::endl;
 	}
-	else if (controller.HasComponent<Powerup>(triggerEntity)) {
+	else if (controller.HasComponent<Powerup>(triggerEntity) && !controller.HasComponent<Powerup>(playerEntity)) {
 		Entity player = playerEntity;
 		auto pickup = controller.GetComponent<Powerup>(triggerEntity);
 		controller.AddComponent(player, pickup);
-		std::cout << "Boost collected!" << std::endl;
+		std::cout << "Powerup collected!" << std::endl;
 		controller.DestroyEntity(triggerEntity);
 	}
 	else if (controller.HasComponent<CheckPoint>(triggerEntity))
@@ -491,4 +504,44 @@ void Game::TriggerEnterListener(Event& e)
 
 		controller.DestroyEntity(triggerEntity);
 	}
+	else if (controller.HasComponent<Banana>(triggerEntity)) {
+		std::cout << "Hit banana" << std::endl;
+		Event spinEvent(Events::Player::SPIN_OUT);
+		spinEvent.SetParam<Entity>(Events::Player::Spin_Out::Entity, playerEntity);
+		controller.SendEvent(spinEvent);
+		controller.DestroyEntity(triggerEntity);
+	}
+}
+
+void Game::SpawnBananaPeel(Entity vehicle) {
+	auto& vehicleTransform = controller.GetComponent<Transform>(vehicle);
+	glm::vec3 position = vehicleTransform.position;
+	glm::quat rotation = vehicleTransform.quatRotation;
+	glm::vec3 forward = glm::normalize(rotation * glm::vec3(0.0f, 0.0f, 1.0f));
+	glm::vec3 spawnPos = position - forward * 5.0f;
+	spawnPos.y = position.y;
+	//glm::vec3 forward = rotation * glm::vec3(0.0f, 0.0f, 1.0f);
+	//glm::vec3 spawnPos = position - forward * 5.0f;
+	//spawnPos.y -= 1.0f;
+	//spawnPos = glm::vec3(-60.0f, -94.0f, -7.0f);
+	Entity banana = controller.createEntity();
+	auto loaded = loaderSystem->LoadModel("assets/models/banana_peel/banana.gltf");
+	controller.AddComponent(banana, Transform{
+		spawnPos,
+		glm::quat(1.0f,0.0f,0.0f,0.0f),
+		glm::vec3(0.5f)
+		});
+	controller.AddComponent(banana, Trigger{ nullptr, 1.0f, 1.0f, 1.0f });
+	controller.AddComponent(banana, Render{ loaded.first, loaded.second, true });
+	controller.AddComponent(banana, PhysicsBody{});
+	controller.AddComponent(banana, Banana{});
+
+	std::cout << "Spawning banana at: "
+		<< spawnPos.x << ", "
+		<< spawnPos.y << ", "
+		<< spawnPos.z << std::endl;
+
+	Event createEvent(Events::Physics::CREATE_ACTOR);
+	createEvent.SetParam<Entity>(Events::Physics::Create_Actor::ENTITY, banana);
+	controller.SendEvent(createEvent);
 }

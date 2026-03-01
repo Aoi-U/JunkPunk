@@ -11,6 +11,8 @@
 
 extern ECSController controller;
 bool usedBoost = false;
+bool spinning = false;
+float spinTimer = 0.0f;
 
 PhysicsSystem::PhysicsSystem()
 {
@@ -18,6 +20,7 @@ PhysicsSystem::PhysicsSystem()
 	controller.AddEventListener(Events::Player::PLAYER_JUMPED, [this](Event& e) { this->JumpEventListener(e); });
 	controller.AddEventListener(Events::Player::RESET_VEHICLE, [this](Event& e) { this->ResetVehicleEventListener(e); });
 	controller.AddEventListener(Events::Checkpoint::REACHED, [this](Event& e) {this->CheckpointReachedListener(e); });
+	controller.AddEventListener(Events::Player::SPIN_OUT, [this](Event& e) {this->SpinOutListener(e); });
 
 	auto rigidBodyArray = controller.GetComponentArray<RigidBody>();
 	rigidBodyArray->BindOnRemoveCallback([this](Entity entity, RigidBody& rb) { this->ReleaseActorCallback(entity, rb); });
@@ -142,6 +145,23 @@ void PhysicsSystem::Update(float deltaTime)
 		command.brake = vehicleCommands.brake;
 		command.steer = vehicleCommands.steer;
 		vehicle->setCommand(command);
+
+		if (spinning)
+		{
+			spinTimer += deltaTime;
+
+			command.throttle = 0.0f;
+			command.brake = 0.3f;
+			command.steer = sin(spinTimer * 20.0f);
+
+			vehicle->SpinOut();
+
+			if (spinTimer > 1.0f)
+			{
+				spinning = false;
+				spinTimer = 0.0f;
+			}
+		}
 	}
 
 	Simulate(deltaTime); // run physics simulation
@@ -520,6 +540,32 @@ void PhysicsSystem::CreateActorListener(Event& e)
 		gPhysicsScene->addActor(*dynamicActor);
 		shape->release();
 	}
+	else if (controller.HasComponent<Trigger>(entity))
+	{
+		// create trigger volume
+		auto& trigger = controller.GetComponent<Trigger>(entity);
+
+		PxBoxGeometry box = PxBoxGeometry(PxVec3(trigger.width, trigger.height, trigger.length));
+		PxTransform boxTransform = PxTransform(PxVec3(transform.position.x, transform.position.y, transform.position.z), PxQuat(transform.quatRotation.x, transform.quatRotation.y, transform.quatRotation.z, transform.quatRotation.w));
+
+		PxShape* shape = gPhysics->createShape(box, *materialMap["default"]);
+		shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
+		shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, true);
+		shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, false);
+
+		PxFilterData filterData(COLLISION_FLAG_TRIGGER, COLLISION_FLAG_TRIGGER_AGAINST, 0, 0);
+		shape->setSimulationFilterData(filterData);
+
+		PxRigidStatic* staticActor = gPhysics->createRigidStatic(boxTransform);
+		staticActor->attachShape(*shape);
+		staticActor->setActorFlag(PxActorFlag::eVISUALIZATION, true);
+		staticActor->userData = reinterpret_cast<void*>(entity);
+
+		trigger.actor = staticActor;
+
+		gPhysicsScene->addActor(*staticActor);
+		shape->release();
+	}
 }
 
 void PhysicsSystem::JumpEventListener(Event& e)
@@ -563,4 +609,11 @@ void PhysicsSystem::ReleaseTriggerCallback(Entity entity, Trigger& trig)
 	{
 		actorsToDelete.push_back(trig.actor);
 	}
+}
+
+void PhysicsSystem::SpinOutListener(Event& e) {
+	Entity entity = e.GetParam<Entity>(Events::Player::Spin_Out::Entity);
+	
+	spinning = true;
+	spinTimer = 0.0f;
 }

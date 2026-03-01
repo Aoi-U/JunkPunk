@@ -76,6 +76,8 @@ public:
 	void ApplyBoost(float multiplier);
 	void ClearBoost();
 
+	void SpinOut();
+
 private:
 	//DirectDriveVehicle gVehicle;
 	EngineDriveVehicle gVehicle;
