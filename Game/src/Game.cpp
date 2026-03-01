@@ -15,7 +15,6 @@
 #include "ECSController.h"
 #include "Core/Types.h"
 
-
 static int camera_scroll_type = 0;
 static bool split_camera = false;
 static bool first_time_held_right_click = false;
@@ -305,8 +304,14 @@ void Game::Run()
 			if (controller.HasComponent<Powerup>(player)) {
 				auto& p = controller.GetComponent<Powerup>(player);
 				if (gamepads[0]->GetButtonDown(Buttons::POWERUP) && !p.active) {
-					p.active = true;
-					p.elapsed = 0.0f;
+					if (p.type == 2) {
+						SpawnBananaPeel(player);
+						controller.RemoveComponent<Powerup>(player);
+					}
+					else {
+						p.active = true;
+						p.elapsed = 0.0f;
+					}
 					std::cout << "Powerup Used" << std::endl;
 				}
 			}
@@ -457,8 +462,14 @@ void Game::KeyboardInputListener(Event& e)
 		if (controller.HasComponent<Powerup>(player)) {
 			auto& p = controller.GetComponent<Powerup>(player);
 			if (key == Keys::KEY_USE && action == true && !p.active) {
-				p.active = true;
-				p.elapsed = 0.0f;
+				if (p.type == 2) {
+					SpawnBananaPeel(player);
+					controller.RemoveComponent<Powerup>(player);
+				}
+				else {
+					p.active = true;
+					p.elapsed = 0.0f;
+				}
 				std::cout << "Powerup Used" << std::endl;
 			}
 		}
@@ -500,4 +511,37 @@ void Game::TriggerEnterListener(Event& e)
 		controller.SendEvent(spinEvent);
 		controller.DestroyEntity(triggerEntity);
 	}
+}
+
+void Game::SpawnBananaPeel(Entity vehicle) {
+	auto& vehicleTransform = controller.GetComponent<Transform>(vehicle);
+	glm::vec3 position = vehicleTransform.position;
+	glm::quat rotation = vehicleTransform.quatRotation;
+	glm::vec3 forward = glm::normalize(rotation * glm::vec3(0.0f, 0.0f, 1.0f));
+	glm::vec3 spawnPos = position - forward * 5.0f;
+	spawnPos.y = position.y;
+	//glm::vec3 forward = rotation * glm::vec3(0.0f, 0.0f, 1.0f);
+	//glm::vec3 spawnPos = position - forward * 5.0f;
+	//spawnPos.y -= 1.0f;
+	//spawnPos = glm::vec3(-60.0f, -94.0f, -7.0f);
+	Entity banana = controller.createEntity();
+	auto loaded = loaderSystem->LoadModel("assets/models/banana_peel/banana.gltf");
+	controller.AddComponent(banana, Transform{
+		spawnPos,
+		glm::quat(1.0f,0.0f,0.0f,0.0f),
+		glm::vec3(0.5f)
+		});
+	controller.AddComponent(banana, Trigger{ nullptr, 1.0f, 1.0f, 1.0f });
+	controller.AddComponent(banana, Render{ loaded.first, loaded.second, true });
+	controller.AddComponent(banana, PhysicsBody{});
+	controller.AddComponent(banana, Banana{});
+
+	std::cout << "Spawning banana at: "
+		<< spawnPos.x << ", "
+		<< spawnPos.y << ", "
+		<< spawnPos.z << std::endl;
+
+	Event createEvent(Events::Physics::CREATE_ACTOR);
+	createEvent.SetParam<Entity>(Events::Physics::Create_Actor::ENTITY, banana);
+	controller.SendEvent(createEvent);
 }

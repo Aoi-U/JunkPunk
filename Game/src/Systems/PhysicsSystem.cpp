@@ -538,6 +538,32 @@ void PhysicsSystem::CreateActorListener(Event& e)
 		gPhysicsScene->addActor(*dynamicActor);
 		shape->release();
 	}
+	else if (controller.HasComponent<Trigger>(entity))
+	{
+		// create trigger volume
+		auto& trigger = controller.GetComponent<Trigger>(entity);
+
+		PxBoxGeometry box = PxBoxGeometry(PxVec3(trigger.width, trigger.height, trigger.length));
+		PxTransform boxTransform = PxTransform(PxVec3(transform.position.x, transform.position.y, transform.position.z), PxQuat(transform.quatRotation.x, transform.quatRotation.y, transform.quatRotation.z, transform.quatRotation.w));
+
+		PxShape* shape = gPhysics->createShape(box, *materialMap["default"]);
+		shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
+		shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, true);
+		shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, false);
+
+		PxFilterData filterData(COLLISION_FLAG_TRIGGER, COLLISION_FLAG_TRIGGER_AGAINST, 0, 0);
+		shape->setSimulationFilterData(filterData);
+
+		PxRigidStatic* staticActor = gPhysics->createRigidStatic(boxTransform);
+		staticActor->attachShape(*shape);
+		staticActor->setActorFlag(PxActorFlag::eVISUALIZATION, true);
+		staticActor->userData = reinterpret_cast<void*>(entity);
+
+		trigger.actor = staticActor;
+
+		gPhysicsScene->addActor(*staticActor);
+		shape->release();
+	}
 }
 
 void PhysicsSystem::JumpEventListener(Event& e)
