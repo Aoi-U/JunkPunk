@@ -10,6 +10,7 @@
 #include "Components/Obstacle.h"
 #include "Components/Particles.h"
 #include "Components/Powerup.h"
+#include "Components/Banana.h"
 
 #include "ECSController.h"
 #include "Core/Types.h"
@@ -135,6 +136,7 @@ Game::Game()
 	controller.RegisterComponent<Powerup>();
 	controller.RegisterComponent<CheckPoint>();
 	controller.RegisterComponent<PlayerController>();
+	controller.RegisterComponent<Banana>();
 
 	// register systems (you must register systems before setting component signatures) 
 	loaderSystem = controller.RegisterSystem<LevelLoaderSystem>();
@@ -469,7 +471,6 @@ void Game::TriggerEnterListener(Event& e)
 	Entity playerEntity = e.GetParam<Entity>(Events::Physics::Trigger_Enter::ENTITY_TWO);
 
 	Entity finishLine = controller.GetEntityByTag("FinishLine");
-	Entity bananaPeel = controller.GetEntityByTag("BananaPeel");
 	if (triggerEntity == finishLine && !playerWon) {
 		playerWon = true;
 		fadeAlpha = 0.0f;
@@ -492,10 +493,11 @@ void Game::TriggerEnterListener(Event& e)
 
 		controller.DestroyEntity(triggerEntity);
 	}
-	else if (triggerEntity == bananaPeel) {
+	else if (controller.HasComponent<Banana>(triggerEntity)) {
 		std::cout << "Hit banana" << std::endl;
 		Event spinEvent(Events::Player::SPIN_OUT);
 		spinEvent.SetParam<Entity>(Events::Player::Spin_Out::Entity, playerEntity);
 		controller.SendEvent(spinEvent);
+		controller.DestroyEntity(triggerEntity);
 	}
 }

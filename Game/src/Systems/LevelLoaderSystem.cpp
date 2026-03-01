@@ -7,7 +7,7 @@
 #include "../Components/Transform.h"
 #include "../Components/Particles.h"
 #include "../Components/Powerup.h"
-
+#include"../Components/Banana.h"
 
 
 #include "../ECSController.h"
@@ -195,7 +195,7 @@ void LevelLoaderSystem::LoadLevel()
 	controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 1.0f, 1.0f });
 	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
 	controller.AddComponent(entity, PhysicsBody{});
-	controller.AssignTag(entity, "BananaPeel");
+	controller.AddComponent(entity, Banana{});
 
 	// finish line
   entity = controller.createEntity();
