@@ -190,6 +190,19 @@ void LevelLoaderSystem::LoadLevel()
 		});
 
 	entity = controller.createEntity();
+	loaded = LoadModel("assets/models/banana/scene.gltf");
+	controller.AddComponent(entity, Transform{ glm::vec3(-60.0f, -94.0f, -7.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(1.0f) });
+	controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 2.0f, 1.0f });
+	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
+	controller.AddComponent(entity, PhysicsBody{});
+	controller.AddComponent(entity, Powerup{
+		2,
+		false,
+		5.0f,
+		0.0f
+		});
+
+	entity = controller.createEntity();
 	loaded = LoadModel("assets/models/banana_peel/banana.gltf");
 	controller.AddComponent(entity, Transform{ glm::vec3(-62.0f, -94.0f, -7.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.5f) });
 	controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 1.0f, 1.0f });

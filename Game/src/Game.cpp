@@ -307,7 +307,7 @@ void Game::Run()
 				if (gamepads[0]->GetButtonDown(Buttons::POWERUP) && !p.active) {
 					p.active = true;
 					p.elapsed = 0.0f;
-					std::cout << "Boost Used" << std::endl;
+					std::cout << "Powerup Used" << std::endl;
 				}
 			}
 
@@ -459,7 +459,7 @@ void Game::KeyboardInputListener(Event& e)
 			if (key == Keys::KEY_USE && action == true && !p.active) {
 				p.active = true;
 				p.elapsed = 0.0f;
-				std::cout << "Boost Used" << std::endl;
+				std::cout << "Powerup Used" << std::endl;
 			}
 		}
 	}
@@ -477,11 +477,11 @@ void Game::TriggerEnterListener(Event& e)
 		winTimer = 0.0f;
 		std::cout << "you win!" << std::endl;
 	}
-	else if (controller.HasComponent<Powerup>(triggerEntity)) {
+	else if (controller.HasComponent<Powerup>(triggerEntity) && !controller.HasComponent<Powerup>(playerEntity)) {
 		Entity player = playerEntity;
 		auto pickup = controller.GetComponent<Powerup>(triggerEntity);
 		controller.AddComponent(player, pickup);
-		std::cout << "Boost collected!" << std::endl;
+		std::cout << "Powerup collected!" << std::endl;
 		controller.DestroyEntity(triggerEntity);
 	}
 	else if (controller.HasComponent<CheckPoint>(triggerEntity))
