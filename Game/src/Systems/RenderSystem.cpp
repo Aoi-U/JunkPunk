@@ -80,6 +80,36 @@ void RenderSystem::Init()
 	fov = tpp.fov;
 	viewMatrix = tpp.viewMatrix;
 	shadowMapper->Update(screenWidth / (float)screenHeight, zNear, zFar, glm::radians(fov), viewMatrix);
+	bananaIconTexture = std::make_unique<Texture>("banana.png");
+	bananaIconTexture->Load("assets/UI");
+	boostIconTexture = std::make_unique<Texture>("flash.png");
+	boostIconTexture->Load("assets/UI");
+
+	float uiVertices[] = {
+		// positions    // texcoords
+		-1.0f,  1.0f,    0.0f, 1.0f,
+		-1.0f, -1.0f,    0.0f, 0.0f,
+		 1.0f, -1.0f,    1.0f, 0.0f,
+
+		-1.0f,  1.0f,    0.0f, 1.0f,
+		 1.0f, -1.0f,    1.0f, 0.0f,
+		 1.0f,  1.0f,    1.0f, 1.0f
+	};
+
+	glGenVertexArrays(1, &uiVAO);
+	glGenBuffers(1, &uiVBO);
+
+	glBindVertexArray(uiVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, uiVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(uiVertices), uiVertices, GL_STATIC_DRAW);
+
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+
+	glBindVertexArray(0);
 }
 
 void RenderSystem::Reset()
@@ -114,6 +144,12 @@ void RenderSystem::Update(float fps, const PxRenderBuffer& buffer)
 	DrawCollisionDebug(buffer);
 
 	DrawPostProcessingPass();
+
+	glDisable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	RenderPowerupUI();
+	glEnable(GL_DEPTH_TEST);
 	
 	int f = static_cast<int>(fps);
 	std::string text = "fps: " + std::to_string(f);
@@ -549,4 +585,71 @@ void RenderSystem::ChangeGameStateListener(Event& e)
 	{
 		tintColor = glm::vec3(1.0f, 1.0f, 1.0f);
 	}
+}
+
+void RenderSystem::drawUI(GLuint textureID,
+	float x0_px, float y0_px,
+	float x1_px, float y1_px,
+	int layerIndex)
+{
+	postProcessShader->use();
+	float screenW = (float)screenWidth;
+	float screenH = (float)screenHeight;
+
+	auto pxToNdcX = [&](float x) { return (x / screenW) * 2.0f - 1.0f; };
+	auto pxToNdcY = [&](float y) { return (y / screenH) * 2.0f - 1.0f; };
+
+	float x0 = pxToNdcX(x0_px);
+	float y0 = pxToNdcY(y0_px);
+	float x1 = pxToNdcX(x1_px);
+	float y1 = pxToNdcY(y1_px);
+
+	float vertices[] = {
+	x0, y1,  0.0f, 0.0f,
+	x0, y0,  0.0f, 1.0f,
+	x1, y0,  1.0f, 1.0f,
+
+	x0, y1,  0.0f, 0.0f,
+	x1, y0,  1.0f, 1.0f,
+	x1, y1,  1.0f, 0.0f
+	};
+
+	glBindBuffer(GL_ARRAY_BUFFER, uiVBO);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
+
+	glBindVertexArray(uiVAO);
+	glBindTexture(GL_TEXTURE_2D, textureID);
+
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+
+	glBindVertexArray(0);
+}
+
+void RenderSystem::RenderPowerupUI() {
+	Entity player = controller.GetEntityByTag("VehicleCommands");
+
+	if (!controller.HasComponent<Powerup>(player))
+		return;
+
+	auto& p = controller.GetComponent <Powerup>(player);
+
+	GLuint textureID = 0;
+
+	if (p.type == 1)
+		textureID = boostIconTexture->getID();
+	else if (p.type == 2)
+		textureID = bananaIconTexture->getID();
+
+	if (textureID == 0)
+		return;
+
+	float iconSize = 96.0f;
+	float margin = 20.0f;
+
+	float x0 = (screenWidth * 0.5f) - (iconSize * 0.5f);
+	float y0 = screenHeight - margin - iconSize;
+	float x1 = x0 + iconSize;
+	float y1 = y0 + iconSize;
+
+	drawUI(textureID, x0, y0, x1, y1, 5);
 }

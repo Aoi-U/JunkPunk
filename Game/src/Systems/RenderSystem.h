@@ -19,6 +19,8 @@
 #include "../Components/Camera.h"
 #include "ParticleRenderSystem.h"
 #include "PxPhysicsAPI.h"
+#include "../Components/Powerup.h"
+#include "../Core/Texture.h"
 
 using namespace physx;
 
@@ -59,6 +61,9 @@ private:
 	
 	void ChangeGameStateListener(Event& e);
 
+	void drawUI(unsigned int texture, float x0_px, float y0_px, float x1_px, float y1_px, int layerIndex);
+	void RenderPowerupUI();
+
 	unsigned int screenWidth = 1280;
 	unsigned int screenHeight = 720;
 	float zNear = 0.1f;
@@ -66,6 +71,11 @@ private:
 	float fov = 45.0f;
 	glm::mat4 viewMatrix = glm::lookAt(glm::vec3(0.0f, -5.0f, 0.0f) + glm::vec3(0.0f, 1.5f, 5.0f), glm::vec3(0.0f, -5.0f, 0.0f) + glm::vec3(0.0f, 1.5f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
+	GLuint uiVAO = 0;
+	GLuint uiVBO = 0;
+
+	std::unique_ptr<Texture> bananaIconTexture;
+	std::unique_ptr<Texture> boostIconTexture;
 
 	GLuint debugVao{}, debugVbo{};
 	const size_t maxDebugLines = 10000;
