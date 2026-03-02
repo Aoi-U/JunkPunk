@@ -2,5 +2,5 @@
 
 Light::Light()
 {
-	position = { 0.0f, 200.0f, 300.0f };
+	position = { 30.0f, 0.0f, 140.0f };
 }

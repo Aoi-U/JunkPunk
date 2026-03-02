@@ -13,7 +13,7 @@ public:
 	const glm::vec3& getAmbient() { return ambient; }
 	const glm::vec3& getDiffuse() { return diffuse; }
 	const glm::vec3& getSpecular() { return specular; }
-	const glm::vec3 getDirection() const { return glm::normalize(position); }
+	const glm::vec3 getDirection() const { return glm::normalize(position - glm::vec3(0.0f, -70.0f, 0.0f)); }
 
 private:
 	glm::vec3 position;
