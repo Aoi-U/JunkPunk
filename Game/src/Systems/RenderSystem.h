@@ -51,8 +51,11 @@ private:
 	void DrawCollisionDebug(const PxRenderBuffer& renderBuffer);
 
 	void DrawPostProcessingPass();
+	
+	void DrawUI(Texture* tex, float x0_px, float y0_px, float x1_px, float y1_px, int layerIndex);
 
 	void RenderText(std::string text, float x, float y, float scale, glm::vec3 color);
+	void RenderPowerupUI();
 
 	void BindTextures(Mesh& mesh); // bind textures for a mesh
 	void ShaderSetupDefaults(); // setup all shader constnat uniforms
@@ -61,18 +64,16 @@ private:
 	
 	void ChangeGameStateListener(Event& e);
 
-	void drawUI(unsigned int texture, float x0_px, float y0_px, float x1_px, float y1_px, int layerIndex);
-	void RenderPowerupUI();
 
 	unsigned int screenWidth = 1280;
 	unsigned int screenHeight = 720;
-	float zNear = 0.1f;
-	float zFar = 800.0f;
-	float fov = 45.0f;
+
 	glm::mat4 viewMatrix = glm::lookAt(glm::vec3(0.0f, -5.0f, 0.0f) + glm::vec3(0.0f, 1.5f, 5.0f), glm::vec3(0.0f, -5.0f, 0.0f) + glm::vec3(0.0f, 1.5f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
-	GLuint uiVAO = 0;
-	GLuint uiVBO = 0;
+	//GLuint uiVAO = 0;
+	//GLuint uiVBO = 0;
+	VAO uiVAO;
+	VBO uiVBO;
 
 	std::unique_ptr<Texture> bananaIconTexture;
 	std::unique_ptr<Texture> boostIconTexture;
@@ -101,6 +102,7 @@ private:
 	std::shared_ptr<Shader> skyboxShader;
 	std::shared_ptr<Shader> physicsDebugShader;
 	std::shared_ptr<Shader> textShader;
+	std::shared_ptr<Shader> uiShader;
 
 	std::shared_ptr<ParticleRenderSystem> particleRenderSystem;
 

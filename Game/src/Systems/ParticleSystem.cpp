@@ -41,7 +41,6 @@ void ParticleSystem::Update(float deltaTime)
 		{
 			auto& targetBody = controller.GetComponent<VehicleBody>(emitter.targetEntity);
 			linearVelocity = glm::length(targetBody.linearVelocity);
-			std::cout << "Vehicle speed: " << linearVelocity << std::endl;
 		}
 
 		int newParticles = 0;
