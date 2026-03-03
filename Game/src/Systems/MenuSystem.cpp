@@ -583,14 +583,14 @@ void MenuSystem::KeyboardInputListener(Event& e)
 		}
 	}
 
-	if (key == Keys::KEY_JUMP && action == true && currentStateGlobal == GameState::ENDMENU) {
+	else if (key == Keys::KEY_JUMP && action == true && currentStateGlobal == GameState::ENDMENU) {
 		playerWon = false;
 		Event event(Events::GameState::NEW_STATE);
 		event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::STARTMENU);
 		controller.SendEvent(event);
 	}
 
-	if (key == Keys::KEY_JUMP && action == true && currentStateGlobal == GameState::CONTROLS) {
+	else if (key == Keys::KEY_JUMP && action == true && currentStateGlobal == GameState::CONTROLS) {
 		Event event(Events::GameState::NEW_STATE);
 		event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::GAME);
 		controller.SendEvent(event);
