@@ -78,6 +78,7 @@ enum GameState
 	PAUSED,
 	STARTMENU,
 	ENDMENU,
+	CONTROLS,
 	RESTART
 };
 
