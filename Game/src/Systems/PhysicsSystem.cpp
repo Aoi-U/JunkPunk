@@ -200,17 +200,27 @@ void PhysicsSystem::Update(float deltaTime)
 				int previousPathIndex = (currentPathIndex - 1 + obstacle.pathPoints.size()) % obstacle.pathPoints.size();
 				
 				// calculate the total distance between the two path points
-				glm::vec3 totalDistance = obstacle.pathPoints[currentPathIndex] - obstacle.pathPoints[previousPathIndex]; 
-				float pathLength = glm::length(totalDistance); 
+				glm::vec3 totalDistance = obstacle.pathPoints[currentPathIndex] - obstacle.pathPoints[previousPathIndex];
 
-				float distanceToTravel = obstacle.speed * deltaTime; // calculate the distance to travel this frame
-
+				// calculate rotation value
 				glm::quat startRotation = obstacle.pathRotations.empty() ? glm::quat(1.0f, 0.0f, 0.0f, 0.0f) : obstacle.pathRotations[previousPathIndex];
 				glm::quat endRotation = obstacle.pathRotations.empty() ? glm::quat(1.0f, 0.0f, 0.0f, 0.0f) : obstacle.pathRotations[currentPathIndex];
 
 				glm::quat newRotation = glm::slerp(startRotation, endRotation, obstacle.progress); // interpolate rotation based on progress
 
-				obstacle.progress += distanceToTravel / pathLength; // update progress along the path
+				// advance progress of obstacle
+				if (!obstacle.pathTimes.empty()) // if path times are defined, use them to calculate progress
+				{
+					float segmentDuration = obstacle.pathTimes[currentPathIndex];
+					obstacle.progress += deltaTime / segmentDuration; // update progress along the path
+				}
+				else // otherwise, use speed to calculate progress
+				{
+					float pathLength = glm::length(totalDistance);
+					float distanceToTravel = obstacle.speed * deltaTime; // calculate the distance to travel this frame
+					obstacle.progress += distanceToTravel / pathLength; // update progress along the path
+				}
+
 				obstacle.progress = glm::clamp(obstacle.progress, 0.0f, 1.0f); // clamp progress between 0 and 1
 
 				// set the new target position for the kinematic actor

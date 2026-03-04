@@ -7,7 +7,8 @@
 struct MovingObstacle
 {
 	std::vector<glm::vec3> pathPoints; 
-	std::vector<glm::quat> pathRotations; // can be empty. if provided, must be the same size as pathPoints
+	std::vector<glm::quat> pathRotations; // new rotation at each path point. if empty, obstacle will not rotate
+	std::vector<float> pathTimes; // time in seconds to reach each point. if empty, movement will be speed based
 	float progress;
 	int currentPathIndex;
 	float speed; // units per second

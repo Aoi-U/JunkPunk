@@ -134,6 +134,13 @@ void LevelLoaderSystem::LoadLevel()
 				glm::quat(glm::vec3(0.0f, glm::radians(-90.0f), 0.0f)),
 				glm::quat(glm::vec3(0.0f, glm::radians(180.0f), 0.0f))
 			},
+			{
+				// times to reach each point (if empty, movement will be based on speed, must be empty or same size as path points)
+				1.0f,
+				2.0f,
+				3.0f,
+				5.0f
+			},
 			0.0f,
 			0,
 			5.0f,
