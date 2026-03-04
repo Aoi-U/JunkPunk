@@ -8,6 +8,7 @@
 #include "../Components/Particles.h"
 #include "../Components/Powerup.h"
 #include "../Components/AiDriver.h"
+#include "AiSystem.h"
 
 
 
@@ -170,7 +171,7 @@ void LevelLoaderSystem::LoadLevel()
 	// AI Opponent vehicle
 	entity = controller.createEntity();
 	auto aiLoaded = LoadModel("assets/models/2003_peugeot_hoggar_concept/scene.gltf");
-	controller.AddComponent(entity, Transform{ glm::vec3(-60.0f, -93.0f, 19.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(40.0f) });
+	controller.AddComponent(entity, Transform{ glm::vec3(-35.0f, -80.0f, -15.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(40.0f) });
 	controller.AddComponent(entity, VehicleBody{});
 	controller.AddComponent(entity, VehicleCommands{});
 	controller.AddComponent(entity, Render{ aiLoaded.first, aiLoaded.second });
@@ -179,10 +180,10 @@ void LevelLoaderSystem::LoadLevel()
 
 	// Initial paramerters for the AI driver, these can be tweaked to change the difficulty of the AI
 	AiDriver ai{};
-	ai.desiredSpeed = 5.0f;
-	ai.arrivalRadius = 2.0f;
-	ai.maxSteerRadians = 1.0f;
-	ai.throttleKp = 0.6f;
+	//ai.desiredSpeed = 2.0f;
+	//ai.arrivalRadius = 2.0f;
+	//ai.maxSteerRadians = 1.0f;
+	//ai.throttleKp = 0.6f;
 	controller.AddComponent(entity, ai);
 
 	// test trigger box
@@ -226,6 +227,37 @@ void LevelLoaderSystem::LoadLevel()
 	controller.AddComponent(entity, Transform{ glm::vec3(-60.0f, -93.0f, 19.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.25f) });
 	controller.AddComponent(entity, CheckPoint{ glm::quat(1.0f, 0.0f, 0.0f, 0.0f) });
 	controller.AddComponent(entity, Trigger{ nullptr, 5.0f, 2.0f, 5.0f });
+
+	// Waypoint 1
+	entity = controller.createEntity();
+	controller.AddComponent(entity, PhysicsBody{});
+	controller.AddComponent(entity, Transform{ glm::vec3(-40.0f, -94.0f, -5.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.25f) });
+	controller.AddComponent(entity, CheckPoint{ glm::quat(1.0f, 0.0f, 0.0f, 0.0f) });
+	controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 4.0f, 1.0f });
+	// Waypoint 2
+	entity = controller.createEntity();
+	controller.AddComponent(entity, PhysicsBody{});
+	controller.AddComponent(entity, Transform{ glm::vec3(-49.266, -84.591, 49.396), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.25f) });
+	controller.AddComponent(entity, CheckPoint{ glm::quat(1.0f, 0.0f, 0.0f, 0.0f) });
+	controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 4.0f, 1.0f });
+	// Waypoint 3
+	entity = controller.createEntity();
+	controller.AddComponent(entity, PhysicsBody{});
+	controller.AddComponent(entity, Transform{ glm::vec3(glm::vec3(9.345, -70.691, 10.822)), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.25f) });
+	controller.AddComponent(entity, CheckPoint{ glm::quat(1.0f, 0.0f, 0.0f, 0.0f) });
+	controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 4.0f, 1.0f });
+	// Waypoint 4
+	entity = controller.createEntity();
+	controller.AddComponent(entity, PhysicsBody{});
+	controller.AddComponent(entity, Transform{ glm::vec3(glm::vec3(27.794, -70.194, 25.407)), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.25f) });
+	controller.AddComponent(entity, CheckPoint{ glm::quat(1.0f, 0.0f, 0.0f, 0.0f) });
+	controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 4.0f, 1.0f });
+	// Waypoint 5
+	entity = controller.createEntity();
+	controller.AddComponent(entity, PhysicsBody{});
+	controller.AddComponent(entity, Transform{ glm::vec3(glm::vec3(-28.125, -59.594, 65.995)), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.25f) });
+	controller.AddComponent(entity, CheckPoint{ glm::quat(1.0f, 0.0f, 0.0f, 0.0f) });
+	controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 4.0f, 1.0f });
 }
 
 std::pair<std::shared_ptr<Model>, std::shared_ptr<AABB>> LevelLoaderSystem::LoadModel(std::string path)

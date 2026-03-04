@@ -16,7 +16,6 @@ void AiSystem::Init()
 
 void AiSystem::Update(float deltaTime)
 {
-	//std::cout << "Updating AiSystem with " << entities.size() << " entities" << std::endl;
 	if (deltaTime <= 0.0f)
 		return;
 
@@ -36,52 +35,79 @@ void AiSystem::Update(float deltaTime)
 		auto& body = controller.GetComponent<VehicleBody>(entity);
 		auto& vc = controller.GetComponent<VehicleCommands>(entity);
 
-		// clamp index
-		if (ai.currentWaypointIndex >= trackWaypoints.size())
-			ai.currentWaypointIndex = 0;
+		if (trackWaypoints.empty())
+			return; // nothing to drive to
 
-		glm::vec3 posXZ(transform.position.x, 0.0f, transform.position.z);
-		glm::vec3 wpPos = trackWaypoints[ai.currentWaypointIndex].position;
-		glm::vec3 wpXZ(wpPos.x, 0.0f, wpPos.z);
+		// Position of vehicle
+		glm::vec3 positionXZ(transform.position.x, 0.0f, transform.position.z);
+		glm::vec3 waypointPosition = trackWaypoints[ai.currentWaypointIndex].position;
+		// Position of Waypoint
+		glm::vec3 waypointXZ(waypointPosition.x, 0.0f, waypointPosition.z);
 
 		// distance to current waypoint
-		float dist = glm::length(wpXZ - posXZ);
+		float dist = glm::length(waypointXZ - positionXZ);
+		//std::cout << "Distance to waypoint " << ai.currentWaypointIndex << ": " << dist << std::endl;
 
-		// advance when within arrival radius
-		// Use A* to find path between waypoints and follow that path instead of straight lines, this will allow the AI to navigate around obstacles and take better racing lines
-		if (dist < ai.arrivalRadius)
-		{
-			ai.currentWaypointIndex = (ai.currentWaypointIndex + 1) % trackWaypoints.size();
-			// update target waypoint values
-			wpPos = trackWaypoints[ai.currentWaypointIndex].position;
-			wpXZ = glm::vec3(wpPos.x, 0.0f, wpPos.z);
-			dist = glm::length(wpXZ - posXZ);
-		}
 
-		// target direction (XZ)
+		// target forward direction (XZ)
 		glm::vec3 forward = transform.quatRotation * glm::vec3(0.0f, 0.0f, 1.0f);
 		forward.y = 0.0f;
 		if (glm::length(forward) < 1e-6f) forward = glm::vec3(0, 0, 1);
 		forward = glm::normalize(forward);
 
-		glm::vec3 toTarget = wpXZ - posXZ;
-		glm::vec3 toTargetN = glm::length(toTarget) > 1e-5f ? glm::normalize(toTarget) : forward;
+		// Previous waypoint
+		int prevIndex = (ai.currentWaypointIndex - 1 + trackWaypoints.size()) % trackWaypoints.size();
+		glm::vec3 prevPos = trackWaypoints[prevIndex].position;
+		glm::vec3 prevXZ(prevPos.x, 0.0f, prevPos.z);
+
+
+		// Normalized direction segment between next and previous waypoint
+		glm::vec3 segmentDir = glm::normalize(waypointXZ - prevXZ);
+		// Vehicle position relative to previous waypoint
+		glm::vec3 toCar = positionXZ - prevXZ;
+		// Project car onto segment
+		float t = glm::dot(toCar, segmentDir);
+
+		// advance when within arrival radius
+		// Use A* to find path between waypoints and follow that path instead of straight lines, this will allow the AI to navigate around obstacles and take better racing lines
+		float segmentLength = glm::length(waypointXZ - prevXZ);
+		if (t + ai.lookaheadDistance > segmentLength)
+		{
+			ai.currentWaypointIndex = (ai.currentWaypointIndex + 1) % trackWaypoints.size();
+		}
+
+		// Add lookahead distance
+		//float lookahead = ai.lookaheadDistance > 0.0f ? ai.lookaheadDistance : 5.0f;
+		float lookahead = ai.lookaheadDistance;
+		glm::vec3 lookaheadPoint = prevXZ + segmentDir * (t + lookahead);
+
+		std::cout << "Lookahead Point: (" << lookaheadPoint.x << "," << lookaheadPoint.y << "," << lookaheadPoint.z << ")" << "\t\tCurrent location: " << positionXZ.x << "," << positionXZ.y << "," << positionXZ.z << std::endl;
+
+		//std::cout << "Current Waypoint Index: " << ai.currentWaypointIndex
+		//	<< "\tNext Waypoint: (" << waypointXZ.x << "," << waypointXZ.y << "," << waypointXZ.z << ")"
+		//	<< std::endl;
+
+		// Distance to target from lookaheadPoint
+		glm::vec3 toTarget = lookaheadPoint - waypointXZ;
+		//glm::vec3 toTargetN = glm::length(toTarget) > 1e-5f ? glm::normalize(toTarget) : forward;
 
 		// signed angle in XZ plane
 		// Add print statements to check for turning
 		// Atan2 function to help with turning/angles
 		// replace your signed angle with atan2(cross, dot) <-- standard gamedegv way
 		auto signedAngleXZ = [](const glm::vec3& a, const glm::vec3& b) -> float {
-			float dot = glm::clamp(glm::dot(glm::normalize(a), glm::normalize(b)), -1.0f, 1.0f);
-			float angle = std::acos(dot);
-			float crossY = a.x * b.z - a.z * b.x;
-			return crossY < 0.0f ? -angle : angle;
+			// Use 2D atan2(cross, dot) for a signed angle in the XZ plane
+			glm::vec2 a2(a.x, a.z);
+			glm::vec2 b2(b.x, b.z);
+			float cross = a2.x * b2.y - a2.y * b2.x;
+			float dot = glm::clamp(a2.x * b2.x + a2.y * b2.y, -1.0f, 1.0f);
+			return std::atan2(cross, dot);
 			};
 
-		float headingError = signedAngleXZ(forward, toTargetN);
+		float headingError = signedAngleXZ(forward, toTarget);
 
 		// Simple steering: proportional to heading error, normalized to [-1,1]
-		float steer = glm::clamp(headingError / ai.maxSteerRadians, -1.0f, 1.0f);
+		float steer = glm::clamp(headingError * 0.2f, -1.0f, 1.0f);
 
 		// Simple throttle:
 		// - drive toward recommended speed (or ai.desiredSpeed)
@@ -90,15 +116,15 @@ void AiSystem::Update(float deltaTime)
 			: ai.desiredSpeed;
 		float speed = glm::length(glm::vec3(body.linearVelocity.x, 0.0f, body.linearVelocity.z));
 
-		// Basic proportional throttle; reduce throttle for large heading errors
-		float baseThrottle = glm::clamp((targetSpeed - speed) * ai.throttleKp, 0.0f, ai.maxThrottle);
-		if (std::abs(headingError) > ai.brakeAngleThreshold)
-			baseThrottle *= 0.3f; // slow down into corners
+		//std::cout << "headingError: " << headingError
+		//	<< "\t\tsteer: " << steer
+		//	<< "\t\tspeed: " << speed
+		//	<< std::endl;
 
-		// Simple brake when very close and still too fast
+		// Basic proportional throttle
+		float baseThrottle = glm::clamp((targetSpeed - speed) * ai.throttleKp, 0.0f, ai.maxThrottle);
+
 		float brake = 0.0f;
-		if (dist < ai.arrivalRadius * 1.2f && speed > targetSpeed + 1.0f)
-			brake = glm::clamp((speed - targetSpeed) * 0.5f, 0.0f, ai.maxBrake);
 
 		// Write commands consumed by PhysicsSystem/MainVehicle
 		vc.steer = steer;
@@ -110,29 +136,52 @@ void AiSystem::Update(float deltaTime)
 
 void AiSystem::InitializeWaypoints()
 {
-	// Create waypoints in a circle
-	// Center of the circle near player spawn
-	// Just using this for testing
-	glm::vec3 circleCenter(-80.0f, -93.0f, 19.0f);
-	float circleRadius = 5.0f;
-	int numWaypoints = 8; // Start with 8 waypoints around the circle
-
 	trackWaypoints.clear();
-	trackWaypoints.reserve(numWaypoints);
 
-	for (int i = 0; i < numWaypoints; i++)
+	std::vector<glm::vec3> anchors{
+		glm::vec3(-40.0f, -94.0f, -5.0f), // Waypoint near computer opponent
+		glm::vec3(-80.0f, -93.0f, 19.0f),
+		glm::vec3(-49.266, -84.591, 49.396),
+		glm::vec3(9.345, -70.691, 10.822),
+		glm::vec3(27.794, -70.194, 25.407),
+		glm::vec3(-28.125, -59.594, 65.995),
+	};
+
+	int nBetween = 3;
+
+	// Build trackWaypoints: include first anchor, then for each segment add nBetween interior points.
+	if (anchors.empty())
+		return;
+
+	for (size_t i = 0; i < anchors.size() - 1; ++i)
 	{
-		float angle = (2.0f * glm::pi<float>() * i) / numWaypoints;
+		// push start anchor of this segment
+		Waypoint startWp;
+		startWp.position = anchors[i];
+		startWp.recommendedSpeed = 10.0f;
+		startWp.trackWidth = 5.0f;
+		trackWaypoints.push_back(startWp);
 
-		Waypoint wp;
-		wp.position.x = circleCenter.x + circleRadius * std::cos(angle);
-		wp.position.y = circleCenter.y; // Keep at same Y level
-		wp.position.z = circleCenter.z + circleRadius * std::sin(angle); // Improve on this
-		wp.recommendedSpeed = 15.0f;
-		wp.trackWidth = 5.0f;
+		// generate interior points (exclude endpoints)
+		for (int k = 1; k <= nBetween; ++k)
+		{
+			float t = static_cast<float>(k) / static_cast<float>(nBetween + 1); // evenly spaced in (0,1)
+			glm::vec3 p = glm::mix(anchors[i], anchors[i + 1], t);
 
-		trackWaypoints.push_back(wp);
+			Waypoint wp;
+			wp.position = p;
+			wp.recommendedSpeed = 10.0f;
+			wp.trackWidth = 5.0f;
+			trackWaypoints.push_back(wp);
+		}
 	}
+
+	// push final anchor
+	Waypoint lastWp;
+	lastWp.position = anchors.back();
+	lastWp.recommendedSpeed = 10.0f;
+	lastWp.trackWidth = 5.0f;
+	trackWaypoints.push_back(lastWp);
 }
 
 void AiSystem::RenderDebugWaypoints()

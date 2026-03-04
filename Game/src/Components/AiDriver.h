@@ -14,8 +14,9 @@ struct AiDriver
 	std::uint32_t currentWaypointIndex = 0;
 
 	// Tuning (per-entity)
-	float arrivalRadius = 2.0f;
-	float desiredSpeed = 12.0f;
+	float arrivalRadius = 5.0f;
+	float desiredSpeed = 5.0f;
+	float lookaheadDistance = 5.0f;
 
 	// Steering PD
 	float maxSteerRadians = 1.0f;
