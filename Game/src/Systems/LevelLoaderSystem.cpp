@@ -151,6 +151,27 @@ void LevelLoaderSystem::LoadLevel()
 			});
 	}
 
+	//punching glove
+	entity = controller.createEntity();
+	loaded = LoadModel("assets/models/spring_glove/spring_glove.gltf");
+	rotation = glm::rotate(glm::mat4(1.0f), glm::pi<float>() / 4.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+	controller.AddComponent(entity, Transform{ glm::vec3(-50.0f, -69.0f, 50.0f), glm::quat_cast(rotation), glm::vec3(3.f) });
+	controller.AddComponent(entity, RigidBody{ nullptr, loaded.first, loaded.second, 50.0f, true, glm::vec3(0.0f), glm::vec3(0.0f) });
+	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
+	controller.AddComponent(entity, PhysicsBody{});
+	controller.AddComponent(entity, MovingObstacle{
+		std::vector<glm::vec3>{
+			{ 20.0f, -69.0f , -80.0f},
+			{ 20.0f,-69.0f, 30.0f},
+			{ 20.0f, -69.0f, 30.0f},
+			{ 20.0f, -69.0f , -80.0f},
+		},
+		0.0f,
+		0,
+		50.0f
+		});
+
+
 	for (int i = 0; i < 50; i++)
 	{
 		entity = controller.createEntity();
