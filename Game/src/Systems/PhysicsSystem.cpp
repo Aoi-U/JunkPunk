@@ -234,7 +234,9 @@ void PhysicsSystem::Update(float deltaTime)
 				));
 				
 				// check if the obstacle reached the current target point
-				if (glm::length(obstacle.pathPoints[currentPathIndex] - transform.position) < 0.1f)
+				bool segmentComplete = !obstacle.pathTimes.empty() ? obstacle.progress >= 1.0f : glm::length(obstacle.pathPoints[currentPathIndex] - transform.position) < 0.1f;
+
+				if (segmentComplete)
 				{
 					obstacle.currentPathIndex = (obstacle.currentPathIndex + 1) % obstacle.pathPoints.size(); // increment the path index to the next point
 					obstacle.progress = 0.0f; // reset progress for the next segment
