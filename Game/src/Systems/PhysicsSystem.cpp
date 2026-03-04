@@ -191,6 +191,9 @@ void PhysicsSystem::Update(float deltaTime)
 			if (controller.HasComponent<MovingObstacle>(entity))
 			{
 				auto& obstacle = controller.GetComponent<MovingObstacle>(entity);
+
+				if (obstacle.paused)
+					continue;
 				
 				// https://stackoverflow.com/questions/1800138/given-a-start-and-end-point-and-a-distance-calculate-a-point-along-a-line
 				int currentPathIndex = obstacle.currentPathIndex;
@@ -200,8 +203,12 @@ void PhysicsSystem::Update(float deltaTime)
 				glm::vec3 totalDistance = obstacle.pathPoints[currentPathIndex] - obstacle.pathPoints[previousPathIndex]; 
 				float pathLength = glm::length(totalDistance); 
 
-				
 				float distanceToTravel = obstacle.speed * deltaTime; // calculate the distance to travel this frame
+
+				glm::quat startRotation = obstacle.pathRotations.empty() ? glm::quat(1.0f, 0.0f, 0.0f, 0.0f) : obstacle.pathRotations[previousPathIndex];
+				glm::quat endRotation = obstacle.pathRotations.empty() ? glm::quat(1.0f, 0.0f, 0.0f, 0.0f) : obstacle.pathRotations[currentPathIndex];
+
+				glm::quat newRotation = glm::slerp(startRotation, endRotation, obstacle.progress); // interpolate rotation based on progress
 
 				obstacle.progress += distanceToTravel / pathLength; // update progress along the path
 				obstacle.progress = glm::clamp(obstacle.progress, 0.0f, 1.0f); // clamp progress between 0 and 1
@@ -213,7 +220,7 @@ void PhysicsSystem::Update(float deltaTime)
 						obstacle.pathPoints[previousPathIndex].y + totalDistance.y * obstacle.progress,
 						obstacle.pathPoints[previousPathIndex].z + totalDistance.z * obstacle.progress
 					),
-					PxQuat(0, 0, 0, 1)
+					PxQuat(newRotation.x, newRotation.y, newRotation.z, newRotation.w)
 				));
 				
 				// check if the obstacle reached the current target point

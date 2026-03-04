@@ -122,15 +122,22 @@ void LevelLoaderSystem::LoadLevel()
 		controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
 		controller.AddComponent(entity, PhysicsBody{});
 		controller.AddComponent(entity, MovingObstacle{
-			std::vector<glm::vec3>{
+			{ // path points
 				{ -50.0f - i, -90.0f + i * 2 ,-20.0f + i },
 				{ -50.0f - i, -90.0f + i * 2, -30.0f + i },
 				{ -40.0f - i, -90.0f + i * 2, -30.0f + i },
 				{ -40.0f - i, -90.0f + i * 2, -20.0f + i }
 			},
+			{ // rotation points (must be empty or same size as path points)
+				glm::quat(glm::vec3(0.0f, glm::radians(90.0f), 0.0f)),
+				glm::quat(glm::vec3(0.0f, glm::radians(180.0f), 0.0f)),
+				glm::quat(glm::vec3(0.0f, glm::radians(-90.0f), 0.0f)),
+				glm::quat(glm::vec3(0.0f, glm::radians(180.0f), 0.0f))
+			},
 			0.0f,
 			0,
-			5.0f
+			5.0f,
+			false
 			});
 	}
 
