@@ -197,8 +197,6 @@ PxTransform MainVehicle::getWheelTransform(int wheelIndex) const
 	return wheelWorldPose;
 }
 
-
-
 const PxTransform MainVehicle::getTransform() const
 {
 	PxTransform t = gVehicle.mPhysXState.physxActor.rigidBody->getGlobalPose();
@@ -222,6 +220,13 @@ void MainVehicle::setTransform(const glm::vec3& position, const glm::quat& rotat
 	PxTransform transform(pxPosition, pxQuat);
 
 	gVehicle.mPhysXState.physxActor.rigidBody->setGlobalPose(transform);
+
+	auto* dyn = gVehicle.mPhysXState.physxActor.rigidBody->is<PxRigidDynamic>();
+	if (dyn)
+	{
+		dyn->setLinearVelocity(PxVec3(0.0f));
+		dyn->setAngularVelocity(PxVec3(0.0f));
+	}
 }
 
 void MainVehicle::setCheckpoint(const glm::vec3& position, const glm::quat& rotation)
