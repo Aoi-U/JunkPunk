@@ -20,6 +20,7 @@ static int camera_scroll_type = 0;
 static bool split_camera = false;
 static bool first_time_held_right_click = false;
 bool playerWon = false;
+bool aiWon = false;
 float winTimer = 0.0f;
 const float WIN_DELAY = 5.0f;
 float fadeAlpha = 0.0f;
@@ -297,6 +298,20 @@ void Game::Run()
 					controller.SendEvent(event);
 				}
 			}
+
+			if (aiWon) {
+				winTimer += time->frameTime;
+				if (winTimer >= 1.0f) {
+					fadeAlpha += time->frameTime * 0.25f;
+					fadeAlpha = glm::clamp(fadeAlpha, 0.0f, 1.0f);
+					menuSystem->RenderFadeOverlay(fadeAlpha);
+				}
+				if (winTimer >= WIN_DELAY) {
+					Event event(Events::GameState::NEW_STATE);
+					event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::ENDMENU);
+					controller.SendEvent(event);
+				}
+			}
 			if (controller.HasComponent<Powerup>(player)) {
 				auto& p = controller.GetComponent<Powerup>(player);
 				if (p.active) {
@@ -383,6 +398,7 @@ void Game::ChangeGameStateListener(Event& e)
 		currentState = state;
 		currentStateGlobal = state;
 		playerWon = false;
+		aiWon = false;
 		winTimer = 0.0f;
 		fadeAlpha = 0.0f;
 		break;
@@ -442,6 +458,7 @@ void Game::ChangeGameStateListener(Event& e)
 		winTimer = 0.0f;
 		fadeAlpha = 0.0f;
 		playerWon = false;
+		aiWon = false;
 
 		currentState = GameState::GAME;
 		currentStateGlobal = GameState::GAME;
@@ -481,14 +498,27 @@ void Game::KeyboardInputListener(Event& e)
 void Game::TriggerEnterListener(Event& e)
 {
 	Entity triggerEntity = e.GetParam<Entity>(Events::Physics::Trigger_Enter::ENTITY_ONE);
-	Entity playerEntity = e.GetParam<Entity>(Events::Physics::Trigger_Enter::ENTITY_TWO);
+	Entity otherEntity = e.GetParam<Entity>(Events::Physics::Trigger_Enter::ENTITY_TWO);
 
 	Entity finishLine = controller.GetEntityByTag("FinishLine");
-	if (triggerEntity == finishLine && !playerWon) {
-		playerWon = true;
-		fadeAlpha = 0.0f;
-		winTimer = 0.0f;
-		std::cout << "you win!" << std::endl;
+	if (triggerEntity == finishLine) {
+		//playerWon = true;
+		//fadeAlpha = 0.0f;
+		//winTimer = 0.0f;
+		//std::cout << "you win!" << std::endl;
+		if (!playerWon && controller.HasComponent<PlayerController>(otherEntity)) {
+			playerWon = true;
+			fadeAlpha = 0.0f;
+			winTimer = 0.0f;
+			std::cout << "you win!" << std::endl;
+		}
+		else if (!aiWon && controller.HasComponent<AiDriver>(otherEntity)) {
+			aiWon = true;
+			fadeAlpha = 0.0f;
+			winTimer = 0.0f;
+			std::cout << "AI wins!" << std::endl;
+		}
+		return;
 	}
 	else if (controller.HasComponent<Powerup>(triggerEntity)) {
 		Entity player = playerEntity;
@@ -500,7 +530,7 @@ void Game::TriggerEnterListener(Event& e)
 	else if (controller.HasComponent<CheckPoint>(triggerEntity))
 	{
 		Event e(Events::Checkpoint::REACHED);
-		e.SetParam<Entity>(Events::Checkpoint::Reached::PLAYER_ENTITY, playerEntity);
+		e.SetParam<Entity>(Events::Checkpoint::Reached::PLAYER_ENTITY, otherEntity);
 		e.SetParam<Entity>(Events::Checkpoint::Reached::CHECKPOINT_ENTITY, triggerEntity);
 		controller.SendEvent(e);
 

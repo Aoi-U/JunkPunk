@@ -169,13 +169,25 @@ void MenuSystem::RenderEndScreen() {
 
 	RenderElements(endUIElements);
 
-	RenderText(
-		"YOU WIN!",
-		ScaledX(480.0f),
-		ScaledY(500.0f),
-		titleScale,
-		glm::vec3(0.2f, 1.0f, 0.2f)
-	);
+	if (aiWon) 	{
+		 //titleScale = uniformScale * 1.5f;
+		RenderText(
+			"Opponent WINS!",
+			ScaledX(480.0f),
+			ScaledY(500.0f),
+			titleScale,
+			glm::vec3(1.0f, 0.2f, 0.2f)
+		);
+	}
+	else if (playerWon){
+		RenderText(
+			"YOU WIN!",
+			ScaledX(480.0f),
+			ScaledY(500.0f),
+			titleScale,
+			glm::vec3(0.2f, 1.0f, 0.2f)
+		);
+	}
 
 	RenderText(
 		"Press A to return to Main Menu",

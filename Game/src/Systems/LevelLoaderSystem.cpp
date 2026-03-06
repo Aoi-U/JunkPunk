@@ -249,7 +249,7 @@ void LevelLoaderSystem::LoadLevel()
 	// Waypoint 4
 	entity = controller.createEntity();
 	controller.AddComponent(entity, PhysicsBody{});
-	controller.AddComponent(entity, Transform{ glm::vec3(glm::vec3(27.794, -70.194, 25.407)), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.25f) });
+	controller.AddComponent(entity, Transform{ glm::vec3(glm::vec3(22, -70.194, 22)), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.25f) });
 	controller.AddComponent(entity, CheckPoint{ glm::quat(1.0f, 0.0f, 0.0f, 0.0f) });
 	controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 4.0f, 1.0f });
 	// Waypoint 5

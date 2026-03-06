@@ -206,5 +206,6 @@ namespace Events::Checkpoint::Reached
 }
 
 extern bool playerWon;
+extern bool aiWon;
 
 extern int numPlayers;

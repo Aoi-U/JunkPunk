@@ -44,6 +44,10 @@ void AiSystem::Update(float deltaTime)
 		// Position of Waypoint
 		glm::vec3 waypointXZ(waypointPosition.x, 0.0f, waypointPosition.z);
 
+		//std::cout << "Next Waypoint Index: " << ai.currentWaypointIndex+1
+		//	<< "\tNext Waypoint: (" << waypointXZ.x << "," << waypointXZ.y << "," << waypointXZ.z << ")"
+		//	<< std::endl;
+
 		// distance to current waypoint
 		float dist = glm::length(waypointXZ - positionXZ);
 		//std::cout << "Distance to waypoint " << ai.currentWaypointIndex << ": " << dist << std::endl;
@@ -78,10 +82,11 @@ void AiSystem::Update(float deltaTime)
 
 		// Add lookahead distance
 		//float lookahead = ai.lookaheadDistance > 0.0f ? ai.lookaheadDistance : 5.0f;
+		// Make this speed based instead of constant, so the AI can slow down for turns and speed up on straights
 		float lookahead = ai.lookaheadDistance;
 		glm::vec3 lookaheadPoint = prevXZ + segmentDir * (t + lookahead);
 
-		std::cout << "Lookahead Point: (" << lookaheadPoint.x << "," << lookaheadPoint.y << "," << lookaheadPoint.z << ")" << "\t\tCurrent location: " << positionXZ.x << "," << positionXZ.y << "," << positionXZ.z << std::endl;
+		//std::cout << "Lookahead Point: (" << lookaheadPoint.x << "," << lookaheadPoint.y << "," << lookaheadPoint.z << ")" << "\t\tCurrent location: " << positionXZ.x << "," << positionXZ.y << "," << positionXZ.z << std::endl;
 
 		//std::cout << "Current Waypoint Index: " << ai.currentWaypointIndex
 		//	<< "\tNext Waypoint: (" << waypointXZ.x << "," << waypointXZ.y << "," << waypointXZ.z << ")"
@@ -89,14 +94,11 @@ void AiSystem::Update(float deltaTime)
 
 		// Distance to target from lookaheadPoint
 		glm::vec3 toTarget = lookaheadPoint - waypointXZ;
-		//glm::vec3 toTargetN = glm::length(toTarget) > 1e-5f ? glm::normalize(toTarget) : forward;
+		glm::vec3 toTargetN = glm::length(toTarget) > 1e-5f ? glm::normalize(toTarget) : forward;
 
+		float steer = 0.0f;
 		// signed angle in XZ plane
-		// Add print statements to check for turning
-		// Atan2 function to help with turning/angles
-		// replace your signed angle with atan2(cross, dot) <-- standard gamedegv way
 		auto signedAngleXZ = [](const glm::vec3& a, const glm::vec3& b) -> float {
-			// Use 2D atan2(cross, dot) for a signed angle in the XZ plane
 			glm::vec2 a2(a.x, a.z);
 			glm::vec2 b2(b.x, b.z);
 			float cross = a2.x * b2.y - a2.y * b2.x;
@@ -104,10 +106,22 @@ void AiSystem::Update(float deltaTime)
 			return std::atan2(cross, dot);
 			};
 
-		float headingError = signedAngleXZ(forward, toTarget);
+		//float headingError = signedAngleXZ(forward, toTarget);
 
-		// Simple steering: proportional to heading error, normalized to [-1,1]
-		float steer = glm::clamp(headingError * 0.2f, -1.0f, 1.0f);
+		//// Simple steering: proportional to heading error, normalized to [-1,1]
+		//float steer = glm::clamp(headingError * 0.2f, -1.0f, 1.0f);
+
+		float forwardDot = glm::clamp(glm::dot(forward, toTargetN), -1.0f, 1.0f);
+		if (std::abs(forwardDot) > ai.steerDeadzoneDot)
+		{
+			steer = 0.0f;
+		}
+		else
+		{
+			float headingError = signedAngleXZ(forward, toTarget);
+			// Simple steering: proportional to heading error, normalized to [-1,1]
+			steer = glm::clamp(headingError * 0.2f, -1.0f, 1.0f);
+		}
 
 		// Simple throttle:
 		// - drive toward recommended speed (or ai.desiredSpeed)
@@ -142,9 +156,15 @@ void AiSystem::InitializeWaypoints()
 		glm::vec3(-40.0f, -94.0f, -5.0f), // Waypoint near computer opponent
 		glm::vec3(-80.0f, -93.0f, 19.0f),
 		glm::vec3(-49.266, -84.591, 49.396),
-		glm::vec3(9.345, -70.691, 10.822),
-		glm::vec3(27.794, -70.194, 25.407),
+		glm::vec3(11.345, -70.691, 12.822),
+		glm::vec3(22, -70.194, 22),
 		glm::vec3(-28.125, -59.594, 65.995),
+		glm::vec3(7.254, -43.482, 95.625),
+		glm::vec3(29.236, -38.011, 71.075),
+		glm::vec3(21.665, -39.062, 56.706),
+		glm::vec3(39.063, -38.777, 39.908),
+		glm::vec3(81.944, -19.593, 81.963),
+		glm::vec3(25.0f, -3.5f, 120.0f), // finish line
 	};
 
 	int nBetween = 3;
@@ -158,7 +178,7 @@ void AiSystem::InitializeWaypoints()
 		// push start anchor of this segment
 		Waypoint startWp;
 		startWp.position = anchors[i];
-		startWp.recommendedSpeed = 10.0f;
+		startWp.recommendedSpeed = 12.0f;
 		startWp.trackWidth = 5.0f;
 		trackWaypoints.push_back(startWp);
 
@@ -170,7 +190,7 @@ void AiSystem::InitializeWaypoints()
 
 			Waypoint wp;
 			wp.position = p;
-			wp.recommendedSpeed = 10.0f;
+			wp.recommendedSpeed = 12.0f;
 			wp.trackWidth = 5.0f;
 			trackWaypoints.push_back(wp);
 		}
@@ -179,7 +199,7 @@ void AiSystem::InitializeWaypoints()
 	// push final anchor
 	Waypoint lastWp;
 	lastWp.position = anchors.back();
-	lastWp.recommendedSpeed = 10.0f;
+	lastWp.recommendedSpeed = 12.0f;
 	lastWp.trackWidth = 5.0f;
 	trackWaypoints.push_back(lastWp);
 }
