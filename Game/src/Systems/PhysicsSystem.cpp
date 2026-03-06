@@ -191,19 +191,36 @@ void PhysicsSystem::Update(float deltaTime)
 			if (controller.HasComponent<MovingObstacle>(entity))
 			{
 				auto& obstacle = controller.GetComponent<MovingObstacle>(entity);
+
+				if (obstacle.paused)
+					continue;
 				
 				// https://stackoverflow.com/questions/1800138/given-a-start-and-end-point-and-a-distance-calculate-a-point-along-a-line
 				int currentPathIndex = obstacle.currentPathIndex;
 				int previousPathIndex = (currentPathIndex - 1 + obstacle.pathPoints.size()) % obstacle.pathPoints.size();
 				
 				// calculate the total distance between the two path points
-				glm::vec3 totalDistance = obstacle.pathPoints[currentPathIndex] - obstacle.pathPoints[previousPathIndex]; 
-				float pathLength = glm::length(totalDistance); 
+				glm::vec3 totalDistance = obstacle.pathPoints[currentPathIndex] - obstacle.pathPoints[previousPathIndex];
 
-				
-				float distanceToTravel = obstacle.speed * deltaTime; // calculate the distance to travel this frame
+				// calculate rotation value
+				glm::quat startRotation = obstacle.pathRotations.empty() ? glm::quat(1.0f, 0.0f, 0.0f, 0.0f) : obstacle.pathRotations[previousPathIndex];
+				glm::quat endRotation = obstacle.pathRotations.empty() ? glm::quat(1.0f, 0.0f, 0.0f, 0.0f) : obstacle.pathRotations[currentPathIndex];
 
-				obstacle.progress += distanceToTravel / pathLength; // update progress along the path
+				glm::quat newRotation = glm::slerp(startRotation, endRotation, obstacle.progress); // interpolate rotation based on progress
+
+				// advance progress of obstacle
+				if (!obstacle.pathTimes.empty()) // if path times are defined, use them to calculate progress
+				{
+					float segmentDuration = obstacle.pathTimes[currentPathIndex];
+					obstacle.progress += deltaTime / segmentDuration; // update progress along the path
+				}
+				else // otherwise, use speed to calculate progress
+				{
+					float pathLength = glm::length(totalDistance);
+					float distanceToTravel = obstacle.speed * deltaTime; // calculate the distance to travel this frame
+					obstacle.progress += distanceToTravel / pathLength; // update progress along the path
+				}
+
 				obstacle.progress = glm::clamp(obstacle.progress, 0.0f, 1.0f); // clamp progress between 0 and 1
 
 				// set the new target position for the kinematic actor
@@ -213,11 +230,13 @@ void PhysicsSystem::Update(float deltaTime)
 						obstacle.pathPoints[previousPathIndex].y + totalDistance.y * obstacle.progress,
 						obstacle.pathPoints[previousPathIndex].z + totalDistance.z * obstacle.progress
 					),
-					PxQuat(0, 0, 0, 1)
+					PxQuat(newRotation.x, newRotation.y, newRotation.z, newRotation.w)
 				));
 				
 				// check if the obstacle reached the current target point
-				if (glm::length(obstacle.pathPoints[currentPathIndex] - transform.position) < 0.1f)
+				bool segmentComplete = !obstacle.pathTimes.empty() ? obstacle.progress >= 1.0f : glm::length(obstacle.pathPoints[currentPathIndex] - transform.position) < 0.1f;
+
+				if (segmentComplete)
 				{
 					obstacle.currentPathIndex = (obstacle.currentPathIndex + 1) % obstacle.pathPoints.size(); // increment the path index to the next point
 					obstacle.progress = 0.0f; // reset progress for the next segment
