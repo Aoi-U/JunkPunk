@@ -325,25 +325,25 @@
         {
             "WheelId": 0,
             "Damping": 15000,
-            "Stiffness": 40000.0,
+            "Stiffness": 50000.0,
             "SprungMass": 300.0
         },
         {
             "WheelId": 1,
             "Damping": 15000,
-            "Stiffness": 40000.0,
+            "Stiffness": 50000.0,
             "SprungMass": 300.0
         },
         {
             "WheelId": 2,
             "Damping": 15000,
-            "Stiffness": 40000.0,
+            "Stiffness": 50000.0,
             "SprungMass": 300.0
         },
         {
             "WheelId": 3,
             "Damping": 15000,
-            "Stiffness": 40000.0,
+            "Stiffness": 50000.0,
             "SprungMass": 300.0
         }
     ],

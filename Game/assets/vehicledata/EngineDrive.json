@@ -3,7 +3,7 @@
 	{
 		"UpRatios": [0.65, 0.15, 0.65, 0.65, 0.65, 0.65, 0.65],
 		"DownRatios":[0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
-		"Latency": 0.05
+		"Latency": 0.01
 	},
 	"ClutchCommandResponseParams":
 	{
@@ -13,7 +13,7 @@
 	{
 		"TorqueCurve": [[0.0, 1.0], [0.5, 1.0], [1.0, 1.0]],
 		"MOI": 1.0,
-		"PeakTorque": 4000.0,
+		"PeakTorque": 2000.0,
 		"IdleOmega": 0.0,
 		"MaxOmega": 1000.0,
 		"DampingRateFullThrottle": 0.05,
