@@ -21,6 +21,12 @@ static bool split_camera = false;
 static bool first_time_held_right_click = false;
 bool playerWon = false;
 bool aiWon = false;
+// -------------------------
+// For logging player position
+// position logging
+//float posLogTimer = 0.0f;
+//const float POS_LOG_INTERVAL = 1.0f; // 500 ms
+// -------------------------
 float winTimer = 0.0f;
 const float WIN_DELAY = 5.0f;
 float fadeAlpha = 0.0f;
@@ -264,6 +270,27 @@ void Game::Run()
 		case GAME:
 		{
 			Entity player = playerEntity;
+			// -----------------------------------------------------------------------------------
+			// FOr logging player position every 0.5 seconds, can be removed later, just for testing
+			//posLogTimer += time->frameTime;
+			//if (posLogTimer >= POS_LOG_INTERVAL)
+			//{
+			//	posLogTimer -= POS_LOG_INTERVAL; // preserve remainder instead of resetting to zero
+
+			//	if (controller.HasComponent<Transform>(player))
+			//	{
+			//		const auto& t = controller.GetComponent<Transform>(player);
+			//		std::cout << "glm::vec3("
+			//			<< t.position.x << ", "
+			//			<< t.position.y << ", "
+			//			<< t.position.z << ")\n";
+			//	}
+			//	else
+			//	{
+			//		std::cout << "Player transform not available\n";
+			//	}
+			//}
+			// -----------------------------------------------------------------------------------
 			// physics update first to prevent twitching/jittering objects
 			while (time->accumulator >= time->deltaTime)
 			{

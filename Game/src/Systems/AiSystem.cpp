@@ -11,11 +11,13 @@ extern ECSController controller;
 
 void AiSystem::Init()
 {
+	//std::cout << "Initializing Waypoints" << std::endl;
 	InitializeWaypoints();
 }
 
 void AiSystem::Update(float deltaTime)
 {
+	//std::cout << "Zoom Zoom" << std::endl;
 	if (deltaTime <= 0.0f)
 		return;
 
@@ -153,13 +155,15 @@ void AiSystem::InitializeWaypoints()
 	trackWaypoints.clear();
 
 	std::vector<glm::vec3> anchors{
-		glm::vec3(-40.0f, -94.0f, -5.0f), // Waypoint near computer opponent
+		glm::vec3(-39.0f, -94.0f, -8.0f), // Waypoint near computer opponent
 		glm::vec3(-80.0f, -93.0f, 19.0f),
 		glm::vec3(-49.266, -84.591, 49.396),
-		glm::vec3(11.345, -70.691, 12.822),
-		glm::vec3(22, -70.194, 22),
+		glm::vec3(2.345, -70.691, 5.822),
+		glm::vec3(28, -70.194, 28),
+		glm::vec3(0.312, -61.604, 40.852),
+		glm::vec3(-10.312, -61.604, 45.852),
 		glm::vec3(-28.125, -59.594, 65.995),
-		glm::vec3(7.254, -43.482, 95.625),
+		glm::vec3(4.254, -43.482, 101.625),
 		glm::vec3(29.236, -38.011, 71.075),
 		glm::vec3(21.665, -39.062, 56.706),
 		glm::vec3(39.063, -38.777, 39.908),
@@ -167,7 +171,7 @@ void AiSystem::InitializeWaypoints()
 		glm::vec3(25.0f, -3.5f, 120.0f), // finish line
 	};
 
-	int nBetween = 3;
+	int nBetween = 5;
 
 	// Build trackWaypoints: include first anchor, then for each segment add nBetween interior points.
 	if (anchors.empty())
