@@ -68,7 +68,7 @@ void ShadowMapper::Update(float aspect, float near, float far, float fovY, glm::
 	this->fovY = fovY;
 	this->view = view;
 
-	shadowCascadeLevels = { far / 50.0f, far / 25.0f, far / 10.0f, far / 3.0f };
+	shadowCascadeLevels = { far / 50.0f, far / 25.0f, far / 10.0f, far / 2.0f };
 }
 
 void ShadowMapper::BindShadowMap()

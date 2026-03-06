@@ -52,6 +52,9 @@ public:
 
 	void setCommand(Command command);
 
+	// get wheel transforms for rendering
+	PxTransform getWheelTransform(int wheelIndex) const;
+
 	// ----------- game related functions -------------
 
 	const PxTransform getTransform() const; // returns the vehicles transform matrix
@@ -66,12 +69,14 @@ public:
 
 	const PxVec3 getAngularVelocity() const;
 
-	bool IsGrounded(PxScene* scene) const;
+	bool IsGrounded(const PxScene* scene) const;
 
 	void jump(); // makes the vehicle jump
 
 	void ApplyBoost(float multiplier);
 	void ClearBoost();
+
+	void SpinOut();
 
 private:
 	//DirectDriveVehicle gVehicle;
@@ -99,7 +104,7 @@ private:
 	glm::vec3 checkpointPosition = glm::vec3(0.0f, -60.0f, 0.0f);
 	glm::quat checkpointRotation = glm::vec3(0.0f);
 
-	PxVec3 jumpForce = PxVec3(0.0f, 20000.0f, 0.0f);
+	PxVec3 jumpForce = PxVec3(0.0f, 25000.0f, 0.0f);
 
 	void setTransform(const glm::vec3& position, const glm::quat& rotation); // set the position and rotation of the vehicle (use for checkpoints/respawning)
 	

@@ -69,6 +69,8 @@ private:
 	
 	void CheckpointReachedListener(Event& e); // listens for checkpoint events
 
+	void SpinOutListener(Event& e);
+
 	// callbacks
 
 	void ReleaseActorCallback(Entity entity, RigidBody& rb); // automatically called when an entity is destroyed or rigidbody is removed

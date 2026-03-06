@@ -52,7 +52,12 @@ bool MainVehicle::initVehicles(PxScene* gScene, PxPhysics* gPhysics, PxMaterial*
 		return false;
 	}
 
-	gVehicle.setUpActor(*gScene, initTransform, gVehicleName);
+	// Apply a start pose to the physx actor and add it to the physx scene
+	PxTransform pose(PxVec3(0.0f, -30.0f, 0.0f), PxQuat(PxIdentity));
+	// rotate around y 180 degrees
+	PxQuat rot = PxQuat(PxPi, PxVec3(0.0f, 1.0f, 0.0f));
+	pose.q = rot;
+	gVehicle.setUpActor(*gScene, pose, gVehicleName); // Might replace pose with initTransform
 
 	PxFilterData vehicleFilter(COLLISION_FLAG_CHASSIS, COLLISION_FLAG_CHASSIS_AGAINST, 0, 0);
 	PxFilterData wheelFilter(COLLISION_FLAG_WHEEL, COLLISION_FLAG_WHEEL_AGAINST, 0, 0);
@@ -115,7 +120,7 @@ bool MainVehicle::initVehicles(PxScene* gScene, PxPhysics* gPhysics, PxMaterial*
 	gVehicle.mPhysXState.physxActor.wheelShapes[2]->setFlag(PxShapeFlag::eVISUALIZATION, true);
 	gVehicle.mPhysXState.physxActor.wheelShapes[3]->setFlag(PxShapeFlag::eVISUALIZATION, true);
 
-	
+
 	return true;
 }
 
@@ -130,7 +135,7 @@ void MainVehicle::step(float deltaTime)
 		gVehicle.mTransmissionCommandState.targetGear = PxVehicleEngineDriveTransmissionCommandState::eAUTOMATIC_GEAR;
 		gVehicle.mCommandState.throttle = gCommand.throttle;
 	}
-	else if (gCommand.brake > 0.0f) 
+	else if (gCommand.brake > 0.0f)
 	{
 		gVehicle.mCommandState.steer = gCommand.steer * 0.5f; // reduce steer sensitivity when reversing
 		gVehicle.mTransmissionCommandState.targetGear = gVehicle.mEngineDriveParams.gearBoxParams.neutralGear - 1;
@@ -143,6 +148,24 @@ void MainVehicle::step(float deltaTime)
 
 	//Forward integrate the vehicle by a single timestep.
 	gVehicle.step(deltaTime, gVehicleSimulationContext);
+
+	// stabalize vehicle when in the air to reduce vehicle flipping
+	auto* dyn = gVehicle.mPhysXState.physxActor.rigidBody->is<PxRigidDynamic>();
+	if (dyn && !IsGrounded(gVehicleSimulationContext.physxScene))
+	{
+		const float dampRate = 1.0f;
+		const float dampFactor = expf(-dampRate * deltaTime);
+		PxVec3 angVel = dyn->getAngularVelocity();
+		angVel.x *= dampFactor;
+		angVel.z *= dampFactor;
+		dyn->setAngularVelocity(angVel);
+
+		// add torque to vehicle to align it with the up direction
+		PxTransform t = dyn->getGlobalPose();
+		PxVec3 vehicleUp = t.q.rotate(PxVec3(0.0f, 1.0f, 0.0f));
+		PxVec3 correctionTorque = vehicleUp.cross(PxVec3(0.0f, 1.0f, 0.0f)) * 10.0f;
+		dyn->addTorque(correctionTorque, PxForceMode::eACCELERATION);
+	}
 }
 
 void MainVehicle::setEntityUserData(Entity entity)
@@ -160,6 +183,22 @@ void MainVehicle::setCommand(Command commands)
 	gCommand = commands;
 }
 
+PxTransform MainVehicle::getWheelTransform(int wheelIndex) const
+{
+	if (wheelIndex < 0 || wheelIndex >= 4)
+	{
+		std::cerr << "Invalid wheel index: " << wheelIndex << std::endl;
+		return PxTransform(PxVec3(0.0f), PxQuat(PxIdentity));
+	}
+	PxTransform vehicleWorldPose = gVehicle.mPhysXState.physxActor.rigidBody->getGlobalPose();
+	PxTransform wheelLocalPose = gVehicle.mPhysXState.physxActor.wheelShapes[wheelIndex]->getLocalPose();
+	PxTransform wheelWorldPose = vehicleWorldPose.transform(wheelLocalPose);
+
+	return wheelWorldPose;
+}
+
+
+
 const PxTransform MainVehicle::getTransform() const
 {
 	PxTransform t = gVehicle.mPhysXState.physxActor.rigidBody->getGlobalPose();
@@ -170,7 +209,7 @@ void MainVehicle::resetTransform()
 {
 	PxTransform t = gVehicle.mPhysXState.physxActor.rigidBody->getGlobalPose();
 
-	glm::vec3 position(t.p.x, t.p.y + 1.0f, t.p.z); 
+	glm::vec3 position(t.p.x, t.p.y + 1.0f, t.p.z);
 	glm::quat rotation(1.0, 0.0, 0.0, 0.0);
 
 	setTransform(position, rotation);
@@ -207,7 +246,7 @@ const PxVec3 MainVehicle::getAngularVelocity() const
 	return gVehicle.mPhysXState.physxActor.rigidBody->getAngularVelocity();
 }
 
-bool MainVehicle::IsGrounded(PxScene* scene) const
+bool MainVehicle::IsGrounded(const PxScene* scene) const
 {
 	PxRaycastBuffer hit;
 	bool grounded = false;
@@ -215,7 +254,7 @@ bool MainVehicle::IsGrounded(PxScene* scene) const
 	rayOrigin.y -= (gVehicle.mPhysXParams.physxActorBoxShapeHalfExtents.y + 0.05f);
 	PxVec3 rayDir = PxVec3(0.0f, -1.0f, 0.0f);
 	PxReal rayLength = 0.3f;
-	
+
 	grounded = scene->raycast(rayOrigin, rayDir, rayLength, hit, PxHitFlag::eDEFAULT);
 	if (grounded && hit.hasBlock && hit.block.actor != gVehicle.mPhysXState.physxActor.rigidBody)
 	{
@@ -227,7 +266,18 @@ bool MainVehicle::IsGrounded(PxScene* scene) const
 
 void MainVehicle::jump()
 {
-	gVehicle.mPhysXState.physxActor.rigidBody->addForce(jumpForce, PxForceMode::eIMPULSE);
+	//gVehicle.mPhysXState.physxActor.rigidBody->addForce(jumpForce, PxForceMode::eIMPULSE);
+	//PxRigidBodyExt::addForceAtLocalPos(*gVehicle.mPhysXState.physxActor.rigidBody, jumpForce, PxVec3(0.0f, -0.5f, 0.0f), PxForceMode::eIMPULSE);
+	float jumpSpeed = sqrt(2.0 * 9.81 * 10.0);
+	auto* body = gVehicle.mPhysXState.physxActor.rigidBody;
+	auto dyn = body->is<PxRigidDynamic>();
+
+	if (!dyn)
+		return;
+
+	PxVec3 velocity = dyn->getLinearVelocity();
+	velocity.y = PxMax(velocity.y, 0.0f) + jumpSpeed;
+	dyn->setLinearVelocity(velocity);
 }
 
 void MainVehicle::ApplyBoost(float multiplier) {
@@ -242,4 +292,12 @@ void MainVehicle::ClearBoost() {
 	if (basePeakTorque < 0.0f)
 		return;
 	gVehicle.mEngineDriveParams.engineParams.peakTorque = basePeakTorque;
+}
+
+void MainVehicle::SpinOut()
+{
+	auto* body = gVehicle.mPhysXState.physxActor.rigidBody;
+	if (!body) return;
+
+	body->addTorque(PxVec3(0.0f, 800.0f, 0.0f), PxForceMode::eIMPULSE);
 }

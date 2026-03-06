@@ -11,6 +11,8 @@
 
 extern ECSController controller;
 bool usedBoost = false;
+bool spinning = false;
+float spinTimer = 0.0f;
 
 PhysicsSystem::PhysicsSystem()
 {
@@ -18,6 +20,7 @@ PhysicsSystem::PhysicsSystem()
 	controller.AddEventListener(Events::Player::PLAYER_JUMPED, [this](Event& e) { this->JumpEventListener(e); });
 	controller.AddEventListener(Events::Player::RESET_VEHICLE, [this](Event& e) { this->ResetVehicleEventListener(e); });
 	controller.AddEventListener(Events::Checkpoint::REACHED, [this](Event& e) {this->CheckpointReachedListener(e); });
+	controller.AddEventListener(Events::Player::SPIN_OUT, [this](Event& e) {this->SpinOutListener(e); });
 
 	auto rigidBodyArray = controller.GetComponentArray<RigidBody>();
 	rigidBodyArray->BindOnRemoveCallback([this](Entity entity, RigidBody& rb) { this->ReleaseActorCallback(entity, rb); });
@@ -142,6 +145,23 @@ void PhysicsSystem::Update(float deltaTime)
 		command.brake = vehicleCommands.brake;
 		command.steer = vehicleCommands.steer;
 		vehicle->setCommand(command);
+
+		if (spinning)
+		{
+			spinTimer += deltaTime;
+
+			command.throttle = 0.0f;
+			command.brake = 0.3f;
+			command.steer = sin(spinTimer * 20.0f);
+
+			vehicle->SpinOut();
+
+			if (spinTimer > 1.0f)
+			{
+				spinning = false;
+				spinTimer = 0.0f;
+			}
+		}
 	}
 
 	Simulate(deltaTime); // run physics simulation
@@ -171,19 +191,36 @@ void PhysicsSystem::Update(float deltaTime)
 			if (controller.HasComponent<MovingObstacle>(entity))
 			{
 				auto& obstacle = controller.GetComponent<MovingObstacle>(entity);
+
+				if (obstacle.paused)
+					continue;
 				
 				// https://stackoverflow.com/questions/1800138/given-a-start-and-end-point-and-a-distance-calculate-a-point-along-a-line
 				int currentPathIndex = obstacle.currentPathIndex;
 				int previousPathIndex = (currentPathIndex - 1 + obstacle.pathPoints.size()) % obstacle.pathPoints.size();
 				
 				// calculate the total distance between the two path points
-				glm::vec3 totalDistance = obstacle.pathPoints[currentPathIndex] - obstacle.pathPoints[previousPathIndex]; 
-				float pathLength = glm::length(totalDistance); 
+				glm::vec3 totalDistance = obstacle.pathPoints[currentPathIndex] - obstacle.pathPoints[previousPathIndex];
 
-				
-				float distanceToTravel = obstacle.speed * deltaTime; // calculate the distance to travel this frame
+				// calculate rotation value
+				glm::quat startRotation = obstacle.pathRotations.empty() ? glm::quat(1.0f, 0.0f, 0.0f, 0.0f) : obstacle.pathRotations[previousPathIndex];
+				glm::quat endRotation = obstacle.pathRotations.empty() ? glm::quat(1.0f, 0.0f, 0.0f, 0.0f) : obstacle.pathRotations[currentPathIndex];
 
-				obstacle.progress += distanceToTravel / pathLength; // update progress along the path
+				glm::quat newRotation = glm::slerp(startRotation, endRotation, obstacle.progress); // interpolate rotation based on progress
+
+				// advance progress of obstacle
+				if (!obstacle.pathTimes.empty()) // if path times are defined, use them to calculate progress
+				{
+					float segmentDuration = obstacle.pathTimes[currentPathIndex];
+					obstacle.progress += deltaTime / segmentDuration; // update progress along the path
+				}
+				else // otherwise, use speed to calculate progress
+				{
+					float pathLength = glm::length(totalDistance);
+					float distanceToTravel = obstacle.speed * deltaTime; // calculate the distance to travel this frame
+					obstacle.progress += distanceToTravel / pathLength; // update progress along the path
+				}
+
 				obstacle.progress = glm::clamp(obstacle.progress, 0.0f, 1.0f); // clamp progress between 0 and 1
 
 				// set the new target position for the kinematic actor
@@ -193,11 +230,13 @@ void PhysicsSystem::Update(float deltaTime)
 						obstacle.pathPoints[previousPathIndex].y + totalDistance.y * obstacle.progress,
 						obstacle.pathPoints[previousPathIndex].z + totalDistance.z * obstacle.progress
 					),
-					PxQuat(0, 0, 0, 1)
+					PxQuat(newRotation.x, newRotation.y, newRotation.z, newRotation.w)
 				));
 				
 				// check if the obstacle reached the current target point
-				if (glm::length(obstacle.pathPoints[currentPathIndex] - transform.position) < 0.1f)
+				bool segmentComplete = !obstacle.pathTimes.empty() ? obstacle.progress >= 1.0f : glm::length(obstacle.pathPoints[currentPathIndex] - transform.position) < 0.1f;
+
+				if (segmentComplete)
 				{
 					obstacle.currentPathIndex = (obstacle.currentPathIndex + 1) % obstacle.pathPoints.size(); // increment the path index to the next point
 					obstacle.progress = 0.0f; // reset progress for the next segment
@@ -208,7 +247,7 @@ void PhysicsSystem::Update(float deltaTime)
 		{
 			auto& vehicleBody = controller.GetComponent<VehicleBody>(entity);
 			PxTransform pxTransform = vehicles[entity]->getTransform();
-			transform.position = glm::vec3(pxTransform.p.x, pxTransform.p.y, pxTransform.p.z);
+			transform.position = glm::vec3(pxTransform.p.x, pxTransform.p.y - 0.3, pxTransform.p.z);
 			transform.quatRotation = glm::quat(pxTransform.q.w, pxTransform.q.x, pxTransform.q.y, pxTransform.q.z);
 
 			PxVec3 linearVel = vehicles[entity]->getLinearVelocity();
@@ -216,15 +255,17 @@ void PhysicsSystem::Update(float deltaTime)
 			vehicleBody.linearVelocity = glm::vec3(linearVel.x, linearVel.y, linearVel.z);
 			vehicleBody.angularVelocity = glm::vec3(angularVel.x, angularVel.y, angularVel.z);
 
-			//auto& vehicleBody = controller.GetComponent<VehicleBody>(entity);
-			//PxTransform pxTransform = gVehicle->getTransform();
-			//transform.position = glm::vec3(pxTransform.p.x, pxTransform.p.y, pxTransform.p.z);
-			//transform.quatRotation = glm::quat(pxTransform.q.w, pxTransform.q.x, pxTransform.q.y, pxTransform.q.z);
+			// update wheel transforms
+			for (size_t i = 0; i < vehicleBody.wheelEntities.size(); i++)
+			{
+				Entity wheelEntity = vehicleBody.wheelEntities[i];
+				auto& wheelTransform = controller.GetComponent<Transform>(wheelEntity);
+				auto [wheelPos, wheelRot] = vehicles[entity]->getWheelTransform(i);
 
-			//PxVec3 linearVel = gVehicle->getLinearVelocity();
-			//PxVec3 angularVel = gVehicle->getAngularVelocity();
-			//vehicleBody.linearVelocity = glm::vec3(linearVel.x, linearVel.y, linearVel.z);
-			//vehicleBody.angularVelocity = glm::vec3(angularVel.x, angularVel.y, angularVel.z);
+				PxTransform t = vehicles[entity]->getWheelTransform(i);
+				wheelTransform.position = glm::vec3(t.p.x, t.p.y, t.p.z);
+				wheelTransform.quatRotation = glm::quat(t.q.w, t.q.x, t.q.y, t.q.z);
+			}
 		}
 	}
 }
@@ -523,6 +564,32 @@ void PhysicsSystem::CreateActorListener(Event& e)
 		gPhysicsScene->addActor(*dynamicActor);
 		shape->release();
 	}
+	else if (controller.HasComponent<Trigger>(entity))
+	{
+		// create trigger volume
+		auto& trigger = controller.GetComponent<Trigger>(entity);
+
+		PxBoxGeometry box = PxBoxGeometry(PxVec3(trigger.width, trigger.height, trigger.length));
+		PxTransform boxTransform = PxTransform(PxVec3(transform.position.x, transform.position.y, transform.position.z), PxQuat(transform.quatRotation.x, transform.quatRotation.y, transform.quatRotation.z, transform.quatRotation.w));
+
+		PxShape* shape = gPhysics->createShape(box, *materialMap["default"]);
+		shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
+		shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, true);
+		shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, false);
+
+		PxFilterData filterData(COLLISION_FLAG_TRIGGER, COLLISION_FLAG_TRIGGER_AGAINST, 0, 0);
+		shape->setSimulationFilterData(filterData);
+
+		PxRigidStatic* staticActor = gPhysics->createRigidStatic(boxTransform);
+		staticActor->attachShape(*shape);
+		staticActor->setActorFlag(PxActorFlag::eVISUALIZATION, true);
+		staticActor->userData = reinterpret_cast<void*>(entity);
+
+		trigger.actor = staticActor;
+
+		gPhysicsScene->addActor(*staticActor);
+		shape->release();
+	}
 }
 
 void PhysicsSystem::JumpEventListener(Event& e)
@@ -566,4 +633,11 @@ void PhysicsSystem::ReleaseTriggerCallback(Entity entity, Trigger& trig)
 	{
 		actorsToDelete.push_back(trig.actor);
 	}
+}
+
+void PhysicsSystem::SpinOutListener(Event& e) {
+	Entity entity = e.GetParam<Entity>(Events::Player::Spin_Out::Entity);
+	
+	spinning = true;
+	spinTimer = 0.0f;
 }

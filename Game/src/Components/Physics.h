@@ -38,6 +38,7 @@ struct VehicleBody
 	EngineDriveVehicle* vehicle = nullptr;
 	glm::vec3 linearVelocity;
 	glm::vec3 angularVelocity;
+	std::vector<Entity> wheelEntities{}; // entities of the wheels associated with this vehicle
 };
 
 // trigger boxes will not be rendered on the screen so you must set the eVISUALIZATION flag on and view it in PVD

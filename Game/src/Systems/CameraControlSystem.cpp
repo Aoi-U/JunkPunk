@@ -31,7 +31,8 @@ void CameraControlSystem::Update(float deltaTime)
 	bool boosting = false;
 	if (controller.HasComponent<Powerup>(player)) {
 		auto& p = controller.GetComponent<Powerup>(player);
-		boosting = p.active;
+		if (p.type == 1 && p.active)
+			boosting = true;
 	}
 
 	for (auto const& entity : entities)
@@ -42,7 +43,11 @@ void CameraControlSystem::Update(float deltaTime)
 		auto& vehicleComp = controller.GetComponent<VehicleBody>(camera.playerEntity);
 
 		float speed = glm::length(vehicleComp.linearVelocity);
-		camera.radius = glm::mix(camera.baseRadius, camera.baseRadius * 1.5f, glm::smoothstep(0.0f, 20.0f, speed)); // zoom out the camera based on speed using smoothstep for a smoother transition
+		float camerad = glm::mix(camera.baseRadius, camera.baseRadius * 1.5f, glm::smoothstep(0.0f, 20.0f, speed)); // zoom out the camera based on speed using smoothstep for a smoother transition
+
+		float boostMultiplier = boosting ? 1.35f : 1.0f;
+		float targetRadius = camerad * boostMultiplier;
+		camera.radius = glm::mix(camera.radius, targetRadius, 5.0f * deltaTime);
 
 		auto& gamepad = gamepads[1]; // assuming single player for now
 
@@ -51,8 +56,8 @@ void CameraControlSystem::Update(float deltaTime)
 			if (!gamepad->RStick_InDeadzone())
 			{
 				// orbit camera around player
-				camera.yaw +=  gamepad->RightStick_X() * camera.horizontalLookSpeed * deltaTime;
-				camera.pitch += gamepad->RightStick_Y() * camera.verticalLookSpeed * deltaTime;
+				camera.yaw +=  -gamepad->RightStick_X() * camera.horizontalLookSpeed * deltaTime;
+				camera.pitch += -gamepad->RightStick_Y() * camera.verticalLookSpeed * deltaTime;
 				camera.pitch = glm::clamp(camera.pitch, glm::radians(-89.0f), glm::radians(89.0f));
 			}
 		}
@@ -97,7 +102,7 @@ void CameraControlSystem::WindowSizeListener(Event& e)
 }
 
 void CameraControlSystem::MouseMovedListener(Event& e)
-{
+{	
 	double xpos = e.GetParam<double>(Events::Window::Mouse_Moved::XPOS);
 	double ypos = e.GetParam<double>(Events::Window::Mouse_Moved::YPOS);
 
@@ -106,6 +111,10 @@ void CameraControlSystem::MouseMovedListener(Event& e)
 
 	lastPosX = xpos;
 	lastPosY = ypos;
+
+	if (abs(deltaX) > 100.f || abs(deltaY) > 100.f) {//make less jumpy
+		return;
+	}
 
 	// rotate camera based on mouse movement
 	for (auto& entity : entities)

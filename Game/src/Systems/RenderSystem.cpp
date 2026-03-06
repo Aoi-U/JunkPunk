@@ -22,6 +22,7 @@ RenderSystem::RenderSystem()
 	skyboxShader = std::make_shared<Shader>("assets/shaders/skybox.vert", "assets/shaders/skybox.frag");
 	physicsDebugShader = std::make_shared<Shader>("assets/shaders/colliders.vert", "assets/shaders/colliders.frag");
 	textShader = std::make_shared<Shader>("assets/shaders/text.vert", "assets/shaders/text.frag");
+	uiShader = std::make_shared<Shader>("assets/shaders/ui.vert", "assets/shaders/ui.frag");
 
 	controller.AddEventListener(Events::Window::RESIZED, [this](Event& e){this->RenderSystem::WindowSizeListener(e); });
 	controller.AddEventListener(Events::GameState::NEW_STATE, [this](Event& e) {this->RenderSystem::ChangeGameStateListener(e); });
@@ -75,11 +76,56 @@ void RenderSystem::Init()
 	// setup shadow mapper
 	camera = controller.GetEntityByTag("Camera");
 	auto& tpp = controller.GetComponent<ThirdPersonCamera>(camera);
-	zNear = tpp.zNear;
-	zFar = tpp.zFar;
-	fov = tpp.fov;
+
 	viewMatrix = tpp.viewMatrix;
-	shadowMapper->Update(screenWidth / (float)screenHeight, zNear, zFar, glm::radians(fov), viewMatrix);
+	shadowMapper->Update(screenWidth / (float)screenHeight, tpp.zNear, tpp.zFar, glm::radians(tpp.fov), viewMatrix);
+
+	bananaIconTexture = std::make_unique<Texture>("banana.png");
+	bananaIconTexture->Load("assets/UI");
+	boostIconTexture = std::make_unique<Texture>("flash.png");
+	boostIconTexture->Load("assets/UI");
+
+	uiVAO = VAO();
+	uiVBO = VBO();
+	uiVAO.Bind();
+	uiVBO.Bind();
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, nullptr, GL_DYNAMIC_DRAW);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+	uiVAO.Unbind();
+	uiVBO.Unbind();
+
+	uiShader->use();
+	uiShader->setMat4("u_projection", fonts.projMat);
+	uiShader->setInt("u_texture", 0);
+
+	//float uiVertices[] = {
+	//	// positions    // texcoords
+	//	-1.0f,  1.0f,    0.0f, 1.0f,
+	//	-1.0f, -1.0f,    0.0f, 0.0f,
+	//	 1.0f, -1.0f,    1.0f, 0.0f,
+
+	//	-1.0f,  1.0f,    0.0f, 1.0f,
+	//	 1.0f, -1.0f,    1.0f, 0.0f,
+	//	 1.0f,  1.0f,    1.0f, 1.0f
+	//};
+
+	//glGenVertexArrays(1, &uiVAO);
+	//glGenBuffers(1, &uiVBO);
+
+	//glBindVertexArray(uiVAO);
+	//glBindBuffer(GL_ARRAY_BUFFER, uiVBO);
+	//glBufferData(GL_ARRAY_BUFFER, sizeof(uiVertices), uiVertices, GL_STATIC_DRAW);
+
+	//glEnableVertexAttribArray(0);
+	//glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+
+	//glEnableVertexAttribArray(1);
+	//glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+
+	//glBindVertexArray(0);
 }
 
 void RenderSystem::Reset()
@@ -102,6 +148,8 @@ void RenderSystem::Update(float fps, const PxRenderBuffer& buffer)
 	glm::vec3 pos = glm::vec3(glm::inverse(tpp.viewMatrix)[3]);
 	Frustum frust = CreateFrustum(tpp.zFar, tpp.zNear, glm::radians(tpp.fov), tpp.screenWidth / (float)tpp.screenHeight, -forward, right, up, glm::vec3(glm::inverse(tpp.viewMatrix)[3]));
 
+	shadowMapper->Update(tpp.screenWidth / (float)tpp.screenHeight, tpp.zNear, tpp.zFar, glm::radians(tpp.fov), tpp.viewMatrix);
+
 	DrawShadowPass(frust);
 
 	DrawLightingPass(frust, tpp, pos);
@@ -114,6 +162,8 @@ void RenderSystem::Update(float fps, const PxRenderBuffer& buffer)
 	DrawCollisionDebug(buffer);
 
 	DrawPostProcessingPass();
+	
+	RenderPowerupUI();
 	
 	int f = static_cast<int>(fps);
 	std::string text = "fps: " + std::to_string(f);
@@ -301,6 +351,39 @@ void RenderSystem::DrawPostProcessingPass()
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
+void RenderSystem::DrawUI(Texture* tex, float x0_px, float y0_px, float x1_px, float y1_px, int layerIndex)
+{
+	glDisable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	uiShader->use();
+	glm::vec4 tempColor = glm::vec4(1.0f);
+	uiShader->setVec4("u_color", &tempColor.x);
+	uiShader->setInt("u_useTexture", 1);
+	uiShader->setMat4("u_projection", fonts.projMat);
+
+	float vertices[] = {
+		x0_px, y1_px,  0.0f, 0.0f,
+		x0_px, y0_px,  0.0f, 1.0f,
+		x1_px, y0_px,  1.0f, 1.0f,
+		x0_px, y1_px,  0.0f, 0.0f,
+		x1_px, y0_px,  1.0f, 1.0f,
+		x1_px, y1_px,  1.0f, 0.0f
+	};
+
+	tex->Bind(GL_TEXTURE0);
+	uiVAO.Bind();
+	uiVBO.Bind();
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
+
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+
+	uiVAO.Unbind();
+	tex->Unbind();
+	glEnable(GL_DEPTH_TEST);
+}
+
 void RenderSystem::RenderText(std::string text, float x, float y, float scale, glm::vec3 color)
 {
 	glEnable(GL_BLEND);
@@ -349,6 +432,35 @@ void RenderSystem::RenderText(std::string text, float x, float y, float scale, g
 
 	textVAO.Unbind();
 	glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void RenderSystem::RenderPowerupUI() {
+	Entity player = controller.GetEntityByTag("VehicleCommands");
+
+	if (!controller.HasComponent<Powerup>(player))
+		return;
+
+	auto& p = controller.GetComponent <Powerup>(player);
+
+	Texture* tex = nullptr;
+
+	if (p.type == 1)
+		tex = boostIconTexture.get();
+	else if (p.type == 2)
+		tex = bananaIconTexture.get();
+
+	if (tex == nullptr)
+		return;
+
+	float iconSize = 96.0f;
+	float margin = 20.0f;
+
+	float x0 = (screenWidth * 0.5f) - (iconSize * 0.5f);
+	float y0 = screenHeight - margin - iconSize;
+	float x1 = x0 + iconSize;
+	float y1 = y0 + iconSize;
+
+	DrawUI(tex, x0, y0, x1, y1, 5);
 }
 
 void RenderSystem::DrawSkybox()
@@ -524,14 +636,10 @@ void RenderSystem::WindowSizeListener(Event& e)
 	if (!(camera == MAX_ENTITIES))
 	{
 		auto& tpp = controller.GetComponent<ThirdPersonCamera>(camera);
+		shadowMapper->Update(screenWidth / (float)screenHeight, tpp.zNear, tpp.zFar, glm::radians(tpp.fov), tpp.viewMatrix);
 
-		zNear = tpp.zNear;
-		zFar = tpp.zFar;
-		fov = tpp.fov;
-		viewMatrix = tpp.viewMatrix;
 	}
 
-	shadowMapper->Update(screenWidth / (float)screenHeight, zNear, zFar, glm::radians(fov), viewMatrix);
 
 	postProcessor->Resize(screenWidth, screenHeight);
 

@@ -122,9 +122,9 @@ void setPhysXIntegrationParams(const PxVehicleAxleDescription& axleDescription,
 
 	const PxQueryFilterData queryFilterData(PxFilterData(0, 0, 0, 0), PxQueryFlag::eSTATIC);
 	PxQueryFilterCallback* queryFilterCallback = NULL;
-	const PxTransform physxActorCMassLocalPose(PxVec3(0.0f, 0.1f, 0.0f), PxQuat(PxIdentity));
-	const PxVec3 physxActorBoxShapeHalfExtents(0.2f, 0.06f, 0.6f);
-	const PxTransform physxActorBoxShapeLocalPose(PxVec3(0.0f, 0.0f, 0.0f), PxQuat(PxIdentity));
+	const PxTransform physxActorCMassLocalPose(PxVec3(0.0f, -0.25f, 0.0f), PxQuat(PxIdentity));
+	const PxVec3 physxActorBoxShapeHalfExtents(0.4f, 0.31f, 1.05f);
+	const PxTransform physxActorBoxShapeLocalPose(PxVec3(0.0f, 0.25f, 0.0f), PxQuat(PxIdentity));
 
 	physXParams.create(
 		axleDescription,

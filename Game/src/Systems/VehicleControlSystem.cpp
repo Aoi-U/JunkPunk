@@ -31,14 +31,14 @@ void VehicleControlSystem::Update()
 		if (gamepad->Connected())
 		{
 			playerCommands.steer = gamepad->LStick_InDeadzone() ? 0.0f : -gamepad->LeftStick_X();
-			if (gamepad->LeftTrigger() > 0.1f)
+			if (gamepad->RightTrigger() > 0.1f)
 			{
-				playerCommands.throttle = gamepad->LeftTrigger();
+				playerCommands.throttle = gamepad->RightTrigger();
 				playerCommands.brake = 0.0f;
 			}
-			else if (gamepad->RightTrigger() > 0.1f)
+			else if (gamepad->LeftTrigger() > 0.1f)
 			{
-				playerCommands.brake = gamepad->RightTrigger();
+				playerCommands.brake = gamepad->LeftTrigger();
 				playerCommands.throttle = 0.0f;
 			}
 			else
