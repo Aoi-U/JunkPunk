@@ -340,6 +340,25 @@ void LevelLoaderSystem::LoadLevel()
 	controller.AddComponent(entity, Transform{ glm::vec3(-60.0f, -93.0f, 19.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.25f) });
 	controller.AddComponent(entity, CheckPoint{ glm::quat(1.0f, 0.0f, 0.0f, 0.0f) });
 	controller.AddComponent(entity, Trigger{ nullptr, 5.0f, 2.0f, 5.0f });
+
+	// Used strictly for testing AI waypoints, can be removed later
+	std::vector<Waypoint> waypoints;
+	if (aiSystemPtr) {
+		waypoints = aiSystemPtr->GetWaypoints();
+		std::cout << "Loaded " << waypoints.size() << " waypoints for AI from AiSystem" << std::endl;
+	}
+	else {
+		// fallback: leave empty or build defaults
+		std::cout << "Warning: AiSystem not set in LevelLoaderSystem, no waypoints loaded for AI" << std::endl;
+	}
+
+	for (const Waypoint& wp : waypoints) {
+		entity = controller.createEntity();
+		controller.AddComponent(entity, PhysicsBody{});
+		controller.AddComponent(entity, Transform{ wp.position, glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.25f) });
+		controller.AddComponent(entity, CheckPoint{ glm::quat(1.0f, 0.0f, 0.0f, 0.0f) });
+		controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 4.0f, 1.0f });
+	}
 }
 
 std::pair<std::shared_ptr<Model>, std::shared_ptr<AABB>> LevelLoaderSystem::LoadModel(std::string path)

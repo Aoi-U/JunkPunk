@@ -57,7 +57,7 @@ bool MainVehicle::initVehicles(PxScene* gScene, PxPhysics* gPhysics, PxMaterial*
 	// rotate around y 180 degrees
 	PxQuat rot = PxQuat(PxPi, PxVec3(0.0f, 1.0f, 0.0f));
 	pose.q = rot;
-	gVehicle.setUpActor(*gScene, pose, gVehicleName); // Might replace pose with initTransform
+	gVehicle.setUpActor(*gScene, initTransform, gVehicleName); // Might replace pose with initTransform
 
 	PxFilterData vehicleFilter(COLLISION_FLAG_CHASSIS, COLLISION_FLAG_CHASSIS_AGAINST, 0, 0);
 	PxFilterData wheelFilter(COLLISION_FLAG_WHEEL, COLLISION_FLAG_WHEEL_AGAINST, 0, 0);

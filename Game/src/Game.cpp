@@ -227,14 +227,13 @@ Game::Game()
 		signature.set(controller.GetComponentType<VehicleBody>());
 		controller.SetSystemSignature<AiSystem>(signature);
 	}
-
+	loaderSystem->SetAiSystem(aiSystem);
 
 	audioSystem->Init();
 	vehicleControlSystem->Init(gamepads);
 	camControlSystem->Init(gamepads);
 	menuSystem->Init(gamepads[0]);
 	pauseSystem->Init(gamepads[0]);
-	aiSystem->Init();
 
 	controller.AddEventListener(Events::GameState::NEW_STATE, [this](Event& e) { this->ChangeGameStateListener(e); });
 	controller.AddEventListener(Events::Window::INPUT, [this](Event& e) { this->KeyboardInputListener(e); });
@@ -441,6 +440,7 @@ void Game::ChangeGameStateListener(Event& e)
 	{
 		if (currentState == GameState::STARTMENU) // set up the world when coming from the main menu
 		{
+			aiSystem->Init();
 			loaderSystem->LoadLevel();
 			renderSystem->Init();
 			physicsSystem->Init();
