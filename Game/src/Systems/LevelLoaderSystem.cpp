@@ -202,7 +202,7 @@ void LevelLoaderSystem::LoadLevel()
 
 	Entity vehicle = controller.createEntity();
 	loaded = LoadModel("assets/models/car_body_orange/car.gltf");
-	controller.AddComponent(vehicle, Transform{ glm::vec3(0.0f, -5.0f, 0.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.2f) });
+	controller.AddComponent(vehicle, Transform{ glm::vec3(-30.0f, -80.0f, -20.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.2f) });
 	controller.AddComponent(vehicle, VehicleBody{});
 	controller.AddComponent(vehicle, VehicleCommands{});
 	controller.AddComponent(vehicle, PlayerController{ 1 });
@@ -214,28 +214,28 @@ void LevelLoaderSystem::LoadLevel()
 
 	entity = controller.createEntity(); // front left wheel
 	loaded = LoadModel("assets/models/left_wheel/wheel.gltf");
-	controller.AddComponent(entity, Transform{ glm::vec3(0.0f, -5.0f, 0.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.2f) });
+	controller.AddComponent(entity, Transform{ glm::vec3(-35.0f, -80.0f, -25.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.2f) });
 	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
 	controller.AddComponent(entity, PhysicsBody{});
 	controller.GetComponent<VehicleBody>(vehicle).wheelEntities.push_back(entity);
 
 	entity = controller.createEntity(); // front right wheel
 	loaded = LoadModel("assets/models/right_wheel/wheel.gltf");
-	controller.AddComponent(entity, Transform{ glm::vec3(0.0f, -5.0f, 0.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.2f) });
+	controller.AddComponent(entity, Transform{ glm::vec3(-35.0f, -80.0f, -25.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.2f) });
 	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
 	controller.AddComponent(entity, PhysicsBody{});
 	controller.GetComponent<VehicleBody>(vehicle).wheelEntities.push_back(entity);
 
 	entity = controller.createEntity(); // back left wheel
 	loaded = LoadModel("assets/models/left_wheel/wheel.gltf");
-	controller.AddComponent(entity, Transform{ glm::vec3(0.0f, -5.0f, 0.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.2f) });
+	controller.AddComponent(entity, Transform{ glm::vec3(-35.0f, -80.0f, -25.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.2f) });
 	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
 	controller.AddComponent(entity, PhysicsBody{});
 	controller.GetComponent<VehicleBody>(vehicle).wheelEntities.push_back(entity);
 
 	entity = controller.createEntity(); // back right wheel
 	loaded = LoadModel("assets/models/right_wheel/wheel.gltf");
-	controller.AddComponent(entity, Transform{ glm::vec3(0.0f, -5.0f, 0.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.2f) });
+	controller.AddComponent(entity, Transform{ glm::vec3(-35.0f, -80.0f, -25.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.2f) });
 	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
 	controller.AddComponent(entity, PhysicsBody{});
 	controller.GetComponent<VehicleBody>(vehicle).wheelEntities.push_back(entity);
@@ -342,23 +342,23 @@ void LevelLoaderSystem::LoadLevel()
 	controller.AddComponent(entity, Trigger{ nullptr, 5.0f, 2.0f, 5.0f });
 
 	// Used strictly for testing AI waypoints, can be removed later
-	std::vector<Waypoint> waypoints;
-	if (aiSystemPtr) {
-		waypoints = aiSystemPtr->GetWaypoints();
-		std::cout << "Loaded " << waypoints.size() << " waypoints for AI from AiSystem" << std::endl;
-	}
-	else {
-		// fallback: leave empty or build defaults
-		std::cout << "Warning: AiSystem not set in LevelLoaderSystem, no waypoints loaded for AI" << std::endl;
-	}
-
-	for (const Waypoint& wp : waypoints) {
-		entity = controller.createEntity();
-		controller.AddComponent(entity, PhysicsBody{});
-		controller.AddComponent(entity, Transform{ wp.position, glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.25f) });
-		controller.AddComponent(entity, CheckPoint{ glm::quat(1.0f, 0.0f, 0.0f, 0.0f) });
-		controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 4.0f, 1.0f });
-	}
+	//std::vector<Waypoint> waypoints;
+	//if (aiSystemPtr) {
+	//	waypoints = aiSystemPtr->GetWaypoints();
+	//	std::cout << "Loaded " << waypoints.size() << " waypoints for AI from AiSystem" << std::endl;
+	//}
+	//else {
+	//	// fallback: leave empty or build defaults
+	//	std::cout << "Warning: AiSystem not set in LevelLoaderSystem, no waypoints loaded for AI" << std::endl;
+	//}
+	//
+	//for (const Waypoint& wp : waypoints) {
+	//	entity = controller.createEntity();
+	//	controller.AddComponent(entity, PhysicsBody{});
+	//	controller.AddComponent(entity, Transform{ wp.position, glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.25f) });
+	//	controller.AddComponent(entity, CheckPoint{ glm::quat(1.0f, 0.0f, 0.0f, 0.0f) });
+	//	controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 4.0f, 1.0f });
+	//}
 }
 
 std::pair<std::shared_ptr<Model>, std::shared_ptr<AABB>> LevelLoaderSystem::LoadModel(std::string path)

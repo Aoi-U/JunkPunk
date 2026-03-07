@@ -24,13 +24,14 @@ bool aiWon = false;
 // -------------------------
 // For logging player position
 // position logging
-//float posLogTimer = 0.0f;
-//const float POS_LOG_INTERVAL = 1.0f; // 500 ms
+float posLogTimer = 0.0f;
+const float POS_LOG_INTERVAL = 1.0f; // 500 ms
 // -------------------------
 float winTimer = 0.0f;
 const float WIN_DELAY = 5.0f;
 float fadeAlpha = 0.0f;
 Entity playerEntity;
+Entity aiEntity;
 
 int numPlayers = 1;
 
@@ -276,14 +277,14 @@ void Game::Run()
 			//if (posLogTimer >= POS_LOG_INTERVAL)
 			//{
 			//	posLogTimer -= POS_LOG_INTERVAL; // preserve remainder instead of resetting to zero
-
+			//
 			//	if (controller.HasComponent<Transform>(player))
 			//	{
 			//		const auto& t = controller.GetComponent<Transform>(player);
 			//		std::cout << "glm::vec3("
 			//			<< t.position.x << ", "
 			//			<< t.position.y << ", "
-			//			<< t.position.z << ")\n";
+			//			<< t.position.z << "),\n";
 			//	}
 			//	else
 			//	{
@@ -309,7 +310,7 @@ void Game::Run()
 			menuSystem->RenderWinText();
 			camera_debug_panel->render(); // render debug panel
 			aiSystem->Update(time->frameTime); // update ai drivers
-			aiSystem->RenderDebugWaypoints(); // render ai waypoints for debugging
+			//aiSystem->RenderDebugWaypoints(); // render ai waypoints for debugging
 
 
 			if (playerWon) {
@@ -445,6 +446,10 @@ void Game::ChangeGameStateListener(Event& e)
 			renderSystem->Init();
 			physicsSystem->Init();
 
+			//aiEntity = controller.GetEntityByTag("AIVehicle");
+			//AiDriver aiDriver{}; // tweak defaults here if needed (desiredSpeed, lookaheadDistance, etc.)
+			//controller.AddComponent(aiEntity, aiDriver);
+
 			playerEntity = controller.GetEntityByTag("VehicleCommands");
 
 			// testing
@@ -484,7 +489,7 @@ void Game::ChangeGameStateListener(Event& e)
 		controller.Reset();
 		physicsSystem->Cleanup();
 
-
+		aiSystem->Init();
 		loaderSystem->LoadLevel();
 		renderSystem->Init();
 		physicsSystem->Init();

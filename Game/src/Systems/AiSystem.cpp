@@ -18,19 +18,19 @@ void AiSystem::Init()
 void AiSystem::Update(float deltaTime)
 {
 	//std::cout << "Zoom Zoom" << std::endl;
-	if (deltaTime <= 0.0f)
-		return;
+	//if (deltaTime <= 0.0f)
+	//	return;
 
 	// For each entity matched by system signature
 	for (auto entity : entities)
 	{
-		if (!controller.HasComponent<AiDriver>(entity) ||
-			!controller.HasComponent<Transform>(entity) ||
-			!controller.HasComponent<VehicleBody>(entity) ||
-			!controller.HasComponent<VehicleCommands>(entity))
-		{
-			continue;
-		}
+		//if (!controller.HasComponent<AiDriver>(entity) ||
+		//	!controller.HasComponent<Transform>(entity) ||
+		//	!controller.HasComponent<VehicleBody>(entity) ||
+		//	!controller.HasComponent<VehicleCommands>(entity))
+		//{
+		//	continue;
+		//}
 
 		auto& ai = controller.GetComponent<AiDriver>(entity);
 		auto& transform = controller.GetComponent<Transform>(entity);
@@ -46,9 +46,7 @@ void AiSystem::Update(float deltaTime)
 		// Position of Waypoint
 		glm::vec3 waypointXZ(waypointPosition.x, 0.0f, waypointPosition.z);
 
-		//std::cout << "Next Waypoint Index: " << ai.currentWaypointIndex+1
-		//	<< "\tNext Waypoint: (" << waypointXZ.x << "," << waypointXZ.y << "," << waypointXZ.z << ")"
-		//	<< std::endl;
+		//std::cout << "Current Waypoint Index: " << ai.currentWaypointIndex << "\tNext Waypoint Index: " << ai.currentWaypointIndex+1 << std::endl;
 
 		// distance to current waypoint
 		float dist = glm::length(waypointXZ - positionXZ);
@@ -82,6 +80,12 @@ void AiSystem::Update(float deltaTime)
 			ai.currentWaypointIndex = (ai.currentWaypointIndex + 1) % trackWaypoints.size();
 		}
 
+		//if (dist < ai.arrivalRadius || (t + ai.lookaheadDistance) > segmentLength)
+		//{
+		//	ai.currentWaypointIndex = (ai.currentWaypointIndex + 1) % trackWaypoints.size();
+		//	// Skip steering calculation this frame so we start targeting the next waypoint next update.
+		//	continue;
+		//}
 		// Add lookahead distance
 		//float lookahead = ai.lookaheadDistance > 0.0f ? ai.lookaheadDistance : 5.0f;
 		// Make this speed based instead of constant, so the AI can slow down for turns and speed up on straights
@@ -169,6 +173,46 @@ void AiSystem::InitializeWaypoints()
 		glm::vec3(39.063, -38.777, 39.908),
 		glm::vec3(81.944, -19.593, 81.963),
 		glm::vec3(25.0f, -3.5f, 120.0f), // finish line
+//		glm::vec3(-44.5055, -94.5461, -26.1023),
+//glm::vec3(-44.3598, -94.5471, -22.1468),
+//glm::vec3(-43.5285, -94.5454, -16.1499),
+//glm::vec3(-46.6151, -94.5472, -9.92809),
+//glm::vec3(-54.3819, -94.5464, -4.0909),
+//glm::vec3(-73.1659, -94.5447, 11.8797),
+//glm::vec3(-74.7481, -94.5462, 26.6788),
+//glm::vec3(-66.3723, -91.2688, 33.3656),
+//glm::vec3(-54.2916, -84.9851, 44.2097),
+//glm::vec3(-42.0976, -84.5365, 45.9866),
+//glm::vec3(-32.5076, -81.7406, 38.2317),
+//glm::vec3(-13.8132, -73.2113, 19.9834),
+//glm::vec3(2.87696, -71.0276, 9.99774),
+//glm::vec3(4.5325, -71.1358, 11.3034),
+//glm::vec3(5.22488, -71.1504, 12.1013),
+//glm::vec3(10.2568, -71.4079, 20.5117),
+//glm::vec3(17.5593, -70.1626, 34.567),
+//glm::vec3(16.9669, -68.5499, 38.3694),
+//glm::vec3(9.36336, -65.0321, 40.6979),
+//glm::vec3(1.62152, -60.9418, 41.5452),
+//glm::vec3(-4.93453, -59.6856, 44.5246),
+//glm::vec3(-16.3894, -59.5465, 54.9809),
+//glm::vec3(-31.0652, -59.5388, 73.0464),
+//glm::vec3(-29.4427, -59.5478, 78.1079),
+//glm::vec3(-16.604, -55.2639, 84.2534),
+//glm::vec3(3.23928, -45.0491, 96.1096),
+//glm::vec3(14.8546, -40.595, 89.8412),
+//glm::vec3(20.1091, -39.5229, 83.5266),
+//glm::vec3(26.6524, -38.3333, 73.0763),
+//glm::vec3(24.6848, -38.2021, 60.4575),
+//glm::vec3(25.9412, -37.9538, 54.832),
+//glm::vec3(34.0655, -37.952, 47.9181),
+//glm::vec3(39.2359, -36.6098, 49.7402),
+//glm::vec3(53.8035, -26.4754, 60.0108),
+//glm::vec3(75.098, -18.5528, 72.1487),
+//glm::vec3(86.443, -19.4369, 76.1686),
+//glm::vec3(74.891, -19.5463, 83.4253),
+//glm::vec3(62.8742, -15.9536, 100.107),
+//glm::vec3(44.3057, -10.2979, 111.62),
+//glm::vec3(27.9747, -7.28955, 125.713),
 	};
 
 	int nBetween = 5;
@@ -177,35 +221,43 @@ void AiSystem::InitializeWaypoints()
 	if (anchors.empty())
 		return;
 
+	//for (int i = 0; i < anchors.size() - 1; ++i)
+	//{
+	//	Waypoint wp;
+	//	wp.position = anchors[i];
+	//	wp.recommendedSpeed = 12.0f;
+	//	wp.trackWidth = 5.0f;
+	//	trackWaypoints.push_back(wp);
+	//}
+
+	Waypoint firstWp;
+	firstWp.position = anchors.front();
+	firstWp.recommendedSpeed = 12.0f;
+	firstWp.trackWidth = 5.0f;
+	trackWaypoints.push_back(firstWp);
+	
 	for (size_t i = 0; i < anchors.size() - 1; ++i)
 	{
 		// push start anchor of this segment
-		Waypoint startWp;
-		startWp.position = anchors[i];
-		startWp.recommendedSpeed = 12.0f;
-		startWp.trackWidth = 5.0f;
-		trackWaypoints.push_back(startWp);
-
+	
 		// generate interior points (exclude endpoints)
 		for (int k = 1; k <= nBetween; ++k)
 		{
 			float t = static_cast<float>(k) / static_cast<float>(nBetween + 1); // evenly spaced in (0,1)
 			glm::vec3 p = glm::mix(anchors[i], anchors[i + 1], t);
-
+	
 			Waypoint wp;
 			wp.position = p;
 			wp.recommendedSpeed = 12.0f;
 			wp.trackWidth = 5.0f;
 			trackWaypoints.push_back(wp);
 		}
+		Waypoint endWp;
+		endWp.position = anchors[i + 1];
+		endWp.recommendedSpeed = 12.0f;
+		endWp.trackWidth = 5.0f;
+		trackWaypoints.push_back(endWp);
 	}
-
-	// push final anchor
-	Waypoint lastWp;
-	lastWp.position = anchors.back();
-	lastWp.recommendedSpeed = 12.0f;
-	lastWp.trackWidth = 5.0f;
-	trackWaypoints.push_back(lastWp);
 }
 
 void AiSystem::RenderDebugWaypoints()
