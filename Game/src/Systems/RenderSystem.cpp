@@ -440,7 +440,7 @@ void RenderSystem::RenderPowerupUI() {
 	if (!controller.HasComponent<Powerup>(player))
 		return;
 
-	auto& p = controller.GetComponent <Powerup>(player);
+	auto& p = controller.GetComponent<Powerup>(player);
 
 	Texture* tex = nullptr;
 

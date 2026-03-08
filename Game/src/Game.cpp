@@ -312,8 +312,7 @@ void Game::Run()
 			aiSystem->Update(time->frameTime); // update ai drivers
 			//aiSystem->RenderDebugWaypoints(); // render ai waypoints for debugging
 
-
-			if (playerWon) {
+			if (playerWon || aiWon) {
 				winTimer += time->frameTime;
 				if (winTimer >= 1.0f) {
 					fadeAlpha += time->frameTime * 0.25f;
@@ -327,19 +326,33 @@ void Game::Run()
 				}
 			}
 
-			if (aiWon) {
-				winTimer += time->frameTime;
-				if (winTimer >= 1.0f) {
-					fadeAlpha += time->frameTime * 0.25f;
-					fadeAlpha = glm::clamp(fadeAlpha, 0.0f, 1.0f);
-					menuSystem->RenderFadeOverlay(fadeAlpha);
-				}
-				if (winTimer >= WIN_DELAY) {
-					Event event(Events::GameState::NEW_STATE);
-					event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::ENDMENU);
-					controller.SendEvent(event);
-				}
-			}
+			//if (playerWon) {
+			//	winTimer += time->frameTime;
+			//	if (winTimer >= 1.0f) {
+			//		fadeAlpha += time->frameTime * 0.25f;
+			//		fadeAlpha = glm::clamp(fadeAlpha, 0.0f, 1.0f);
+			//		menuSystem->RenderFadeOverlay(fadeAlpha);
+			//	}
+			//	if (winTimer >= WIN_DELAY) {
+			//		Event event(Events::GameState::NEW_STATE);
+			//		event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::ENDMENU);
+			//		controller.SendEvent(event);
+			//	}
+			//}
+
+			//if (aiWon) {
+			//	winTimer += time->frameTime;
+			//	if (winTimer >= 1.0f) {
+			//		fadeAlpha += time->frameTime * 0.25f;
+			//		fadeAlpha = glm::clamp(fadeAlpha, 0.0f, 1.0f);
+			//		menuSystem->RenderFadeOverlay(fadeAlpha);
+			//	}
+			//	if (winTimer >= WIN_DELAY) {
+			//		Event event(Events::GameState::NEW_STATE);
+			//		event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::ENDMENU);
+			//		controller.SendEvent(event);
+			//	}
+			//}
 			if (controller.HasComponent<Powerup>(player)) {
 				auto& p = controller.GetComponent<Powerup>(player);
 				if (p.active) {
@@ -547,17 +560,13 @@ void Game::TriggerEnterListener(Event& e)
 
 	Entity finishLine = controller.GetEntityByTag("FinishLine");
 	if (triggerEntity == finishLine) {
-		//playerWon = true;
-		//fadeAlpha = 0.0f;
-		//winTimer = 0.0f;
-		//std::cout << "you win!" << std::endl;
-		if (!playerWon && controller.HasComponent<PlayerController>(otherEntity)) {
+		if (!playerWon && !aiWon && controller.HasComponent<PlayerController>(otherEntity)) {
 			playerWon = true;
 			fadeAlpha = 0.0f;
 			winTimer = 0.0f;
 			std::cout << "you win!" << std::endl;
 		}
-		else if (!aiWon && controller.HasComponent<AiDriver>(otherEntity)) {
+		else if (!playerWon && !aiWon && controller.HasComponent<AiDriver>(otherEntity)) {
 			aiWon = true;
 			fadeAlpha = 0.0f;
 			winTimer = 0.0f;
@@ -565,7 +574,7 @@ void Game::TriggerEnterListener(Event& e)
 		}
 		return;
 	}
-	else if (controller.HasComponent<Powerup>(triggerEntity) && !controller.HasComponent<Powerup>(playerEntity)) {
+	else if (controller.HasComponent<Powerup>(triggerEntity) && otherEntity == playerEntity && !controller.HasComponent<Powerup>(playerEntity)) {
 		Entity player = playerEntity;
 		auto pickup = controller.GetComponent<Powerup>(triggerEntity);
 		controller.AddComponent(player, pickup);
