@@ -259,15 +259,43 @@ void LevelLoaderSystem::LoadLevel()
 		});
 
 	// AI Opponent vehicle
-	entity = controller.createEntity();
-	auto aiLoaded = LoadModel("assets/models/2003_peugeot_hoggar_concept/scene.gltf");
+	vehicle = controller.createEntity();
+	loaded = LoadModel("assets/models/car_body_blue/car.gltf");
 	glm::mat4 aiRotation = glm::rotate(glm::mat4(1.0f), glm::radians(-30.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-	controller.AddComponent(entity, Transform{ glm::vec3(-35.0f, -80.0f, -15.0f), glm::quat(aiRotation), glm::vec3(40.0f) });
-	controller.AddComponent(entity, VehicleBody{});
-	controller.AddComponent(entity, VehicleCommands{});
-	controller.AddComponent(entity, Render{ aiLoaded.first, aiLoaded.second });
+	controller.AddComponent(vehicle, Transform{ glm::vec3(-35.0f, -80.0f, -15.0f), glm::quat(aiRotation), glm::vec3(0.2f) });
+	controller.AddComponent(vehicle, VehicleBody{});
+	controller.AddComponent(vehicle, VehicleCommands{});
+	controller.AddComponent(vehicle, Render{ loaded.first, loaded.second });
+	controller.AddComponent(vehicle, PhysicsBody{});
+	controller.AssignTag(vehicle, "AIVehicle");
+
+	entity = controller.createEntity(); // front left wheel
+	loaded = LoadModel("assets/models/left_wheel/wheel.gltf");
+	controller.AddComponent(entity, Transform{ glm::vec3(-35.0f, -80.0f, -15.0f), glm::quat(aiRotation), glm::vec3(0.2f) });
+	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
 	controller.AddComponent(entity, PhysicsBody{});
-	controller.AssignTag(entity, "AIVehicle");
+	controller.GetComponent<VehicleBody>(vehicle).wheelEntities.push_back(entity);
+
+	entity = controller.createEntity(); // front right wheel
+	loaded = LoadModel("assets/models/right_wheel/wheel.gltf");
+	controller.AddComponent(entity, Transform{ glm::vec3(-35.0f, -80.0f, -15.0f), glm::quat(aiRotation), glm::vec3(0.2f) });
+	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
+	controller.AddComponent(entity, PhysicsBody{});
+	controller.GetComponent<VehicleBody>(vehicle).wheelEntities.push_back(entity);
+
+	entity = controller.createEntity(); // back left wheel
+	loaded = LoadModel("assets/models/left_wheel/wheel.gltf");
+	controller.AddComponent(entity, Transform{ glm::vec3(-35.0f, -80.0f, -15.0f), glm::quat(aiRotation), glm::vec3(0.2f) });
+	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
+	controller.AddComponent(entity, PhysicsBody{});
+	controller.GetComponent<VehicleBody>(vehicle).wheelEntities.push_back(entity);
+
+	entity = controller.createEntity(); // back right wheel
+	loaded = LoadModel("assets/models/right_wheel/wheel.gltf");
+	controller.AddComponent(entity, Transform{ glm::vec3(-35.0f, -80.0f, -15.0f), glm::quat(aiRotation), glm::vec3(0.2f) });
+	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
+	controller.AddComponent(entity, PhysicsBody{});
+	controller.GetComponent<VehicleBody>(vehicle).wheelEntities.push_back(entity);
 
 	// Initial paramerters for the AI driver, these can be tweaked to change the difficulty of the AI
 	AiDriver ai{};
@@ -275,7 +303,7 @@ void LevelLoaderSystem::LoadLevel()
 	//ai.arrivalRadius = 2.0f;
 	//ai.maxSteerRadians = 1.0f;
 	//ai.throttleKp = 0.6f;
-	controller.AddComponent(entity, ai);
+	controller.AddComponent(vehicle, ai);
 
 	// test trigger box
 	//entity = controller.createEntity();
