@@ -401,6 +401,11 @@ void Game::Run()
 			audioSystem->Update();
 			break;
 
+		case CONTROLS:
+			menuSystem->RenderControlsScreen();
+			audioSystem->Update();
+			break;
+
 		case ENDMENU:
 			renderSystem->Update(time->fps(), physicsSystem->GetRenderBuffer());
 			menuSystem->RenderEndScreen();
@@ -450,9 +455,17 @@ void Game::ChangeGameStateListener(Event& e)
 		fadeAlpha = 0.0f;
 		break;
 	}
+	case::GameState::CONTROLS:
+	{
+		//menuSystem->Reset();
+		time->Pause();
+		currentState = state;
+		currentStateGlobal = state;
+		break;
+	}
 	case::GameState::GAME:
 	{
-		if (currentState == GameState::STARTMENU) // set up the world when coming from the main menu
+		if (currentState == GameState::STARTMENU || currentState == GameState::CONTROLS) // set up the world when coming from the main menu
 		{
 			aiSystem->Init();
 			loaderSystem->LoadLevel();

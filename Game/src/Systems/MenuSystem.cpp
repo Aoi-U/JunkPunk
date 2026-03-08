@@ -49,6 +49,7 @@ void MenuSystem::Init(std::shared_ptr<Gamepad> gamepad)
 	uiShader->setInt("u_texture", 0);
 
 	InitUI();
+	InitControlsUI();
 	InitEndUI();
 }
 
@@ -105,7 +106,7 @@ void MenuSystem::Update()
 		case Menus::START:
 		{
 			Event event(Events::GameState::NEW_STATE);
-			event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::GAME);
+			event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::CONTROLS);
 			controller.SendEvent(event);
 			break;
 		}
@@ -206,7 +207,17 @@ void MenuSystem::RenderEndScreen() {
 	}
 }
 
+void MenuSystem::RenderControlsScreen() {
+	glDisable(GL_DEPTH_TEST);
+	Clear(0.05f, 0.05f, 0.05f, 1.0f);
+	RenderElements(controlsUIElements);
 
+	if (gamepad->GetButtonDown(Buttons::JUMP)) {
+		Event event(Events::GameState::NEW_STATE);
+		event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::GAME);
+		controller.SendEvent(event);
+	}
+}
 
 void MenuSystem::RenderFadeOverlay(float alpha) {
 	if (alpha <= 0.0f)
@@ -316,6 +327,22 @@ void MenuSystem::InitEndUI() {
 	Texture tex("dumpster sunset.jpg");
 	tex.Load("assets/textures");
 	endUIElements.emplace_back(
+		0.0f,
+		0.0f,
+		1280.0f,
+		720.0f,
+		glm::vec4(1.0f),
+		ScaleMode::FILL,
+		std::make_unique<Texture>(tex)
+	);
+}
+
+void MenuSystem::InitControlsUI() {
+	controlsUIElements.clear();
+	Texture tex("Powerup.png");
+	tex.Load("assets/textures");
+
+	controlsUIElements.emplace_back(
 		0.0f,
 		0.0f,
 		1280.0f,
@@ -550,7 +577,7 @@ void MenuSystem::KeyboardInputListener(Event& e)
 		case Menus::START:
 		{
 			Event event(Events::GameState::NEW_STATE);
-			event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::GAME);
+			event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::CONTROLS);
 			controller.SendEvent(event);
 			break;
 		}
@@ -568,10 +595,16 @@ void MenuSystem::KeyboardInputListener(Event& e)
 		}
 	}
 
-	if (key == Keys::KEY_JUMP && action == true && currentStateGlobal == GameState::ENDMENU) {
+	else if (key == Keys::KEY_JUMP && action == true && currentStateGlobal == GameState::ENDMENU) {
 		playerWon = false;
 		Event event(Events::GameState::NEW_STATE);
 		event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::STARTMENU);
+		controller.SendEvent(event);
+	}
+
+	else if (key == Keys::KEY_JUMP && action == true && currentStateGlobal == GameState::CONTROLS) {
+		Event event(Events::GameState::NEW_STATE);
+		event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::GAME);
 		controller.SendEvent(event);
 	}
 }

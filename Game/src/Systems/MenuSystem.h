@@ -40,6 +40,7 @@ public:
 	void Reset();
 	void RenderWinText();
 	void RenderEndScreen();
+	void RenderControlsScreen();
 	void RenderFadeOverlay(float alpha);
 
 private:
@@ -52,6 +53,7 @@ private:
 
 	void InitUI();
 	void InitEndUI();
+	void InitControlsUI();
 
 	void UpdateUIScale();
 	float ScaledX(float x);
@@ -99,4 +101,6 @@ private:
 
 	std::vector<UIElement> uiElements;
 	std::vector<UIElement> endUIElements;
+	std::vector<UIElement> controlsUIElements;
+
 };
