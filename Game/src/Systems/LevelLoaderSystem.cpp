@@ -7,12 +7,19 @@
 #include "../Components/Transform.h"
 #include "../Components/Particles.h"
 #include "../Components/Powerup.h"
+#include "../Components/AiDriver.h"
+#include "AiSystem.h"
 #include"../Components/Banana.h"
 
 
 #include "../ECSController.h"
 
 extern ECSController controller;
+
+void LevelLoaderSystem::SetAiSystem(std::shared_ptr<AiSystem> ai)
+{
+	aiSystemPtr = ai;
+}
 
 Frustum CreateFrustum(float zFar, float zNear, float fovY, float aspectRatio, glm::vec3 front, glm::vec3 right, glm::vec3 up, glm::vec3 pos) {
 	Frustum frust;
@@ -151,20 +158,51 @@ void LevelLoaderSystem::LoadLevel()
 			});
 	}
 
-	for (int i = 0; i < 50; i++)
-	{
-		entity = controller.createEntity();
-		loaded = LoadModel("assets/models/rubix_2.0/scene.gltf");
-		controller.AddComponent(entity, Transform{ glm::vec3(-60.0f, -90.0f + i * 10.0f, 20.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.7f) });
-		controller.AddComponent(entity, RigidBody{ nullptr, loaded.first, loaded.second, 50.0f, true, glm::vec3(0.0f), glm::vec3(0.0f) });
-		controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
-		controller.AddComponent(entity, PhysicsBody{});
-	}
+	//punching glove
+	entity = controller.createEntity();
+	loaded = LoadModel("assets/models/spring_glove/spring_glove.gltf");
+	rotation = glm::rotate(glm::mat4(1.0f), glm::pi<float>() / 4.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+	controller.AddComponent(entity, Transform{ glm::vec3(-50.0f, -69.0f, 50.0f), glm::quat_cast(rotation), glm::vec3(3.f) });
+	controller.AddComponent(entity, RigidBody{ nullptr, loaded.first, loaded.second, 50.0f, true, glm::vec3(0.0f), glm::vec3(0.0f) });
+	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
+	controller.AddComponent(entity, PhysicsBody{});
+	controller.AddComponent(entity, MovingObstacle{
+		std::vector<glm::vec3>{
+			{ 50.0f, -69.0f , 50.0f},
+			{ 20.0f, -69.0f, 20.0f},
+				{ 20.0f, -69.0f, 20.0f},
+			{ 50.0f, -69.0f , 50.0f},
+		},
+		std::vector<glm::quat>{
+			glm::quat_cast(glm::rotate(glm::mat4(1.0f), -3.0f * glm::pi<float>() / 4.0f, glm::vec3(0.0f, 1.0f, 0.0f))),
+			glm::quat_cast(glm::rotate(glm::mat4(1.0f), -3.0f * glm::pi<float>() / 4.0f, glm::vec3(0.0f, 1.0f, 0.0f))),
+			glm::quat_cast(glm::rotate(glm::mat4(1.0f), -3.0f * glm::pi<float>() / 4.0f, glm::vec3(0.0f, 1.0f, 0.0f))),
+			glm::quat_cast(glm::rotate(glm::mat4(1.0f), -3.0f * glm::pi<float>() / 4.0f, glm::vec3(0.0f, 1.0f, 0.0f))),
+		},
+		std::vector <float>{
+			3.f, 1.f, 1.f, 1.f
+		},
+		0.0f,
+		1,
+		0,
+		false
+		});
+
+
+	//for (int i = 0; i < 50; i++)
+	//{
+	//	entity = controller.createEntity();
+	//	loaded = LoadModel("assets/models/rubix_2.0/scene.gltf");
+	//	controller.AddComponent(entity, Transform{ glm::vec3(-60.0f, -90.0f + i * 10.0f, 20.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.7f) });
+	//	controller.AddComponent(entity, RigidBody{ nullptr, loaded.first, loaded.second, 50.0f, true, glm::vec3(0.0f), glm::vec3(0.0f) });
+	//	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
+	//	controller.AddComponent(entity, PhysicsBody{});
+	//}
 
 
 	Entity vehicle = controller.createEntity();
 	loaded = LoadModel("assets/models/car_body_orange/car.gltf");
-	controller.AddComponent(vehicle, Transform{ glm::vec3(0.0f, -5.0f, 0.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.2f) });
+	controller.AddComponent(vehicle, Transform{ glm::vec3(-30.0f, -80.0f, -20.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.2f) });
 	controller.AddComponent(vehicle, VehicleBody{});
 	controller.AddComponent(vehicle, VehicleCommands{});
 	controller.AddComponent(vehicle, PlayerController{ 1 });
@@ -176,28 +214,28 @@ void LevelLoaderSystem::LoadLevel()
 
 	entity = controller.createEntity(); // front left wheel
 	loaded = LoadModel("assets/models/left_wheel/wheel.gltf");
-	controller.AddComponent(entity, Transform{ glm::vec3(0.0f, -5.0f, 0.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.2f) });
+	controller.AddComponent(entity, Transform{ glm::vec3(-35.0f, -80.0f, -25.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.2f) });
 	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
 	controller.AddComponent(entity, PhysicsBody{});
 	controller.GetComponent<VehicleBody>(vehicle).wheelEntities.push_back(entity);
-	
+
 	entity = controller.createEntity(); // front right wheel
 	loaded = LoadModel("assets/models/right_wheel/wheel.gltf");
-	controller.AddComponent(entity, Transform{ glm::vec3(0.0f, -5.0f, 0.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.2f) });
+	controller.AddComponent(entity, Transform{ glm::vec3(-35.0f, -80.0f, -25.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.2f) });
 	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
 	controller.AddComponent(entity, PhysicsBody{});
 	controller.GetComponent<VehicleBody>(vehicle).wheelEntities.push_back(entity);
 
 	entity = controller.createEntity(); // back left wheel
 	loaded = LoadModel("assets/models/left_wheel/wheel.gltf");
-	controller.AddComponent(entity, Transform{ glm::vec3(0.0f, -5.0f, 0.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.2f) });
+	controller.AddComponent(entity, Transform{ glm::vec3(-35.0f, -80.0f, -25.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.2f) });
 	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
 	controller.AddComponent(entity, PhysicsBody{});
-	controller.GetComponent<VehicleBody>(vehicle).wheelEntities.push_back(entity); 
+	controller.GetComponent<VehicleBody>(vehicle).wheelEntities.push_back(entity);
 
 	entity = controller.createEntity(); // back right wheel
 	loaded = LoadModel("assets/models/right_wheel/wheel.gltf");
-	controller.AddComponent(entity, Transform{ glm::vec3(0.0f, -5.0f, 0.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.2f) });
+	controller.AddComponent(entity, Transform{ glm::vec3(-35.0f, -80.0f, -25.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.2f) });
 	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
 	controller.AddComponent(entity, PhysicsBody{});
 	controller.GetComponent<VehicleBody>(vehicle).wheelEntities.push_back(entity);
@@ -220,15 +258,34 @@ void LevelLoaderSystem::LoadLevel()
 		particles
 		});
 
-	// test trigger box
+	// AI Opponent vehicle
 	entity = controller.createEntity();
+	auto aiLoaded = LoadModel("assets/models/2003_peugeot_hoggar_concept/scene.gltf");
+	glm::mat4 aiRotation = glm::rotate(glm::mat4(1.0f), glm::radians(-30.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	controller.AddComponent(entity, Transform{ glm::vec3(-35.0f, -80.0f, -15.0f), glm::quat(aiRotation), glm::vec3(40.0f) });
+	controller.AddComponent(entity, VehicleBody{});
+	controller.AddComponent(entity, VehicleCommands{});
+	controller.AddComponent(entity, Render{ aiLoaded.first, aiLoaded.second });
 	controller.AddComponent(entity, PhysicsBody{});
-	controller.AddComponent(entity, Trigger{ nullptr, 10.0f, 2.0f, 10.0f });
-	controller.AddComponent(entity, Transform{
-		glm::vec3(25.0f, 35.0f, 120.0f),
-		glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
-		glm::vec3(1.0f)
-		});
+	controller.AssignTag(entity, "AIVehicle");
+
+	// Initial paramerters for the AI driver, these can be tweaked to change the difficulty of the AI
+	AiDriver ai{};
+	//ai.desiredSpeed = 2.0f;
+	//ai.arrivalRadius = 2.0f;
+	//ai.maxSteerRadians = 1.0f;
+	//ai.throttleKp = 0.6f;
+	controller.AddComponent(entity, ai);
+
+	// test trigger box
+	//entity = controller.createEntity();
+	//controller.AddComponent(entity, PhysicsBody{});
+	//controller.AddComponent(entity, Trigger{ nullptr, 10.0f, 2.0f, 10.0f });
+	//controller.AddComponent(entity, Transform{
+	//	glm::vec3(25.0f, 35.0f, 120.0f),
+	//	glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
+	//	glm::vec3(1.0f)
+	//	});
 
 	entity = controller.createEntity();
 	loaded = LoadModel("assets/models/lightning_capsule/scene.gltf");
@@ -283,6 +340,25 @@ void LevelLoaderSystem::LoadLevel()
 	controller.AddComponent(entity, Transform{ glm::vec3(-60.0f, -93.0f, 19.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.25f) });
 	controller.AddComponent(entity, CheckPoint{ glm::quat(1.0f, 0.0f, 0.0f, 0.0f) });
 	controller.AddComponent(entity, Trigger{ nullptr, 5.0f, 2.0f, 5.0f });
+
+	// Used strictly for testing AI waypoints, can be removed later
+	//std::vector<Waypoint> waypoints;
+	//if (aiSystemPtr) {
+	//	waypoints = aiSystemPtr->GetWaypoints();
+	//	std::cout << "Loaded " << waypoints.size() << " waypoints for AI from AiSystem" << std::endl;
+	//}
+	//else {
+	//	// fallback: leave empty or build defaults
+	//	std::cout << "Warning: AiSystem not set in LevelLoaderSystem, no waypoints loaded for AI" << std::endl;
+	//}
+	//
+	//for (const Waypoint& wp : waypoints) {
+	//	entity = controller.createEntity();
+	//	controller.AddComponent(entity, PhysicsBody{});
+	//	controller.AddComponent(entity, Transform{ wp.position, glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.25f) });
+	//	controller.AddComponent(entity, CheckPoint{ glm::quat(1.0f, 0.0f, 0.0f, 0.0f) });
+	//	controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 4.0f, 1.0f });
+	//}
 }
 
 std::pair<std::shared_ptr<Model>, std::shared_ptr<AABB>> LevelLoaderSystem::LoadModel(std::string path)

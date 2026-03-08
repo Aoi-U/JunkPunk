@@ -4,11 +4,11 @@ MainVehicle::MainVehicle()
 {
 }
 
-bool MainVehicle::setup(PxScene* scene, PxPhysics* physics, PxMaterial* material)
+bool MainVehicle::setup(PxScene* scene, PxPhysics* physics, PxMaterial* material, PxTransform initTransform)
 {
 	initMaterialFrictionTable(material);
 
-	if (!initVehicles(scene, physics, material))
+	if (!initVehicles(scene, physics, material, initTransform))
 	{
 		std::cout << "Failed to setup vehicle!" << std::endl;
 		return false;
@@ -24,7 +24,7 @@ void MainVehicle::initMaterialFrictionTable(PxMaterial* gMaterial)
 	gNbPhysXmaterialFrictions = 1;
 }
 
-bool MainVehicle::initVehicles(PxScene* gScene, PxPhysics* gPhysics, PxMaterial* gMaterial)
+bool MainVehicle::initVehicles(PxScene* gScene, PxPhysics* gPhysics, PxMaterial* gMaterial, PxTransform initTransform)
 {
 	// Initialize the vehicle
 	readBaseParamsFromJsonFile("assets/vehicledata/", "Base.json", gVehicle.mBaseParams);
@@ -57,7 +57,7 @@ bool MainVehicle::initVehicles(PxScene* gScene, PxPhysics* gPhysics, PxMaterial*
 	// rotate around y 180 degrees
 	PxQuat rot = PxQuat(PxPi, PxVec3(0.0f, 1.0f, 0.0f));
 	pose.q = rot;
-	gVehicle.setUpActor(*gScene, pose, gVehicleName);
+	gVehicle.setUpActor(*gScene, initTransform, gVehicleName); // Might replace pose with initTransform
 
 	PxFilterData vehicleFilter(COLLISION_FLAG_CHASSIS, COLLISION_FLAG_CHASSIS_AGAINST, 0, 0);
 	PxFilterData wheelFilter(COLLISION_FLAG_WHEEL, COLLISION_FLAG_WHEEL_AGAINST, 0, 0);
@@ -120,7 +120,7 @@ bool MainVehicle::initVehicles(PxScene* gScene, PxPhysics* gPhysics, PxMaterial*
 	gVehicle.mPhysXState.physxActor.wheelShapes[2]->setFlag(PxShapeFlag::eVISUALIZATION, true);
 	gVehicle.mPhysXState.physxActor.wheelShapes[3]->setFlag(PxShapeFlag::eVISUALIZATION, true);
 
-	
+
 	return true;
 }
 
@@ -135,7 +135,7 @@ void MainVehicle::step(float deltaTime)
 		gVehicle.mTransmissionCommandState.targetGear = PxVehicleEngineDriveTransmissionCommandState::eAUTOMATIC_GEAR;
 		gVehicle.mCommandState.throttle = gCommand.throttle;
 	}
-	else if (gCommand.brake > 0.0f) 
+	else if (gCommand.brake > 0.0f)
 	{
 		gVehicle.mCommandState.steer = gCommand.steer * 0.5f; // reduce steer sensitivity when reversing
 		gVehicle.mTransmissionCommandState.targetGear = gVehicle.mEngineDriveParams.gearBoxParams.neutralGear - 1;
@@ -207,7 +207,7 @@ void MainVehicle::resetTransform()
 {
 	PxTransform t = gVehicle.mPhysXState.physxActor.rigidBody->getGlobalPose();
 
-	glm::vec3 position(t.p.x, t.p.y + 1.0f, t.p.z); 
+	glm::vec3 position(t.p.x, t.p.y + 1.0f, t.p.z);
 	glm::quat rotation(1.0, 0.0, 0.0, 0.0);
 
 	setTransform(position, rotation);
@@ -259,7 +259,7 @@ bool MainVehicle::IsGrounded(const PxScene* scene) const
 	rayOrigin.y -= (gVehicle.mPhysXParams.physxActorBoxShapeHalfExtents.y + 0.05f);
 	PxVec3 rayDir = PxVec3(0.0f, -1.0f, 0.0f);
 	PxReal rayLength = 0.3f;
-	
+
 	grounded = scene->raycast(rayOrigin, rayDir, rayLength, hit, PxHitFlag::eDEFAULT);
 	if (grounded && hit.hasBlock && hit.block.actor != gVehicle.mPhysXState.physxActor.rigidBody)
 	{
@@ -276,7 +276,7 @@ void MainVehicle::jump()
 	float jumpSpeed = sqrt(2.0 * 9.81 * 10.0);
 	auto* body = gVehicle.mPhysXState.physxActor.rigidBody;
 	auto dyn = body->is<PxRigidDynamic>();
-	
+
 	if (!dyn)
 		return;
 

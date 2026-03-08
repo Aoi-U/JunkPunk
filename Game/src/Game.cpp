@@ -10,6 +10,7 @@
 #include "Components/Obstacle.h"
 #include "Components/Particles.h"
 #include "Components/Powerup.h"
+#include "Components/AiDriver.h"
 #include "Components/Banana.h"
 
 #include "ECSController.h"
@@ -19,10 +20,18 @@ static int camera_scroll_type = 0;
 static bool split_camera = false;
 static bool first_time_held_right_click = false;
 bool playerWon = false;
+bool aiWon = false;
+// -------------------------
+// For logging player position
+// position logging
+float posLogTimer = 0.0f;
+const float POS_LOG_INTERVAL = 1.0f; // 500 ms
+// -------------------------
 float winTimer = 0.0f;
 const float WIN_DELAY = 5.0f;
 float fadeAlpha = 0.0f;
 Entity playerEntity;
+Entity aiEntity;
 
 int numPlayers = 1;
 
@@ -31,7 +40,7 @@ ECSController controller;
 GameState currentStateGlobal = GameState::STARTMENU;
 
 
-//Setup ImGui panel for camera, putting it here to quick access 
+//Setup ImGui panel for camera, putting it here to quick access
 class CameraEditorPanelRenderer : public ImGuiPanelRendererInterface {
 public:
 	//CameraEditorPanelRenderer(){}
@@ -100,8 +109,8 @@ private:
 std::shared_ptr<CameraEditorPanelRenderer> cameraPanelRenderer; // testing
 
 // some sources that explain ecs
-// https://austinmorlan.com/posts/entity_component_system/ // the ecs i wrote is based on this article so best to read this to understand how it works 
-// https://www.youtube.com/watch?v=dEdFM0uQpA0 
+// https://austinmorlan.com/posts/entity_component_system/ // the ecs i wrote is based on this article so best to read this to understand how it works
+// https://www.youtube.com/watch?v=dEdFM0uQpA0
 
 Game::Game()
 {
@@ -110,12 +119,12 @@ Game::Game()
 
 
 	window = std::make_shared<Window>(1280, 720, "JunkPunk");
-	//gamepad = std::make_shared<Gamepad>(1); // initialize gamepad 
+	//gamepad = std::make_shared<Gamepad>(1); // initialize gamepad
 	for (int i = 0; i < numPlayers; i++)
 	{
 		gamepads.push_back(std::make_shared<Gamepad>(i + 1)); // initialize all connected gamepads
 	}
-	
+
 	time = std::make_unique<Time>();
 	glfwSwapInterval(1); // Enable vsync to limit fps
 
@@ -135,9 +144,10 @@ Game::Game()
 	controller.RegisterComponent<Powerup>();
 	controller.RegisterComponent<CheckPoint>();
 	controller.RegisterComponent<PlayerController>();
+	controller.RegisterComponent<AiDriver>();
 	controller.RegisterComponent<Banana>();
 
-	// register systems (you must register systems before setting component signatures) 
+	// register systems (you must register systems before setting component signatures)
 	loaderSystem = controller.RegisterSystem<LevelLoaderSystem>();
 	{
 		// signatures basically just tell the system which components to look for in an entity
@@ -164,15 +174,15 @@ Game::Game()
 		Signature signature;
 		signature.set(controller.GetComponentType<Render>());
 		signature.set(controller.GetComponentType<Transform>());
-		
+
 		controller.SetSystemSignature<RenderSystem>(signature);
 	}
-	
+
 	physicsSystem = controller.RegisterSystem<PhysicsSystem>();
 	{
 		Signature signature;
 		signature.set(controller.GetComponentType<Transform>());
-		signature.set(controller.GetComponentType<PhysicsBody>()); 
+		signature.set(controller.GetComponentType<PhysicsBody>());
 		controller.SetSystemSignature<PhysicsSystem>(signature);
 	}
 
@@ -209,6 +219,16 @@ Game::Game()
 		controller.SetSystemSignature<PauseSystem>(signature);
 	}
 
+	aiSystem = controller.RegisterSystem<AiSystem>();
+	{
+		Signature signature;
+		signature.set(controller.GetComponentType<AiDriver>());
+		signature.set(controller.GetComponentType<Transform>());
+		signature.set(controller.GetComponentType<VehicleCommands>());
+		signature.set(controller.GetComponentType<VehicleBody>());
+		controller.SetSystemSignature<AiSystem>(signature);
+	}
+	loaderSystem->SetAiSystem(aiSystem);
 
 	audioSystem->Init();
 	vehicleControlSystem->Init(gamepads);
@@ -224,7 +244,7 @@ Game::Game()
 // main game function
 void Game::Run()
 {
-	// temporary background music. add separate menu bgm, game bgm, etc in their proper states 
+	// temporary background music. add separate menu bgm, game bgm, etc in their proper states
 	Event event(Events::Audio::PLAY_SOUND);
 	event.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/jazz-background-music-325355.mp3");
 	event.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
@@ -235,7 +255,7 @@ void Game::Run()
 	camera_debug_panel = std::make_unique<ImGuiPanel>(window);
 	cameraPanelRenderer = std::make_shared<CameraEditorPanelRenderer>();
 	camera_debug_panel->setPanelRenderer(cameraPanelRenderer);
-	
+
 
 	// when creating an entity that needs physics during runtime, add all necessary components first
 	// then create and send Events::Physics::CREATE_ACTOR event with the entity created as the parameter
@@ -244,13 +264,34 @@ void Game::Run()
   // main loop
 	while (!window->shouldClose())
 	{
-		time->Update();			
-		
+		time->Update();
+
 		switch (currentState)
 		{
 		case GAME:
 		{
 			Entity player = playerEntity;
+			// -----------------------------------------------------------------------------------
+			// FOr logging player position every 0.5 seconds, can be removed later, just for testing
+			//posLogTimer += time->frameTime;
+			//if (posLogTimer >= POS_LOG_INTERVAL)
+			//{
+			//	posLogTimer -= POS_LOG_INTERVAL; // preserve remainder instead of resetting to zero
+			//
+			//	if (controller.HasComponent<Transform>(player))
+			//	{
+			//		const auto& t = controller.GetComponent<Transform>(player);
+			//		std::cout << "glm::vec3("
+			//			<< t.position.x << ", "
+			//			<< t.position.y << ", "
+			//			<< t.position.z << "),\n";
+			//	}
+			//	else
+			//	{
+			//		std::cout << "Player transform not available\n";
+			//	}
+			//}
+			// -----------------------------------------------------------------------------------
 			// physics update first to prevent twitching/jittering objects
 			while (time->accumulator >= time->deltaTime)
 			{
@@ -268,9 +309,25 @@ void Game::Run()
 			renderSystem->Update(time->fps(), physicsSystem->GetRenderBuffer()); // render physics debug data
 			menuSystem->RenderWinText();
 			camera_debug_panel->render(); // render debug panel
+			aiSystem->Update(time->frameTime); // update ai drivers
+			//aiSystem->RenderDebugWaypoints(); // render ai waypoints for debugging
 
 
 			if (playerWon) {
+				winTimer += time->frameTime;
+				if (winTimer >= 1.0f) {
+					fadeAlpha += time->frameTime * 0.25f;
+					fadeAlpha = glm::clamp(fadeAlpha, 0.0f, 1.0f);
+					menuSystem->RenderFadeOverlay(fadeAlpha);
+				}
+				if (winTimer >= WIN_DELAY) {
+					Event event(Events::GameState::NEW_STATE);
+					event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::ENDMENU);
+					controller.SendEvent(event);
+				}
+			}
+
+			if (aiWon) {
 				winTimer += time->frameTime;
 				if (winTimer >= 1.0f) {
 					fadeAlpha += time->frameTime * 0.25f;
@@ -336,7 +393,7 @@ void Game::Run()
 			menuSystem->RenderEndScreen();
 			break;
 		}
-		
+
 		//gamepad->RefreshState();
 		//gamepad->Update();
 		for (auto& gamepad : gamepads)
@@ -375,6 +432,7 @@ void Game::ChangeGameStateListener(Event& e)
 		currentState = state;
 		currentStateGlobal = state;
 		playerWon = false;
+		aiWon = false;
 		winTimer = 0.0f;
 		fadeAlpha = 0.0f;
 		break;
@@ -383,10 +441,15 @@ void Game::ChangeGameStateListener(Event& e)
 	{
 		if (currentState == GameState::STARTMENU) // set up the world when coming from the main menu
 		{
-			loaderSystem->LoadLevel(); 
+			aiSystem->Init();
+			loaderSystem->LoadLevel();
 			renderSystem->Init();
 			physicsSystem->Init();
-			
+
+			//aiEntity = controller.GetEntityByTag("AIVehicle");
+			//AiDriver aiDriver{}; // tweak defaults here if needed (desiredSpeed, lookaheadDistance, etc.)
+			//controller.AddComponent(aiEntity, aiDriver);
+
 			playerEntity = controller.GetEntityByTag("VehicleCommands");
 
 			// testing
@@ -426,7 +489,7 @@ void Game::ChangeGameStateListener(Event& e)
 		controller.Reset();
 		physicsSystem->Cleanup();
 
-
+		aiSystem->Init();
 		loaderSystem->LoadLevel();
 		renderSystem->Init();
 		physicsSystem->Init();
@@ -434,6 +497,7 @@ void Game::ChangeGameStateListener(Event& e)
 		winTimer = 0.0f;
 		fadeAlpha = 0.0f;
 		playerWon = false;
+		aiWon = false;
 
 		currentState = GameState::GAME;
 		currentStateGlobal = GameState::GAME;
@@ -479,14 +543,27 @@ void Game::KeyboardInputListener(Event& e)
 void Game::TriggerEnterListener(Event& e)
 {
 	Entity triggerEntity = e.GetParam<Entity>(Events::Physics::Trigger_Enter::ENTITY_ONE);
-	Entity playerEntity = e.GetParam<Entity>(Events::Physics::Trigger_Enter::ENTITY_TWO);
+	Entity otherEntity = e.GetParam<Entity>(Events::Physics::Trigger_Enter::ENTITY_TWO);
 
 	Entity finishLine = controller.GetEntityByTag("FinishLine");
-	if (triggerEntity == finishLine && !playerWon) {
-		playerWon = true;
-		fadeAlpha = 0.0f;
-		winTimer = 0.0f;
-		std::cout << "you win!" << std::endl;
+	if (triggerEntity == finishLine) {
+		//playerWon = true;
+		//fadeAlpha = 0.0f;
+		//winTimer = 0.0f;
+		//std::cout << "you win!" << std::endl;
+		if (!playerWon && controller.HasComponent<PlayerController>(otherEntity)) {
+			playerWon = true;
+			fadeAlpha = 0.0f;
+			winTimer = 0.0f;
+			std::cout << "you win!" << std::endl;
+		}
+		else if (!aiWon && controller.HasComponent<AiDriver>(otherEntity)) {
+			aiWon = true;
+			fadeAlpha = 0.0f;
+			winTimer = 0.0f;
+			std::cout << "AI wins!" << std::endl;
+		}
+		return;
 	}
 	else if (controller.HasComponent<Powerup>(triggerEntity) && !controller.HasComponent<Powerup>(playerEntity)) {
 		Entity player = playerEntity;
@@ -498,7 +575,7 @@ void Game::TriggerEnterListener(Event& e)
 	else if (controller.HasComponent<CheckPoint>(triggerEntity))
 	{
 		Event e(Events::Checkpoint::REACHED);
-		e.SetParam<Entity>(Events::Checkpoint::Reached::PLAYER_ENTITY, playerEntity);
+		e.SetParam<Entity>(Events::Checkpoint::Reached::PLAYER_ENTITY, otherEntity);
 		e.SetParam<Entity>(Events::Checkpoint::Reached::CHECKPOINT_ENTITY, triggerEntity);
 		controller.SendEvent(e);
 

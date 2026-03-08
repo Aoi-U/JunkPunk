@@ -41,7 +41,7 @@ class MainVehicle
 public:
 	MainVehicle();
 
-	bool setup(PxScene* scene, PxPhysics* physics, PxMaterial* material);
+	bool setup(PxScene* scene, PxPhysics* physics, PxMaterial* material, PxTransform initTransform);
 
 
 	void step(float deltaTime);
@@ -95,13 +95,13 @@ private:
 
 	void initMaterialFrictionTable(PxMaterial* gMaterial);
 
-	bool initVehicles(PxScene* gScene, PxPhysics* gPhysics, PxMaterial* gMaterial);
+	bool initVehicles(PxScene* gScene, PxPhysics* gPhysics, PxMaterial* gMaterial, PxTransform initTransform);
 
 	// game related methods and variables 
 	
 	glm::mat4 gVehicleTransform = glm::mat4(1.0f);
 
-	glm::vec3 checkpointPosition = glm::vec3(0.0f, -30.0f, 0.0f);
+	glm::vec3 checkpointPosition = glm::vec3(0.0f, -60.0f, 0.0f);
 	glm::quat checkpointRotation = glm::vec3(0.0f);
 
 	PxVec3 jumpForce = PxVec3(0.0f, 25000.0f, 0.0f);

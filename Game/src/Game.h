@@ -12,6 +12,7 @@
 #include "Systems/ParticleRenderSystem.h"
 #include "Systems/MenuSystem.h"
 #include "Systems/PauseSystem.h"
+#include "Systems/AiSystem.h"
 #include "Core/Time.h"
 
 #include "ImGuiPanel.h"
@@ -42,6 +43,7 @@ private:
 	std::shared_ptr<ParticleRenderSystem> particleRenderSystem;
 	std::shared_ptr<MenuSystem> menuSystem;
 	std::shared_ptr<PauseSystem> pauseSystem;
+	std::shared_ptr<AiSystem> aiSystem;
 
 
 	void Cleanup();
