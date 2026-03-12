@@ -98,7 +98,7 @@ private:
 	std::shared_ptr<Shader> uiShader;
 
 	std::shared_ptr<Gamepad> gamepad;
-	bool canNavigate = falses;
+	bool canNavigate = false;
 	int currentHover = 0;
 	int maxVerticalHover = 2;
 
