@@ -112,10 +112,10 @@ void LevelLoaderSystem::LoadLevel()
 	//controller.AddComponent(entity, PhysicsBody{});
 
 	// create dumpster
-	glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::pi<float>()/4.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f));
 	Entity entity = controller.createEntity();
 	auto loaded = LoadModel("assets/models/dumpster/dumpster.gltf");
-	controller.AddComponent(entity, Transform{ glm::vec3(0.0f, -50.0f, 50.0f), glm::quat_cast(rotation), glm::vec3(50.0f) });
+	controller.AddComponent(entity, Transform{ glm::vec3(0.0f, -100.0f, 50.0f), glm::quat_cast(rotation), glm::vec3(200.0f) });
 	controller.AddComponent(entity, StaticBody{ nullptr, loaded.first });
 	controller.AddComponent(entity, Render{ loaded.first, loaded.second });
 	controller.AddComponent(entity, PhysicsBody{});
@@ -187,7 +187,81 @@ void LevelLoaderSystem::LoadLevel()
 		0,
 		false
 		});
+	//spinner
+	std::vector<glm::vec3> spinner_positions = {
+		glm::vec3(0.0f, -81.f, 100.f),
+		glm::vec3(0.0f, -81.f, 180.f),
+		glm::vec3(40.0f, -81.f, 150.f),
+		glm::vec3(40.0f, -80.5f, 150.f),
+		glm::vec3(60.0f, -80.5f, 115.f),
+		glm::vec3(70.0f, -80.f, 170.f),
+		glm::vec3(70.0f, -80.f, 200.f),
+		glm::vec3(40.0f, -80.f, 205.f),
+		glm::vec3(-19.0f, -80.f, 210.f)
+	};
+	std::vector<float> spinner_rotation = {
+		-1.f,
+		1.f,
+		1.f,
+		1.f,
+		1.f,
+		-1.f,
+		1.f,
+		-1.f,
+		1.f
+	};
+	std::vector<float> spinner_duration = {
+		2.f,
+		1.f,
+		1.f,
+		1.f,
+		1.f,
+		1.f,
+		1.f,
+		1.f,
+		1.f
+	};
+	std::vector<float> spinner_size = {
+		4.f,
+		2.f,
+		2.f,
+		1.f,
+		1.f,
+		1.f,
+		1.f,
+		1.f,
+		1.f
+	};
 
+	for (int i = 0; i < spinner_positions.size(); i++) {
+		entity = controller.createEntity();
+		loaded = LoadModel("assets/models/spinner/spinner.gltf");
+		rotation = glm::rotate(glm::mat4(1.0f), 0.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+		controller.AddComponent(entity, Transform{ spinner_positions[i], glm::quat_cast(rotation), glm::vec3(spinner_size[i])});
+		controller.AddComponent(entity, RigidBody{ nullptr, loaded.first, loaded.second, 50.0f, true, glm::vec3(0.0f), glm::vec3(0.0f) });
+		controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
+		controller.AddComponent(entity, PhysicsBody{});
+		controller.AddComponent(entity, MovingObstacle{
+			std::vector<glm::vec3>{
+				spinner_positions[i],
+				spinner_positions[i],
+				spinner_positions[i],
+			},
+			std::vector<glm::quat>{
+				glm::quat_cast(glm::rotate(glm::mat4(1.0f), -glm::pi<float>() * spinner_rotation[i], glm::vec3(0.0f, 1.0f, 0.0f))),
+				glm::quat_cast(glm::rotate(glm::mat4(1.0f), 0.f, glm::vec3(0.0f, 1.0f, 0.0f))),
+				glm::quat_cast(glm::rotate(glm::mat4(1.0f), glm::pi<float>() * spinner_rotation[i], glm::vec3(0.0f, 1.0f, 0.0f))),
+			},
+			std::vector <float>{
+				0.f,spinner_duration[i],spinner_duration[i]
+			},
+			0.0f,
+			1,
+			0,
+			false
+			});
+	}
+	
 
 	//for (int i = 0; i < 50; i++)
 	//{
