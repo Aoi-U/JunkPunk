@@ -336,18 +336,12 @@ void LevelLoaderSystem::LoadLevel()
 		});
 
 
+
 	//dice
-	/*std::vector<std::vector<glm::vec3>> dice_positions = {
+	std::vector<std::vector<glm::vec3>> dice_positions = {
 		{glm::vec3(-40.0f, -46.f, 200.f), glm::vec3(120.0f, -46.f, 200.f), glm::vec3(120.0f, -46.f, 200.f), glm::vec3(-40.0f, -46.f, 200.f)},
 		{glm::vec3(-40.0f, -46.f, 175.f), glm::vec3(120.0f, -46.f, 175.f), glm::vec3(120.0f, -46.f, 175.f), glm::vec3(-40.0f, -46.f, 175.f)},
 		{glm::vec3(-40.0f, -46.f, 150.f), glm::vec3(120.0f, -46.f, 150.f), glm::vec3(120.0f, -46.f, 150.f), glm::vec3(-40.0f, -46.f, 150.f)},
-	};*/
-
-	//dropoff 
-	std::vector<std::vector<glm::vec3>> dice_positions = {
-		{glm::vec3(-40.0f, -46.f, 215.f), glm::vec3(180.0f, 0.f, 215.f), glm::vec3(180.0f, 0.f, 215.f), glm::vec3(-40.0f, -46.f, 215.f)},
-		{glm::vec3(-40.0f, -46.f, 190.f), glm::vec3(180.0f, 0.f, 190.f), glm::vec3(180.0f, 0.f, 190.f), glm::vec3(-40.0f, -46.f, 190.f)},
-		{glm::vec3(-40.0f, -46.f, 165.f), glm::vec3(180.0f, 0.f, 165.f), glm::vec3(180.0f, 0.f, 165.f), glm::vec3(-40.0f, -46.f, 165.f)},
 
 		{glm::vec3(0.0f, 62.f, 325.f), glm::vec3(30.0f, 62.f, 355.f), glm::vec3(60.0f, 62.f, 325.f), glm::vec3(30.0f, 62.f, 295.f)},
 	};
