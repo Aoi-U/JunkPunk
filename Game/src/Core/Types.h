@@ -2,6 +2,7 @@
 
 #include <bitset>
 #include <cstdint>
+#include <vector>
 
 // defines types used for ECS
 
@@ -217,3 +218,5 @@ extern bool playerWon;
 extern bool aiWon;
 
 extern int numPlayers;
+extern std::vector<Entity> playerEntities;
+extern std::vector<Entity> cameraEntities;

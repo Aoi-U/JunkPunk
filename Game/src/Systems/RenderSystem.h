@@ -46,16 +46,16 @@ private:
 
 	void DrawLightingPass(const Frustum& frust, const ThirdPersonCamera& tpp, glm::vec3 pos);
 	
-	void DrawSkybox(); // draw function for rendering skybox
+	void DrawSkybox(const ThirdPersonCamera& cameraComp); // draw function for rendering skybox
 
-	void DrawCollisionDebug(const PxRenderBuffer& renderBuffer);
+	void DrawCollisionDebug(const PxRenderBuffer& renderBuffer, const ThirdPersonCamera& tpp);
 
-	void DrawPostProcessingPass();
+	void DrawPostProcessingPass(int vx, int vy, int vw, int vh);
 	
 	void DrawUI(Texture* tex, float x0_px, float y0_px, float x1_px, float y1_px, int layerIndex);
 
 	void RenderText(std::string text, float x, float y, float scale, glm::vec3 color);
-	void RenderPowerupUI();
+	void RenderPowerupUI(Entity player, int vx, int vy, int vw, int vh);
 
 	void BindTextures(Mesh& mesh); // bind textures for a mesh
 	void ShaderSetupDefaults(); // setup all shader constnat uniforms

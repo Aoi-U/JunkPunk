@@ -297,21 +297,48 @@ void PhysicsSystem::Cleanup()
 
 	for (auto& [_, vehicle] : vehicles)
 	{
-		vehicle->cleanup();
-		vehicle.reset();
+		if (vehicle)
+		{
+			vehicle->cleanup();
+			vehicle.reset();
+		}
 	}
+	vehicles.clear();
+
+	actorsToDelete.clear();
 
 	PxCloseVehicleExtension();
-	gPhysicsScene->release();
-	gDispatcher->release();
-	gPhysics->release();
+
+	if (gPhysicsScene)
+	{
+		gPhysicsScene->release();
+		gPhysicsScene = nullptr;
+	}
+
+	if (gDispatcher)
+	{
+		gDispatcher->release();
+		gDispatcher = nullptr;
+	}
+
+	if (gPhysics)
+	{
+		gPhysics->release();
+		gPhysics = nullptr;
+	}
+
 	if (gPvd)
 	{
 		PxPvdTransport* transport = gPvd->getTransport();
 		gPvd->release();
 		transport->release();
 	}
-	gFoundation->release();
+
+	if (gFoundation)
+	{
+		gFoundation->release();
+		gFoundation = nullptr;
+	}
 }
 
 void PhysicsSystem::CreateMap()

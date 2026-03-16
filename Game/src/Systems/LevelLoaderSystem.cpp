@@ -97,10 +97,21 @@ void LevelLoaderSystem::LoadLevel()
 	glm::mat4 viewMatrix = glm::lookAt(cameraPos, glm::vec3(0.0f, -5.0f, 0.0f) + glm::vec3(0.0f, heightOffset, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	glm::mat4 projectionMatrix = glm::perspective(glm::radians(fov), 1280 / (float)720, zNear, zFar);
 
-	Entity camera = controller.createEntity();
-	controller.AddComponent(camera, ThirdPersonCamera{ radius, radius, heightOffset, lerpSpeed, horizontalLookSpeed, verticalLookSpeed, yaw, pitch, fov, zNear, zFar, 1280, 720, viewMatrix, projectionMatrix });
-	controller.AddComponent(camera, Transform{ cameraPos, glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(1.0f) });
-	controller.AssignTag(camera, "Camera");
+	//Entity camera = controller.createEntity();
+	//controller.AddComponent(camera, ThirdPersonCamera{ radius, radius, heightOffset, lerpSpeed, horizontalLookSpeed, //verticalLookSpeed, yaw, pitch, fov, zNear, zFar, 1280, 720, viewMatrix, projectionMatrix });
+	//controller.AddComponent(camera, Transform{ cameraPos, glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(1.0f) });
+	//controller.AssignTag(camera, "Camera");
+
+	for (int i = 0; i < numPlayers; i++)
+	{
+		Entity camera = controller.createEntity();
+		controller.AddComponent(camera, ThirdPersonCamera{ radius, radius, heightOffset, lerpSpeed, horizontalLookSpeed, verticalLookSpeed, yaw, pitch, fov, zNear, zFar, 1280, 720, viewMatrix, projectionMatrix });
+		controller.AddComponent(camera, Transform{ cameraPos, glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(1.0f) });
+		controller.AssignTag(camera, "Camera" + std::to_string(i + 1));
+
+		cameraEntities.push_back(camera);
+	}
+
 	// end camera entity
 
 	// create scene entities
@@ -158,6 +169,36 @@ void LevelLoaderSystem::LoadLevel()
 			});
 	}
 
+	entity = controller.createEntity();
+	loaded = LoadModel("assets/models/rubix_2.0/scene.gltf");
+	controller.AddComponent(entity, Transform{ glm::vec3(0.0f, -40.0f * 8.0f, 20.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(2.0f, 0.5f, 2.0f) });
+	controller.AddComponent(entity, RigidBody{ nullptr, loaded.first, loaded.second, 50.0f, true, glm::vec3(0.0f), glm::vec3(0.0f) });
+	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
+	controller.AddComponent(entity, PhysicsBody{});
+	controller.AddComponent(entity, MovingObstacle{
+		{ // path points
+			{ -40.0f, -94.0f,-20.0f },
+			{ -40.0f, -94.0f, -30.0f },
+			{ -30.0f, -94.0f, -30.0f },
+				
+		},
+		{ // rotation points (must be empty or same size as path points)
+			glm::quat(glm::vec3(0.0f, glm::radians(90.0f), 0.0f)),
+			glm::quat(glm::vec3(0.0f, glm::radians(180.0f), 0.0f)),
+			glm::quat(glm::vec3(0.0f, glm::radians(-90.0f), 0.0f)),
+		},
+		{
+			// times to reach each point (if empty, movement will be based on speed, must be empty or same size as path points)
+			3.0f,
+			3.0f,
+			3.0f,
+		},
+		0.0f,
+		0,
+		5.0f,
+		false
+		});
+
 	//punching glove
 	entity = controller.createEntity();
 	loaded = LoadModel("assets/models/spring_glove/spring_glove.gltf");
@@ -170,7 +211,7 @@ void LevelLoaderSystem::LoadLevel()
 		std::vector<glm::vec3>{
 			{ 50.0f, -69.0f , 50.0f},
 			{ 20.0f, -69.0f, 20.0f},
-				{ 20.0f, -69.0f, 20.0f},
+			{ 20.0f, -69.0f, 20.0f},
 			{ 50.0f, -69.0f , 50.0f},
 		},
 		std::vector<glm::quat>{
@@ -199,67 +240,127 @@ void LevelLoaderSystem::LoadLevel()
 	//	controller.AddComponent(entity, PhysicsBody{});
 	//}
 
+	for (int i = 0; i < numPlayers; i++)
+	{
+		Entity vehicle = controller.createEntity();
+		loaded = LoadModel("assets/models/car_body_orange/car.gltf");
+		controller.AddComponent(vehicle, Transform{ glm::vec3(-30.0f + i * 5.0f, -80.0f, -20.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.2f)});
+		controller.AddComponent(vehicle, VehicleBody{});
+		controller.AddComponent(vehicle, VehicleCommands{});
+		controller.AddComponent(vehicle, PlayerController{ i + 1 });
+		controller.AddComponent(vehicle, Render{ loaded.first, loaded.second });
+		controller.AddComponent(vehicle, PhysicsBody{});
+		controller.AssignTag(vehicle, "Player" + std::to_string(i + 1));
+		auto& cameraComp = controller.GetComponent<ThirdPersonCamera>(controller.GetEntityByTag("Camera" + std::to_string(i + 1))); // set the camera's player entity to the vehicle
+		cameraComp.playerEntity = vehicle;
 
-	Entity vehicle = controller.createEntity();
-	loaded = LoadModel("assets/models/car_body_orange/car.gltf");
-	controller.AddComponent(vehicle, Transform{ glm::vec3(-30.0f, -80.0f, -20.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.2f) });
-	controller.AddComponent(vehicle, VehicleBody{});
-	controller.AddComponent(vehicle, VehicleCommands{});
-	controller.AddComponent(vehicle, PlayerController{ 1 });
-	controller.AddComponent(vehicle, Render{ loaded.first, loaded.second });
-	controller.AddComponent(vehicle, PhysicsBody{});
-	controller.AssignTag(vehicle, "VehicleCommands");
-	auto& cameraComp = controller.GetComponent<ThirdPersonCamera>(camera); // set the camera's player entity to the vehicle
-	cameraComp.playerEntity = vehicle;
+		entity = controller.createEntity(); // front left wheel
+		loaded = LoadModel("assets/models/left_wheel/wheel.gltf");
+		controller.AddComponent(entity, Transform{ glm::vec3(-30.0f + i * 5.0f, -80.0f, -25.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.2f) });
+		controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
+		controller.AddComponent(entity, PhysicsBody{});
+		controller.GetComponent<VehicleBody>(vehicle).wheelEntities.push_back(entity);
 
-	entity = controller.createEntity(); // front left wheel
-	loaded = LoadModel("assets/models/left_wheel/wheel.gltf");
-	controller.AddComponent(entity, Transform{ glm::vec3(-35.0f, -80.0f, -25.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.2f) });
-	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
-	controller.AddComponent(entity, PhysicsBody{});
-	controller.GetComponent<VehicleBody>(vehicle).wheelEntities.push_back(entity);
+		entity = controller.createEntity(); // front right wheel
+		loaded = LoadModel("assets/models/right_wheel/wheel.gltf");
+		controller.AddComponent(entity, Transform{ glm::vec3(-30.0f + i * 5.0f, -80.0f, -25.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.2f) });
+		controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
+		controller.AddComponent(entity, PhysicsBody{});
+		controller.GetComponent<VehicleBody>(vehicle).wheelEntities.push_back(entity);
 
-	entity = controller.createEntity(); // front right wheel
-	loaded = LoadModel("assets/models/right_wheel/wheel.gltf");
-	controller.AddComponent(entity, Transform{ glm::vec3(-35.0f, -80.0f, -25.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.2f) });
-	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
-	controller.AddComponent(entity, PhysicsBody{});
-	controller.GetComponent<VehicleBody>(vehicle).wheelEntities.push_back(entity);
+		entity = controller.createEntity(); // back left wheel
+		loaded = LoadModel("assets/models/left_wheel/wheel.gltf");
+		controller.AddComponent(entity, Transform{ glm::vec3(-30.0f + i * 5.0f, -80.0f, -25.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.2f) });
+		controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
+		controller.AddComponent(entity, PhysicsBody{});
+		controller.GetComponent<VehicleBody>(vehicle).wheelEntities.push_back(entity);
 
-	entity = controller.createEntity(); // back left wheel
-	loaded = LoadModel("assets/models/left_wheel/wheel.gltf");
-	controller.AddComponent(entity, Transform{ glm::vec3(-35.0f, -80.0f, -25.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.2f) });
-	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
-	controller.AddComponent(entity, PhysicsBody{});
-	controller.GetComponent<VehicleBody>(vehicle).wheelEntities.push_back(entity);
+		entity = controller.createEntity(); // back right wheel
+		loaded = LoadModel("assets/models/right_wheel/wheel.gltf");
+		controller.AddComponent(entity, Transform{ glm::vec3(-35.0f + i * 5.0f, -80.0f, -25.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.2f) });
+		controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
+		controller.AddComponent(entity, PhysicsBody{});
+		controller.GetComponent<VehicleBody>(vehicle).wheelEntities.push_back(entity);
 
-	entity = controller.createEntity(); // back right wheel
-	loaded = LoadModel("assets/models/right_wheel/wheel.gltf");
-	controller.AddComponent(entity, Transform{ glm::vec3(-35.0f, -80.0f, -25.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.2f) });
-	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
-	controller.AddComponent(entity, PhysicsBody{});
-	controller.GetComponent<VehicleBody>(vehicle).wheelEntities.push_back(entity);
+		ParticleEmitter particles = ParticleEmitter{};
+		particles.Init(20000);
+		particles.targetEntity = controller.GetEntityByTag("Player" + std::to_string(i + 1));
+		particles.offset = glm::vec3(-0.3f, 0.0f, -1.3f);
+		entity = controller.createEntity();
+		controller.AddComponent(entity, ParticleEmitter{
+			particles
+			});
 
-	ParticleEmitter particles = ParticleEmitter{};
-	particles.Init(20000);
-	particles.targetEntity = controller.GetEntityByTag("VehicleCommands");
-	particles.offset = glm::vec3(-0.3f, 0.0f, -1.3f);
-	entity = controller.createEntity();
-	controller.AddComponent(entity, ParticleEmitter{
-		particles
-		});
+		particles = ParticleEmitter{};
+		particles.Init(20000);
+		particles.targetEntity = controller.GetEntityByTag("Player" + std::to_string(i + 1));
+		particles.offset = glm::vec3(0.3f, 0.0f, -1.3f);
+		entity = controller.createEntity();
+		controller.AddComponent(entity, ParticleEmitter{
+			particles
+			});
+	}
 
-	particles = ParticleEmitter{};
-	particles.Init(20000);
-	particles.targetEntity = controller.GetEntityByTag("VehicleCommands");
-	particles.offset = glm::vec3(0.3f, 0.0f, -1.3f);
-	entity = controller.createEntity();
-	controller.AddComponent(entity, ParticleEmitter{
-		particles
-		});
+	//Entity vehicle = controller.createEntity();
+	//loaded = LoadModel("assets/models/car_body_orange/car.gltf");
+	//controller.AddComponent(vehicle, Transform{ glm::vec3(-30.0f, -80.0f, -20.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.2f) });
+	//controller.AddComponent(vehicle, VehicleBody{});
+	//controller.AddComponent(vehicle, VehicleCommands{});
+	//controller.AddComponent(vehicle, PlayerController{ 1 });
+	//controller.AddComponent(vehicle, Render{ loaded.first, loaded.second });
+	//controller.AddComponent(vehicle, PhysicsBody{});
+	//controller.AssignTag(vehicle, "VehicleCommands");
+	//auto& cameraComp = controller.GetComponent<ThirdPersonCamera>(camera); // set the camera's player entity to the vehicle
+	//cameraComp.playerEntity = vehicle;
+	//
+	//entity = controller.createEntity(); // front left wheel
+	//loaded = LoadModel("assets/models/left_wheel/wheel.gltf");
+	//controller.AddComponent(entity, Transform{ glm::vec3(-35.0f, -80.0f, -25.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.2f) });
+	//controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
+	//controller.AddComponent(entity, PhysicsBody{});
+	//controller.GetComponent<VehicleBody>(vehicle).wheelEntities.push_back(entity);
+	//
+	//entity = controller.createEntity(); // front right wheel
+	//loaded = LoadModel("assets/models/right_wheel/wheel.gltf");
+	//controller.AddComponent(entity, Transform{ glm::vec3(-35.0f, -80.0f, -25.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.2f) });
+	//controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
+	//controller.AddComponent(entity, PhysicsBody{});
+	//controller.GetComponent<VehicleBody>(vehicle).wheelEntities.push_back(entity);
+	//
+	//entity = controller.createEntity(); // back left wheel
+	//loaded = LoadModel("assets/models/left_wheel/wheel.gltf");
+	//controller.AddComponent(entity, Transform{ glm::vec3(-35.0f, -80.0f, -25.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.2f) });
+	//controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
+	//controller.AddComponent(entity, PhysicsBody{});
+	//controller.GetComponent<VehicleBody>(vehicle).wheelEntities.push_back(entity);
+	//
+	//entity = controller.createEntity(); // back right wheel
+	//loaded = LoadModel("assets/models/right_wheel/wheel.gltf");
+	//controller.AddComponent(entity, Transform{ glm::vec3(-35.0f, -80.0f, -25.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.2f) });
+	//controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
+	//controller.AddComponent(entity, PhysicsBody{});
+	//controller.GetComponent<VehicleBody>(vehicle).wheelEntities.push_back(entity);
+	//
+	//ParticleEmitter particles = ParticleEmitter{};
+	//particles.Init(20000);
+	//particles.targetEntity = controller.GetEntityByTag("VehicleCommands");
+	//particles.offset = glm::vec3(-0.3f, 0.0f, -1.3f);
+	//entity = controller.createEntity();
+	//controller.AddComponent(entity, ParticleEmitter{
+	//	particles
+	//	});
+	//
+	//particles = ParticleEmitter{};
+	//particles.Init(20000);
+	//particles.targetEntity = controller.GetEntityByTag("VehicleCommands");
+	//particles.offset = glm::vec3(0.3f, 0.0f, -1.3f);
+	//entity = controller.createEntity();
+	//controller.AddComponent(entity, ParticleEmitter{
+	//	particles
+	//	});
 
 	// AI Opponent vehicle
-	vehicle = controller.createEntity();
+	Entity vehicle = controller.createEntity();
 	loaded = LoadModel("assets/models/car_body_blue/car.gltf");
 	glm::mat4 aiRotation = glm::rotate(glm::mat4(1.0f), glm::radians(-30.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	controller.AddComponent(vehicle, Transform{ glm::vec3(-35.0f, -80.0f, -15.0f), glm::quat(aiRotation), glm::vec3(0.2f) });

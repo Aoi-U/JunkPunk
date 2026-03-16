@@ -29,7 +29,7 @@ void AudioSystem::Update() {
 	aEngine.Update();
 	if (currentStateGlobal == GameState::GAME)
 	{
-		Entity player = controller.GetEntityByTag("VehicleCommands");
+		Entity player = controller.GetEntityByTag("Player1");
 		auto& vehicleVelocity = controller.GetComponent<VehicleBody>(player);
 		float speed = glm::length(vehicleVelocity.linearVelocity);
 

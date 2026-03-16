@@ -18,7 +18,7 @@ void ParticleSystem::Init()
 
 void ParticleSystem::Update(float deltaTime)
 {
-	auto camera = controller.GetEntityByTag("Camera");
+	auto camera = controller.GetEntityByTag("Camera1");
 	auto& cameraTransform = controller.GetComponent<Transform>(camera);
 
 	for (auto& entity : entities)

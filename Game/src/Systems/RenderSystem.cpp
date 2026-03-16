@@ -74,9 +74,9 @@ RenderSystem::RenderSystem()
 void RenderSystem::Init()
 {
 	// setup shadow mapper
-	camera = controller.GetEntityByTag("Camera");
+	camera = controller.GetEntityByTag("Camera1");
 	auto& tpp = controller.GetComponent<ThirdPersonCamera>(camera);
-
+	
 	viewMatrix = tpp.viewMatrix;
 	shadowMapper->Update(screenWidth / (float)screenHeight, tpp.zNear, tpp.zFar, glm::radians(tpp.fov), viewMatrix);
 
@@ -100,32 +100,6 @@ void RenderSystem::Init()
 	uiShader->use();
 	uiShader->setMat4("u_projection", fonts.projMat);
 	uiShader->setInt("u_texture", 0);
-
-	//float uiVertices[] = {
-	//	// positions    // texcoords
-	//	-1.0f,  1.0f,    0.0f, 1.0f,
-	//	-1.0f, -1.0f,    0.0f, 0.0f,
-	//	 1.0f, -1.0f,    1.0f, 0.0f,
-
-	//	-1.0f,  1.0f,    0.0f, 1.0f,
-	//	 1.0f, -1.0f,    1.0f, 0.0f,
-	//	 1.0f,  1.0f,    1.0f, 1.0f
-	//};
-
-	//glGenVertexArrays(1, &uiVAO);
-	//glGenBuffers(1, &uiVBO);
-
-	//glBindVertexArray(uiVAO);
-	//glBindBuffer(GL_ARRAY_BUFFER, uiVBO);
-	//glBufferData(GL_ARRAY_BUFFER, sizeof(uiVertices), uiVertices, GL_STATIC_DRAW);
-
-	//glEnableVertexAttribArray(0);
-	//glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-
-	//glEnableVertexAttribArray(1);
-	//glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
-
-	//glBindVertexArray(0);
 }
 
 void RenderSystem::Reset()
@@ -141,29 +115,82 @@ void RenderSystem::Clear(float r, float g, float b, float a)
 
 void RenderSystem::Update(float fps, const PxRenderBuffer& buffer)
 {
-	auto& tpp = controller.GetComponent<ThirdPersonCamera>(camera);
-	glm::vec3 forward = glm::normalize(glm::vec3(glm::inverse(tpp.viewMatrix)[2]));
-	glm::vec3 right = glm::normalize(glm::vec3(glm::inverse(tpp.viewMatrix)[0]));
-	glm::vec3 up = glm::normalize(glm::vec3(glm::inverse(tpp.viewMatrix)[1]));
-	glm::vec3 pos = glm::vec3(glm::inverse(tpp.viewMatrix)[3]);
-	Frustum frust = CreateFrustum(tpp.zFar, tpp.zNear, glm::radians(tpp.fov), tpp.screenWidth / (float)tpp.screenHeight, -forward, right, up, glm::vec3(glm::inverse(tpp.viewMatrix)[3]));
+	//auto& tpp = controller.GetComponent<ThirdPersonCamera>(camera);
+	//glm::vec3 forward = glm::normalize(glm::vec3(glm::inverse(tpp.viewMatrix)[2]));
+	//glm::vec3 right = glm::normalize(glm::vec3(glm::inverse(tpp.viewMatrix)[0]));
+	//glm::vec3 up = glm::normalize(glm::vec3(glm::inverse(tpp.viewMatrix)[1]));
+	//glm::vec3 pos = glm::vec3(glm::inverse(tpp.viewMatrix)[3]);
+	//Frustum frust = CreateFrustum(tpp.zFar, tpp.zNear, glm::radians(tpp.fov), tpp.screenWidth / (float)tpp.screenHeight, -forward, right, up, glm::vec3(glm::inverse(tpp.viewMatrix)[3]));
 
-	shadowMapper->Update(tpp.screenWidth / (float)tpp.screenHeight, tpp.zNear, tpp.zFar, glm::radians(tpp.fov), tpp.viewMatrix);
+	//shadowMapper->Update(tpp.screenWidth / (float)tpp.screenHeight, tpp.zNear, tpp.zFar, glm::radians(tpp.fov), tpp.viewMatrix);
 
-	DrawShadowPass(frust);
+	//DrawShadowPass(frust);
 
-	DrawLightingPass(frust, tpp, pos);
+	//DrawLightingPass(frust, tpp, pos);
 
-	DrawSkybox();
+	//DrawSkybox();
 
-	particleRenderSystem->Update(tpp);
+	//particleRenderSystem->Update(tpp);
 
-	// draw physics colliders
-	DrawCollisionDebug(buffer);
+	//// draw physics colliders
+	//DrawCollisionDebug(buffer);
 
-	DrawPostProcessingPass();
-	
-	RenderPowerupUI();
+	//DrawPostProcessingPass();
+	//
+	//RenderPowerupUI();
+
+	// Clear the default screen buffer ONCE at the start of the frame
+	Clear(0.0f, 0.0f, 0.0f, 1.0f);
+
+	int numPlayers = cameraEntities.size();
+	for (int i = 0; i < numPlayers; i++)
+	{
+		auto& tpp = controller.GetComponent<ThirdPersonCamera>(cameraEntities[i]);
+
+		// Calculate split-screen viewport
+		int vx = 0, vy = 0, vw = screenWidth, vh = screenHeight;
+		if (numPlayers == 2) {
+			// Horizontal split-screen (Top / Bottom)
+			vw = screenWidth;
+			vh = screenHeight / 2;
+			vy = (i == 0) ? vh : 0; // Player 1 on top, Player 2 on bottom
+		}
+		else if (numPlayers > 2) {
+			// 4-way split-screen
+			vw = screenWidth / 2;
+			vh = screenHeight / 2;
+			vx = (i % 2) * vw;
+			vy = (i < 2) ? vh : 0;
+		}
+
+		float aspect = vw / (float)vh;
+
+		// Update camera aspect ratio for proper projection matrix calculation
+		tpp.screenWidth = (unsigned int)vw;
+		tpp.screenHeight = (unsigned int)vh;
+
+		glm::vec3 forward = glm::normalize(glm::vec3(glm::inverse(tpp.viewMatrix)[2]));
+		glm::vec3 right = glm::normalize(glm::vec3(glm::inverse(tpp.viewMatrix)[0]));
+		glm::vec3 up = glm::normalize(glm::vec3(glm::inverse(tpp.viewMatrix)[1]));
+		glm::vec3 pos = glm::vec3(glm::inverse(tpp.viewMatrix)[3]);
+		Frustum frust = CreateFrustum(tpp.zFar, tpp.zNear, glm::radians(tpp.fov), aspect, -forward, right, up, glm::vec3(glm::inverse(tpp.viewMatrix)[3]));
+
+		shadowMapper->Update(aspect, tpp.zNear, tpp.zFar, glm::radians(tpp.fov), tpp.viewMatrix);
+		DrawShadowPass(frust);
+
+		// DrawLightingPass uses its own postProcessor FBO that cleans itself
+		DrawLightingPass(frust, tpp, pos);
+		DrawSkybox(tpp);
+		particleRenderSystem->Update(tpp);
+
+		// Draw the finished FBO to the current player's quadrant on the screen
+		DrawPostProcessingPass(vx, vy, vw, vh);
+		RenderPowerupUI(tpp.playerEntity, vx, vy, vw, vh);
+	}
+
+	// Reset back to full viewport for debug text, UI overlays, etc.
+	glViewport(0, 0, screenWidth, screenHeight);
+
 	
 	int f = static_cast<int>(fps);
 	std::string text = "fps: " + std::to_string(f);
@@ -335,12 +362,17 @@ void RenderSystem::DrawLightingPass(const Frustum& frust, const ThirdPersonCamer
 	//std::cout << "Culled entities this frame: " << cullCount << std::endl;
 }
 
-void RenderSystem::DrawPostProcessingPass()
+void RenderSystem::DrawPostProcessingPass(int vx, int vy, int vw, int vh)
 {
 	// setup post processing
 	postProcessor->Blit();
-	postProcessor->Unbind();
-	Clear(0.0f, 0.0f, 0.0f, 1.0f);
+	postProcessor->Unbind(); // return to default framebuffer
+
+	// Apply viewport specific to this player's screen quadrant
+	glViewport(vx, vy, vw, vh);
+
+	// Remov clear step here! We don't want to erase other players' quadrants.
+
 	postProcessShader->use();
 	// set tint uniform
 	postProcessShader->setVec3("u_tintColor", &tintColor.x);
@@ -434,9 +466,8 @@ void RenderSystem::RenderText(std::string text, float x, float y, float scale, g
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void RenderSystem::RenderPowerupUI() {
-	Entity player = controller.GetEntityByTag("VehicleCommands");
-
+void RenderSystem::RenderPowerupUI(Entity player, int vx, int vy, int vw, int vh)
+{
 	if (!controller.HasComponent<Powerup>(player))
 		return;
 
@@ -463,11 +494,9 @@ void RenderSystem::RenderPowerupUI() {
 	DrawUI(tex, x0, y0, x1, y1, 5);
 }
 
-void RenderSystem::DrawSkybox()
+void RenderSystem::DrawSkybox(const ThirdPersonCamera& cameraComp)
 {
 	glDepthFunc(GL_LEQUAL); // change depth function for skybox
-
-	auto& cameraComp = controller.GetComponent<ThirdPersonCamera>(camera);
 
 	glm::mat4 projView = cameraComp.getProjectionMatrix() * glm::mat4(glm::mat3(cameraComp.viewMatrix)); // remove translation from view matrix
 
@@ -484,10 +513,8 @@ void RenderSystem::DrawSkybox()
 	glDepthFunc(GL_LESS); // reset depth function
 }
 
-void RenderSystem::DrawCollisionDebug(const PxRenderBuffer& renderBuffer)
+void RenderSystem::DrawCollisionDebug(const PxRenderBuffer& renderBuffer, const ThirdPersonCamera& tpp)
 {
-	auto& tpp = controller.GetComponent<ThirdPersonCamera>(camera);
-
 	glm::mat4 projView = tpp.getProjectionMatrix() * tpp.viewMatrix;
 
 	physicsDebugShader->use();
@@ -633,13 +660,11 @@ void RenderSystem::WindowSizeListener(Event& e)
 {
 	screenWidth = e.GetParam<unsigned int>(Events::Window::Resized::WIDTH);
 	screenHeight = e.GetParam<unsigned int>(Events::Window::Resized::HEIGHT);
-	if (!(camera == MAX_ENTITIES))
-	{
-		auto& tpp = controller.GetComponent<ThirdPersonCamera>(camera);
-		shadowMapper->Update(screenWidth / (float)screenHeight, tpp.zNear, tpp.zFar, glm::radians(tpp.fov), tpp.viewMatrix);
-
-	}
-
+	//if (!(camera == MAX_ENTITIES))
+	//{
+	//	auto& tpp = controller.GetComponent<ThirdPersonCamera>(camera);
+	//	shadowMapper->Update(screenWidth / (float)screenHeight, tpp.zNear, tpp.zFar, glm::radians(tpp.fov), tpp.viewMatrix);
+	//}
 
 	postProcessor->Resize(screenWidth, screenHeight);
 

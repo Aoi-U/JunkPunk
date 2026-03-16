@@ -54,7 +54,7 @@ private:
 	void TriggerEnterListener(Event& e);
 	void SpawnBananaPeel(Entity vehicle);
 
-	std::unique_ptr<ImGuiPanel> camera_debug_panel; // testing
+	//std::unique_ptr<ImGuiPanel> camera_debug_panel; // testing
 	
 	// current game state
 	GameState currentState = GameState::STARTMENU;
