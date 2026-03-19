@@ -1,4 +1,3 @@
-#pragma once
 
 #include <array>
 #include <cassert>
@@ -8,10 +7,21 @@
 
 #include "../Core/Types.h"
 
+enum class AiState
+{
+	FollowPath,
+	AvoidObstacle,
+	BackingUp,
+	Overtaking,
+	RecoveringFromOffTrack
+};
+
 struct AiDriver
 {
 	// Runtime state
 	std::uint32_t currentWaypointIndex = 0;
+	AiState currentState = AiState::FollowPath;
+	AiState previousState = AiState::FollowPath;
 
 	// Tuning (per-entity)
 	float arrivalRadius = 1.0f;
@@ -27,4 +37,20 @@ struct AiDriver
 	float brakeAngleThreshold = 0.9f;
 	float maxThrottle = 1.0f;
 	float maxBrake = 1.0f;
+
+	// Stuck detection and recovery
+	float stuckTimer = 0.0f;
+	float stuckTimeThreshold = 1.0f;
+	float stuckSpeedThreshold = 1.5f;
+	float backupTimer = 0.0f;
+	float backupDuration = 0.5f;
+
+	// Obstacle avoidance
+	float obstacleDetectionRange = 10.0f;
+	float avoidanceSteerMultiplier = 1.5f;
+	glm::vec3 detectedObstaclePosition = glm::vec3(0.0f);
+
+	// Off-track recovery
+	float maxDistanceFromTrack = 15.0f;
+	float recoveryTimer = 0.0f;
 };
