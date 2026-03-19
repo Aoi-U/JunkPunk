@@ -339,9 +339,9 @@ void LevelLoaderSystem::LoadLevel()
 
 	//dice
 	std::vector<std::vector<glm::vec3>> dice_positions = {
-		{glm::vec3(-40.0f, -46.f, 200.f), glm::vec3(120.0f, -46.f, 200.f), glm::vec3(120.0f, -46.f, 200.f), glm::vec3(-40.0f, -46.f, 200.f)},
-		{glm::vec3(-40.0f, -46.f, 175.f), glm::vec3(120.0f, -46.f, 175.f), glm::vec3(120.0f, -46.f, 175.f), glm::vec3(-40.0f, -46.f, 175.f)},
-		{glm::vec3(-40.0f, -46.f, 150.f), glm::vec3(120.0f, -46.f, 150.f), glm::vec3(120.0f, -46.f, 150.f), glm::vec3(-40.0f, -46.f, 150.f)},
+		{glm::vec3(-40.0f, -46.f, 200.f), glm::vec3(140.0f, -46.f, 200.f), glm::vec3(140.0f, -46.f, 200.f), glm::vec3(-40.0f, -46.f, 200.f)},
+		{glm::vec3(-40.0f, -46.f, 175.f), glm::vec3(140.0f, -46.f, 175.f), glm::vec3(140.0f, -46.f, 175.f), glm::vec3(-40.0f, -46.f, 175.f)},
+		{glm::vec3(-40.0f, -46.f, 150.f), glm::vec3(140.0f, -46.f, 150.f), glm::vec3(140.0f, -46.f, 150.f), glm::vec3(-40.0f, -46.f, 150.f)},
 
 		{glm::vec3(0.0f, 62.f, 325.f), glm::vec3(30.0f, 62.f, 355.f), glm::vec3(60.0f, 62.f, 325.f), glm::vec3(30.0f, 62.f, 295.f)},
 	};
@@ -421,8 +421,9 @@ void LevelLoaderSystem::LoadLevel()
 
 
 	Entity vehicle = controller.createEntity();
+	glm::mat4 player_rotation = glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	loaded = LoadModel("assets/models/car_body_orange/car.gltf");
-	controller.AddComponent(vehicle, Transform{ glm::vec3(166.0f, 56.0f, 416), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.2f) });
+	controller.AddComponent(vehicle, Transform{ glm::vec3(137.0f, -255.0f, -233.f), glm::quat(player_rotation), glm::vec3(0.2f) });
 	controller.AddComponent(vehicle, VehicleBody{});
 	controller.AddComponent(vehicle, VehicleCommands{});
 	controller.AddComponent(vehicle, PlayerController{ 1 });
