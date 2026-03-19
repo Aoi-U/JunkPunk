@@ -143,13 +143,30 @@ void MenuSystem::Update()
 		RenderElements(uiElements);
 		float buttonSpacing = 120.0f;
 		float textScale = uniformScale;
-		RenderText("START", ScaledX(550.0f), ScaledY(480.0f), textScale,
-			currentHover == Menus::START ? hoverColor : defaultColor);
-		RenderText("SETTINGS", ScaledX(510.0f), ScaledY(480.0f - buttonSpacing), textScale,
-			currentHover == Menus::SETTINGS ? hoverColor : defaultColor);
-		RenderText("QUIT", ScaledX(570.0f), ScaledY(480.0f - buttonSpacing * 2), textScale,
-			currentHover == Menus::QUIT ? hoverColor : defaultColor);
 
+		float startY = ScaledY(420.0f);
+		std::string startText = "START";
+		std::string settingsText = "SETTINGS";
+		std::string quitText = "QUIT";
+
+		RenderText(startText,
+			GetCenteredX(startText, textScale),
+			startY,
+			textScale,
+			currentHover == Menus::START ? hoverColor : defaultColor);
+
+		RenderText(settingsText,
+			GetCenteredX(settingsText, textScale),
+			startY - buttonSpacing,
+			textScale,
+			currentHover == Menus::SETTINGS ? hoverColor : defaultColor);
+
+		RenderText(quitText,
+			GetCenteredX(quitText, textScale),
+			startY - buttonSpacing * 2,
+			textScale,
+			currentHover == Menus::QUIT ? hoverColor : defaultColor);
+		
 		if (gamepad->GetButtonDown(Buttons::JUMP))
 		{
 			switch (currentHover)
@@ -376,27 +393,9 @@ void MenuSystem::RenderUITexture(float x, float y, float width, float height, Te
 void MenuSystem::InitUI()
 {
 	uiElements.clear();
-	Texture tex("background.png");	
+	Texture tex("background2.png");	
 	tex.Load("assets/textures");
 	uiElements.emplace_back(0.0f, 0.0f, 1280.0f, 720.0f, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), ScaleMode::FILL, std::make_unique<Texture>(tex));
-
-
-	float buttonWidth = 300.0f;
-	float buttonHeight = 80.0f;
-	float buttonX = 640.0f - buttonWidth * 0.5f;
-	float buttonSpacing = 120.0f;
-
-	float startY = 500.0f - buttonHeight * 0.5f;
-	float settingsY = startY - buttonSpacing;
-	float quitY = settingsY - buttonSpacing;
-
-	// Create UI elements for each button
-	uiElements.emplace_back(buttonX, startY, buttonWidth, buttonHeight,
-		glm::vec4(0.2f, 0.2f, 0.2f, 0.9f));
-	uiElements.emplace_back(buttonX, settingsY, buttonWidth, buttonHeight,
-		glm::vec4(0.2f, 0.2f, 0.2f, 0.9f));
-	uiElements.emplace_back(buttonX, quitY, buttonWidth, buttonHeight,
-		glm::vec4(0.2f, 0.2f, 0.2f, 0.9f));
 }
 
 void MenuSystem::InitEndUI() {
@@ -698,4 +697,17 @@ void MenuSystem::KeyboardInputListener(Event& e)
 		event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::GAME);
 		controller.SendEvent(event);
 	}
+}
+
+float MenuSystem::GetCenteredX(std::string text, float scale)
+{
+	float width = 0.0f;
+
+	for (char c : text)
+	{
+		Character ch = fonts.charArial[c];
+		width += (ch.Advance >> 6) * scale;
+	}
+
+	return (screenWidth * 0.5f) - (width * 0.5f);
 }
