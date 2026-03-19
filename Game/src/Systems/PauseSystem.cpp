@@ -29,10 +29,61 @@ void PauseSystem::Init(std::shared_ptr<Gamepad> gamepad)
 
 	textShader->use();
 	textShader->setMat4("u_projection", fonts.projMat);
+
+	uiVAO = VAO();
+	uiVBO = VBO();
+
+	uiVAO.Bind();
+	uiVBO.Bind();
+
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, nullptr, GL_DYNAMIC_DRAW);
+
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+
+	uiVAO.Unbind();
+	uiVBO.Unbind();
+
+	uiShader = std::make_shared<Shader>("assets/shaders/ui.vert", "assets/shaders/ui.frag");
+
+	uiShader->use();
+	uiShader->setMat4("u_projection", fonts.projMat);
+	uiShader->setInt("u_texture", 0);
+
+	Texture tex("Powerup.png");
+	tex.Load("assets/textures");
+
+	powerupUIElements.emplace_back(
+		0.0f,
+		0.0f,
+		1280.0f,
+		720.0f,
+		glm::vec4(1.0f),
+		ScaleMode::FILL,
+		std::make_unique<Texture>(tex)
+	);
 }
 
 void PauseSystem::Update()
 {
+
+	if (showingPowerupScreen)
+	{
+		glDisable(GL_DEPTH_TEST);
+
+		RenderElements(powerupUIElements);
+
+		if (gamepad->GetButtonDown(Buttons::JUMP))
+		{
+			showingPowerupScreen = false;
+		}
+
+		return;
+	}
+
 	if (gamepad->LStick_InDeadzone())
 	{
 		canNavigate = true;
@@ -57,7 +108,7 @@ void PauseSystem::Update()
 		}
 		else if (gamepad->LeftStick_X() > 0.5f) // navigate right
 		{
-			if (currentHover < 2)
+			if (currentHover < 3)
 			{
 				Event event(Events::Audio::PLAY_SOUND);
 				event.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/MenuNavigation.wav");
@@ -97,11 +148,16 @@ void PauseSystem::Update()
 			controller.SendEvent(event);
 			break;
 		}
+		case Menus::POWERUPS:
+		{
+			showingPowerupScreen = true;
+			break;
+		}
 		}
 	}
 
 	float scale = 1.0f;
-	float spacing = 200.0f;
+	float spacing = 100.0f;
 
 	std::string title = "PAUSED";
 	RenderText(
@@ -114,29 +170,65 @@ void PauseSystem::Update()
 
 	float y = 0.45f * screenHeight;
 
+	auto getWidth = [&](const std::string& text)
+		{
+			float w = 0.0f;
+			for (char c : text)
+			{
+				Character ch = fonts.charArial[c];
+				w += (ch.Advance >> 6) * scale;
+			}
+			return w;
+		};
+
 	std::string resumeText = "RESUME";
 	std::string restartText = "RESTART";
+	std::string powerText = "CONTROLS";
 	std::string menuText = "MENU";
 
-	RenderText(
-		restartText,
-		GetCenteredX(restartText, scale),
-		y,
-		scale,
-		currentHover == Menus::RESTART ? hoverColor : defaultColor
-	);
+	float wResume = getWidth(resumeText);
+	float wRestart = getWidth(restartText);
+	float wPower = getWidth(powerText);
+	float wMenu = getWidth(menuText);
+
+	float totalWidth =
+		wResume + wRestart + wPower + wMenu +
+		spacing * 3;
+
+	float startX = (screenWidth * 0.5f) - (totalWidth * 0.5f);
+
+	float x = startX;
 
 	RenderText(
 		resumeText,
-		GetCenteredX(resumeText, scale) - spacing,
+		x,
 		y,
 		scale,
 		currentHover == Menus::RESUME ? hoverColor : defaultColor
 	);
+	x += wResume + spacing;
+
+	RenderText(
+		restartText,
+		x,
+		y,
+		scale,
+		currentHover == Menus::RESTART ? hoverColor : defaultColor
+	);
+	x += wRestart + spacing;
+
+	RenderText(
+		powerText,
+		x,
+		y,
+		scale,
+		currentHover == Menus::POWERUPS ? hoverColor : defaultColor
+	);
+	x += wPower + spacing;
 
 	RenderText(
 		menuText,
-		GetCenteredX(menuText, scale) + spacing,
+		x,
 		y,
 		scale,
 		currentHover == Menus::MENU ? hoverColor : defaultColor
@@ -214,6 +306,14 @@ void PauseSystem::KeyboardInputListener(Event& e)
 	int action = e.GetParam<bool>(Events::Window::Input::ACTION);
 	char key = static_cast<char>(keyRecieve);
 
+	if (showingPowerupScreen) {
+		if (key == Keys::KEY_JUMP && action == true)
+		{
+			showingPowerupScreen = false;
+			return;
+		}
+	}
+
 	if (canNavigate && currentStateGlobal == GameState::PAUSED)
 	{
 		if (key == Keys::KEY_LEFT && action == true)
@@ -232,7 +332,7 @@ void PauseSystem::KeyboardInputListener(Event& e)
 		}
 		else if (key == Keys::KEY_RIGHT && action == true)
 		{
-			if (currentHover < 2)
+			if (currentHover < 3)
 			{
 				Event event(Events::Audio::PLAY_SOUND);
 				event.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/MenuNavigation.wav");
@@ -272,6 +372,11 @@ void PauseSystem::KeyboardInputListener(Event& e)
 			controller.SendEvent(event);
 			break;
 		}
+		case Menus::POWERUPS:
+		{
+			showingPowerupScreen = true;
+			break;
+		}
 		}
 	}
 }
@@ -287,4 +392,39 @@ float PauseSystem::GetCenteredX(std::string text, float scale)
 	}
 
 	return (screenWidth * 0.5f) - (width * 0.5f);
+}
+
+void PauseSystem::RenderElements(std::vector<UIElement>& elements)
+{
+	for (auto& elem : elements)
+	{
+		if (elem.tex)
+		{
+			uiShader->use();
+			uiShader->setVec4("u_color", &elem.color.x);
+			uiShader->setInt("u_useTexture", 1);
+			uiShader->setMat4("u_projection", fonts.projMat);
+
+			float vertices[6][4] = {
+				{ 0.0f, screenHeight, 0.0f, 0.0f },
+				{ 0.0f, 0.0f,         0.0f, 1.0f },
+				{ screenWidth, 0.0f,  1.0f, 1.0f },
+
+				{ 0.0f, screenHeight, 0.0f, 0.0f },
+				{ screenWidth, 0.0f,  1.0f, 1.0f },
+				{ screenWidth, screenHeight, 1.0f, 0.0f }
+			};
+
+			elem.tex->Bind(GL_TEXTURE0);
+
+			uiVAO.Bind();
+			uiVBO.Bind();
+			glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
+
+			glDrawArrays(GL_TRIANGLES, 0, 6);
+
+			uiVAO.Unbind();
+			glBindTexture(GL_TEXTURE_2D, 0);
+		}
+	}
 }
