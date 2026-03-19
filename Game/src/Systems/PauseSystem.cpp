@@ -7,6 +7,10 @@ PauseSystem::PauseSystem()
 {
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	defaultColor = glm::vec3(1.0f, 1.0f, 1.0f);
+	hoverColor = glm::vec3(0.3f, 1.0f, 0.3f);
+
 	textShader = std::make_unique<Shader>("assets/shaders/text.vert", "assets/shaders/text.frag");
 
 	controller.AddEventListener(Events::Window::RESIZED, [this](Event& e) {this->WindowSizeListener(e); });
@@ -96,10 +100,47 @@ void PauseSystem::Update()
 		}
 	}
 
-	RenderText("PAUSED", 0.4 * screenWidth, 0.6 * screenHeight, 1.0f, glm::vec3(0.5f, 0.8f, 0.2f));
-	RenderText("RESUME", 0.2 * screenWidth, 0.4 * screenHeight, 1.0f, currentHover == Menus::RESUME ? hoverColor : defaultColor);
-	RenderText("RESTART", 0.4 * screenWidth, 0.4 * screenHeight, 1.0f, currentHover == Menus::RESTART ? hoverColor : defaultColor);
-	RenderText("MENU", 0.6 * screenWidth, 0.4 * screenHeight, 1.0f, currentHover == Menus::MENU ? hoverColor : defaultColor);
+	float scale = 1.0f;
+	float spacing = 200.0f;
+
+	std::string title = "PAUSED";
+	RenderText(
+		title,
+		GetCenteredX(title, scale * 1.5f),
+		0.65f * screenHeight,
+		scale * 1.5f,
+		glm::vec3(1.0f, 1.0f, 1.0f)
+	);
+
+	float y = 0.45f * screenHeight;
+
+	std::string resumeText = "RESUME";
+	std::string restartText = "RESTART";
+	std::string menuText = "MENU";
+
+	RenderText(
+		restartText,
+		GetCenteredX(restartText, scale),
+		y,
+		scale,
+		currentHover == Menus::RESTART ? hoverColor : defaultColor
+	);
+
+	RenderText(
+		resumeText,
+		GetCenteredX(resumeText, scale) - spacing,
+		y,
+		scale,
+		currentHover == Menus::RESUME ? hoverColor : defaultColor
+	);
+
+	RenderText(
+		menuText,
+		GetCenteredX(menuText, scale) + spacing,
+		y,
+		scale,
+		currentHover == Menus::MENU ? hoverColor : defaultColor
+	);
 }
 
 void PauseSystem::Reset()
@@ -233,4 +274,17 @@ void PauseSystem::KeyboardInputListener(Event& e)
 		}
 		}
 	}
+}
+
+float PauseSystem::GetCenteredX(std::string text, float scale)
+{
+	float width = 0.0f;
+
+	for (char c : text)
+	{
+		Character ch = fonts.charArial[c];
+		width += (ch.Advance >> 6) * scale;
+	}
+
+	return (screenWidth * 0.5f) - (width * 0.5f);
 }

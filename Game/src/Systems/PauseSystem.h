@@ -26,6 +26,8 @@ private:
 	void WindowSizeListener(Event& e);
 	void KeyboardInputListener(Event& e);
 
+	float GetCenteredX(std::string text, float scale);
+
 	enum Menus
 	{
 		RESUME,
