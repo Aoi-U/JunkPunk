@@ -61,10 +61,4 @@ public:
 
 private:
 	std::vector<NavTriangle> triangles;
-
-	bool GetPortalEdge(int32_t triA, int32_t triB, glm::vec3& outLeft, glm::vec3& outRight) const;
-
-	std::vector<glm::vec3> FunnelSmooth(const glm::vec3& startPos,
-		const glm::vec3& goalPos,
-		const std::vector<int32_t>& corridor) const;
 };

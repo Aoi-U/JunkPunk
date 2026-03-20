@@ -10,7 +10,7 @@ enum class AiState;
 class AiSystem : public System
 {
 public:
-	bool useAnchors = false; // Toggle: true = anchor-based, false = pure A*
+	bool useAnchors = true; // Toggle: true = anchor-based, false = pure A*
 
 	void Init();
 	void Update(float deltaTime);

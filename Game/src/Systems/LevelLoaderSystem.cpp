@@ -279,53 +279,58 @@ void LevelLoaderSystem::LoadLevel()
 		particles
 		});
 
-	// AI Opponent vehicle
-	vehicle = controller.createEntity();
-	loaded = LoadModel("assets/models/car_body_blue/car.gltf");
-	glm::mat4 aiRotation = glm::rotate(glm::mat4(1.0f), glm::radians(-40.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-	glm::vec3 aiStartPos = glm::vec3(-28.0f, -80.0f, -21.0f);
-	controller.AddComponent(vehicle, Transform{ aiStartPos, glm::quat(aiRotation), glm::vec3(0.2f) });
-	controller.AddComponent(vehicle, VehicleBody{});
-	controller.AddComponent(vehicle, VehicleCommands{});
-	controller.AddComponent(vehicle, Render{ loaded.first, loaded.second });
-	controller.AddComponent(vehicle, PhysicsBody{});
-	controller.AssignTag(vehicle, "AIVehicle");
+	// ---- AI Opponents ----
+	struct AiSpawnInfo
+	{
+		glm::vec3 startPos;
+		float rotationDeg;
+		std::string tag;
+		std::string carModel;
+	};
 
-	entity = controller.createEntity(); // front left wheel
-	loaded = LoadModel("assets/models/left_wheel/wheel.gltf");
-	controller.AddComponent(entity, Transform{ aiStartPos, glm::quat(aiRotation), glm::vec3(0.2f) });
-	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
-	controller.AddComponent(entity, PhysicsBody{});
-	controller.GetComponent<VehicleBody>(vehicle).wheelEntities.push_back(entity);
+	std::vector<AiSpawnInfo> aiSpawns = {
+		{ glm::vec3(-28.0f, -80.0f, -21.0f), -40.0f, "AIVehicle1", "assets/models/car_body_blue/car.gltf" },
+		{ glm::vec3(-32.0f, -80.0f, -25.0f), -40.0f, "AIVehicle2", "assets/models/car_body_pink/car.gltf" },
+		{ glm::vec3(-24.0f, -80.0f, -17.0f), -40.0f, "AIVehicle3", "assets/models/car_body_red/car.gltf" },
+	};
 
-	entity = controller.createEntity(); // front right wheel
-	loaded = LoadModel("assets/models/right_wheel/wheel.gltf");
-	controller.AddComponent(entity, Transform{ aiStartPos, glm::quat(aiRotation), glm::vec3(0.2f) });
-	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
-	controller.AddComponent(entity, PhysicsBody{});
-	controller.GetComponent<VehicleBody>(vehicle).wheelEntities.push_back(entity);
+	for (const auto& spawn : aiSpawns)
+	{
+		glm::mat4 aiRot = glm::rotate(glm::mat4(1.0f), glm::radians(spawn.rotationDeg), glm::vec3(0.0f, 1.0f, 0.0f));
+		glm::quat aiQuat = glm::quat(aiRot);
 
-	entity = controller.createEntity(); // back left wheel
-	loaded = LoadModel("assets/models/left_wheel/wheel.gltf");
-	controller.AddComponent(entity, Transform{ aiStartPos, glm::quat(aiRotation), glm::vec3(0.2f) });
-	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
-	controller.AddComponent(entity, PhysicsBody{});
-	controller.GetComponent<VehicleBody>(vehicle).wheelEntities.push_back(entity);
+		Entity aiVehicle = controller.createEntity();
+		loaded = LoadModel(spawn.carModel);
+		controller.AddComponent(aiVehicle, Transform{ spawn.startPos, aiQuat, glm::vec3(0.2f) });
+		controller.AddComponent(aiVehicle, VehicleBody{});
+		controller.AddComponent(aiVehicle, VehicleCommands{});
+		controller.AddComponent(aiVehicle, Render{ loaded.first, loaded.second });
+		controller.AddComponent(aiVehicle, PhysicsBody{});
+		controller.AssignTag(aiVehicle, spawn.tag);
 
-	entity = controller.createEntity(); // back right wheel
-	loaded = LoadModel("assets/models/right_wheel/wheel.gltf");
-	controller.AddComponent(entity, Transform{ aiStartPos, glm::quat(aiRotation), glm::vec3(0.2f) });
-	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
-	controller.AddComponent(entity, PhysicsBody{});
-	controller.GetComponent<VehicleBody>(vehicle).wheelEntities.push_back(entity);
+		// Wheels
+		std::vector<std::string> wheelModels = {
+			"assets/models/left_wheel/wheel.gltf",
+			"assets/models/right_wheel/wheel.gltf",
+			"assets/models/left_wheel/wheel.gltf",
+			"assets/models/right_wheel/wheel.gltf"
+		};
+		for (const auto& wheelModel : wheelModels)
+		{
+			entity = controller.createEntity();
+			loaded = LoadModel(wheelModel);
+			controller.AddComponent(entity, Transform{ spawn.startPos, aiQuat, glm::vec3(0.2f) });
+			controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
+			controller.AddComponent(entity, PhysicsBody{});
+			controller.GetComponent<VehicleBody>(aiVehicle).wheelEntities.push_back(entity);
+		}
 
-	// Initial paramerters for the AI driver, these can be tweaked to change the difficulty of the AI
-	AiDriver ai{};
-	//ai.desiredSpeed = 2.0f;
-	//ai.arrivalRadius = 2.0f;
-	//ai.maxSteerRadians = 1.0f;
-	//ai.throttleKp = 0.6f;
-	controller.AddComponent(vehicle, ai);
+		AiDriver ai{};
+		controller.AddComponent(aiVehicle, ai);
+
+		std::cout << "[LevelLoader] Spawned AI vehicle: " << spawn.tag
+			<< " at (" << spawn.startPos.x << ", " << spawn.startPos.y << ", " << spawn.startPos.z << ")" << std::endl;
+	}
 
 	// test trigger box
 	//entity = controller.createEntity();
@@ -401,7 +406,7 @@ void LevelLoaderSystem::LoadLevel()
 	// Debug: spawn visible trigger markers at each navmesh waypoint
 	if (aiSystemPtr)
 	{
-		Entity aiVehicle = controller.GetEntityByTag("AIVehicle");
+		Entity aiVehicle = controller.GetEntityByTag("AIVehicle1");
 		aiSystemPtr->SpawnDebugWaypoints(aiVehicle);
 	}
 }
