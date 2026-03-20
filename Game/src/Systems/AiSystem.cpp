@@ -13,7 +13,23 @@ extern ECSController controller;
 
 void AiSystem::Init()
 {
-	InitializeRaceAnchors();
+	if (useAnchors)
+	{
+		InitializeRaceAnchors();
+		std::cout << "[AiSystem] Using anchor-based pathfinding" << std::endl;
+	}
+	else
+	{
+		std::cout << "[AiSystem] Using pure A* pathfinding" << std::endl;
+	}
+}
+
+void AiSystem::ComputeNavPath(Entity entity, size_t anchorStartIndex)
+{
+	if (useAnchors)
+		ComputeNavPathWithAnchors(entity, anchorStartIndex);
+	else
+		ComputeNavPathWithoutAnchors(entity);
 }
 
 void AiSystem::InitializeRaceAnchors()
@@ -63,7 +79,8 @@ size_t AiSystem::FindNearestAnchorIndex(const glm::vec3& position) const
 	return bestIndex;
 }
 
-void AiSystem::ComputeNavPath(Entity entity, size_t anchorStartIndex)
+// This uses anchor points to create a multi-segment path, which is more expensive to compute but allows for better control over the route.
+void AiSystem::ComputeNavPathWithAnchors(Entity entity, size_t anchorStartIndex)
 {
 	auto& ai = controller.GetComponent<AiDriver>(entity);
 	auto& transform = controller.GetComponent<Transform>(entity);
@@ -125,6 +142,35 @@ void AiSystem::ComputeNavPath(Entity entity, size_t anchorStartIndex)
 
 	std::cout << "[AiSystem] Total path: " << ai.navWaypoints.size() << " waypoints (from anchor "
 		<< anchorStartIndex << " to " << raceAnchors.size() - 1 << ")" << std::endl;
+}
+
+// This is pure A* from current position to goal, without using anchors. Cheaper to compute but less control over the route.
+void AiSystem::ComputeNavPathWithoutAnchors(Entity entity)
+{
+	auto& ai = controller.GetComponent<AiDriver>(entity);
+	auto& transform = controller.GetComponent<Transform>(entity);
+
+	glm::vec3 startPos = transform.position;
+	glm::vec3 goalPos(25.0f, -3.5f, 120.0f); // finish line — update this for the new map
+
+	int32_t startTri = navMesh.FindTriangle(startPos);
+	if (startTri < 0) startTri = navMesh.FindClosestTriangle(startPos);
+
+	int32_t goalTri = navMesh.FindTriangle(goalPos);
+	if (goalTri < 0) goalTri = navMesh.FindClosestTriangle(goalPos);
+
+	std::cout << "[AiSystem] A* from tri " << startTri << " to tri " << goalTri << std::endl;
+
+	NavPath path = navMesh.FindPath(startTri, goalTri, startPos, goalPos);
+
+	ai.navWaypoints = path.waypoints;
+	ai.currentWaypointIndex = 0;
+
+	if (ai.navWaypoints.size() > 1)
+		ai.currentWaypointIndex = 1;
+
+	std::cout << "[AiSystem] A* path: " << path.triangleIndices.size()
+		<< " corridor triangles -> " << ai.navWaypoints.size() << " waypoints" << std::endl;
 }
 
 void AiSystem::SpawnDebugWaypoints(Entity aiEntity)
@@ -201,23 +247,16 @@ void AiSystem::UpdateStateMachine(Entity entity, float deltaTime)
 	{
 	case AiState::FollowPath:
 	{
-		// Check if the AI has gone off-track
+		// Off-track detection
 		int32_t currentTri = navMesh.FindTriangle(transform.position);
-		if (currentTri < 0)
+		if (currentTri < 0 && ai.currentWaypointIndex < static_cast<uint32_t>(ai.navWaypoints.size()))
 		{
-			// Not on the navmesh — check distance to current waypoint
-			if (ai.currentWaypointIndex < static_cast<uint32_t>(ai.navWaypoints.size()))
+			float dist = glm::length(ai.navWaypoints[ai.currentWaypointIndex] - transform.position);
+			if (dist > ai.maxDistanceFromTrack)
 			{
-				glm::vec3 toWp = ai.navWaypoints[ai.currentWaypointIndex] - transform.position;
-				float dist = glm::length(toWp);
-				if (dist > ai.maxDistanceFromTrack)
-				{
-					std::cout << "[AI] Off-track! dist=" << dist
-						<< " pos=(" << transform.position.x << ", " << transform.position.y << ", " << transform.position.z << ")"
-						<< std::endl;
-					TransitionToState(entity, AiState::RecoveringFromOffTrack);
-					break;
-				}
+				std::cout << "[AI] Off-track! dist=" << dist << std::endl;
+				TransitionToState(entity, AiState::RecoveringFromOffTrack);
+				break;
 			}
 		}
 		UpdateFollowPathState(entity, deltaTime);
@@ -228,6 +267,21 @@ void AiSystem::UpdateStateMachine(Entity entity, float deltaTime)
 		break;
 	case AiState::RecoveringFromOffTrack:
 		UpdateRecoveringFromOffTrackState(entity, deltaTime);
+		break;
+	case AiState::AvoidObstacle:
+		UpdateAvoidObstacleState(entity, deltaTime);
+		break;
+	case AiState::Braking:
+		UpdateBrakingState(entity, deltaTime);
+		break;
+	case AiState::SeekPowerup:
+		UpdateSeekPowerupState(entity, deltaTime);
+		break;
+	case AiState::UsePowerup:
+		UpdateUsePowerupState(entity, deltaTime);
+		break;
+	case AiState::Overtaking:
+		UpdateOvertakingState(entity, deltaTime);
 		break;
 	}
 }
@@ -455,4 +509,70 @@ void AiSystem::UpdateRecoveringFromOffTrackState(Entity entity, float deltaTime)
 	vc.throttle = ai.maxThrottle * 0.5f; // drive cautiously during recovery
 	vc.brake = 0.0f;
 	vc.isGrounded = true;
+}
+
+void AiSystem::UpdateAvoidObstacleState(Entity entity, float deltaTime)
+{
+	// TODO: Detect MovingObstacle and Banana entities in front of the car.
+	//       Steer left or right to dodge, then return to FollowPath.
+	//
+	// Suggested approach:
+	// - Check all entities with MovingObstacle or Banana components
+	// - If any are within obstacleDetectionRange and in the car's forward cone
+	// - Steer perpendicular to the obstacle direction
+	// - Once obstacle is no longer ahead, transition back to FollowPath
+
+	TransitionToState(entity, AiState::FollowPath);
+}
+
+void AiSystem::UpdateBrakingState(Entity entity, float deltaTime)
+{
+	// TODO: Slow down before sharp turns, then resume FollowPath.
+	//
+	// Suggested approach:
+	// - Check the angle between current forward and the direction to a waypoint
+	//   brakingLookaheadWaypoints ahead
+	// - If the dot product is below brakingAngleThreshold, apply brakes
+	//   and reduce speed to brakingSpeed
+	// - Once speed is low enough or the turn is passed, transition to FollowPath
+
+	TransitionToState(entity, AiState::FollowPath);
+}
+
+void AiSystem::UpdateSeekPowerupState(Entity entity, float deltaTime)
+{
+	// TODO: Briefly detour to collect a nearby powerup pickup.
+	//
+	// Suggested approach:
+	// - Scan for entities with a Powerup component within powerupSeekRange
+	// - Steer toward the nearest one
+	// - Once collected (component removed by physics trigger) or out of range,
+	//   transition back to FollowPath
+
+	TransitionToState(entity, AiState::FollowPath);
+}
+
+void AiSystem::UpdateUsePowerupState(Entity entity, float deltaTime)
+{
+	// TODO: Decide when to activate a held powerup.
+	//
+	// Suggested approach:
+	// - If holding a speed boost (type 1): activate on straightaways (high fwdDot)
+	// - If holding a banana peel (type 2): drop when the player is behind and close
+	// - After using, transition back to FollowPath
+
+	TransitionToState(entity, AiState::FollowPath);
+}
+
+void AiSystem::UpdateOvertakingState(Entity entity, float deltaTime)
+{
+	// TODO: Pass the player vehicle when close behind.
+	//
+	// Suggested approach:
+	// - Detect the player entity ("VehicleCommands" tag) within overtakeDetectionRange
+	// - If player is ahead and in the car's forward cone, steer to one side
+	//   using overtakeSteerOffset
+	// - Once past the player (player is now behind), transition back to FollowPath
+
+	TransitionToState(entity, AiState::FollowPath);
 }

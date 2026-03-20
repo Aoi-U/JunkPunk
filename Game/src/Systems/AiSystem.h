@@ -10,6 +10,8 @@ enum class AiState;
 class AiSystem : public System
 {
 public:
+	bool useAnchors = false; // Toggle: true = anchor-based, false = pure A*
+
 	void Init();
 	void Update(float deltaTime);
 
@@ -24,10 +26,11 @@ private:
 	std::vector<glm::vec3> raceAnchors;
 	void InitializeRaceAnchors();
 
-	// Computes a path from the entity's current position through anchors starting at anchorStartIndex
+	// Single entry point — delegates based on useAnchors flag
 	void ComputeNavPath(Entity entity, size_t anchorStartIndex = 0);
+	void ComputeNavPathWithAnchors(Entity entity, size_t anchorStartIndex);
+	void ComputeNavPathWithoutAnchors(Entity entity);
 
-	// Find the index of the closest anchor that is ahead of or nearest to the given position
 	size_t FindNearestAnchorIndex(const glm::vec3& position) const;
 
 	void UpdateStateMachine(Entity entity, float deltaTime);
@@ -36,6 +39,11 @@ private:
 	void UpdateFollowPathState(Entity entity, float deltaTime);
 	void UpdateBackingUpState(Entity entity, float deltaTime);
 	void UpdateRecoveringFromOffTrackState(Entity entity, float deltaTime);
+	void UpdateAvoidObstacleState(Entity entity, float deltaTime);
+	void UpdateBrakingState(Entity entity, float deltaTime);
+	void UpdateSeekPowerupState(Entity entity, float deltaTime);
+	void UpdateUsePowerupState(Entity entity, float deltaTime);
+	void UpdateOvertakingState(Entity entity, float deltaTime);
 
 	float CalculateSteeringAngle(const glm::vec3& forward, const glm::vec3& toTarget);
 };

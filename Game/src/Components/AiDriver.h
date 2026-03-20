@@ -15,7 +15,10 @@ enum class AiState
 	AvoidObstacle,
 	BackingUp,
 	Overtaking,
-	RecoveringFromOffTrack
+	RecoveringFromOffTrack,
+	SeekPowerup,
+	UsePowerup,
+	Braking
 };
 
 struct AiDriver
@@ -58,4 +61,16 @@ struct AiDriver
 	// Off-track recovery
 	float maxDistanceFromTrack = 30.0f;
 	float recoveryTimer = 0.0f;
+
+	// Braking
+	float brakingAngleThreshold = 0.7f; // dot product below this triggers braking
+	int brakingLookaheadWaypoints = 3;   // how many waypoints ahead to check for sharp turns
+	float brakingSpeed = 4.0f;           // target speed when braking
+
+	// Seek powerup
+	float powerupSeekRange = 20.0f;      // max distance to detour for a powerup
+
+	// Overtaking
+	float overtakeDetectionRange = 15.0f;
+	float overtakeSteerOffset = 2.0f;
 };

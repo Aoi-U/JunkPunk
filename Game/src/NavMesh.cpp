@@ -552,8 +552,7 @@ NavPath NavMesh::FindPath(int32_t startTri, int32_t goalTri, const glm::vec3& st
 	result.waypoints.push_back(startPos);
 
 	// Sample every few centroids to keep the count manageable but the path accurate
-	// For 63 corridor triangles, sampling every 3 gives ~21 waypoints
-	const int sampleInterval = 10;
+	const int sampleInterval = 3;
 	for (size_t i = 1; i < corridor.size(); ++i)
 	{
 		if (i % sampleInterval == 0 || i == corridor.size() - 1)
