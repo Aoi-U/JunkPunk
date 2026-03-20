@@ -1,9 +1,11 @@
+#pragma once
 
 #include <array>
 #include <cassert>
 #include <unordered_map>
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
+#include <vector>
 
 #include "../Core/Types.h"
 
@@ -23,8 +25,11 @@ struct AiDriver
 	AiState currentState = AiState::FollowPath;
 	AiState previousState = AiState::FollowPath;
 
+	// Navmesh path waypoints (set by AiSystem after pathfinding)
+	std::vector<glm::vec3> navWaypoints;
+
 	// Tuning (per-entity)
-	float arrivalRadius = 1.0f;
+	float arrivalRadius = 5.0f;
 	float desiredSpeed = 5.0f;
 	float lookaheadDistance = 5.0f;
 

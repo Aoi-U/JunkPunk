@@ -10,6 +10,7 @@
 #include "../Components/AiDriver.h"
 #include "AiSystem.h"
 #include"../Components/Banana.h"
+#include "../NavMesh.h"
 
 
 #include "../ECSController.h"
@@ -119,6 +120,22 @@ void LevelLoaderSystem::LoadLevel()
 	controller.AddComponent(entity, StaticBody{ nullptr, loaded.first });
 	controller.AddComponent(entity, Render{ loaded.first, loaded.second });
 	controller.AddComponent(entity, PhysicsBody{});
+
+	if (aiSystemPtr)
+	{
+		NavMesh navMesh;
+		navMesh.BuildFromModel(
+			loaded.first,
+			glm::vec3(0.0f, -50.0f, 50.0f),          // same position as the dumpster
+			glm::quat_cast(rotation),                   // same rotation
+			glm::vec3(50.0f),                            // same scale
+			45.0f                                        // max slope angle — tweak if too many/few triangles
+		);
+		navMesh.Subdivide();    // 1023 -> 4092 triangles (4x denser)
+		navMesh.Subdivide(); // uncomment for 16368 triangles (16x denser) if needed
+		navMesh.BuildAdjacency();
+		aiSystemPtr->SetNavMesh(navMesh);
+	}
 
 	for (int i = 0; i < 10; i++)
 	{
@@ -370,23 +387,18 @@ void LevelLoaderSystem::LoadLevel()
 	controller.AddComponent(entity, CheckPoint{ glm::quat(1.0f, 0.0f, 0.0f, 0.0f) });
 	controller.AddComponent(entity, Trigger{ nullptr, 5.0f, 2.0f, 5.0f });
 
-	// Used strictly for testing AI waypoints, can be removed later
-	std::vector<Waypoint> waypoints;
-	if (aiSystemPtr) {
-		waypoints = aiSystemPtr->GetWaypoints();
-		std::cout << "Loaded " << waypoints.size() << " waypoints for AI from AiSystem" << std::endl;
-	}
-	else {
-		// fallback: leave empty or build defaults
-		std::cout << "Warning: AiSystem not set in LevelLoaderSystem, no waypoints loaded for AI" << std::endl;
-	}
-	
-	for (const Waypoint& wp : waypoints) {
-		entity = controller.createEntity();
-		controller.AddComponent(entity, PhysicsBody{});
-		controller.AddComponent(entity, Transform{ wp.position, glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.25f) });
-		controller.AddComponent(entity, CheckPoint{ glm::quat(1.0f, 0.0f, 0.0f, 0.0f) });
-		controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 4.0f, 1.0f });
+	// Used strictly for testing AI navpoints, can be removed later
+	entity = controller.createEntity();
+	controller.AddComponent(entity, PhysicsBody{});
+	controller.AddComponent(entity, Transform{ glm::vec3(-60.0f, -93.0f, 19.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.25f) });
+	controller.AddComponent(entity, CheckPoint{ glm::quat(1.0f, 0.0f, 0.0f, 0.0f) });
+	controller.AddComponent(entity, Trigger{ nullptr, 5.0f, 2.0f, 5.0f });
+
+	// Debug: spawn visible trigger markers at each navmesh waypoint
+	if (aiSystemPtr)
+	{
+		Entity aiVehicle = controller.GetEntityByTag("AIVehicle");
+		aiSystemPtr->SpawnDebugWaypoints(aiVehicle);
 	}
 }
 
