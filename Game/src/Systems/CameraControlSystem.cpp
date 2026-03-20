@@ -54,17 +54,27 @@ void CameraControlSystem::Update(float deltaTime)
 		float targetRadius = camerad * boostMultiplier;
 		camera.radius = glm::mix(camera.radius, targetRadius, 5.0f * deltaTime);
 	 
-		auto& gamepad = gamepads[1]; // assuming single player for now
-	 
-		if (gamepad->Connected())
+		auto& playerController = controller.GetComponent<PlayerController>(entity);
+		auto it = gamepads.find(playerController.playerNum);
+
+		std::shared_ptr<Gamepad> gamepad;
+		if (it != gamepads.end())
 		{
-	 		if (!gamepad->RStick_InDeadzone())
-	 		{
-	 			// orbit camera around player
-	 			camera.yaw +=  -gamepad->RightStick_X() * camera.horizontalLookSpeed * deltaTime;
-	 			camera.pitch += -gamepad->RightStick_Y() * camera.verticalLookSpeed * deltaTime;
-	 			camera.pitch = glm::clamp(camera.pitch, glm::radians(-89.0f), glm::radians(89.0f));
-	 		}
+			gamepad = it->second;
+		}
+
+		if (gamepad)
+		{
+			if (gamepad->Connected())
+			{
+	 			if (!gamepad->RStick_InDeadzone())
+	 			{
+	 				// orbit camera around player
+	 				camera.yaw +=  -gamepad->RightStick_X() * camera.horizontalLookSpeed * deltaTime;
+	 				camera.pitch += -gamepad->RightStick_Y() * camera.verticalLookSpeed * deltaTime;
+	 				camera.pitch = glm::clamp(camera.pitch, glm::radians(-89.0f), glm::radians(89.0f));
+	 			}
+			}
 		}
 	 		
 		glm::vec3 playerForward = glm::normalize(playerTransform.quatRotation * glm::vec3(0.0f, 0.0f, 1.0f));
