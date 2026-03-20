@@ -48,10 +48,6 @@ private:
 
 	std::vector<PxActor*> actorsToDelete; // list of actors to delete 
 
-	bool usedBoost = false;
-	bool spinning = false;
-	float spinTimer = 0.0f;
-
 	void DeleteActorsQueue();
 
 	void Simulate(float deltaTime); // run a physics simulation step

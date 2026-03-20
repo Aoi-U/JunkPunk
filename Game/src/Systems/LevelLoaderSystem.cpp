@@ -113,10 +113,10 @@ void LevelLoaderSystem::LoadLevel()
 	//controller.AddComponent(entity, PhysicsBody{});
 
 	// create dumpster
-	glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::pi<float>()/4.0f, glm::vec3(0.0f, 1.0f, 0.0f));
 	Entity entity = controller.createEntity();
 	auto loaded = LoadModel("assets/models/dumpster/dumpster.gltf");
-	controller.AddComponent(entity, Transform{ glm::vec3(0.0f, -100.0f, 50.0f), glm::quat_cast(rotation), glm::vec3(200.0f) });
+	controller.AddComponent(entity, Transform{ glm::vec3(0.0f, -50.0f, 50.0f), glm::quat_cast(rotation), glm::vec3(50.0f) });
 	controller.AddComponent(entity, StaticBody{ nullptr, loaded.first });
 	controller.AddComponent(entity, Render{ loaded.first, loaded.second });
 	controller.AddComponent(entity, PhysicsBody{});
@@ -176,175 +176,28 @@ void LevelLoaderSystem::LoadLevel()
 	}
 
 	//punching glove
-	std::vector<std::vector<glm::vec3>> glove_positions = {
-		{glm::vec3(20.0f, -169.f, 40.f), glm::vec3(20.0f, -169.f, -45.f), glm::vec3(20.0f, -169.f, -45.f), glm::vec3(20.0f, -169.f, 40.f)},
-		{glm::vec3(-15.0f, -169.f, 40.f), glm::vec3(-15.0f, -169.f, -45.f), glm::vec3(-15.0f, -169.f, -45.f), glm::vec3(-15.0f, -169.f, 40.f)},
-		{glm::vec3(-50.0f, -169.f, 40.f), glm::vec3(-50.0f, -169.f, -45.f), glm::vec3(-50.0f, -169.f, -45.f), glm::vec3(-50.0f, -169.f, 40.f)},
-		{glm::vec3(45.0f, -70.f, 440.f), glm::vec3(45.0f, -67.f, 301.f), glm::vec3(45.0f, -67.f, 301.f), glm::vec3(45.0f, -70.f, 440.f)},
-	};
-	std::vector<float> glove_size = {
-		10.f,
-		10.f,
-		10.f,
-		10.f,
-	};
-	std::vector<float> glove_speed = {
-		1.5f,
-		1.5f,
-		1.5f,
-		1.5f,
-	};
-
-	for (int i = 0; i < glove_positions.size(); i++) {
-		//punching glove
-		entity = controller.createEntity();
-		loaded = LoadModel("assets/models/spring_glove/spring_glove.gltf");
-		rotation = glm::rotate(glm::mat4(1.0f), glm::pi<float>() / 4.0f, glm::vec3(0.0f, 1.0f, 0.0f));
-		controller.AddComponent(entity, Transform{ glm::vec3(-50.0f, -69.0f, 50.0f), glm::quat_cast(rotation), glm::vec3(glove_size[i])});
-		controller.AddComponent(entity, RigidBody{ nullptr, loaded.first, loaded.second, 50.0f, true, glm::vec3(0.0f), glm::vec3(0.0f) });
-		controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
-		controller.AddComponent(entity, PhysicsBody{});
-		controller.AddComponent(entity, MovingObstacle{
-			glove_positions[i],
-			std::vector<glm::quat>{
-				glm::quat_cast(glm::rotate(glm::mat4(1.0f), glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f))),
-				glm::quat_cast(glm::rotate(glm::mat4(1.0f), glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f))),
-				glm::quat_cast(glm::rotate(glm::mat4(1.0f), glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f))),
-				glm::quat_cast(glm::rotate(glm::mat4(1.0f), glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f))),
-			},
-			std::vector <float>{
-				2.0f, glove_speed[i], 0.5f, 0.5f
-			},
-			0.0f,
-			1,
-			0,
-			false
-			});
-
-	}
-
-	
-
-
-	//spinner
-	std::vector<glm::vec3> spinner_positions = {
-		glm::vec3(0.0f, -81.f, 100.f),
-		glm::vec3(0.0f, -81.f, 180.f),
-		glm::vec3(40.0f, -81.f, 150.f),
-		glm::vec3(40.0f, -80.5f, 150.f),
-		glm::vec3(60.0f, -80.5f, 115.f),
-		glm::vec3(70.0f, -80.f, 170.f),
-		glm::vec3(70.0f, -80.f, 200.f),
-		glm::vec3(40.0f, -80.f, 205.f),
-		glm::vec3(-19.0f, -80.f, 210.f),
-
-		glm::vec3(37.f, -32.f, 295.f),
-		glm::vec3(37.f, -34.f, 295.f),
-
-		glm::vec3(-56.f, 53.f, 358.f),
-		glm::vec3(-56.0f, 53.f, 293.f),
-	};
-	std::vector<float> spinner_rotation = {
-		-1.f,
-		1.f,
-		1.f,
-		1.f,
-		1.f,
-		-1.f,
-		1.f,
-		-1.f,
-		1.f,
-
-		1.f,
-		-1.f,
-
-		1.f,
-		-1.f
-	};
-	std::vector<float> spinner_duration = {
-		2.f,
-		1.f,
-		1.f,
-		1.f,
-		1.f,
-		1.f,
-		1.f,
-		1.f,
-		1.f,
-
-		6.f,
-		6.f,
-
-		1.2f,
-		1.2f
-	};
-	std::vector<float> spinner_size = {
-		4.f,
-		2.f,
-		2.f,
-		1.f,
-		1.f,
-		1.f,
-		1.f,
-		1.f,
-		1.f,
-
-		4.f,
-		4.f,
-
-		3.f,
-		3.f
-	};
-
-	for (int i = 0; i < spinner_positions.size(); i++) {
-		entity = controller.createEntity();
-		loaded = LoadModel("assets/models/spinner/spinner.gltf");
-		rotation = glm::rotate(glm::mat4(1.0f), 0.0f, glm::vec3(0.0f, 1.0f, 0.0f));
-		controller.AddComponent(entity, Transform{ spinner_positions[i], glm::quat_cast(rotation), glm::vec3(spinner_size[i])});
-		controller.AddComponent(entity, RigidBody{ nullptr, loaded.first, loaded.second, 50.0f, true, glm::vec3(0.0f), glm::vec3(0.0f) });
-		controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
-		controller.AddComponent(entity, PhysicsBody{});
-		controller.AddComponent(entity, MovingObstacle{
-			std::vector<glm::vec3>{
-				spinner_positions[i],
-				spinner_positions[i],
-				spinner_positions[i],
-			},
-			std::vector<glm::quat>{
-				glm::quat_cast(glm::rotate(glm::mat4(1.0f), -glm::pi<float>() * spinner_rotation[i], glm::vec3(0.0f, 1.0f, 0.0f))),
-				glm::quat_cast(glm::rotate(glm::mat4(1.0f), 0.f, glm::vec3(0.0f, 1.0f, 0.0f))),
-				glm::quat_cast(glm::rotate(glm::mat4(1.0f), glm::pi<float>() * spinner_rotation[i], glm::vec3(0.0f, 1.0f, 0.0f))),
-			},
-			std::vector <float>{
-				0.f,spinner_duration[i],spinner_duration[i]
-			},
-			0.0f,
-			1,
-			0,
-			false
-			});
-	}
-	//90 degree offset
 	entity = controller.createEntity();
-	loaded = LoadModel("assets/models/spinner/spinner.gltf");
-	rotation = glm::rotate(glm::mat4(1.0f), 0.0f, glm::vec3(0.0f, 1.0f, 0.0f));
-	controller.AddComponent(entity, Transform{glm::vec3(37.f, -32.f, 295.f), glm::quat_cast(rotation), glm::vec3(4.0f)});
+	loaded = LoadModel("assets/models/spring_glove/spring_glove.gltf");
+	rotation = glm::rotate(glm::mat4(1.0f), glm::pi<float>() / 4.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+	controller.AddComponent(entity, Transform{ glm::vec3(-50.0f, -69.0f, 50.0f), glm::quat_cast(rotation), glm::vec3(3.f) });
 	controller.AddComponent(entity, RigidBody{ nullptr, loaded.first, loaded.second, 50.0f, true, glm::vec3(0.0f), glm::vec3(0.0f) });
 	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
 	controller.AddComponent(entity, PhysicsBody{});
 	controller.AddComponent(entity, MovingObstacle{
 		std::vector<glm::vec3>{
-			glm::vec3(37.f, -32.f, 295.f),
-			glm::vec3(37.f, -32.f, 295.f),
-			glm::vec3(37.f, -32.f, 295.f),
+			{ 50.0f, -69.0f , 50.0f},
+			{ 20.0f, -69.0f, 20.0f},
+				{ 20.0f, -69.0f, 20.0f},
+			{ 50.0f, -69.0f , 50.0f},
 		},
 		std::vector<glm::quat>{
-			glm::quat_cast(glm::rotate(glm::mat4(1.0f), -glm::pi<float>() / 2.0f, glm::vec3(0.0f, 1.0f, 0.0f))),
-			glm::quat_cast(glm::rotate(glm::mat4(1.0f), glm::pi<float>() / 2.0f, glm::vec3(0.0f, 1.0f, 0.0f))),
-			glm::quat_cast(glm::rotate(glm::mat4(1.0f), -glm::pi<float>() / 2.0f, glm::vec3(0.0f, 1.0f, 0.0f))),
+			glm::quat_cast(glm::rotate(glm::mat4(1.0f), -3.0f * glm::pi<float>() / 4.0f, glm::vec3(0.0f, 1.0f, 0.0f))),
+			glm::quat_cast(glm::rotate(glm::mat4(1.0f), -3.0f * glm::pi<float>() / 4.0f, glm::vec3(0.0f, 1.0f, 0.0f))),
+			glm::quat_cast(glm::rotate(glm::mat4(1.0f), -3.0f * glm::pi<float>() / 4.0f, glm::vec3(0.0f, 1.0f, 0.0f))),
+			glm::quat_cast(glm::rotate(glm::mat4(1.0f), -3.0f * glm::pi<float>() / 4.0f, glm::vec3(0.0f, 1.0f, 0.0f))),
 		},
 		std::vector <float>{
-			0.f,6.f,0.f
+			3.f, 1.f, 1.f, 1.f
 		},
 		0.0f,
 		1,
@@ -353,94 +206,20 @@ void LevelLoaderSystem::LoadLevel()
 		});
 
 
-
-	//dice
-	std::vector<std::vector<glm::vec3>> dice_positions = {
-		{glm::vec3(-40.0f, -46.f, 200.f), glm::vec3(140.0f, -46.f, 200.f), glm::vec3(140.0f, -46.f, 200.f), glm::vec3(-40.0f, -46.f, 200.f)},
-		{glm::vec3(-40.0f, -46.f, 175.f), glm::vec3(140.0f, -46.f, 175.f), glm::vec3(140.0f, -46.f, 175.f), glm::vec3(-40.0f, -46.f, 175.f)},
-		{glm::vec3(-40.0f, -46.f, 150.f), glm::vec3(140.0f, -46.f, 150.f), glm::vec3(140.0f, -46.f, 150.f), glm::vec3(-40.0f, -46.f, 150.f)},
-
-		{glm::vec3(0.0f, 62.f, 325.f), glm::vec3(30.0f, 62.f, 355.f), glm::vec3(60.0f, 62.f, 325.f), glm::vec3(30.0f, 62.f, 295.f)},
-	};
-
-	std::vector<std::vector<float>> dice_duration = {
-		{3.f,13.f,3.f, 2.f},
-		{3.f,17.f,3.f, 2.f},
-		{3.f,21.f,3.f, 2.f},
-
-		{1.f,1.f, 1.f, 1.f},
-	};
-	std::vector<float> dice_size = {
-		10.f,
-		10.f,
-		10.f,
-
-		10.f,
-	};
-	//moving dice
-	for (int i = 0; i < dice_positions.size(); i++) {
-		entity = controller.createEntity();
-		loaded = LoadModel("assets/models/dice/dice.gltf");
-		rotation = glm::rotate(glm::mat4(1.0f), 0.0f, glm::vec3(0.0f, 1.0f, 0.0f));
-		controller.AddComponent(entity, Transform{ glm::vec3(0.f, 0.f, 0.f), glm::quat_cast(rotation), glm::vec3(dice_size[i])});
-		controller.AddComponent(entity, RigidBody{ nullptr, loaded.first, loaded.second, 50.0f, true, glm::vec3(0.0f), glm::vec3(0.0f) });
-		controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
-		controller.AddComponent(entity, PhysicsBody{});
-		controller.AddComponent(entity, MovingObstacle{
-			dice_positions[i],
-			std::vector<glm::quat>{},
-			dice_duration[i],
-			0.0f,
-			1,
-			0,
-			false
-			});
-	}
-	for (int i = 0; i < 15; i++) {
-		entity = controller.createEntity();
-		loaded = LoadModel("assets/models/dice/dice.gltf");
-		rotation = glm::rotate(glm::mat4(1.0f), 0.0f, glm::vec3(0.0f, 1.0f, 0.0f));
-		controller.AddComponent(entity, Transform{ glm::vec3(0.f, 0.f, 0.f), glm::quat_cast(rotation), glm::vec3(1.f) });
-		controller.AddComponent(entity, RigidBody{ nullptr, loaded.first, loaded.second, 50.0f, true, glm::vec3(0.0f), glm::vec3(0.0f) });
-		controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
-		controller.AddComponent(entity, PhysicsBody{});
-		controller.AddComponent(entity, MovingObstacle{
-			std::vector<glm::vec3>{
-				glm::vec3(65.0f + (i * 3), 54.5f, 410.f),
-				glm::vec3(65.0f + (i * 3), 54.5f, 250.f),
-				//glm::vec3(65.0f + (i * 3), 54.5f, 250.f),
-				//glm::vec3(65.0f + (i * 3), 54.5f, 410.f)
-			},
-			std::vector<glm::quat>{},
-			std::vector <float>{
-				((rand() % 101) / 100.f) + 1.f,
-				((rand() % 101) / 100.f) + 1.f,
-				//((rand() % 101) / 100.f) + 1.f,
-				//((rand() % 101) / 100.f) + 1.f
-			}, 
-			0.0f,
-			1,
-			0,
-			false
-			});
-	}
-	
-
-	for (int i = 0; i < 100; i++)
-	{
-		entity = controller.createEntity();
-		loaded = LoadModel("assets/models/dice/dice.gltf");
-		controller.AddComponent(entity, Transform{ glm::vec3(0.0f, -247.0f + (i * 10.0f),-208.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(1.f) });
-		controller.AddComponent(entity, RigidBody{ nullptr, loaded.first, loaded.second, 50.0f, true, glm::vec3(0.0f), glm::vec3(0.0f) });
-		controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
-		controller.AddComponent(entity, PhysicsBody{});
-	}
+	//for (int i = 0; i < 50; i++)
+	//{
+	//	entity = controller.createEntity();
+	//	loaded = LoadModel("assets/models/rubix_2.0/scene.gltf");
+	//	controller.AddComponent(entity, Transform{ glm::vec3(-60.0f, -90.0f + i * 10.0f, 20.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.7f) });
+	//	controller.AddComponent(entity, RigidBody{ nullptr, loaded.first, loaded.second, 50.0f, true, glm::vec3(0.0f), glm::vec3(0.0f) });
+	//	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
+	//	controller.AddComponent(entity, PhysicsBody{});
+	//}
 
 
 	Entity vehicle = controller.createEntity();
-	glm::mat4 player_rotation = glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	loaded = LoadModel("assets/models/car_body_orange/car.gltf");
-	controller.AddComponent(vehicle, Transform{ glm::vec3(137.0f, -255.0f, -233.f), glm::quat(player_rotation), glm::vec3(0.2f) });
+	controller.AddComponent(vehicle, Transform{ glm::vec3(-30.0f, -80.0f, -20.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.2f) });
 	controller.AddComponent(vehicle, VehicleBody{});
 	controller.AddComponent(vehicle, VehicleCommands{});
 	controller.AddComponent(vehicle, PlayerController{ 1 });
@@ -594,11 +373,11 @@ void LevelLoaderSystem::LoadLevel()
   //controller.AddComponent(entity, StaticBody{ nullptr, loaded.first });
   controller.AddComponent(entity, Render{ loaded.first, loaded.second });
   controller.AddComponent(entity, PhysicsBody{});
-  controller.AddComponent(entity, Trigger{ nullptr, 2.5f, 20.0f, 50.0f });
+  controller.AddComponent(entity, Trigger{ nullptr, 0.5f, 4.0f, 10.0f });
   controller.AddComponent(entity, Transform{
-    glm::vec3(-184.0f, 115.f, 323.0f),
+    glm::vec3(25.0f, -3.5f, 120.0f),
     glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
-    glm::vec3(25.0f, 25.0f, 25.0f)
+    glm::vec3(5.0f, 5.0f, 5.0f)
     });
   controller.AssignTag(entity, "FinishLine");
 

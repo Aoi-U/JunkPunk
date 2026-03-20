@@ -402,17 +402,13 @@ void Game::Run()
 			break;
 
 		case CONTROLS:
-			menuSystem->Update();
-			audioSystem->Update();
-			break;
-		case SETTINGS:
-			menuSystem->Update();
+			menuSystem->RenderControlsScreen();
 			audioSystem->Update();
 			break;
 
 		case ENDMENU:
 			renderSystem->Update(time->fps(), physicsSystem->GetRenderBuffer());
-			menuSystem->Update();
+			menuSystem->RenderEndScreen();
 			break;
 		}
 
@@ -445,15 +441,10 @@ void Game::ChangeGameStateListener(Event& e)
 	{
 	case::GameState::STARTMENU:
 	{
-		if (currentStateGlobal == GameState::GAME) // clean up the world when leaving the game state
-		{
-			physicsSystem->Cleanup();
-			controller.Reset();
-			physicsSystem->Cleanup();
-			renderSystem->Reset();
-
-		}
+		controller.Reset();
+		physicsSystem->Cleanup();
 		menuSystem->Reset();
+		renderSystem->Reset();
 
 		time->Pause();
 		currentState = state;
@@ -537,13 +528,6 @@ void Game::ChangeGameStateListener(Event& e)
 		currentState = GameState::GAME;
 		currentStateGlobal = GameState::GAME;
 
-		break;
-	}
-	case GameState::SETTINGS:
-	{
-		time->Pause();
-		currentState = state;
-		currentStateGlobal = state;
 		break;
 	}
 	}

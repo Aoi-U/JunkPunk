@@ -10,6 +10,9 @@
 #include "../ECSController.h"
 
 extern ECSController controller;
+bool usedBoost = false;
+bool spinning = false;
+float spinTimer = 0.0f;
 
 PhysicsSystem::PhysicsSystem()
 {

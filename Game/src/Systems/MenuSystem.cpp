@@ -51,7 +51,6 @@ void MenuSystem::Init(std::shared_ptr<Gamepad> gamepad)
 	InitUI();
 	InitControlsUI();
 	InitEndUI();
-	InitSettingsUI();
 }
 
 void MenuSystem::Clear(float r, float g, float b, float a)
@@ -69,7 +68,7 @@ void MenuSystem::Update()
 	
 	if (canNavigate)
 	{
-		if (gamepad->LeftStick_Y() > 0.3f) // navigate left
+		if (gamepad->LeftStick_Y() > 0.5f) // navigate left
 		{
 			// navigate left
 			if (currentHover > 0)
@@ -84,135 +83,64 @@ void MenuSystem::Update()
 			}
 			canNavigate = false;
 		}
-		else if (gamepad->LeftStick_Y() < -0.3f) // navigate right
+		else if (gamepad->LeftStick_Y() < -0.5f) // navigate right
 		{
-			if (currentHover < maxVerticalHover)
+			if (currentHover < 2)
 			{
 				Event event(Events::Audio::PLAY_SOUND);
 				event.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/MenuNavigation.wav");
 				event.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
 				event.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, 0.0f);
-				controller.SendEvent(event);
+				controller.SendEvent(event); 
 
 				currentHover++;
 			}
 			canNavigate = false;
 		}
+	}
 
-		// Add horizontal navigation for settings (player count adjustment)
-		if (currentStateGlobal == GameState::SETTINGS)
+	if (gamepad->GetButtonDown(Buttons::JUMP))
+	{
+		switch (currentHover)
 		{
-			if (gamepad->LeftStick_X() > 0.3f) // increase player count
-			{
-				if (numPlayers < 4) // assuming max 4 players
-				{
-					Event event(Events::Audio::PLAY_SOUND);
-					event.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/MenuNavigation.wav");
-					event.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
-					event.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, 0.0f);
-					controller.SendEvent(event);
-
-					numPlayers++;
-				}
-				canNavigate = false;
-			}
-			else if (gamepad->LeftStick_X() < -0.3f) // decrease player count
-			{
-				if (numPlayers > 1) // minimum 1 player
-				{
-					Event event(Events::Audio::PLAY_SOUND);
-					event.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/MenuNavigation.wav");
-					event.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
-					event.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, 0.0f);
-					controller.SendEvent(event);
-
-					numPlayers--;
-				}
-				canNavigate = false;
-			}
+		case Menus::START:
+		{
+			Event event(Events::GameState::NEW_STATE);
+			event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::CONTROLS);
+			controller.SendEvent(event);
+			break;
+		}
+		case Menus::SETTINGS:
+		{
+			// settings menu
+			break;
+		}
+		case Menus::QUIT:
+		{
+			// quit game
+			controller.SendEvent(Events::Window::CLOSE);
+			break;
+		}
 		}
 	}
+
+
 
 	glDisable(GL_DEPTH_TEST);
 	Clear(0.1f, 0.1f, 0.1f, 1.0f);
 
-	switch (currentStateGlobal)
-	{
-	case GameState::STARTMENU:
-	{
-		RenderElements(uiElements);
-		float buttonSpacing = 120.0f;
-		float textScale = uniformScale;
-		RenderText("START", ScaledX(550.0f), ScaledY(480.0f), textScale,
-			currentHover == Menus::START ? hoverColor : defaultColor);
-		RenderText("SETTINGS", ScaledX(510.0f), ScaledY(480.0f - buttonSpacing), textScale,
-			currentHover == Menus::SETTINGS ? hoverColor : defaultColor);
-		RenderText("QUIT", ScaledX(570.0f), ScaledY(480.0f - buttonSpacing * 2), textScale,
-			currentHover == Menus::QUIT ? hoverColor : defaultColor);
+	RenderElements(uiElements);
 
-		if (gamepad->GetButtonDown(Buttons::JUMP))
-		{
-			switch (currentHover)
-			{
-			case Menus::START:
-			{
-				Event event(Events::GameState::NEW_STATE);
-				event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::CONTROLS);
-				controller.SendEvent(event);
-				break;
-			}
-			case Menus::SETTINGS:
-			{
-				maxVerticalHover = 0;
+	// Render text with scaled positions and uniform scale for text size
+	float buttonSpacing = 120.0f;
+	float textScale = uniformScale;
+	RenderText("START", ScaledX(550.0f), ScaledY(480.0f), textScale,
+		currentHover == Menus::START ? hoverColor : defaultColor);
+	RenderText("SETTINGS", ScaledX(510.0f), ScaledY(480.0f - buttonSpacing), textScale,
+		currentHover == Menus::SETTINGS ? hoverColor : defaultColor);
+	RenderText("QUIT", ScaledX(570.0f), ScaledY(480.0f - buttonSpacing * 2), textScale,
+		currentHover == Menus::QUIT ? hoverColor : defaultColor);
 
-				Event event(Events::GameState::NEW_STATE);
-				event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::SETTINGS);
-				controller.SendEvent(event);
-				break;
-			}
-			case Menus::QUIT:
-			{
-				// quit game
-				controller.SendEvent(Events::Window::CLOSE);
-				break;
-			}
-			}
-		}
-		break;
-	}
-	case GameState::ENDMENU:
-	{
-		RenderEndScreen();
-		break;
-	}
-	case GameState::CONTROLS:
-	{
-		RenderControlsScreen();
-
-		if (gamepad->GetButtonDown(Buttons::JUMP)) {
-			Event event(Events::GameState::NEW_STATE);
-			event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::GAME);
-			controller.SendEvent(event);
-		}
-		break;
-	}
-	case GameState::SETTINGS:
-	{
-		RenderSettingsScreen();
-
-		if (gamepad->GetButtonDown(Buttons::POWERUP))
-		{
-			currentHover = 0;
-			maxVerticalHover = 2;
-
-			Event event(Events::GameState::NEW_STATE);
-			event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::STARTMENU);
-			controller.SendEvent(event);
-		}
-
-		break;
-	}
-	}
 }
 
 void MenuSystem::Reset()
@@ -280,20 +208,15 @@ void MenuSystem::RenderEndScreen() {
 }
 
 void MenuSystem::RenderControlsScreen() {
+	glDisable(GL_DEPTH_TEST);
+	Clear(0.05f, 0.05f, 0.05f, 1.0f);
 	RenderElements(controlsUIElements);
-}
 
-void MenuSystem::RenderSettingsScreen()
-{
-	RenderElements(settingsUIElements);
-
-	float buttonSpacing = 120.0f;
-	float textScale = uniformScale;
-	RenderText("Player Count: " + std::to_string(numPlayers), ScaledX(500.0f), ScaledY(500.0f), textScale, defaultColor);
-	
-
-	// back instruction
-	RenderText("Press B to return to Main Menu", ScaledX(0.0f), ScaledY(700.0f), textScale * 0.5, glm::vec3(1.0f));
+	if (gamepad->GetButtonDown(Buttons::JUMP)) {
+		Event event(Events::GameState::NEW_STATE);
+		event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::GAME);
+		controller.SendEvent(event);
+	}
 }
 
 void MenuSystem::RenderFadeOverlay(float alpha) {
@@ -428,20 +351,6 @@ void MenuSystem::InitControlsUI() {
 		ScaleMode::FILL,
 		std::make_unique<Texture>(tex)
 	);
-}
-
-void MenuSystem::InitSettingsUI()
-{
-	float buttonWidth = 300.0f;
-	float buttonHeight = 80.0f;
-	float buttonX = 640.0f - buttonWidth * 0.5f;
-	float buttonSpacing = 120.0f;
-
-	float playerCountY = 500.0f - buttonHeight * 0.5f;
-
-	settingsUIElements.clear();
-	settingsUIElements.emplace_back(buttonX, playerCountY, buttonWidth, buttonHeight,
-		glm::vec4(0.2f, 0.2f, 0.2f, 0.9f));
 }
 
 void MenuSystem::RenderElements(std::vector<UIElement>& elements)

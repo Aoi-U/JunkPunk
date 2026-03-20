@@ -79,7 +79,6 @@ enum GameState
 	STARTMENU,
 	ENDMENU,
 	CONTROLS,
-	SETTINGS,
 	RESTART
 };
 

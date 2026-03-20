@@ -72,7 +72,7 @@ bool MainVehicle::initVehicles(PxScene* gScene, PxPhysics* gPhysics, PxMaterial*
 			shape->setSimulationFilterData(vehicleFilter);
 			shape->setQueryFilterData(vehicleFilter);
 
-			shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, false);
+			shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, true);
 			shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, true);
 			shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, false);
 		}
@@ -81,7 +81,7 @@ bool MainVehicle::initVehicles(PxScene* gScene, PxPhysics* gPhysics, PxMaterial*
 			shape->setSimulationFilterData(wheelFilter);
 			shape->setQueryFilterData(wheelFilter);
 
-			shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, false);
+			shape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, true);
 			shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
 			shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, false);
 		}
@@ -96,25 +96,14 @@ bool MainVehicle::initVehicles(PxScene* gScene, PxPhysics* gPhysics, PxMaterial*
 	PxShape* chassisShape = gPhysics->createShape(PxBoxGeometry(gVehicle.mPhysXParams.physxActorBoxShapeHalfExtents), *gMaterial);
 	chassisShape->setFlag(PxShapeFlag::eVISUALIZATION, true);
 
-	//PxFilterData chassisFilter(COLLISION_FLAG_CHASSIS, COLLISION_FLAG_CHASSIS_AGAINST, 0, 0);
-	//chassisShape->setSimulationFilterData(chassisFilter);
-	//chassisShape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, true);
-	//chassisShape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, true);
-	//chassisShape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, false);
-	//
-	//gVehicle.mPhysXState.physxActor.rigidBody->attachShape(*chassisShape);
 	PxFilterData chassisFilter(COLLISION_FLAG_CHASSIS, COLLISION_FLAG_CHASSIS_AGAINST, 0, 0);
 	chassisShape->setSimulationFilterData(chassisFilter);
-	chassisShape->setQueryFilterData(chassisFilter);
-
-	// IMPORTANT: same here
-	chassisShape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, false);
+	chassisShape->setFlag(PxShapeFlag::eSCENE_QUERY_SHAPE, true);
 	chassisShape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, true);
 	chassisShape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, false);
 
 	gVehicle.mPhysXState.physxActor.rigidBody->attachShape(*chassisShape);
 	chassisShape->release();
-
 
 	gVehicleSimulationContext.setToDefault();
 	gVehicleSimulationContext.frame.lngAxis = PxVehicleAxes::ePosZ;

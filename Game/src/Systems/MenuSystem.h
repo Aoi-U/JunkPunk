@@ -39,6 +39,8 @@ public:
 	void Update();
 	void Reset();
 	void RenderWinText();
+	void RenderEndScreen();
+	void RenderControlsScreen();
 	void RenderFadeOverlay(float alpha);
 
 private:
@@ -48,14 +50,10 @@ private:
 	void RenderText(std::string text, float x, float y, float scale, glm::vec3 color);
 	void RenderUIRect(float x, float y, float width, float height, glm::vec4 color);
 	void RenderUITexture(float x, float y, float width, float height, Texture* tex, glm::vec4 tint);
-	void RenderEndScreen();
-	void RenderControlsScreen();
-	void RenderSettingsScreen();
 
 	void InitUI();
 	void InitEndUI();
 	void InitControlsUI();
-	void InitSettingsUI();
 
 	void UpdateUIScale();
 	float ScaledX(float x);
@@ -72,9 +70,7 @@ private:
 	{
 		START,
 		SETTINGS,
-		QUIT,
-
-		PLAYER_COUNT
+		QUIT
 	};
 
 	unsigned int screenWidth = 1280;
@@ -98,17 +94,13 @@ private:
 	std::shared_ptr<Shader> uiShader;
 
 	std::shared_ptr<Gamepad> gamepad;
-	bool canNavigate = false;
+	bool canNavigate = true;
 	int currentHover = 0;
-	int maxVerticalHover = 2;
-
-
 	glm::vec3 defaultColor = glm::vec3(0.5f, 0.8f, 0.2f);
 	glm::vec3 hoverColor = glm::vec3(0.7f, 1.0f, 0.2f);
 
 	std::vector<UIElement> uiElements;
 	std::vector<UIElement> endUIElements;
 	std::vector<UIElement> controlsUIElements;
-	std::vector<UIElement> settingsUIElements;
 
 };
