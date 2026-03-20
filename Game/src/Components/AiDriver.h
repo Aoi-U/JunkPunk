@@ -30,7 +30,7 @@ struct AiDriver
 
 	// Tuning (per-entity)
 	float arrivalRadius = 5.0f;
-	float desiredSpeed = 5.0f;
+	float desiredSpeed = 12.0f;
 	float lookaheadDistance = 5.0f;
 
 	// Steering PD
@@ -38,7 +38,7 @@ struct AiDriver
 	float steerDeadzoneDot = 0.98f;
 
 	// Throttle / brake
-	float throttleKp = 0.5f;
+	float throttleKp = 1.5f; // `throttleKp = 0.5` means the car ramps up slowly.Increasing it makes the AI hit target speed faster
 	float brakeAngleThreshold = 0.9f;
 	float maxThrottle = 1.0f;
 	float maxBrake = 1.0f;
@@ -56,6 +56,6 @@ struct AiDriver
 	glm::vec3 detectedObstaclePosition = glm::vec3(0.0f);
 
 	// Off-track recovery
-	float maxDistanceFromTrack = 15.0f;
+	float maxDistanceFromTrack = 30.0f;
 	float recoveryTimer = 0.0f;
 };

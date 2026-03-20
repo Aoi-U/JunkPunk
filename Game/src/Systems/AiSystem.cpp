@@ -11,35 +11,31 @@
 
 extern ECSController controller;
 
-//void AiSystem::Init()
-//{
-//	InitializeRaceAnchors();
-//}
-//
-//void AiSystem::InitializeRaceAnchors()
-//{
-//	raceAnchors = {
-//		glm::vec3(-39.0f, -94.0f, -8.0f),
-//		glm::vec3(-80.0f, -93.0f, 19.0f),
-//		glm::vec3(-49.266f, -84.591f, 49.396f),
-//		glm::vec3(-5.0f, -70.691f, 5.0f),
-//		glm::vec3(22.0f, -70.194f, 32.0f),
-//		glm::vec3(-3.312f, -61.604f, 35.852f),
-//		glm::vec3(-10.312f, -61.604f, 45.852f),
-//		glm::vec3(-28.125f, -59.594f, 65.995f),
-//		glm::vec3(4.254f, -43.482f, 101.625f),
-//		glm::vec3(29.236f, -38.011f, 71.075f),
-//		glm::vec3(21.665f, -39.062f, 56.706f),
-//		glm::vec3(39.063f, -38.777f, 39.908f),
-//		glm::vec3(81.944f, -19.593f, 81.963f),
-//		glm::vec3(25.0f, -3.5f, 120.0f), // finish line
-//	};
-//
-//	std::cout << "[AiSystem] Initialized " << raceAnchors.size() << " race anchors" << std::endl;
-//}
-
 void AiSystem::Init()
 {
+	InitializeRaceAnchors();
+}
+
+void AiSystem::InitializeRaceAnchors()
+{
+	raceAnchors = {
+		glm::vec3(-39.0f, -94.0f, -8.0f),
+		glm::vec3(-80.0f, -93.0f, 19.0f),
+		glm::vec3(-45.266f, -84.591f, 55.396f),
+		glm::vec3(5.0f, -70.691f, 5.0f),
+		glm::vec3(28.0f, -70.194f, 28.0f),
+		glm::vec3(-3.312f, -61.604f, 35.852f),
+		glm::vec3(-10.312f, -61.604f, 45.852f),
+		glm::vec3(-28.125f, -59.594f, 65.995f),
+		glm::vec3(4.254f, -43.482f, 101.625f),
+		glm::vec3(29.236f, -38.011f, 71.075f),
+		glm::vec3(21.665f, -39.062f, 56.706f),
+		glm::vec3(39.063f, -38.777f, 39.908f),
+		glm::vec3(81.944f, -19.593f, 81.963f),
+		glm::vec3(25.0f, -3.5f, 120.0f), // finish line
+	};
+
+	std::cout << "[AiSystem] Initialized " << raceAnchors.size() << " race anchors" << std::endl;
 }
 
 void AiSystem::SetNavMesh(const NavMesh& mesh)
@@ -48,31 +44,87 @@ void AiSystem::SetNavMesh(const NavMesh& mesh)
 	std::cout << "[AiSystem] NavMesh set: " << navMesh.TriangleCount() << " triangles." << std::endl;
 }
 
-void AiSystem::ComputeNavPath(Entity entity)
+size_t AiSystem::FindNearestAnchorIndex(const glm::vec3& position) const
+{
+	size_t bestIndex = 0;
+	float bestDistSq = std::numeric_limits<float>::max();
+
+	for (size_t i = 0; i < raceAnchors.size(); ++i)
+	{
+		glm::vec3 diff = raceAnchors[i] - position;
+		float distSq = glm::dot(diff, diff);
+		if (distSq < bestDistSq)
+		{
+			bestDistSq = distSq;
+			bestIndex = i;
+		}
+	}
+
+	return bestIndex;
+}
+
+void AiSystem::ComputeNavPath(Entity entity, size_t anchorStartIndex)
 {
 	auto& ai = controller.GetComponent<AiDriver>(entity);
 	auto& transform = controller.GetComponent<Transform>(entity);
 
-	glm::vec3 startPos = transform.position;
+	if (raceAnchors.empty())
+	{
+		std::cout << "[AiSystem] No race anchors defined!" << std::endl;
+		return;
+	}
 
-	int32_t startTri = navMesh.FindTriangle(startPos);
-	if (startTri < 0) startTri = navMesh.FindClosestTriangle(startPos);
+	// Clamp start index
+	if (anchorStartIndex >= raceAnchors.size())
+		anchorStartIndex = raceAnchors.size() - 1;
 
-	int32_t goalTri = navMesh.FindTriangle(goalPosition);
-	if (goalTri < 0) goalTri = navMesh.FindClosestTriangle(goalPosition);
+	ai.navWaypoints.clear();
 
-	std::cout << "[AiSystem] A* from tri " << startTri << " to tri " << goalTri << std::endl;
+	glm::vec3 currentPos = transform.position;
 
-	NavPath path = navMesh.FindPath(startTri, goalTri, startPos, goalPosition);
+	for (size_t i = anchorStartIndex; i < raceAnchors.size(); ++i)
+	{
+		glm::vec3 segGoal = raceAnchors[i];
 
-	ai.navWaypoints = path.waypoints;
+		int32_t startTri = navMesh.FindTriangle(currentPos);
+		if (startTri < 0) startTri = navMesh.FindClosestTriangle(currentPos);
+
+		int32_t goalTri = navMesh.FindTriangle(segGoal);
+		if (goalTri < 0) goalTri = navMesh.FindClosestTriangle(segGoal);
+
+		NavPath segPath = navMesh.FindPath(startTri, goalTri, currentPos, segGoal);
+
+		if (segPath.waypoints.size() <= 2)
+		{
+			if (ai.navWaypoints.empty())
+				ai.navWaypoints.push_back(currentPos);
+			ai.navWaypoints.push_back(segGoal);
+		}
+		else
+		{
+			if (ai.navWaypoints.empty())
+				ai.navWaypoints.push_back(segPath.waypoints[0]);
+
+			for (size_t w = 1; w < segPath.waypoints.size() - 1; ++w)
+			{
+				ai.navWaypoints.push_back(segPath.waypoints[w]);
+			}
+
+			ai.navWaypoints.push_back(segGoal);
+		}
+
+		std::cout << "[AiSystem] Segment " << i << ": " << segPath.triangleIndices.size()
+			<< " corridor tris, " << segPath.waypoints.size() << " raw waypoints" << std::endl;
+
+		currentPos = segGoal;
+	}
+
 	ai.currentWaypointIndex = 0;
-
 	if (ai.navWaypoints.size() > 1)
 		ai.currentWaypointIndex = 1;
 
-	std::cout << "[AiSystem] Computed A* path: " << path.triangleIndices.size()
-		<< " corridor triangles -> " << ai.navWaypoints.size() << " waypoints" << std::endl;
+	std::cout << "[AiSystem] Total path: " << ai.navWaypoints.size() << " waypoints (from anchor "
+		<< anchorStartIndex << " to " << raceAnchors.size() - 1 << ")" << std::endl;
 }
 
 void AiSystem::SpawnDebugWaypoints(Entity aiEntity)
@@ -132,6 +184,9 @@ void AiSystem::TransitionToState(Entity entity, AiState newState)
 	case AiState::FollowPath:
 		ai.stuckTimer = 0.0f;
 		break;
+	case AiState::RecoveringFromOffTrack:
+		ai.recoveryTimer = 0.0f;
+		break;
 	default:
 		break;
 	}
@@ -140,12 +195,34 @@ void AiSystem::TransitionToState(Entity entity, AiState newState)
 void AiSystem::UpdateStateMachine(Entity entity, float deltaTime)
 {
 	auto& ai = controller.GetComponent<AiDriver>(entity);
+	auto& transform = controller.GetComponent<Transform>(entity);
 
 	switch (ai.currentState)
 	{
 	case AiState::FollowPath:
+	{
+		// Check if the AI has gone off-track
+		int32_t currentTri = navMesh.FindTriangle(transform.position);
+		if (currentTri < 0)
+		{
+			// Not on the navmesh — check distance to current waypoint
+			if (ai.currentWaypointIndex < static_cast<uint32_t>(ai.navWaypoints.size()))
+			{
+				glm::vec3 toWp = ai.navWaypoints[ai.currentWaypointIndex] - transform.position;
+				float dist = glm::length(toWp);
+				if (dist > ai.maxDistanceFromTrack)
+				{
+					std::cout << "[AI] Off-track! dist=" << dist
+						<< " pos=(" << transform.position.x << ", " << transform.position.y << ", " << transform.position.z << ")"
+						<< std::endl;
+					TransitionToState(entity, AiState::RecoveringFromOffTrack);
+					break;
+				}
+			}
+		}
 		UpdateFollowPathState(entity, deltaTime);
 		break;
+	}
 	case AiState::BackingUp:
 		UpdateBackingUpState(entity, deltaTime);
 		break;
@@ -180,11 +257,9 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 	glm::vec3 carPos = transform.position;
 	glm::vec3 waypointPosition = ai.navWaypoints[ai.currentWaypointIndex];
 
-	// Use XZ distance for arrival
 	glm::vec3 toWpXZ = glm::vec3(waypointPosition.x - carPos.x, 0.0f, waypointPosition.z - carPos.z);
 	float distXZ = glm::length(toWpXZ);
 
-	// Advance through waypoints within arrival radius
 	while (distXZ < ai.arrivalRadius &&
 		ai.currentWaypointIndex + 1 < static_cast<uint32_t>(ai.navWaypoints.size()))
 	{
@@ -194,7 +269,6 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 		distXZ = glm::length(toWpXZ);
 	}
 
-	// Forward direction in XZ
 	glm::vec3 forward = transform.quatRotation * glm::vec3(0.0f, 0.0f, 1.0f);
 	forward.y = 0.0f;
 	if (glm::length(forward) < 1e-6f) forward = glm::vec3(0, 0, 1);
@@ -203,12 +277,10 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 	glm::vec3 toTargetN = distXZ > 1e-5f ? glm::normalize(toWpXZ) : forward;
 	float forwardDot = glm::clamp(glm::dot(forward, toTargetN), -1.0f, 1.0f);
 
-	// Only zero steer when almost perfectly aligned TOWARD the target
-	// (not when facing away — that needs full steering correction)
 	float steer = 0.0f;
-	if (std::abs(forwardDot) > ai.steerDeadzoneDot)
+	if (forwardDot > ai.steerDeadzoneDot)
 	{
-		steer = 0.0f; // Nearly aligned, go straight
+		steer = 0.0f;
 	}
 	else
 	{
@@ -218,26 +290,25 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 	float speed = glm::length(glm::vec3(body.linearVelocity.x, 0.0f, body.linearVelocity.z));
 	float baseThrottle = glm::clamp((ai.desiredSpeed - speed) * ai.throttleKp, 0.0f, ai.maxThrottle);
 
-	if (shouldLog)
-	{
-		std::cout << "[AI] pos=(" << carPos.x << ", " << carPos.y << ", " << carPos.z << ")"
-			<< " | wp[" << ai.currentWaypointIndex << "/" << ai.navWaypoints.size() << "]=("
-			<< waypointPosition.x << ", " << waypointPosition.y << ", " << waypointPosition.z << ")"
-			<< " | distXZ=" << distXZ
-			<< " | fwdDot=" << forwardDot
-			<< " | steer=" << steer
-			<< " | throttle=" << baseThrottle
-			<< " | speed=" << speed
-			<< std::endl;
-	}
+	//if (shouldLog)
+	//{
+	//	std::cout << "[AI] pos=(" << carPos.x << ", " << carPos.y << ", " << carPos.z << ")"
+	//		<< " | wp[" << ai.currentWaypointIndex << "/" << ai.navWaypoints.size() << "]=("
+	//		<< waypointPosition.x << ", " << waypointPosition.y << ", " << waypointPosition.z << ")"
+	//		<< " | distXZ=" << distXZ
+	//		<< " | fwdDot=" << forwardDot
+	//		<< " | steer=" << steer
+	//		<< " | throttle=" << baseThrottle
+	//		<< " | speed=" << speed
+	//		<< std::endl;
+	//}
 
-	// Stuck detection
 	if (speed < ai.stuckSpeedThreshold && baseThrottle > 0.5f)
 	{
 		ai.stuckTimer += deltaTime;
 		if (ai.stuckTimer > ai.stuckTimeThreshold)
 		{
-			std::cout << "[AI] STUCK — backing up" << std::endl;
+			std::cout << "[AI] STUCK: backing up" << std::endl;
 			TransitionToState(entity, AiState::BackingUp);
 			return;
 		}
@@ -293,7 +364,7 @@ void AiSystem::UpdateBackingUpState(Entity entity, float deltaTime)
 	float dot = glm::clamp(fwd2D.x * target2D.x + fwd2D.y * target2D.y, -1.0f, 1.0f);
 	float angle = std::atan2(cross, dot);
 
-	float steer = glm::clamp(angle * 1.0f, -1.0f, 1.0f);
+	float steer = glm::clamp(-angle * 1.0f, -1.0f, 1.0f);
 
 	vc.steer = -steer;
 	vc.throttle = 0.0f;
@@ -315,11 +386,73 @@ float AiSystem::CalculateSteeringAngle(const glm::vec3& forward, const glm::vec3
 	float dot = glm::clamp(fwd2D.x * target2D.x + fwd2D.y * target2D.y, -1.0f, 1.0f);
 	float angle = std::atan2(cross, dot);
 
-	// Use gain of 1.0 so the AI gets full lock when needed
 	return glm::clamp(-angle * 1.0f, -1.0f, 1.0f);
 }
 
 void AiSystem::UpdateRecoveringFromOffTrackState(Entity entity, float deltaTime)
 {
-	TransitionToState(entity, AiState::FollowPath);
+	std::cout << "Off track: updating recovery state..." << std::endl;
+	auto& ai = controller.GetComponent<AiDriver>(entity);
+	auto& transform = controller.GetComponent<Transform>(entity);
+	auto& vc = controller.GetComponent<VehicleCommands>(entity);
+
+	ai.recoveryTimer += deltaTime;
+
+	// Step 1: Find the nearest anchor ahead of our position and recompute the path
+	// This only runs once on entry (recoveryTimer just started)
+	if (ai.recoveryTimer < deltaTime * 1.5f)
+	{
+		size_t nearestAnchor = FindNearestAnchorIndex(transform.position);
+		std::cout << "[AI] Recovery: recomputing path from nearest anchor " << nearestAnchor
+			<< " (" << raceAnchors[nearestAnchor].x << ", "
+			<< raceAnchors[nearestAnchor].y << ", "
+			<< raceAnchors[nearestAnchor].z << ")" << std::endl;
+
+		ComputeNavPath(entity, nearestAnchor);
+	}
+
+	// Step 2: Drive toward the first new waypoint
+	if (ai.navWaypoints.empty())
+	{
+		// Path computation failed — just go back to FollowPath and hope for the best
+		std::cout << "[AI] Recovery: no path found, returning to FollowPath" << std::endl;
+		TransitionToState(entity, AiState::FollowPath);
+		return;
+	}
+
+	glm::vec3 carPos = transform.position;
+	glm::vec3 targetWp = ai.navWaypoints[ai.currentWaypointIndex];
+	glm::vec3 toWpXZ = glm::vec3(targetWp.x - carPos.x, 0.0f, targetWp.z - carPos.z);
+	float distXZ = glm::length(toWpXZ);
+
+	// Once we're close to the first waypoint on the new path, we're back on track
+	if (distXZ < ai.arrivalRadius * 2.0f)
+	{
+		std::cout << "[AI] Recovery complete, resuming FollowPath" << std::endl;
+		TransitionToState(entity, AiState::FollowPath);
+		return;
+	}
+
+	// Safety timeout — if we can't reach the path in 5 seconds, recompute again
+	if (ai.recoveryTimer > 5.0f)
+	{
+		std::cout << "[AI] Recovery timeout, recomputing..." << std::endl;
+		ai.recoveryTimer = 0.0f;
+		size_t nearestAnchor = FindNearestAnchorIndex(transform.position);
+		ComputeNavPath(entity, nearestAnchor);
+		return;
+	}
+
+	// Drive toward the first waypoint on the new path
+	glm::vec3 forward = transform.quatRotation * glm::vec3(0.0f, 0.0f, 1.0f);
+	forward.y = 0.0f;
+	if (glm::length(forward) < 1e-6f) forward = glm::vec3(0, 0, 1);
+	forward = glm::normalize(forward);
+
+	float steer = CalculateSteeringAngle(forward, toWpXZ);
+
+	vc.steer = steer;
+	vc.throttle = ai.maxThrottle * 0.5f; // drive cautiously during recovery
+	vc.brake = 0.0f;
+	vc.isGrounded = true;
 }
