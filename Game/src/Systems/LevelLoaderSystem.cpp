@@ -136,6 +136,7 @@ void LevelLoaderSystem::LoadLevel()
 		navMesh.Subdivide();    // 1023 -> 4092 triangles (4x denser)
 		navMesh.Subdivide(); // uncomment for 16368 triangles (16x denser) if needed
 		navMesh.BuildAdjacency();
+		navMesh.ComputeEdgeDanger(3);  // spread danger 3 triangles inward from edges
 		aiSystemPtr->SetNavMesh(navMesh);
 	}
 
@@ -290,8 +291,8 @@ void LevelLoaderSystem::LoadLevel()
 
 	std::vector<AiSpawnInfo> aiSpawns = {
 		{ glm::vec3(-28.0f, -80.0f, -21.0f), -40.0f, "AIVehicle1", "assets/models/car_body_blue/car.gltf" },
-		{ glm::vec3(-32.0f, -80.0f, -25.0f), -40.0f, "AIVehicle2", "assets/models/car_body_pink/car.gltf" },
-		{ glm::vec3(-24.0f, -80.0f, -17.0f), -40.0f, "AIVehicle3", "assets/models/car_body_red/car.gltf" },
+		//{ glm::vec3(-32.0f, -80.0f, -25.0f), -40.0f, "AIVehicle2", "assets/models/car_body_pink/car.gltf" },
+		//{ glm::vec3(-24.0f, -80.0f, -17.0f), -40.0f, "AIVehicle3", "assets/models/car_body_red/car.gltf" },
 	};
 
 	for (const auto& spawn : aiSpawns)

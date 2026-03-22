@@ -10,23 +10,22 @@
 
 class Model;
 
-// A single triangle on the navigation mesh
 struct NavTriangle
 {
-	std::array<glm::vec3, 3> vertices;          // The 3 corner positions
-	glm::vec3 centroid = glm::vec3(0.0f);       // Precomputed centre
+	std::array<glm::vec3, 3> vertices;
+	glm::vec3 centroid = glm::vec3(0.0f);
 	glm::vec3 normal = glm::vec3(0.0f, 1.0f, 0.0f);
-
-	// Indices into NavMesh::triangles for up to 3 edge-adjacent neighbours.
-	// -1 means no neighbour on that edge.
 	std::array<int32_t, 3> neighbours = { -1, -1, -1 };
+
+	// How close this triangle is to an edge/cliff. 0 = safe interior, 1.0 = right on the edge.
+	// Used by A* to penalize paths near drop-offs.
+	float edgeDanger = 0.0f;
 };
 
-// Lightweight handle used during A* / path queries
 struct NavPath
 {
-	std::vector<int32_t> triangleIndices;        // Corridor of triangle IDs
-	std::vector<glm::vec3> waypoints;            // Smoothed world-space points
+	std::vector<int32_t> triangleIndices;
+	std::vector<glm::vec3> waypoints;
 };
 
 class NavMesh
@@ -41,18 +40,22 @@ public:
 		const glm::vec3& scale,
 		float maxSlopeAngleDeg = 60.0f);
 
-	// Subdivide all triangles: each triangle is split into 4 by connecting edge midpoints.
-	// Call this between BuildFromModel and BuildAdjacency to increase density.
-	// Can be called multiple times (each call quadruples the triangle count).
 	void Subdivide();
-
 	void BuildAdjacency();
+
+	// Call after BuildAdjacency. Computes edgeDanger for each triangle and
+	// propagates it inward so A* avoids paths near cliffs.
+	// spreadRadius = how many triangles inward the danger spreads (default 3).
+	void ComputeEdgeDanger(int spreadRadius = 3);
 
 	// ---- Queries ----
 	int32_t FindTriangle(const glm::vec3& point) const;
 	int32_t FindClosestTriangle(const glm::vec3& point) const;
 
-	NavPath FindPath(int32_t startTri, int32_t goalTri, const glm::vec3& startPos, const glm::vec3& goalPos) const;
+	// edgePenaltyWeight: how much to penalize edge-adjacent triangles (0 = no penalty, higher = more avoidance)
+	NavPath FindPath(int32_t startTri, int32_t goalTri,
+		const glm::vec3& startPos, const glm::vec3& goalPos,
+		float edgePenaltyWeight = 5.0f) const;
 
 	// ---- Accessors ----
 	const std::vector<NavTriangle>& GetTriangles() const { return triangles; }

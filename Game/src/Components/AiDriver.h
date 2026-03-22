@@ -59,7 +59,8 @@ struct AiDriver
 	glm::vec3 detectedObstaclePosition = glm::vec3(0.0f);
 
 	// Off-track recovery
-	float maxDistanceFromTrack = 30.0f;
+	float maxDistanceFromTrack = 20.0f;
+	float offTrackHeightThreshold = 8.0f; // how far below the waypoint before triggering recovery
 	float recoveryTimer = 0.0f;
 
 	// Braking

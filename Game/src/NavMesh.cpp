@@ -52,7 +52,6 @@ static bool PointInTriangle3D(const glm::vec3& point,
 	return (u >= 0.0f) && (v >= 0.0f) && (u + v <= 1.0f);
 }
 
-// 2D cross product on XZ plane (used by the funnel algorithm)
 static float Cross2D(const glm::vec3& o, const glm::vec3& a, const glm::vec3& b)
 {
 	return (a.x - o.x) * (b.z - o.z) - (a.z - o.z) * (b.x - o.x);
@@ -67,6 +66,7 @@ int32_t NavMesh::AddTriangle(const glm::vec3& a, const glm::vec3& b, const glm::
 	tri.centroid = ComputeCentroid(a, b, c);
 	tri.normal = ComputeNormal(a, b, c);
 	tri.neighbours = { -1, -1, -1 };
+	tri.edgeDanger = 0.0f;
 
 	int32_t index = static_cast<int32_t>(triangles.size());
 	triangles.push_back(tri);
@@ -137,31 +137,24 @@ void NavMesh::Subdivide()
 		const glm::vec3& b = triangles[i].vertices[1];
 		const glm::vec3& c = triangles[i].vertices[2];
 
-		//       a
-		//      / \
-		//     ab--ac
-		//    / \ / \
-		//   b---bc---c
-
 		glm::vec3 ab = (a + b) * 0.5f;
 		glm::vec3 bc = (b + c) * 0.5f;
 		glm::vec3 ac = (a + c) * 0.5f;
 
-		// 4 sub-triangles
 		NavTriangle t0, t1, t2, t3;
 
 		t0.vertices = { a, ab, ac };
 		t1.vertices = { ab, b, bc };
 		t2.vertices = { ac, bc, c };
-		t3.vertices = { ab, bc, ac }; // centre triangle
+		t3.vertices = { ab, bc, ac };
 
-		// Compute centroid and normal for each
 		auto finish = [](NavTriangle& t) {
 			t.centroid = (t.vertices[0] + t.vertices[1] + t.vertices[2]) / 3.0f;
 			glm::vec3 n = glm::cross(t.vertices[1] - t.vertices[0], t.vertices[2] - t.vertices[0]);
 			float len = glm::length(n);
 			t.normal = (len > 1e-8f) ? n / len : glm::vec3(0.0f, 1.0f, 0.0f);
 			t.neighbours = { -1, -1, -1 };
+			t.edgeDanger = 0.0f;
 			};
 
 		finish(t0); finish(t1); finish(t2); finish(t3);
@@ -264,6 +257,72 @@ void NavMesh::BuildAdjacency()
 		<< " triangles, " << (adjacentPairs / 2) << " shared edges" << std::endl;
 }
 
+// ---- Edge Danger ----
+
+void NavMesh::ComputeEdgeDanger(int spreadRadius)
+{
+	int32_t count = static_cast<int32_t>(triangles.size());
+
+	// Step 1: Mark boundary triangles (any edge with no neighbour = mesh boundary = potential cliff)
+	int32_t boundaryCount = 0;
+	for (int32_t i = 0; i < count; ++i)
+	{
+		for (int e = 0; e < 3; ++e)
+		{
+			if (triangles[i].neighbours[e] < 0)
+			{
+				triangles[i].edgeDanger = 1.0f;
+				++boundaryCount;
+				break;
+			}
+		}
+	}
+
+	// Step 2: BFS spread danger inward from boundary triangles
+	// Each step reduces danger by 1/spreadRadius
+	if (spreadRadius > 0)
+	{
+		std::queue<int32_t> frontier;
+		std::vector<int> depth(count, -1);
+
+		for (int32_t i = 0; i < count; ++i)
+		{
+			if (triangles[i].edgeDanger > 0.0f)
+			{
+				frontier.push(i);
+				depth[i] = 0;
+			}
+		}
+
+		while (!frontier.empty())
+		{
+			int32_t current = frontier.front();
+			frontier.pop();
+
+			int nextDepth = depth[current] + 1;
+			if (nextDepth >= spreadRadius)
+				continue;
+
+			float nextDanger = 1.0f - (static_cast<float>(nextDepth) / static_cast<float>(spreadRadius));
+
+			for (int e = 0; e < 3; ++e)
+			{
+				int32_t nb = triangles[current].neighbours[e];
+				if (nb >= 0 && depth[nb] < 0)
+				{
+					depth[nb] = nextDepth;
+					if (nextDanger > triangles[nb].edgeDanger)
+						triangles[nb].edgeDanger = nextDanger;
+					frontier.push(nb);
+				}
+			}
+		}
+	}
+
+	std::cout << "[NavMesh] ComputeEdgeDanger: " << boundaryCount
+		<< " boundary triangles, spread radius=" << spreadRadius << std::endl;
+}
+
 // ---- Queries ----
 
 int32_t NavMesh::FindTriangle(const glm::vec3& point) const
@@ -299,7 +358,9 @@ int32_t NavMesh::FindClosestTriangle(const glm::vec3& point) const
 
 // ---- A* Pathfinding ----
 
-NavPath NavMesh::FindPath(int32_t startTri, int32_t goalTri, const glm::vec3& startPos, const glm::vec3& goalPos) const
+NavPath NavMesh::FindPath(int32_t startTri, int32_t goalTri,
+	const glm::vec3& startPos, const glm::vec3& goalPos,
+	float edgePenaltyWeight) const
 {
 	NavPath result;
 
@@ -310,7 +371,6 @@ NavPath NavMesh::FindPath(int32_t startTri, int32_t goalTri, const glm::vec3& st
 		return result;
 	}
 
-	// Trivial case
 	if (startTri == goalTri)
 	{
 		result.triangleIndices.push_back(startTri);
@@ -319,7 +379,6 @@ NavPath NavMesh::FindPath(int32_t startTri, int32_t goalTri, const glm::vec3& st
 		return result;
 	}
 
-	// A* open set: (f-cost, triangle index)
 	using Node = std::pair<float, int32_t>;
 	std::priority_queue<Node, std::vector<Node>, std::greater<Node>> openSet;
 
@@ -356,7 +415,10 @@ NavPath NavMesh::FindPath(int32_t startTri, int32_t goalTri, const glm::vec3& st
 				continue;
 
 			float edgeCost = glm::length(triangles[neighbour].centroid - tri.centroid);
-			float tentativeG = gCost[current] + edgeCost;
+
+			// Penalize triangles near edges/cliffs -- makes A* prefer interior paths
+			float dangerPenalty = triangles[neighbour].edgeDanger * edgePenaltyWeight;
+			float tentativeG = gCost[current] + edgeCost + dangerPenalty;
 
 			if (tentativeG < gCost[neighbour])
 			{
@@ -380,10 +442,9 @@ NavPath NavMesh::FindPath(int32_t startTri, int32_t goalTri, const glm::vec3& st
 
 	result.triangleIndices = corridor;
 
-	// Build waypoints: start position, then sampled centroids, then goal position
+	// Build waypoints from corridor centroids
 	result.waypoints.push_back(startPos);
 
-	// Sample every few centroids to keep the count manageable but the path accurate
 	const int sampleInterval = 3;
 	for (size_t i = 1; i < corridor.size(); ++i)
 	{
@@ -391,9 +452,92 @@ NavPath NavMesh::FindPath(int32_t startTri, int32_t goalTri, const glm::vec3& st
 			result.waypoints.push_back(triangles[corridor[i]].centroid);
 	}
 
-	// Ensure goal is the last waypoint
 	if (glm::length(result.waypoints.back() - goalPos) > 0.01f)
 		result.waypoints.push_back(goalPos);
+
+	// Step 1: Cull waypoints that are too close together
+	{
+		const float minSpacing = 5.0f;
+		std::vector<glm::vec3> culled;
+		culled.push_back(result.waypoints.front());
+
+		for (size_t i = 1; i < result.waypoints.size() - 1; ++i)
+		{
+			float distFromLast = glm::length(result.waypoints[i] - culled.back());
+			if (distFromLast >= minSpacing)
+			{
+				culled.push_back(result.waypoints[i]);
+			}
+		}
+
+		culled.push_back(result.waypoints.back());
+		result.waypoints = culled;
+	}
+
+	// Step 2: Generate a smooth Catmull-Rom spline through the waypoints.
+	// This replaces sharp corners with natural arcs -- the spline inherently
+	// creates wide turns because it matches the tangent at each control point.
+	if (result.waypoints.size() > 2)
+	{
+		const int subdivisions = 4; // points to insert between each pair of waypoints
+
+		std::vector<glm::vec3> spline;
+		size_t n = result.waypoints.size();
+
+		for (size_t i = 0; i < n - 1; ++i)
+		{
+			// Catmull-Rom needs 4 control points: p0, p1, p2, p3
+			// Clamp at the ends
+			glm::vec3 p0 = result.waypoints[(i > 0) ? i - 1 : 0];
+			glm::vec3 p1 = result.waypoints[i];
+			glm::vec3 p2 = result.waypoints[i + 1];
+			glm::vec3 p3 = result.waypoints[(i + 2 < n) ? i + 2 : n - 1];
+
+			// Always include the control point itself
+			spline.push_back(p1);
+
+			// Insert subdivided points between p1 and p2
+			for (int s = 1; s < subdivisions; ++s)
+			{
+				float t = static_cast<float>(s) / static_cast<float>(subdivisions);
+				float t2 = t * t;
+				float t3 = t2 * t;
+
+				// Catmull-Rom basis
+				glm::vec3 point =
+					0.5f * ((2.0f * p1) +
+					(-p0 + p2) * t +
+					(2.0f * p0 - 5.0f * p1 + 4.0f * p2 - p3) * t2 +
+					(-p0 + 3.0f * p1 - 3.0f * p2 + p3) * t3);
+
+				spline.push_back(point);
+			}
+		}
+
+		// Add the final point
+		spline.push_back(result.waypoints.back());
+
+		result.waypoints = spline;
+	}
+
+	// Step 3: Cull the spline output to a reasonable density for the AI to follow
+	{
+		const float finalSpacing = 5.0f;
+		std::vector<glm::vec3> culled;
+		culled.push_back(result.waypoints.front());
+
+		for (size_t i = 1; i < result.waypoints.size() - 1; ++i)
+		{
+			float distFromLast = glm::length(result.waypoints[i] - culled.back());
+			if (distFromLast >= finalSpacing)
+			{
+				culled.push_back(result.waypoints[i]);
+			}
+		}
+
+		culled.push_back(result.waypoints.back());
+		result.waypoints = culled;
+	}
 
 	return result;
 }

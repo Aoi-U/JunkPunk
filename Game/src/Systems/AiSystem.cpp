@@ -13,155 +13,29 @@ extern ECSController controller;
 
 void AiSystem::Init()
 {
-	if (useAnchors)
-	{
-		InitializeRaceAnchors();
-		std::cout << "[AiSystem] Using anchor-based pathfinding" << std::endl;
-	}
-	else
-	{
-		std::cout << "[AiSystem] Using pure A* pathfinding" << std::endl;
-	}
-}
-
-void AiSystem::ComputeNavPath(Entity entity, size_t anchorStartIndex)
-{
-	if (useAnchors)
-		ComputeNavPathWithAnchors(entity, anchorStartIndex);
-	else
-		ComputeNavPathWithoutAnchors(entity);
-}
-
-void AiSystem::InitializeRaceAnchors()
-{
-	raceAnchors = {
-		glm::vec3(-39.0f, -94.0f, -8.0f),
-		glm::vec3(-80.0f, -93.0f, 19.0f),
-		glm::vec3(-45.266f, -84.591f, 55.396f),
-		glm::vec3(5.0f, -70.691f, 5.0f),
-		glm::vec3(28.0f, -70.194f, 28.0f),
-		glm::vec3(-3.312f, -61.604f, 35.852f),
-		glm::vec3(-10.312f, -61.604f, 45.852f),
-		glm::vec3(-28.125f, -59.594f, 65.995f),
-		glm::vec3(4.254f, -43.482f, 101.625f),
-		glm::vec3(29.236f, -38.011f, 71.075f),
-		glm::vec3(21.665f, -39.062f, 56.706f),
-		glm::vec3(39.063f, -38.777f, 39.908f),
-		glm::vec3(81.944f, -19.593f, 81.963f),
-		glm::vec3(25.0f, -3.5f, 120.0f), // finish line
-	};
-
-	std::cout << "[AiSystem] Initialized " << raceAnchors.size() << " race anchors" << std::endl;
 }
 
 void AiSystem::SetNavMesh(const NavMesh& mesh)
 {
 	navMesh = mesh;
-	std::cout << "[AiSystem] NavMesh set: " << navMesh.TriangleCount() << " triangles." << std::endl;
+	std::cout << "[AiSystem] NavMesh set: " << navMesh.TriangleCount() << " triangles ("
+		<< navMesh.TriangleCount() << " nodes available for pathfinding)" << std::endl;
 }
 
-size_t AiSystem::FindNearestAnchorIndex(const glm::vec3& position) const
-{
-	size_t bestIndex = 0;
-	float bestDistSq = std::numeric_limits<float>::max();
-
-	for (size_t i = 0; i < raceAnchors.size(); ++i)
-	{
-		glm::vec3 diff = raceAnchors[i] - position;
-		float distSq = glm::dot(diff, diff);
-		if (distSq < bestDistSq)
-		{
-			bestDistSq = distSq;
-			bestIndex = i;
-		}
-	}
-
-	return bestIndex;
-}
-
-// This uses anchor points to create a multi-segment path, which is more expensive to compute but allows for better control over the route.
-void AiSystem::ComputeNavPathWithAnchors(Entity entity, size_t anchorStartIndex)
-{
-	auto& ai = controller.GetComponent<AiDriver>(entity);
-	auto& transform = controller.GetComponent<Transform>(entity);
-
-	if (raceAnchors.empty())
-	{
-		std::cout << "[AiSystem] No race anchors defined!" << std::endl;
-		return;
-	}
-
-	// Clamp start index
-	if (anchorStartIndex >= raceAnchors.size())
-		anchorStartIndex = raceAnchors.size() - 1;
-
-	ai.navWaypoints.clear();
-
-	glm::vec3 currentPos = transform.position;
-
-	for (size_t i = anchorStartIndex; i < raceAnchors.size(); ++i)
-	{
-		glm::vec3 segGoal = raceAnchors[i];
-
-		int32_t startTri = navMesh.FindTriangle(currentPos);
-		if (startTri < 0) startTri = navMesh.FindClosestTriangle(currentPos);
-
-		int32_t goalTri = navMesh.FindTriangle(segGoal);
-		if (goalTri < 0) goalTri = navMesh.FindClosestTriangle(segGoal);
-
-		NavPath segPath = navMesh.FindPath(startTri, goalTri, currentPos, segGoal);
-
-		if (segPath.waypoints.size() <= 2)
-		{
-			if (ai.navWaypoints.empty())
-				ai.navWaypoints.push_back(currentPos);
-			ai.navWaypoints.push_back(segGoal);
-		}
-		else
-		{
-			if (ai.navWaypoints.empty())
-				ai.navWaypoints.push_back(segPath.waypoints[0]);
-
-			for (size_t w = 1; w < segPath.waypoints.size() - 1; ++w)
-			{
-				ai.navWaypoints.push_back(segPath.waypoints[w]);
-			}
-
-			ai.navWaypoints.push_back(segGoal);
-		}
-
-		std::cout << "[AiSystem] Segment " << i << ": " << segPath.triangleIndices.size()
-			<< " corridor tris, " << segPath.waypoints.size() << " raw waypoints" << std::endl;
-
-		currentPos = segGoal;
-	}
-
-	ai.currentWaypointIndex = 0;
-	if (ai.navWaypoints.size() > 1)
-		ai.currentWaypointIndex = 1;
-
-	std::cout << "[AiSystem] Total path: " << ai.navWaypoints.size() << " waypoints (from anchor "
-		<< anchorStartIndex << " to " << raceAnchors.size() - 1 << ")" << std::endl;
-}
-
-// This is pure A* from current position to goal, without using anchors. Cheaper to compute but less control over the route.
-void AiSystem::ComputeNavPathWithoutAnchors(Entity entity)
+void AiSystem::ComputeNavPath(Entity entity)
 {
 	auto& ai = controller.GetComponent<AiDriver>(entity);
 	auto& transform = controller.GetComponent<Transform>(entity);
 
 	glm::vec3 startPos = transform.position;
-	glm::vec3 goalPos(25.0f, -3.5f, 120.0f); // finish line — update this for the new map
 
 	int32_t startTri = navMesh.FindTriangle(startPos);
 	if (startTri < 0) startTri = navMesh.FindClosestTriangle(startPos);
 
-	int32_t goalTri = navMesh.FindTriangle(goalPos);
-	if (goalTri < 0) goalTri = navMesh.FindClosestTriangle(goalPos);
+	int32_t goalTri = navMesh.FindTriangle(goalPosition);
+	if (goalTri < 0) goalTri = navMesh.FindClosestTriangle(goalPosition);
 
-	std::cout << "[AiSystem] A* from tri " << startTri << " to tri " << goalTri << std::endl;
-
-	NavPath path = navMesh.FindPath(startTri, goalTri, startPos, goalPos);
+	NavPath path = navMesh.FindPath(startTri, goalTri, startPos, goalPosition);
 
 	ai.navWaypoints = path.waypoints;
 	ai.currentWaypointIndex = 0;
@@ -169,7 +43,39 @@ void AiSystem::ComputeNavPathWithoutAnchors(Entity entity)
 	if (ai.navWaypoints.size() > 1)
 		ai.currentWaypointIndex = 1;
 
-	std::cout << "[AiSystem] A* path: " << path.triangleIndices.size()
+	std::cout << "[AiSystem] Path computed: " << path.triangleIndices.size()
+		<< " corridor triangles -> " << ai.navWaypoints.size() << " waypoints" << std::endl;
+}
+
+void AiSystem::RecomputeNavPath(Entity entity)
+{
+	auto& ai = controller.GetComponent<AiDriver>(entity);
+	auto& transform = controller.GetComponent<Transform>(entity);
+
+	glm::vec3 currentPos = transform.position;
+
+	// Find the closest node (triangle centroid) to our current position
+	int32_t nearestTri = navMesh.FindTriangle(currentPos);
+	if (nearestTri < 0) nearestTri = navMesh.FindClosestTriangle(currentPos);
+
+	int32_t goalTri = navMesh.FindTriangle(goalPosition);
+	if (goalTri < 0) goalTri = navMesh.FindClosestTriangle(goalPosition);
+
+	NavPath path = navMesh.FindPath(nearestTri, goalTri, currentPos, goalPosition);
+
+	if (path.waypoints.empty())
+	{
+		std::cout << "[AiSystem] Re-path failed! No path from current position to goal." << std::endl;
+		return;
+	}
+
+	ai.navWaypoints = path.waypoints;
+	ai.currentWaypointIndex = 0;
+
+	if (ai.navWaypoints.size() > 1)
+		ai.currentWaypointIndex = 1;
+
+	std::cout << "[AiSystem] Re-pathed: " << path.triangleIndices.size()
 		<< " corridor triangles -> " << ai.navWaypoints.size() << " waypoints" << std::endl;
 }
 
@@ -247,18 +153,39 @@ void AiSystem::UpdateStateMachine(Entity entity, float deltaTime)
 	{
 	case AiState::FollowPath:
 	{
-		// Off-track detection
-		int32_t currentTri = navMesh.FindTriangle(transform.position);
-		if (currentTri < 0 && ai.currentWaypointIndex < static_cast<uint32_t>(ai.navWaypoints.size()))
+		bool offTrack = false;
+
+		if (ai.currentWaypointIndex < static_cast<uint32_t>(ai.navWaypoints.size()))
 		{
-			float dist = glm::length(ai.navWaypoints[ai.currentWaypointIndex] - transform.position);
-			if (dist > ai.maxDistanceFromTrack)
+			glm::vec3 carPos = transform.position;
+			glm::vec3 wpPos = ai.navWaypoints[ai.currentWaypointIndex];
+
+			// Check 1: Car is below the current waypoint (fell off a cliff/ramp)
+			float heightBelow = wpPos.y - carPos.y;
+			if (heightBelow > ai.offTrackHeightThreshold)
 			{
-				std::cout << "[AI] Off-track! dist=" << dist << std::endl;
-				TransitionToState(entity, AiState::RecoveringFromOffTrack);
-				break;
+				std::cout << "[AI] Off-track (fell below waypoint)! heightBelow=" << heightBelow << std::endl;
+				offTrack = true;
+			}
+
+			// Check 2: 3D distance is too large (knocked far away)
+			if (!offTrack)
+			{
+				float dist3D = glm::length(wpPos - carPos);
+				if (dist3D > ai.maxDistanceFromTrack)
+				{
+					std::cout << "[AI] Off-track (too far in 3D)! dist=" << dist3D << std::endl;
+					offTrack = true;
+				}
 			}
 		}
+
+		if (offTrack)
+		{
+			TransitionToState(entity, AiState::RecoveringFromOffTrack);
+			break;
+		}
+
 		UpdateFollowPathState(entity, deltaTime);
 		break;
 	}
@@ -362,7 +289,7 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 		ai.stuckTimer += deltaTime;
 		if (ai.stuckTimer > ai.stuckTimeThreshold)
 		{
-			std::cout << "[AI] STUCK: backing up" << std::endl;
+			std::cout << "[AI] STUCK - backing up" << std::endl;
 			TransitionToState(entity, AiState::BackingUp);
 			return;
 		}
@@ -426,6 +353,65 @@ void AiSystem::UpdateBackingUpState(Entity entity, float deltaTime)
 	vc.isGrounded = true;
 }
 
+void AiSystem::UpdateRecoveringFromOffTrackState(Entity entity, float deltaTime)
+{
+	auto& ai = controller.GetComponent<AiDriver>(entity);
+	auto& transform = controller.GetComponent<Transform>(entity);
+	auto& vc = controller.GetComponent<VehicleCommands>(entity);
+
+	ai.recoveryTimer += deltaTime;
+
+	// On entry: find the nearest node and recompute entire path to goal
+	if (ai.recoveryTimer < deltaTime * 1.5f)
+	{
+		std::cout << "[AI] Recovery: finding nearest node and re-pathing to goal..." << std::endl;
+		RecomputeNavPath(entity);
+	}
+
+	if (ai.navWaypoints.empty())
+	{
+		std::cout << "[AI] Recovery: no path found, returning to FollowPath" << std::endl;
+		TransitionToState(entity, AiState::FollowPath);
+		return;
+	}
+
+	// Drive toward the first waypoint on the new path
+	glm::vec3 carPos = transform.position;
+	glm::vec3 targetWp = ai.navWaypoints[ai.currentWaypointIndex];
+	glm::vec3 toWpXZ = glm::vec3(targetWp.x - carPos.x, 0.0f, targetWp.z - carPos.z);
+	float distXZ = glm::length(toWpXZ);
+
+	// Once close to the new path, resume normal following
+	if (distXZ < ai.arrivalRadius * 2.0f)
+	{
+		std::cout << "[AI] Recovery complete, resuming FollowPath" << std::endl;
+		TransitionToState(entity, AiState::FollowPath);
+		return;
+	}
+
+	// Safety timeout — re-path again if we can't reach it in 5 seconds
+	if (ai.recoveryTimer > 5.0f)
+	{
+		std::cout << "[AI] Recovery timeout, re-pathing..." << std::endl;
+		ai.recoveryTimer = 0.0f;
+		RecomputeNavPath(entity);
+		return;
+	}
+
+	// Steer toward the first waypoint
+	glm::vec3 forward = transform.quatRotation * glm::vec3(0.0f, 0.0f, 1.0f);
+	forward.y = 0.0f;
+	if (glm::length(forward) < 1e-6f) forward = glm::vec3(0, 0, 1);
+	forward = glm::normalize(forward);
+
+	float steer = CalculateSteeringAngle(forward, toWpXZ);
+
+	vc.steer = steer;
+	vc.throttle = ai.maxThrottle * 0.5f;
+	vc.brake = 0.0f;
+	vc.isGrounded = true;
+}
+
 float AiSystem::CalculateSteeringAngle(const glm::vec3& forward, const glm::vec3& toTarget)
 {
 	glm::vec2 fwd2D(forward.x, forward.z);
@@ -443,73 +429,7 @@ float AiSystem::CalculateSteeringAngle(const glm::vec3& forward, const glm::vec3
 	return glm::clamp(-angle * 1.0f, -1.0f, 1.0f);
 }
 
-void AiSystem::UpdateRecoveringFromOffTrackState(Entity entity, float deltaTime)
-{
-	std::cout << "Off track: updating recovery state..." << std::endl;
-	auto& ai = controller.GetComponent<AiDriver>(entity);
-	auto& transform = controller.GetComponent<Transform>(entity);
-	auto& vc = controller.GetComponent<VehicleCommands>(entity);
-
-	ai.recoveryTimer += deltaTime;
-
-	// Step 1: Find the nearest anchor ahead of our position and recompute the path
-	// This only runs once on entry (recoveryTimer just started)
-	if (ai.recoveryTimer < deltaTime * 1.5f)
-	{
-		size_t nearestAnchor = FindNearestAnchorIndex(transform.position);
-		std::cout << "[AI] Recovery: recomputing path from nearest anchor " << nearestAnchor
-			<< " (" << raceAnchors[nearestAnchor].x << ", "
-			<< raceAnchors[nearestAnchor].y << ", "
-			<< raceAnchors[nearestAnchor].z << ")" << std::endl;
-
-		ComputeNavPath(entity, nearestAnchor);
-	}
-
-	// Step 2: Drive toward the first new waypoint
-	if (ai.navWaypoints.empty())
-	{
-		// Path computation failed — just go back to FollowPath and hope for the best
-		std::cout << "[AI] Recovery: no path found, returning to FollowPath" << std::endl;
-		TransitionToState(entity, AiState::FollowPath);
-		return;
-	}
-
-	glm::vec3 carPos = transform.position;
-	glm::vec3 targetWp = ai.navWaypoints[ai.currentWaypointIndex];
-	glm::vec3 toWpXZ = glm::vec3(targetWp.x - carPos.x, 0.0f, targetWp.z - carPos.z);
-	float distXZ = glm::length(toWpXZ);
-
-	// Once we're close to the first waypoint on the new path, we're back on track
-	if (distXZ < ai.arrivalRadius * 2.0f)
-	{
-		std::cout << "[AI] Recovery complete, resuming FollowPath" << std::endl;
-		TransitionToState(entity, AiState::FollowPath);
-		return;
-	}
-
-	// Safety timeout — if we can't reach the path in 5 seconds, recompute again
-	if (ai.recoveryTimer > 5.0f)
-	{
-		std::cout << "[AI] Recovery timeout, recomputing..." << std::endl;
-		ai.recoveryTimer = 0.0f;
-		size_t nearestAnchor = FindNearestAnchorIndex(transform.position);
-		ComputeNavPath(entity, nearestAnchor);
-		return;
-	}
-
-	// Drive toward the first waypoint on the new path
-	glm::vec3 forward = transform.quatRotation * glm::vec3(0.0f, 0.0f, 1.0f);
-	forward.y = 0.0f;
-	if (glm::length(forward) < 1e-6f) forward = glm::vec3(0, 0, 1);
-	forward = glm::normalize(forward);
-
-	float steer = CalculateSteeringAngle(forward, toWpXZ);
-
-	vc.steer = steer;
-	vc.throttle = ai.maxThrottle * 0.5f; // drive cautiously during recovery
-	vc.brake = 0.0f;
-	vc.isGrounded = true;
-}
+// ---- Stubs for future states ----
 
 void AiSystem::UpdateAvoidObstacleState(Entity entity, float deltaTime)
 {

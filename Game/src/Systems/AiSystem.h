@@ -10,28 +10,25 @@ enum class AiState;
 class AiSystem : public System
 {
 public:
-	bool useAnchors = true; // Toggle: true = anchor-based, false = pure A*
-
 	void Init();
 	void Update(float deltaTime);
 
 	void SetNavMesh(const NavMesh& mesh);
 	const NavMesh& GetNavMesh() const { return navMesh; }
 
+	void SetGoalPosition(const glm::vec3& goal) { goalPosition = goal; }
+
 	void SpawnDebugWaypoints(Entity entity);
 
 private:
 	NavMesh navMesh;
+	glm::vec3 goalPosition = glm::vec3(25.0f, -3.5f, 120.0f);
 
-	std::vector<glm::vec3> raceAnchors;
-	void InitializeRaceAnchors();
+	// Computes A* path from the entity's current position to the goal
+	void ComputeNavPath(Entity entity);
 
-	// Single entry point — delegates based on useAnchors flag
-	void ComputeNavPath(Entity entity, size_t anchorStartIndex = 0);
-	void ComputeNavPathWithAnchors(Entity entity, size_t anchorStartIndex);
-	void ComputeNavPathWithoutAnchors(Entity entity);
-
-	size_t FindNearestAnchorIndex(const glm::vec3& position) const;
+	// Re-paths from the entity's current position (used after getting knocked off track)
+	void RecomputeNavPath(Entity entity);
 
 	void UpdateStateMachine(Entity entity, float deltaTime);
 	void TransitionToState(Entity entity, AiState newState);
