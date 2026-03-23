@@ -442,14 +442,23 @@ NavPath NavMesh::FindPath(int32_t startTri, int32_t goalTri,
 
 	result.triangleIndices = corridor;
 
-	// Build waypoints from corridor centroids
+	// Build waypoints from shared-edge midpoints (portals) between corridor triangles.
+	// Each consecutive pair in the corridor shares an edge; its midpoint is where
+	// the path actually crosses from one triangle to the next.
 	result.waypoints.push_back(startPos);
 
-	const int sampleInterval = 3;
-	for (size_t i = 1; i < corridor.size(); ++i)
+	for (size_t i = 0; i < corridor.size() - 1; ++i)
 	{
-		if (i % sampleInterval == 0 || i == corridor.size() - 1)
-			result.waypoints.push_back(triangles[corridor[i]].centroid);
+		const auto& tri = triangles[corridor[i]];
+		for (int e = 0; e < 3; ++e)
+		{
+			if (tri.neighbours[e] == corridor[i + 1])
+			{
+				glm::vec3 edgeMid = (tri.vertices[e] + tri.vertices[(e + 1) % 3]) * 0.5f;
+				result.waypoints.push_back(edgeMid);
+				break;
+			}
+		}
 	}
 
 	if (glm::length(result.waypoints.back() - goalPos) > 0.01f)
@@ -474,51 +483,136 @@ NavPath NavMesh::FindPath(int32_t startTri, int32_t goalTri,
 		result.waypoints = culled;
 	}
 
+	// Step 1.5: Replace sharp corners with arcs based on turning radius
+	if (result.waypoints.size() > 2)
+	{
+		const float minTurnRadius = 12.0f; // TUNE THIS
+
+		std::vector<glm::vec3> smoothed;
+		smoothed.push_back(result.waypoints.front());
+
+		for (size_t i = 1; i < result.waypoints.size() - 1; ++i)
+		{
+			glm::vec3 prev = result.waypoints[i - 1];
+			glm::vec3 curr = result.waypoints[i];
+			glm::vec3 next = result.waypoints[i + 1];
+
+			glm::vec3 inDir = glm::normalize(curr - prev);
+			glm::vec3 outDir = glm::normalize(next - curr);
+
+			float dot = glm::clamp(glm::dot(inDir, outDir), -1.0f, 1.0f);
+			float theta = acos(dot);
+
+			// Skip nearly straight lines
+			if (theta < 0.1f)
+			{
+				smoothed.push_back(curr);
+				continue;
+			}
+
+			// Distance from corner to entry/exit points
+			float d = minTurnRadius * tan(theta * 0.5f);
+
+			// Clamp so we don’t overshoot segments
+			float lenIn = glm::length(curr - prev);
+			float lenOut = glm::length(next - curr);
+			d = std::min(d, lenIn * 0.5f);
+			d = std::min(d, lenOut * 0.5f);
+
+			glm::vec3 entry = curr - inDir * d;
+			glm::vec3 exit = curr + outDir * d;
+
+			// Add entry point
+			smoothed.push_back(entry);
+
+			// --- Generate arc between entry and exit ---
+			// Compute turn direction (left/right)
+			glm::vec3 cross = glm::cross(inDir, outDir);
+			float turnSign = (cross.y >= 0.0f) ? 1.0f : -1.0f;
+
+			// Compute perpendicular to inDir (XZ plane)
+			glm::vec3 perp = glm::normalize(glm::vec3(-inDir.z, 0.0f, inDir.x)) * turnSign;
+
+			// Arc center
+			glm::vec3 center = entry + perp * minTurnRadius;
+
+			// Angles for arc interpolation
+			glm::vec3 startVec = entry - center;
+			glm::vec3 endVec = exit - center;
+
+			float startAngle = atan2(startVec.z, startVec.x);
+			float endAngle = atan2(endVec.z, endVec.x);
+
+			// Ensure correct winding
+			if (turnSign > 0.0f && endAngle < startAngle)
+				endAngle += glm::two_pi<float>();
+			else if (turnSign < 0.0f && endAngle > startAngle)
+				endAngle -= glm::two_pi<float>();
+
+			// Subdivide arc
+			const int arcSegments = 4;
+			for (int s = 1; s < arcSegments; ++s)
+			{
+				float t = (float)s / (float)arcSegments;
+				float angle = glm::mix(startAngle, endAngle, t);
+
+				glm::vec3 p = center + glm::vec3(cos(angle), 0.0f, sin(angle)) * minTurnRadius;
+				smoothed.push_back(p);
+			}
+
+			// Add exit point
+			smoothed.push_back(exit);
+		}
+
+		smoothed.push_back(result.waypoints.back());
+		result.waypoints = smoothed;
+	}
+
 	// Step 2: Generate a smooth Catmull-Rom spline through the waypoints.
 	// This replaces sharp corners with natural arcs -- the spline inherently
 	// creates wide turns because it matches the tangent at each control point.
-	if (result.waypoints.size() > 2)
-	{
-		const int subdivisions = 4; // points to insert between each pair of waypoints
+	//if (result.waypoints.size() > 2)
+	//{
+	//	const int subdivisions = 4; // points to insert between each pair of waypoints
 
-		std::vector<glm::vec3> spline;
-		size_t n = result.waypoints.size();
+	//	std::vector<glm::vec3> spline;
+	//	size_t n = result.waypoints.size();
 
-		for (size_t i = 0; i < n - 1; ++i)
-		{
-			// Catmull-Rom needs 4 control points: p0, p1, p2, p3
-			// Clamp at the ends
-			glm::vec3 p0 = result.waypoints[(i > 0) ? i - 1 : 0];
-			glm::vec3 p1 = result.waypoints[i];
-			glm::vec3 p2 = result.waypoints[i + 1];
-			glm::vec3 p3 = result.waypoints[(i + 2 < n) ? i + 2 : n - 1];
+	//	for (size_t i = 0; i < n - 1; ++i)
+	//	{
+	//		// Catmull-Rom needs 4 control points: p0, p1, p2, p3
+	//		// Clamp at the ends
+	//		glm::vec3 p0 = result.waypoints[(i > 0) ? i - 1 : 0];
+	//		glm::vec3 p1 = result.waypoints[i];
+	//		glm::vec3 p2 = result.waypoints[i + 1];
+	//		glm::vec3 p3 = result.waypoints[(i + 2 < n) ? i + 2 : n - 1];
 
-			// Always include the control point itself
-			spline.push_back(p1);
+	//		// Always include the control point itself
+	//		spline.push_back(p1);
 
-			// Insert subdivided points between p1 and p2
-			for (int s = 1; s < subdivisions; ++s)
-			{
-				float t = static_cast<float>(s) / static_cast<float>(subdivisions);
-				float t2 = t * t;
-				float t3 = t2 * t;
+	//		// Insert subdivided points between p1 and p2
+	//		for (int s = 1; s < subdivisions; ++s)
+	//		{
+	//			float t = static_cast<float>(s) / static_cast<float>(subdivisions);
+	//			float t2 = t * t;
+	//			float t3 = t2 * t;
 
-				// Catmull-Rom basis
-				glm::vec3 point =
-					0.5f * ((2.0f * p1) +
-					(-p0 + p2) * t +
-					(2.0f * p0 - 5.0f * p1 + 4.0f * p2 - p3) * t2 +
-					(-p0 + 3.0f * p1 - 3.0f * p2 + p3) * t3);
+	//			// Catmull-Rom basis
+	//			glm::vec3 point =
+	//				0.5f * ((2.0f * p1) +
+	//				(-p0 + p2) * t +
+	//				(2.0f * p0 - 5.0f * p1 + 4.0f * p2 - p3) * t2 +
+	//				(-p0 + 3.0f * p1 - 3.0f * p2 + p3) * t3);
 
-				spline.push_back(point);
-			}
-		}
+	//			spline.push_back(point);
+	//		}
+	//	}
 
-		// Add the final point
-		spline.push_back(result.waypoints.back());
+	//	// Add the final point
+	//	spline.push_back(result.waypoints.back());
 
-		result.waypoints = spline;
-	}
+	//	result.waypoints = spline;
+	//}
 
 	// Step 3: Cull the spline output to a reasonable density for the AI to follow
 	{

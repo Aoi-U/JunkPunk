@@ -38,7 +38,7 @@ public:
 		const glm::vec3& position,
 		const glm::quat& rotation,
 		const glm::vec3& scale,
-		float maxSlopeAngleDeg = 60.0f);
+		float maxSlopeAngleDeg = 40.0f);
 
 	void Subdivide();
 	void BuildAdjacency();

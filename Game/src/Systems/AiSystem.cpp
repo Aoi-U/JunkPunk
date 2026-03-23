@@ -271,18 +271,18 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 	float speed = glm::length(glm::vec3(body.linearVelocity.x, 0.0f, body.linearVelocity.z));
 	float baseThrottle = glm::clamp((ai.desiredSpeed - speed) * ai.throttleKp, 0.0f, ai.maxThrottle);
 
-	//if (shouldLog)
-	//{
-	//	std::cout << "[AI] pos=(" << carPos.x << ", " << carPos.y << ", " << carPos.z << ")"
-	//		<< " | wp[" << ai.currentWaypointIndex << "/" << ai.navWaypoints.size() << "]=("
-	//		<< waypointPosition.x << ", " << waypointPosition.y << ", " << waypointPosition.z << ")"
-	//		<< " | distXZ=" << distXZ
-	//		<< " | fwdDot=" << forwardDot
-	//		<< " | steer=" << steer
-	//		<< " | throttle=" << baseThrottle
-	//		<< " | speed=" << speed
-	//		<< std::endl;
-	//}
+	if (shouldLog)
+	{
+		std::cout << "[AI] pos=(" << carPos.x << ", " << carPos.y << ", " << carPos.z << ")"
+			<< " | wp[" << ai.currentWaypointIndex << "/" << ai.navWaypoints.size() << "]=("
+			<< waypointPosition.x << ", " << waypointPosition.y << ", " << waypointPosition.z << ")"
+			<< " | distXZ=" << distXZ
+			<< " | fwdDot=" << forwardDot
+			<< " | steer=" << steer
+			<< " | throttle=" << baseThrottle
+			<< " | speed=" << speed
+			<< std::endl;
+	}
 
 	if (speed < ai.stuckSpeedThreshold && baseThrottle > 0.5f)
 	{

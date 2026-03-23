@@ -10,9 +10,6 @@
 #include "../ECSController.h"
 
 extern ECSController controller;
-bool usedBoost = false;
-bool spinning = false;
-float spinTimer = 0.0f;
 
 PhysicsSystem::PhysicsSystem()
 {
@@ -88,9 +85,9 @@ void PhysicsSystem::Init()
 	PxPvdSceneClient* pvdClient = gPhysicsScene->getScenePvdClient();
 	if (pvdClient)
 	{
-		pvdClient->setScenePvdFlag(PxPvdSceneFlag::eTRANSMIT_CONSTRAINTS, true);
-		pvdClient->setScenePvdFlag(PxPvdSceneFlag::eTRANSMIT_CONTACTS, true);
-		pvdClient->setScenePvdFlag(PxPvdSceneFlag::eTRANSMIT_SCENEQUERIES, true);
+		pvdClient->setScenePvdFlag(PxPvdSceneFlag::eTRANSMIT_CONSTRAINTS, false);
+		pvdClient->setScenePvdFlag(PxPvdSceneFlag::eTRANSMIT_CONTACTS, false);
+		pvdClient->setScenePvdFlag(PxPvdSceneFlag::eTRANSMIT_SCENEQUERIES, false);
 	}
 
 	PxInitVehicleExtension(*gFoundation); // initialize vehicle extension
