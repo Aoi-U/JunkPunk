@@ -41,7 +41,7 @@ struct AiDriver
 	float steerDeadzoneDot = 0.98f;
 
 	// Throttle / brake
-	float throttleKp = 1.5f; // `throttleKp = 0.5` means the car ramps up slowly.Increasing it makes the AI hit target speed faster
+	float throttleKp = 1.5f;
 	float brakeAngleThreshold = 0.9f;
 	float maxThrottle = 1.0f;
 	float maxBrake = 1.0f;
@@ -53,23 +53,31 @@ struct AiDriver
 	float backupTimer = 0.0f;
 	float backupDuration = 0.5f;
 
+	// Progress tracking
+	float progressTimer = 0.0f;
+	float progressTimeThreshold = 2.0f;
+	float lastDistToWaypoint = 999999.0f;
+
+	// Re-path cooldown to prevent infinite re-pathing
+	float repathCooldown = 0.0f;
+	float repathCooldownDuration = 3.0f; // minimum seconds between re-paths
+
 	// Obstacle avoidance
 	float obstacleDetectionRange = 10.0f;
 	float avoidanceSteerMultiplier = 1.5f;
 	glm::vec3 detectedObstaclePosition = glm::vec3(0.0f);
 
 	// Off-track recovery
-	float maxDistanceFromTrack = 20.0f;
-	float offTrackHeightThreshold = 8.0f; // how far below the waypoint before triggering recovery
+	float offTrackHeightThreshold = 8.0f;
 	float recoveryTimer = 0.0f;
 
 	// Braking
-	float brakingAngleThreshold = 0.7f; // dot product below this triggers braking
-	int brakingLookaheadWaypoints = 3;   // how many waypoints ahead to check for sharp turns
-	float brakingSpeed = 4.0f;           // target speed when braking
+	float brakingAngleThreshold = 0.7f;
+	int brakingLookaheadWaypoints = 3;
+	float brakingSpeed = 4.0f;
 
 	// Seek powerup
-	float powerupSeekRange = 20.0f;      // max distance to detour for a powerup
+	float powerupSeekRange = 20.0f;
 
 	// Overtaking
 	float overtakeDetectionRange = 15.0f;

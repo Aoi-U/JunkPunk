@@ -52,6 +52,13 @@ public:
 	int32_t FindTriangle(const glm::vec3& point) const;
 	int32_t FindClosestTriangle(const glm::vec3& point) const;
 
+	// Like FindClosestTriangle but only considers triangles within maxHeightDiff
+	// of the query point's Y. Prevents snapping to walls/cliffs above or below.
+	int32_t FindClosestTriangleAtHeight(const glm::vec3& point, float maxHeightDiff = 5.0f) const;
+
+	// Like FindTriangle but only matches if the triangle is within maxHeightDiff of the point's Y
+	int32_t FindTriangleAtHeight(const glm::vec3& point, float maxHeightDiff = 5.0f) const;
+
 	// edgePenaltyWeight: how much to penalize edge-adjacent triangles (0 = no penalty, higher = more avoidance)
 	NavPath FindPath(int32_t startTri, int32_t goalTri,
 		const glm::vec3& startPos, const glm::vec3& goalPos,

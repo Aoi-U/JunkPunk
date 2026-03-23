@@ -356,6 +356,51 @@ int32_t NavMesh::FindClosestTriangle(const glm::vec3& point) const
 	return bestIndex;
 }
 
+int32_t NavMesh::FindClosestTriangleAtHeight(const glm::vec3& point, float maxHeightDiff) const
+{
+	if (triangles.empty())
+		return -1;
+
+	int32_t bestIndex = -1;
+	float bestDistSq = std::numeric_limits<float>::max();
+
+	for (int32_t i = 0; i < static_cast<int32_t>(triangles.size()); ++i)
+	{
+		// Only consider triangles near the same height
+		float heightDiff = std::abs(triangles[i].centroid.y - point.y);
+		if (heightDiff > maxHeightDiff)
+			continue;
+
+		float distSq = glm::dot(triangles[i].centroid - point, triangles[i].centroid - point);
+		if (distSq < bestDistSq)
+		{
+			bestDistSq = distSq;
+			bestIndex = i;
+		}
+	}
+
+	// If nothing found at this height, fall back to any triangle
+	if (bestIndex < 0)
+		return FindClosestTriangle(point);
+
+	return bestIndex;
+}
+
+int32_t NavMesh::FindTriangleAtHeight(const glm::vec3& point, float maxHeightDiff) const
+{
+	for (int32_t i = 0; i < static_cast<int32_t>(triangles.size()); ++i)
+	{
+		float heightDiff = std::abs(triangles[i].centroid.y - point.y);
+		if (heightDiff > maxHeightDiff)
+			continue;
+
+		const auto& tri = triangles[i];
+		if (PointInTriangle3D(point, tri.vertices[0], tri.vertices[1], tri.vertices[2], tri.normal))
+			return i;
+	}
+	return -1;
+}
+
 // ---- A* Pathfinding ----
 
 NavPath NavMesh::FindPath(int32_t startTri, int32_t goalTri,
@@ -464,25 +509,6 @@ NavPath NavMesh::FindPath(int32_t startTri, int32_t goalTri,
 	if (glm::length(result.waypoints.back() - goalPos) > 0.01f)
 		result.waypoints.push_back(goalPos);
 
-	// Step 1: Cull waypoints that are too close together
-	{
-		const float minSpacing = 5.0f;
-		std::vector<glm::vec3> culled;
-		culled.push_back(result.waypoints.front());
-
-		for (size_t i = 1; i < result.waypoints.size() - 1; ++i)
-		{
-			float distFromLast = glm::length(result.waypoints[i] - culled.back());
-			if (distFromLast >= minSpacing)
-			{
-				culled.push_back(result.waypoints[i]);
-			}
-		}
-
-		culled.push_back(result.waypoints.back());
-		result.waypoints = culled;
-	}
-
 	// Step 1.5: Replace sharp corners with arcs based on turning radius
 	if (result.waypoints.size() > 2)
 	{
@@ -567,52 +593,6 @@ NavPath NavMesh::FindPath(int32_t startTri, int32_t goalTri,
 		smoothed.push_back(result.waypoints.back());
 		result.waypoints = smoothed;
 	}
-
-	// Step 2: Generate a smooth Catmull-Rom spline through the waypoints.
-	// This replaces sharp corners with natural arcs -- the spline inherently
-	// creates wide turns because it matches the tangent at each control point.
-	//if (result.waypoints.size() > 2)
-	//{
-	//	const int subdivisions = 4; // points to insert between each pair of waypoints
-
-	//	std::vector<glm::vec3> spline;
-	//	size_t n = result.waypoints.size();
-
-	//	for (size_t i = 0; i < n - 1; ++i)
-	//	{
-	//		// Catmull-Rom needs 4 control points: p0, p1, p2, p3
-	//		// Clamp at the ends
-	//		glm::vec3 p0 = result.waypoints[(i > 0) ? i - 1 : 0];
-	//		glm::vec3 p1 = result.waypoints[i];
-	//		glm::vec3 p2 = result.waypoints[i + 1];
-	//		glm::vec3 p3 = result.waypoints[(i + 2 < n) ? i + 2 : n - 1];
-
-	//		// Always include the control point itself
-	//		spline.push_back(p1);
-
-	//		// Insert subdivided points between p1 and p2
-	//		for (int s = 1; s < subdivisions; ++s)
-	//		{
-	//			float t = static_cast<float>(s) / static_cast<float>(subdivisions);
-	//			float t2 = t * t;
-	//			float t3 = t2 * t;
-
-	//			// Catmull-Rom basis
-	//			glm::vec3 point =
-	//				0.5f * ((2.0f * p1) +
-	//				(-p0 + p2) * t +
-	//				(2.0f * p0 - 5.0f * p1 + 4.0f * p2 - p3) * t2 +
-	//				(-p0 + 3.0f * p1 - 3.0f * p2 + p3) * t3);
-
-	//			spline.push_back(point);
-	//		}
-	//	}
-
-	//	// Add the final point
-	//	spline.push_back(result.waypoints.back());
-
-	//	result.waypoints = spline;
-	//}
 
 	// Step 3: Cull the spline output to a reasonable density for the AI to follow
 	{

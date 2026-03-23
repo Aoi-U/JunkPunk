@@ -19,6 +19,8 @@ public:
 	void SetGoalPosition(const glm::vec3& goal) { goalPosition = goal; }
 
 	void SpawnDebugWaypoints(Entity entity);
+	// Spawns a 1x1 trigger box at every navmesh triangle centroid (node)
+	void SpawnDebugNodes();
 
 private:
 	NavMesh navMesh;

@@ -27,6 +27,10 @@ public:
 
 	const PxRenderBuffer& GetRenderBuffer() { return gPhysicsScene->getRenderBuffer(); }
 
+	bool usedBoost = false;
+	bool spinning = false;
+	float spinTimer;
+
 private:
 	PxDefaultAllocator gAllocator;
 	PxDefaultErrorCallback gErrorCallback;
