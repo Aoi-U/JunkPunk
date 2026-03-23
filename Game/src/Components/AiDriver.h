@@ -33,16 +33,21 @@ struct AiDriver
 
 	// Tuning (per-entity)
 	float arrivalRadius = 5.0f;
-	float desiredSpeed = 12.0f;
 	float lookaheadDistance = 5.0f;
 
 	// Steering PD
 	float maxSteerRadians = 1.0f;
 	float steerDeadzoneDot = 0.98f;
 
+	// Speed control
+	float maxSpeed = 50.0f;         // top speed on straight sections
+	float cornerSpeed = 4.0f;       // slowest speed at hairpins (increase if the AI is too cautious)
+	float brakingDistance = 25.0f;   // how far ahead to start slowing down for a corner
+	int lookaheadWaypoints = 8;     // how many waypoints ahead to scan for turns
+
 	// Throttle / brake
 	float throttleKp = 1.5f;
-	float brakeAngleThreshold = 0.9f;
+	float brakeKp = 10.0f;           // brake aggressiveness (increase if the AI doesn't slow down fast enough)
 	float maxThrottle = 1.0f;
 	float maxBrake = 1.0f;
 
@@ -58,9 +63,9 @@ struct AiDriver
 	float progressTimeThreshold = 2.0f;
 	float lastDistToWaypoint = 999999.0f;
 
-	// Re-path cooldown to prevent infinite re-pathing
+	// Re-path cooldown
 	float repathCooldown = 0.0f;
-	float repathCooldownDuration = 3.0f; // minimum seconds between re-paths
+	float repathCooldownDuration = 3.0f;
 
 	// Obstacle avoidance
 	float obstacleDetectionRange = 10.0f;
@@ -70,11 +75,6 @@ struct AiDriver
 	// Off-track recovery
 	float offTrackHeightThreshold = 8.0f;
 	float recoveryTimer = 0.0f;
-
-	// Braking
-	float brakingAngleThreshold = 0.7f;
-	int brakingLookaheadWaypoints = 3;
-	float brakingSpeed = 4.0f;
 
 	// Seek powerup
 	float powerupSeekRange = 20.0f;

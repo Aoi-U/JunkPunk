@@ -358,8 +358,95 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 		steer = CalculateSteeringAngle(forward, toWpXZ);
 	}
 
+	// --- Speed control: look ahead for corners ---
+	// Scan upcoming waypoints to find the sharpest turn ahead.
+	// The target speed scales between maxSpeed (straight) and cornerSpeed (sharp turn).
+	float sharpestTurnDot = 1.0f; // 1.0 = perfectly straight
+	float distToSharpest = 999999.0f;
+
+	uint32_t wpCount = static_cast<uint32_t>(ai.navWaypoints.size());
+	uint32_t scanStart = ai.currentWaypointIndex;
+	uint32_t scanEnd = glm::min(scanStart + static_cast<uint32_t>(ai.lookaheadWaypoints), wpCount);
+
+	// Accumulate distance along the path to each upcoming waypoint
+	float accumDist = distXZ; // distance from car to current waypoint
+
+	for (uint32_t i = scanStart; i + 2 < scanEnd; ++i)
+	{
+		glm::vec3 a = ai.navWaypoints[i];
+		glm::vec3 b = ai.navWaypoints[i + 1];
+		glm::vec3 c = ai.navWaypoints[i + 2];
+
+		glm::vec3 dirAB = b - a;
+		glm::vec3 dirBC = c - b;
+		dirAB.y = 0.0f;
+		dirBC.y = 0.0f;
+
+		float lenAB = glm::length(dirAB);
+		float lenBC = glm::length(dirBC);
+
+		if (lenAB < 1e-5f || lenBC < 1e-5f)
+		{
+			accumDist += lenAB;
+			continue;
+		}
+
+		float turnDot = glm::dot(dirAB / lenAB, dirBC / lenBC);
+
+		if (turnDot < sharpestTurnDot)
+		{
+			sharpestTurnDot = turnDot;
+			distToSharpest = accumDist + lenAB; // distance from car to the turn at B
+		}
+
+		accumDist += lenAB;
+	}
+
+	// Also factor in the immediate turn toward the current waypoint
+	float immediateTurnDot = forwardDot;
+	if (immediateTurnDot < sharpestTurnDot)
+	{
+		sharpestTurnDot = immediateTurnDot;
+		distToSharpest = distXZ;
+	}
+
+	// Map sharpest turn dot to a target speed:
+	// dot=1.0 (straight) -> maxSpeed
+	// dot=0.0 (90 deg)   -> cornerSpeed
+	// dot<0   (U-turn)   -> cornerSpeed
+	float turnFactor = glm::clamp(sharpestTurnDot, 0.0f, 1.0f);
+	float cornerTargetSpeed = glm::mix(ai.cornerSpeed, ai.maxSpeed, turnFactor);
+
+	// Ramp speed based on distance to the corner:
+	// Far away -> can go maxSpeed
+	// Close -> need to be at cornerTargetSpeed
+	float distanceFactor = glm::clamp(distToSharpest / ai.brakingDistance, 0.0f, 1.0f);
+	float desiredSpeed = glm::mix(cornerTargetSpeed, ai.maxSpeed, distanceFactor);
+
+	// --- Throttle and braking ---
 	float speed = glm::length(glm::vec3(body.linearVelocity.x, 0.0f, body.linearVelocity.z));
-	float baseThrottle = glm::clamp((ai.desiredSpeed - speed) * ai.throttleKp, 0.0f, ai.maxThrottle);
+
+	float throttle = 0.0f;
+	float brake = 0.0f;
+
+	if (speed < desiredSpeed)
+	{
+		// Under target speed: accelerate
+		throttle = glm::clamp((desiredSpeed - speed) * ai.throttleKp, 0.0f, ai.maxThrottle);
+		brake = 0.0f;
+	}
+	else if (speed > desiredSpeed + 1.0f)
+	{
+		// Over target speed by more than 1 unit: brake
+		throttle = 0.0f;
+		brake = glm::clamp((speed - desiredSpeed) * ai.brakeKp, 0.0f, ai.maxBrake);
+	}
+	else
+	{
+		// Near target speed: coast
+		throttle = 0.0f;
+		brake = 0.0f;
+	}
 
 	if (shouldLog)
 	{
@@ -369,14 +456,15 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 			<< " | distXZ=" << distXZ
 			<< " | fwdDot=" << forwardDot
 			<< " | steer=" << steer
-			<< " | throttle=" << baseThrottle
 			<< " | speed=" << speed
-			<< " | progress=" << ai.progressTimer
+			<< " | target=" << desiredSpeed
+			<< " | throttle=" << throttle
+			<< " | brake=" << brake
 			<< std::endl;
 	}
 
 	// Stuck detection (zero speed against a wall)
-	if (speed < ai.stuckSpeedThreshold && baseThrottle > 0.5f)
+	if (speed < ai.stuckSpeedThreshold && throttle > 0.5f)
 	{
 		ai.stuckTimer += deltaTime;
 		if (ai.stuckTimer > ai.stuckTimeThreshold)
@@ -392,8 +480,8 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 	}
 
 	vc.steer = steer;
-	vc.throttle = baseThrottle;
-	vc.brake = 0.0f;
+	vc.throttle = throttle;
+	vc.brake = brake;
 	vc.isGrounded = true;
 }
 
