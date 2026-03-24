@@ -248,11 +248,11 @@ Game::Game()
 void Game::Run()
 {
 	// temporary background music. add separate menu bgm, game bgm, etc in their proper states
-	Event event(Events::Audio::PLAY_SOUND);
-	event.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/jazz-background-music-325355.mp3");
+	/*Event event(Events::Audio::PLAY_SOUND);
+	event.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/intro.mp3");
 	event.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
 	event.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, -30.0f);
-	controller.SendEvent(event);
+	controller.SendEvent(event);*/
 
 	// imgui panel for debugging
 	//camera_debug_panel = std::make_unique<ImGuiPanel>(window);

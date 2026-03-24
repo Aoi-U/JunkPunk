@@ -56,6 +56,7 @@ private:
 	void InitEndUI();
 	void InitControlsUI();
 	void InitSettingsUI();
+	float GetCenteredX(std::string text, float scale);
 
 	void UpdateUIScale();
 	float ScaledX(float x);
@@ -103,8 +104,8 @@ private:
 	int maxVerticalHover = 2;
 
 
-	glm::vec3 defaultColor = glm::vec3(0.5f, 0.8f, 0.2f);
-	glm::vec3 hoverColor = glm::vec3(0.7f, 1.0f, 0.2f);
+	glm::vec3 defaultColor = glm::vec3(0.0f, 0.0f, 0.0f);
+	glm::vec3 hoverColor = glm::vec3(1.0f, 1.0f, 1.0f);
 
 	std::vector<UIElement> uiElements;
 	std::vector<UIElement> endUIElements;
