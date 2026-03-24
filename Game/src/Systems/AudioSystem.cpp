@@ -19,6 +19,12 @@ void AudioSystem::Init()
 	aEngine.LoadSound("assets/audio/MenuNavigation.wav", false);
 	aEngine.LoadSound("assets/audio/carAudio/carEngineIdle.mp3", false, true);
 
+	aEngine.LoadSound("assets/audio/main.mp3", false);
+	aEngine.LoadSound("assets/audio/main2.mp3", false);
+	aEngine.LoadSound("assets/audio/intro.mp3", false);
+	aEngine.LoadSound("assets/audio/outro.mp3", false);
+	aEngine.LoadSound("assets/audio/pause.mp3", false);
+
 	// event listeners
 	controller.AddEventListener(Events::Audio::PLAY_SOUND, [this](Event& e) {this->AudioEventListener(e); });
 	controller.AddEventListener(Events::Player::PLAYER_JUMPED, [this](Event& e) {this->JumpEventListener(e); });
@@ -27,6 +33,66 @@ void AudioSystem::Init()
 
 void AudioSystem::Update() {
 	aEngine.Update();
+
+	if (firstUpdate || currentStateGlobal != lastState)
+	{
+		firstUpdate = false;
+
+		if (currentStateGlobal != GameState::PAUSED)
+		{
+			lastState = currentStateGlobal;
+
+			switch (currentStateGlobal)
+			{
+			case GameState::STARTMENU:
+			case GameState::SETTINGS:
+				PlayMusic("assets/audio/main.mp3", -25.0f);
+				break;
+
+			case GameState::CONTROLS:
+				PlayMusic("assets/audio/pause.mp3", -25.0f);
+				break;
+
+			case GameState::GAME:
+				PlayMusic("assets/audio/intro.mp3", -25.0f);
+				break;
+
+			case GameState::ENDMENU:
+				PlayMusic("assets/audio/outro.mp3", -25.0f);
+				break;
+			}
+		}
+	}
+
+	static bool wasPaused = false;
+
+	if (currentStateGlobal == GameState::PAUSED)
+	{
+		if (!wasPaused)
+		{
+			wasPaused = true;
+
+			if (musicChannelId != -1)
+			{
+				aEngine.SetChannelVolume(musicChannelId, -40.0f);
+				aEngine.SetChannelPitch(musicChannelId, 0.7f);
+			}
+		}
+	}
+	else
+	{
+		if (wasPaused)
+		{
+			wasPaused = false;
+
+			if (musicChannelId != -1)
+			{
+				aEngine.SetChannelVolume(musicChannelId, -25.0f);
+				aEngine.SetChannelPitch(musicChannelId, 1.0f);
+			}
+		}
+	}
+
 	if (currentStateGlobal == GameState::GAME)
 	{
 		Entity player = controller.GetEntityByTag("Player1");
@@ -81,4 +147,13 @@ void AudioSystem::JumpEventListener(Event& e)
 	{
 		aEngine.PlaySounds("assets/audio/mariojump.mp3", Vector3{ 0, 0, 0 }, -20.0f);
 	}
+}
+
+void AudioSystem::PlayMusic(const std::string& path, float volumeDb) {
+
+	if (musicChannelId != -1) {
+		aEngine.StopChannel(musicChannelId);
+		musicChannelId = -1;
+	}
+	musicChannelId = aEngine.PlaySounds(path, Vector3{ 0,0,0 }, volumeDb);
 }
