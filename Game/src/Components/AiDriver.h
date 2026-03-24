@@ -40,14 +40,14 @@ struct AiDriver
 	float steerDeadzoneDot = 0.98f;
 
 	// Speed control
-	float maxSpeed = 50.0f;         // top speed on straight sections
+	float maxSpeed = 30.0f;         // top speed on straight sections
 	float cornerSpeed = 4.0f;       // slowest speed at hairpins (increase if the AI is too cautious)
-	float brakingDistance = 25.0f;   // how far ahead to start slowing down for a corner
+	float brakingDistance = 15.0f;   // how far ahead to start slowing down for a corner
 	int lookaheadWaypoints = 8;     // how many waypoints ahead to scan for turns
 
 	// Throttle / brake
 	float throttleKp = 1.5f;
-	float brakeKp = 10.0f;           // brake aggressiveness (increase if the AI doesn't slow down fast enough)
+	float brakeKp = 2.0f;           // brake aggressiveness (increase if the AI doesn't slow down fast enough)
 	float maxThrottle = 1.0f;
 	float maxBrake = 1.0f;
 
