@@ -64,6 +64,15 @@ void AudioSystem::Update() {
 		}
 	}
 
+	if (currentStateGlobal == GameState::GAME && lastState == GameState::GAME && firstUpdate == false)
+	{
+		// Detect restart case manually
+		if (musicChannelId == -1)
+		{
+			PlayMusic("assets/audio/main.mp3", -25.0f);
+		}
+	}
+
 	static bool wasPaused = false;
 
 	if (currentStateGlobal == GameState::PAUSED)
