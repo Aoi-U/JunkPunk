@@ -16,19 +16,28 @@ void PhysicsCallbacks::onTrigger(PxTriggerPair* pairs, PxU32 count)
 	
 	for (PxU32 i = 0; i < count; i++) {
 		const PxTriggerPair& pair = pairs[i];
-		if (!(pair.status & PxPairFlag::eNOTIFY_TOUCH_FOUND))
-			continue;
+		/*if (!(pair.status & PxPairFlag::eNOTIFY_TOUCH_FOUND))
+			continue;*/
 
 		if (!pair.triggerActor->userData || !pair.otherActor->userData)
 			continue;
 
 		Entity triggerEntity = static_cast<Entity>(reinterpret_cast<uintptr_t>(pair.triggerActor->userData));
 		Entity otherEntity = static_cast<Entity>(reinterpret_cast<uintptr_t>(pair.otherActor->userData));
+		if (pair.status & PxPairFlag::eNOTIFY_TOUCH_FOUND) {
+			Event e(Events::Physics::TRIGGER_ENTER);
+			e.SetParam<Entity>(Events::Physics::Trigger_Enter::ENTITY_ONE, triggerEntity);
+			e.SetParam<Entity>(Events::Physics::Trigger_Enter::ENTITY_TWO, otherEntity);
+			controller.SendEvent(e);
+			std::cout << "trigger event was called" << std::endl;
+		}
 
-		Event e(Events::Physics::TRIGGER_ENTER);
-		e.SetParam<Entity>(Events::Physics::Trigger_Enter::ENTITY_ONE, triggerEntity);
-		e.SetParam<Entity>(Events::Physics::Trigger_Enter::ENTITY_TWO, otherEntity);
-		controller.SendEvent(e);
-		std::cout << "trigger event was called" << std::endl;
+		if (pair.status & PxPairFlag::eNOTIFY_TOUCH_LOST) {
+			Event e(Events::Physics::TRIGGER_EXIT);
+			e.SetParam<Entity>(Events::Physics::Trigger_Enter::ENTITY_ONE, triggerEntity);
+			e.SetParam<Entity>(Events::Physics::Trigger_Enter::ENTITY_TWO, otherEntity);
+			controller.SendEvent(e);
+			std::cout << "exited trigger" << std::endl;
+		}
 	}
 }

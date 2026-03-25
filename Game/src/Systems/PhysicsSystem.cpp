@@ -127,7 +127,7 @@ void PhysicsSystem::Update(float deltaTime)
 
 		Command command;
 		command.throttle = vehicleCommands.throttle;
-		
+
 		if (controller.HasComponent<Powerup>(entity)) {
 			auto& p = controller.GetComponent<Powerup>(entity);
 			if (p.active && p.type == 1) {
@@ -158,6 +158,16 @@ void PhysicsSystem::Update(float deltaTime)
 				spinning = false;
 				spinTimer = 0.0f;
 			}
+		}
+
+
+		if (vehicleCommands.inSludge) {
+			float drag = vehicleCommands.sludgeFactor;
+			std::cout << "drag: " << drag << std::endl;
+			float factor = 1.0f - drag * deltaTime;
+			factor = PxMax(factor, 0.0f);
+
+			vehicle->ApplySludgeDrag(factor);
 		}
 	}
 
