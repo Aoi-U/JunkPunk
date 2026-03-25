@@ -5,6 +5,8 @@
 #include "../Components/Player.h"
 #include "../Components/AiDriver.h"
 #include "../Components/Powerup.h"
+#include "../Components/Obstacle.h"
+#include "../Components/Banana.h"
 #include "../ECSController.h"
 #include <cmath>
 #include <iostream>
@@ -211,6 +213,31 @@ void AiSystem::UpdateStateMachine(Entity entity, float deltaTime)
 	if (ai.repathCooldown > 0.0f)
 		ai.repathCooldown -= deltaTime;
 
+	// --- Flip detection ---
+	// Check if the vehicle's local up vector is pointing downward (flipped over)
+	glm::vec3 vehicleUp = transform.quatRotation * glm::vec3(0.0f, 1.0f, 0.0f);
+	if (vehicleUp.y < 0.1f) // up vector pointing sideways or downward
+	{
+		ai.flippedTimer += deltaTime;
+		if (ai.flippedTimer > ai.flippedTimeThreshold)
+		{
+			std::cout << "[AI] Flipped over, resetting vehicle" << std::endl;
+			ai.flippedTimer = 0.0f;
+
+			Event resetEvent(Events::Player::RESET_VEHICLE);
+			resetEvent.SetParam<Entity>(Events::Player::Reset_Vehicle::ENTITY, entity);
+			controller.SendEvent(resetEvent);
+
+			RecomputeNavPath(entity);
+			TransitionToState(entity, AiState::FollowPath);
+			return;
+		}
+	}
+	else
+	{
+		ai.flippedTimer = 0.0f;
+	}
+
 	switch (ai.currentState)
 	{
 	case AiState::FollowPath:
@@ -241,6 +268,87 @@ void AiSystem::UpdateStateMachine(Entity entity, float deltaTime)
 		{
 			TransitionToState(entity, AiState::RecoveringFromOffTrack);
 			break;
+		}
+
+		// --- Obstacle detection: scan for MovingObstacles and Bananas ahead ---
+		{
+			glm::vec3 carPos = transform.position;
+			glm::vec3 forward = transform.quatRotation * glm::vec3(0.0f, 0.0f, 1.0f);
+			forward.y = 0.0f;
+			if (glm::length(forward) > 1e-6f) forward = glm::normalize(forward);
+
+			Entity closestObstacle = 0;
+			float closestDist = ai.obstacleDetectionRange;
+			glm::vec3 closestObstaclePos(0.0f);
+
+			// Scan MovingObstacles
+			auto obstacleArray = controller.GetComponentArray<MovingObstacle>();
+			for (auto& [obsEntity, idx] : obstacleArray->GetEntityToIndexMap())
+			{
+				if (!controller.HasComponent<Transform>(obsEntity))
+					continue;
+
+				auto& obsTransform = controller.GetComponent<Transform>(obsEntity);
+				glm::vec3 toObs = obsTransform.position - carPos;
+				toObs.y = 0.0f;
+				float dist = glm::length(toObs);
+
+				if (dist < 1e-5f || dist > closestDist)
+					continue;
+
+				float dot = glm::dot(forward, glm::normalize(toObs));
+				if (dot > ai.obstacleDetectionCone)
+				{
+					closestDist = dist;
+					closestObstacle = obsEntity;
+					closestObstaclePos = obsTransform.position;
+				}
+			}
+
+			// Scan Bananas
+			auto bananaArray = controller.GetComponentArray<Banana>();
+			for (auto& [banEntity, idx] : bananaArray->GetEntityToIndexMap())
+			{
+				if (!controller.HasComponent<Transform>(banEntity))
+					continue;
+
+				auto& banTransform = controller.GetComponent<Transform>(banEntity);
+				glm::vec3 toBan = banTransform.position - carPos;
+				toBan.y = 0.0f;
+				float dist = glm::length(toBan);
+
+				if (dist < 1e-5f || dist > closestDist)
+					continue;
+
+				float dot = glm::dot(forward, glm::normalize(toBan));
+				if (dot > ai.obstacleDetectionCone)
+				{
+					closestDist = dist;
+					closestObstacle = banEntity;
+					closestObstaclePos = banTransform.position;
+				}
+			}
+
+			if (closestObstacle != 0)
+			{
+				// Decide which direction to dodge: steer away from the obstacle
+				// Use the cross product to determine if obstacle is left or right of us
+				glm::vec3 toObs = closestObstaclePos - carPos;
+				toObs.y = 0.0f;
+				float cross = forward.x * toObs.z - forward.z * toObs.x;
+
+				// If obstacle is to our right (cross > 0), steer left (-1), and vice versa
+				ai.avoidanceSteerDirection = (cross > 0.0f) ? -1.0f : 1.0f;
+				ai.detectedObstacleEntity = closestObstacle;
+				ai.avoidTimer = 0.0f;
+
+				std::cout << "[AI] Obstacle detected, dodging "
+					<< (ai.avoidanceSteerDirection < 0.0f ? "left" : "right")
+					<< " (dist=" << closestDist << ")" << std::endl;
+
+				TransitionToState(entity, AiState::AvoidObstacle);
+				break;
+			}
 		}
 
 		// Check for nearby powerups (only if we don't already have one)
@@ -674,16 +782,94 @@ float AiSystem::CalculateSteeringAngle(const glm::vec3& forward, const glm::vec3
 
 void AiSystem::UpdateAvoidObstacleState(Entity entity, float deltaTime)
 {
-	// TODO: Detect MovingObstacle and Banana entities in front of the car.
-	//       Steer left or right to dodge, then return to FollowPath.
-	//
-	// Suggested approach:
-	// - Check all entities with MovingObstacle or Banana components
-	// - If any are within obstacleDetectionRange and in the car's forward cone
-	// - Steer perpendicular to the obstacle direction
-	// - Once obstacle is no longer ahead, transition back to FollowPath
+	auto& ai = controller.GetComponent<AiDriver>(entity);
+	auto& transform = controller.GetComponent<Transform>(entity);
+	auto& body = controller.GetComponent<VehicleBody>(entity);
+	auto& vc = controller.GetComponent<VehicleCommands>(entity);
 
-	TransitionToState(entity, AiState::FollowPath);
+	ai.avoidTimer += deltaTime;
+
+	// Done avoiding -- return to path
+	if (ai.avoidTimer > ai.avoidDuration)
+	{
+		std::cout << "[AI] Obstacle avoidance complete, resuming path" << std::endl;
+		ai.detectedObstacleEntity = 0;
+		RecomputeNavPath(entity);
+		TransitionToState(entity, AiState::FollowPath);
+		return;
+	}
+
+	// If the obstacle was destroyed or no longer exists, resume early
+	bool obstacleGone = true;
+	if (ai.detectedObstacleEntity != 0)
+	{
+		if (controller.HasComponent<Transform>(ai.detectedObstacleEntity))
+		{
+			// Check if it's still ahead of us
+			glm::vec3 forward = transform.quatRotation * glm::vec3(0.0f, 0.0f, 1.0f);
+			forward.y = 0.0f;
+			if (glm::length(forward) > 1e-6f) forward = glm::normalize(forward);
+
+			auto& obsTransform = controller.GetComponent<Transform>(ai.detectedObstacleEntity);
+			glm::vec3 toObs = obsTransform.position - transform.position;
+			toObs.y = 0.0f;
+			float dist = glm::length(toObs);
+
+			if (dist > 1e-5f)
+			{
+				float dot = glm::dot(forward, glm::normalize(toObs));
+
+				// Obstacle is still ahead and in range -- keep avoiding
+				if (dot > 0.0f && dist < ai.obstacleDetectionRange * 1.5f)
+					obstacleGone = false;
+			}
+		}
+	}
+
+	if (obstacleGone && ai.avoidTimer > 0.5f)
+	{
+		// Obstacle passed or destroyed, safe to resume
+		std::cout << "[AI] Obstacle cleared, resuming path" << std::endl;
+		ai.detectedObstacleEntity = 0;
+		RecomputeNavPath(entity);
+		TransitionToState(entity, AiState::FollowPath);
+		return;
+	}
+
+	// --- Avoidance steering ---
+	// Combine the avoidance steer with a gentle pull toward the next waypoint
+	// so the AI doesn't just veer off into a wall
+	float avoidSteer = ai.avoidanceSteerDirection * ai.avoidSteerStrength;
+
+	// Blend with waypoint steering as avoidance progresses (more waypoint pull later)
+	float blendFactor = glm::clamp(ai.avoidTimer / ai.avoidDuration, 0.0f, 1.0f);
+	float waypointSteer = 0.0f;
+
+	if (ai.currentWaypointIndex < static_cast<uint32_t>(ai.navWaypoints.size()))
+	{
+		glm::vec3 forward = transform.quatRotation * glm::vec3(0.0f, 0.0f, 1.0f);
+		forward.y = 0.0f;
+		if (glm::length(forward) < 1e-6f) forward = glm::vec3(0, 0, 1);
+		forward = glm::normalize(forward);
+
+		glm::vec3 toWp = ai.navWaypoints[ai.currentWaypointIndex] - transform.position;
+		toWp.y = 0.0f;
+		waypointSteer = CalculateSteeringAngle(forward, toWp);
+	}
+
+	// Early: mostly dodge. Late: blend back toward waypoint
+	float finalSteer = glm::mix(avoidSteer, waypointSteer, blendFactor * blendFactor);
+	finalSteer = glm::clamp(finalSteer, -1.0f, 1.0f);
+
+	// Slow down during avoidance
+	float speed = glm::length(glm::vec3(body.linearVelocity.x, 0.0f, body.linearVelocity.z));
+	float targetSpeed = ai.maxSpeed * ai.avoidThrottleScale;
+	float throttle = glm::clamp((targetSpeed - speed) * ai.throttleKp, 0.0f, ai.maxThrottle);
+
+	vc.steer = finalSteer;
+	vc.throttle = throttle;
+	vc.brake = (speed > targetSpeed + 2.0f) ? glm::clamp((speed - targetSpeed) * ai.brakeKp, 0.0f, ai.maxBrake) : 0.0f;
+	vc.isGrounded = true;
 }
 
 void AiSystem::UpdateBrakingState(Entity entity, float deltaTime)

@@ -68,7 +68,7 @@ struct AiDriver
 	float repathCooldownDuration = 3.0f;
 
 	// Obstacle avoidance
-	float obstacleDetectionRange = 10.0f;
+	//float obstacleDetectionRange = 10.0f;
 	float avoidanceSteerMultiplier = 1.5f;
 	glm::vec3 detectedObstaclePosition = glm::vec3(0.0f);
 
@@ -101,6 +101,10 @@ struct AiDriver
 	// Overtaking
 	float overtakeDetectionRange = 15.0f;
 	float overtakeSteerOffset = 2.0f;
+
+	// Flip detection
+	float flippedTimer = 0.0f;
+	float flippedTimeThreshold = 1.0f;  // seconds upside-down before auto-reset
 
 	// Obstacle avoidance
 	float obstacleDetectionRange = 15.0f;   // how far ahead to detect. Increase if the AI reacts too late at high speed.
