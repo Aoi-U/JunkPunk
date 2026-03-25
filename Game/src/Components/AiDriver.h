@@ -40,7 +40,7 @@ struct AiDriver
 	float steerDeadzoneDot = 0.98f;
 
 	// Speed control
-	float maxSpeed = 30.0f;         // top speed on straight sections
+	float maxSpeed = 15.0f;         // top speed on straight sections
 	float cornerSpeed = 4.0f;       // slowest speed at hairpins (increase if the AI is too cautious)
 	float brakingDistance = 15.0f;   // how far ahead to start slowing down for a corner
 	int lookaheadWaypoints = 8;     // how many waypoints ahead to scan for turns
@@ -76,10 +76,39 @@ struct AiDriver
 	float offTrackHeightThreshold = 8.0f;
 	float recoveryTimer = 0.0f;
 
-	// Seek powerup
-	float powerupSeekRange = 20.0f;
+	// Powerup seeking
+	float powerupSeekRange = 50.0f;        // max distance to detour for a powerup
+	float powerupSeekMaxAngle = -0.3f;      // dot product threshold -- -0.3 = nearly full 360, excludes directly behind
+	//### Reference for `powerupSeekMaxAngle`
+
+	//	| Value | Detection cone |
+	//	|-- - | -- - |
+	//	| `0.95` | ~18° — nearly straight ahead only |
+	//	| `0.5` | ~60° — forward cone |
+	//	| `0.0` | ~90° — front hemisphere |
+	//	| `-0.3` | ~107° — most directions except directly behind |
+	//	| `-1.0` | 360° — any direction, will even turn around |
+	Entity targetPowerupEntity = 0;         // entity ID of the powerup we're chasing
+	float seekTimer = 0.0f;                 // how long we've been seeking
+	float seekTimeout = 6.0f;              // give up after this many seconds
+	bool hasPowerup = false;                // whether we currently hold a powerup
+	int heldPowerupType = 0;                // type of held powerup (1=speed boost, 2=banana)
+
+	// Powerup usage
+	float useBoostDot = 0.95f;             // use speed boost when path is this straight ahead
+	float dropBananaPlayerRange = 15.0f;   // drop banana when player is this close behind
 
 	// Overtaking
 	float overtakeDetectionRange = 15.0f;
 	float overtakeSteerOffset = 2.0f;
+
+	// Obstacle avoidance
+	float obstacleDetectionRange = 15.0f;   // how far ahead to detect. Increase if the AI reacts too late at high speed.
+	float obstacleDetectionCone = 0.7f;     // dot product threshold -- 0.7 = ~45 degree forward cone. Lower to detect obstacles further to the side.
+	float avoidanceSteerDirection = 0.0f;   // -1.0 = steer left, 1.0 = steer right (set on detection)
+	Entity detectedObstacleEntity = 0;      // entity we're currently avoiding
+	float avoidTimer = 0.0f;                // how long we've been avoiding
+	float avoidDuration = 1.5f;             // how long to steer away. Increase for larger obstacles like spinning pushers.
+	float avoidSteerStrength = 1.0f;        // how hard to steer while avoiding. `1.0` = full lock. Lower for gentler swerves.
+	float avoidThrottleScale = 0.5f;        // slow down while avoiding (0.5 = half throttle). speed reduction during avoidance. Lower for more cautious dodging.
 };

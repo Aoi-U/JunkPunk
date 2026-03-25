@@ -4,6 +4,7 @@
 #include "../Components/Physics.h"
 #include "../Components/Player.h"
 #include "../Components/AiDriver.h"
+#include "../Components/Powerup.h"
 #include "../ECSController.h"
 #include <cmath>
 #include <iostream>
@@ -215,7 +216,6 @@ void AiSystem::UpdateStateMachine(Entity entity, float deltaTime)
 	case AiState::FollowPath:
 	{
 		// Off-track: check if car is far below the nearest navmesh surface
-		// NOT the waypoint -- waypoints can be on ramps above us
 		int32_t nearestTri = navMesh.FindTriangleAtHeight(transform.position);
 		if (nearestTri < 0)
 			nearestTri = navMesh.FindClosestTriangleAtHeight(transform.position, 5.0f);
@@ -225,7 +225,6 @@ void AiSystem::UpdateStateMachine(Entity entity, float deltaTime)
 		{
 			float surfaceY = navMesh.GetTriangles()[nearestTri].centroid.y;
 			float heightBelow = surfaceY - transform.position.y;
-			// Only trigger if we're significantly below the nearest walkable surface at our XZ
 			if (heightBelow > ai.offTrackHeightThreshold)
 			{
 				std::cout << "[AI] Off-track (below navmesh surface)! heightBelow=" << heightBelow << std::endl;
@@ -234,7 +233,6 @@ void AiSystem::UpdateStateMachine(Entity entity, float deltaTime)
 		}
 		else
 		{
-			// Can't find any navmesh nearby at our height -- we're off the map
 			offTrack = true;
 			std::cout << "[AI] Off-track (no navmesh found nearby)" << std::endl;
 		}
@@ -243,6 +241,59 @@ void AiSystem::UpdateStateMachine(Entity entity, float deltaTime)
 		{
 			TransitionToState(entity, AiState::RecoveringFromOffTrack);
 			break;
+		}
+
+		// Check for nearby powerups (only if we don't already have one)
+		if (!ai.hasPowerup)
+		{
+			Entity bestPowerup = 0;
+			float bestDist = ai.powerupSeekRange;
+
+			glm::vec3 carPos = transform.position;
+			glm::vec3 forward = transform.quatRotation * glm::vec3(0.0f, 0.0f, 1.0f);
+			forward.y = 0.0f;
+			if (glm::length(forward) > 1e-6f) forward = glm::normalize(forward);
+
+			auto powerupArray = controller.GetComponentArray<Powerup>();
+			for (auto& [powerupEntity, idx] : powerupArray->GetEntityToIndexMap())
+			{
+				if (!controller.HasComponent<Transform>(powerupEntity))
+					continue;
+
+				auto& pickup = controller.GetComponent<Powerup>(powerupEntity);
+				if (pickup.active)
+					continue;
+
+				auto& powerupTransform = controller.GetComponent<Transform>(powerupEntity);
+				glm::vec3 toPowerup = powerupTransform.position - carPos;
+				toPowerup.y = 0.0f;
+
+				float dist = glm::length(toPowerup);
+				if (dist < 1e-5f || dist > bestDist)
+					continue;
+
+				float dot = glm::dot(forward, glm::normalize(toPowerup));
+				if (dot < ai.powerupSeekMaxAngle)
+					continue;
+
+				bestDist = dist;
+				bestPowerup = powerupEntity;
+			}
+
+			if (bestPowerup != 0)
+			{
+				ai.targetPowerupEntity = bestPowerup;
+				ai.seekTimer = 0.0f;
+				std::cout << "[AI] Spotted powerup, detouring to collect" << std::endl;
+				TransitionToState(entity, AiState::SeekPowerup);
+				break;
+			}
+		}
+
+		// Try to use a held powerup (checked inline -- does NOT interrupt driving)
+		if (ai.hasPowerup)
+		{
+			TryUsePowerup(entity);
 		}
 
 		UpdateFollowPathState(entity, deltaTime);
@@ -651,26 +702,164 @@ void AiSystem::UpdateBrakingState(Entity entity, float deltaTime)
 
 void AiSystem::UpdateSeekPowerupState(Entity entity, float deltaTime)
 {
-	// TODO: Briefly detour to collect a nearby powerup pickup.
-	//
-	// Suggested approach:
-	// - Scan for entities with a Powerup component within powerupSeekRange
-	// - Steer toward the nearest one
-	// - Once collected (component removed by physics trigger) or out of range,
-	//   transition back to FollowPath
+	auto& ai = controller.GetComponent<AiDriver>(entity);
+	auto& transform = controller.GetComponent<Transform>(entity);
+	auto& body = controller.GetComponent<VehicleBody>(entity);
+	auto& vc = controller.GetComponent<VehicleCommands>(entity);
 
-	TransitionToState(entity, AiState::FollowPath);
+	ai.seekTimer += deltaTime;
+
+	// Give up if taking too long
+	if (ai.seekTimer > ai.seekTimeout)
+	{
+		std::cout << "[AI] Powerup seek timed out, resuming path" << std::endl;
+		ai.targetPowerupEntity = 0;
+		RecomputeNavPath(entity);
+		TransitionToState(entity, AiState::FollowPath);
+		return;
+	}
+
+	// Check if the powerup entity still exists
+	if (!controller.HasComponent<Powerup>(ai.targetPowerupEntity) ||
+		!controller.HasComponent<Transform>(ai.targetPowerupEntity))
+	{
+		std::cout << "[AI] Powerup gone, resuming path" << std::endl;
+		ai.targetPowerupEntity = 0;
+		RecomputeNavPath(entity);
+		TransitionToState(entity, AiState::FollowPath);
+		return;
+	}
+
+	glm::vec3 carPos = transform.position;
+	auto& powerupTransform = controller.GetComponent<Transform>(ai.targetPowerupEntity);
+	glm::vec3 powerupPos = powerupTransform.position;
+
+	glm::vec3 toPowerupXZ = glm::vec3(powerupPos.x - carPos.x, 0.0f, powerupPos.z - carPos.z);
+	float distXZ = glm::length(toPowerupXZ);
+
+	// Check if we're out of range (went past it or it moved)
+	if (distXZ > ai.powerupSeekRange * 1.5f)
+	{
+		std::cout << "[AI] Powerup too far, resuming path" << std::endl;
+		ai.targetPowerupEntity = 0;
+		RecomputeNavPath(entity);
+		TransitionToState(entity, AiState::FollowPath);
+		return;
+	}
+
+	// Close enough to "collect" -- the trigger system handles the actual pickup
+	// but we also handle it here in case trigger doesn't fire for AI
+	// Close enough to "collect" -- the trigger system handles the actual pickup
+	// but we also handle it here in case trigger doesn't fire for AI
+	if (distXZ < ai.arrivalRadius)
+	{
+		auto& pickup = controller.GetComponent<Powerup>(ai.targetPowerupEntity);
+		ai.hasPowerup = true;
+		ai.heldPowerupType = pickup.type;
+		std::cout << "[AI] Collected powerup type " << pickup.type << std::endl;
+		controller.DestroyEntity(ai.targetPowerupEntity);
+		ai.targetPowerupEntity = 0;
+
+		// Re-path from current position since we detoured off the original path
+		RecomputeNavPath(entity);
+		TransitionToState(entity, AiState::FollowPath);
+		return;
+	}
+
+	// Steer toward the powerup
+	glm::vec3 forward = transform.quatRotation * glm::vec3(0.0f, 0.0f, 1.0f);
+	forward.y = 0.0f;
+	if (glm::length(forward) < 1e-6f) forward = glm::vec3(0, 0, 1);
+	forward = glm::normalize(forward);
+
+	float steer = CalculateSteeringAngle(forward, toPowerupXZ);
+
+	float speed = glm::length(glm::vec3(body.linearVelocity.x, 0.0f, body.linearVelocity.z));
+	float throttle = glm::clamp((ai.maxSpeed * 0.7f - speed) * ai.throttleKp, 0.0f, ai.maxThrottle);
+
+	vc.steer = steer;
+	vc.throttle = throttle;
+	vc.brake = 0.0f;
+	vc.isGrounded = true;
+}
+
+void AiSystem::TryUsePowerup(Entity entity)
+{
+	auto& ai = controller.GetComponent<AiDriver>(entity);
+	auto& transform = controller.GetComponent<Transform>(entity);
+
+	if (!ai.hasPowerup)
+		return;
+
+	glm::vec3 forward = transform.quatRotation * glm::vec3(0.0f, 0.0f, 1.0f);
+	forward.y = 0.0f;
+	if (glm::length(forward) < 1e-6f) forward = glm::vec3(0, 0, 1);
+	forward = glm::normalize(forward);
+
+	if (ai.heldPowerupType == 1)
+	{
+		// Speed boost: use on straightaways
+		if (ai.currentWaypointIndex < static_cast<uint32_t>(ai.navWaypoints.size()))
+		{
+			glm::vec3 toWp = ai.navWaypoints[ai.currentWaypointIndex] - transform.position;
+			toWp.y = 0.0f;
+			float dist = glm::length(toWp);
+
+			if (dist > 1e-5f)
+			{
+				float dot = glm::dot(forward, glm::normalize(toWp));
+
+				if (dot > ai.useBoostDot)
+				{
+					controller.AddComponent(entity, Powerup{ 1, true, 5.0f, 0.0f });
+					ai.hasPowerup = false;
+					ai.heldPowerupType = 0;
+					std::cout << "[AI] Using speed boost on straightaway" << std::endl;
+				}
+			}
+		}
+	}
+	else if (ai.heldPowerupType == 2)
+	{
+		// Banana peel: drop when the player is close behind
+		Entity playerEntity = 0;
+		auto playerArray = controller.GetComponentArray<PlayerController>();
+		for (auto& [pEntity, idx] : playerArray->GetEntityToIndexMap())
+		{
+			if (controller.HasComponent<Transform>(pEntity))
+			{
+				playerEntity = pEntity;
+				break;
+			}
+		}
+
+		if (playerEntity != 0)
+		{
+			auto& playerTransform = controller.GetComponent<Transform>(playerEntity);
+			glm::vec3 toPlayer = playerTransform.position - transform.position;
+			toPlayer.y = 0.0f;
+			float dist = glm::length(toPlayer);
+
+			if (dist > 1e-5f && dist < ai.dropBananaPlayerRange)
+			{
+				float dot = glm::dot(forward, glm::normalize(toPlayer));
+
+				if (dot < -0.3f)
+				{
+					// TODO: Call SpawnBananaPeel equivalent for AI
+					ai.hasPowerup = false;
+					ai.heldPowerupType = 0;
+					std::cout << "[AI] Dropped banana peel behind" << std::endl;
+				}
+			}
+		}
+	}
 }
 
 void AiSystem::UpdateUsePowerupState(Entity entity, float deltaTime)
 {
-	// TODO: Decide when to activate a held powerup.
-	//
-	// Suggested approach:
-	// - If holding a speed boost (type 1): activate on straightaways (high fwdDot)
-	// - If holding a banana peel (type 2): drop when the player is behind and close
-	// - After using, transition back to FollowPath
-
+	// Powerup usage is now handled inline in FollowPath via TryUsePowerup.
+	// If we somehow end up here, just go back to FollowPath.
 	TransitionToState(entity, AiState::FollowPath);
 }
 

@@ -44,5 +44,8 @@ private:
 	void UpdateUsePowerupState(Entity entity, float deltaTime);
 	void UpdateOvertakingState(Entity entity, float deltaTime);
 
+	// Checks if conditions are right to use a held powerup. Called during FollowPath.
+	void TryUsePowerup(Entity entity);
+
 	float CalculateSteeringAngle(const glm::vec3& forward, const glm::vec3& toTarget);
 };
