@@ -131,7 +131,7 @@ void LevelLoaderSystem::LoadLevel()
 			glm::vec3(0.0f, -50.0f, 50.0f),          // same position as the dumpster
 			glm::quat_cast(rotation),                   // same rotation
 			glm::vec3(50.0f),                            // same scale
-			37.0f                                        // max slope angle — tweak if too many/few triangles
+			35.0f                                        // max slope angle — tweak if too many/few triangles
 		);
 		navMesh.Subdivide();    // 1023 -> 4092 triangles (4x denser)
 		//navMesh.Subdivide(); // uncomment for 16368 triangles (16x denser) if needed
@@ -289,6 +289,9 @@ void LevelLoaderSystem::LoadLevel()
 		std::string carModel;
 	};
 
+	// 180° rotation around the Z-axis = completely upside-down. Used for testing
+	glm::quat flippedRotation = glm::angleAxis(glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+
 	std::vector<AiSpawnInfo> aiSpawns = {
 		{ glm::vec3(-28.0f, -94.0f, -21.0f), -40.0f, "AIVehicle1", "assets/models/car_body_blue/car.gltf" },
 		//{ glm::vec3(-32.0f, -80.0f, -25.0f), -40.0f, "AIVehicle2", "assets/models/car_body_pink/car.gltf" },
@@ -299,6 +302,9 @@ void LevelLoaderSystem::LoadLevel()
 	{
 		glm::mat4 aiRot = glm::rotate(glm::mat4(1.0f), glm::radians(spawn.rotationDeg), glm::vec3(0.0f, 1.0f, 0.0f));
 		glm::quat aiQuat = glm::quat(aiRot);
+
+		// Used for testing flipped vehicle as spawn. Can be removed later.
+		glm::quat finalQuat = flippedRotation * aiQuat;
 
 		Entity aiVehicle = controller.createEntity();
 		loaded = LoadModel(spawn.carModel);
@@ -369,13 +375,20 @@ void LevelLoaderSystem::LoadLevel()
 		0.0f
 		});
 
-	//entity = controller.createEntity();
-	//loaded = LoadModel("assets/models/banana_peel/banana.gltf");
-	//controller.AddComponent(entity, Transform{ glm::vec3(-62.0f, -94.0f, -7.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.5f) });
-	//controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 1.0f, 1.0f });
-	//controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
-	//controller.AddComponent(entity, PhysicsBody{});
-	//controller.AddComponent(entity, Banana{});
+	entity = controller.createEntity();
+	loaded = LoadModel("assets/models/banana_peel/banana.gltf");
+	controller.AddComponent(entity, Transform{ glm::vec3(-13.181f, -73.175f, 19.803f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.5f) });
+	controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 1.0f, 1.0f });
+	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
+	controller.AddComponent(entity, PhysicsBody{});
+	controller.AddComponent(entity, Banana{});
+	entity = controller.createEntity();
+	loaded = LoadModel("assets/models/banana_peel/banana.gltf");
+	controller.AddComponent(entity, Transform{ glm::vec3(-8.181f, -73.175f, 24.803f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.5f) });
+	controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 1.0f, 1.0f });
+	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
+	controller.AddComponent(entity, PhysicsBody{});
+	controller.AddComponent(entity, Banana{});
 
 	// finish line
   entity = controller.createEntity();

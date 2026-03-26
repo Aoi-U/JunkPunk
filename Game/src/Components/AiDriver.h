@@ -31,25 +31,24 @@ struct AiDriver
 	// Navmesh path waypoints (set by AiSystem after pathfinding)
 	std::vector<glm::vec3> navWaypoints;
 
-	// Tuning (per-entity)
+	// Tuning (per-entity) (Bump these up for larger map)
 	float arrivalRadius = 5.0f;
-	float lookaheadDistance = 5.0f;
+	float lookaheadDistance = 15.0f;
 
 	// Steering PD
 	float maxSteerRadians = 1.0f;
 	float steerDeadzoneDot = 0.98f;
 
 	// Speed control
-	float maxSpeed = 15.0f;         // top speed on straight sections
-	float cornerSpeed = 4.0f;       // slowest speed at hairpins (increase if the AI is too cautious)
-	float brakingDistance = 15.0f;   // how far ahead to start slowing down for a corner
+	float maxSpeed = 50.0f;         // top speed on straight sections
+	float cornerSpeed = 4.0f;       // minimum throttle speed at sharp corners
+	float brakingDistance = 15.0f;   // how far ahead to start easing off throttle for a corner
 	int lookaheadWaypoints = 8;     // how many waypoints ahead to scan for turns
 
-	// Throttle / brake
+	// Throttle
 	float throttleKp = 1.5f;
-	float brakeKp = 2.0f;           // brake aggressiveness (increase if the AI doesn't slow down fast enough)
 	float maxThrottle = 1.0f;
-	float maxBrake = 1.0f;
+	float minThrottle = 0.0f;       // throttle floor in corners (0.0 = full coast, 0.1 = light gas)
 
 	// Stuck detection and recovery
 	float stuckTimer = 0.0f;

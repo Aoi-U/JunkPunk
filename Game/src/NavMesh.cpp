@@ -424,6 +424,11 @@ NavPath NavMesh::FindPath(int32_t startTri, int32_t goalTri,
 		return result;
 	}
 
+	const glm::vec3 worldUp(0.0f, 1.0f, 0.0f);
+	const float slopePenaltyWeight = 10.0f;  // how much to penalize steep triangles
+	const float slopePenaltyStart = 0.85f;   // dot(normal, up) below this starts penalty (~32 deg)
+	const float uphillMultiplier = 2.0f;     // cost multiplier for climbing
+
 	using Node = std::pair<float, int32_t>;
 	std::priority_queue<Node, std::vector<Node>, std::greater<Node>> openSet;
 
@@ -459,18 +464,37 @@ NavPath NavMesh::FindPath(int32_t startTri, int32_t goalTri,
 			if (neighbour < 0 || closed[neighbour])
 				continue;
 
-			float edgeCost = glm::length(triangles[neighbour].centroid - tri.centroid);
+			const auto& nbTri = triangles[neighbour];
+			float edgeCost = glm::length(nbTri.centroid - tri.centroid);
 
-			// Penalize triangles near edges/cliffs -- makes A* prefer interior paths
-			float dangerPenalty = triangles[neighbour].edgeDanger * edgePenaltyWeight;
-			float tentativeG = gCost[current] + edgeCost + dangerPenalty;
+			// Penalize triangles near edges/cliffs
+			float dangerPenalty = nbTri.edgeDanger * edgePenaltyWeight;
+
+			// Penalize steep triangles -- steeper = more expensive
+			float slopeDot = glm::dot(nbTri.normal, worldUp); // 1.0 = flat, 0.0 = vertical
+			float slopePenalty = 0.0f;
+			if (slopeDot < slopePenaltyStart)
+			{
+				float steepness = (slopePenaltyStart - slopeDot) / slopePenaltyStart;
+				slopePenalty = steepness * slopePenaltyWeight;
+			}
+
+			// Penalize uphill transitions
+			float heightDiff = nbTri.centroid.y - tri.centroid.y;
+			float uphillPenalty = 0.0f;
+			if (heightDiff > 0.0f)
+			{
+				uphillPenalty = heightDiff * uphillMultiplier;
+			}
+
+			float tentativeG = gCost[current] + edgeCost + dangerPenalty + slopePenalty + uphillPenalty;
 
 			if (tentativeG < gCost[neighbour])
 			{
 				gCost[neighbour] = tentativeG;
 				cameFrom[neighbour] = current;
 
-				float hCost = glm::length(triangles[neighbour].centroid - triangles[goalTri].centroid);
+				float hCost = glm::length(nbTri.centroid - triangles[goalTri].centroid);
 				openSet.push({ tentativeG + hCost, neighbour });
 			}
 		}
