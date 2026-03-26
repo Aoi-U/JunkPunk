@@ -224,8 +224,8 @@ void LevelLoaderSystem::LoadLevel()
 		glm::vec3(37.f, -32.f, 295.f),
 		glm::vec3(37.f, -34.f, 295.f),
 
-		glm::vec3(-56.f, 53.f, 358.f),
-		glm::vec3(-56.0f, 53.f, 293.f),
+		//glm::vec3(-56.f, 53.f, 358.f),
+		//glm::vec3(-56.0f, 53.f, 293.f),
 	};
 	std::vector<float> spinner_rotation = {
 		-1.f,
@@ -241,8 +241,8 @@ void LevelLoaderSystem::LoadLevel()
 		1.f,
 		-1.f,
 
-		1.f,
-		-1.f
+		//1.f,
+		//-1.f
 	};
 	std::vector<float> spinner_duration = {
 		2.f,
@@ -258,8 +258,8 @@ void LevelLoaderSystem::LoadLevel()
 		6.f,
 		6.f,
 
-		1.2f,
-		1.2f
+		//1.2f,
+		//1.2f
 	};
 	std::vector<float> spinner_size = {
 		4.f,
@@ -275,8 +275,8 @@ void LevelLoaderSystem::LoadLevel()
 		4.f,
 		4.f,
 
-		3.f,
-		3.f
+		//3.f,
+		//3.f
 	};
 
 	for (int i = 0; i < spinner_positions.size(); i++) {
@@ -339,19 +339,27 @@ void LevelLoaderSystem::LoadLevel()
 
 	//dice
 	std::vector<std::vector<glm::vec3>> dice_positions = {
-		{glm::vec3(-40.0f, -46.f, 200.f), glm::vec3(140.0f, -46.f, 200.f), glm::vec3(140.0f, -46.f, 200.f), glm::vec3(-40.0f, -46.f, 200.f)},
-		{glm::vec3(-40.0f, -46.f, 175.f), glm::vec3(140.0f, -46.f, 175.f), glm::vec3(140.0f, -46.f, 175.f), glm::vec3(-40.0f, -46.f, 175.f)},
-		{glm::vec3(-40.0f, -46.f, 150.f), glm::vec3(140.0f, -46.f, 150.f), glm::vec3(140.0f, -46.f, 150.f), glm::vec3(-40.0f, -46.f, 150.f)},
+		{glm::vec3(40.0f, -46.f, 200.f), glm::vec3(140.0f, -41.f, 200.f), glm::vec3(140.0f, -41.f, 200.f), glm::vec3(40.0f, -46.f, 200.f)},
+		{glm::vec3(40.0f, -46.f, 175.f), glm::vec3(140.0f, -41.f, 175.f), glm::vec3(140.0f, -41.f, 175.f), glm::vec3(40.0f, -46.f, 175.f)},
+		{glm::vec3(40.0f, -46.f, 150.f), glm::vec3(140.0f, -41.f, 150.f), glm::vec3(140.0f, -41.f, 150.f), glm::vec3(40.0f, -46.f, 150.f)},
 
-		{glm::vec3(0.0f, 62.f, 325.f), glm::vec3(30.0f, 62.f, 355.f), glm::vec3(60.0f, 62.f, 325.f), glm::vec3(30.0f, 62.f, 295.f)},
+		{glm::vec3(20.0f, -46.f, 200.f), glm::vec3(-40.0f, -46.f, 200.f), glm::vec3(-40.0f, -46.f, 200.f), glm::vec3(20.0f, -46.f, 200.f)},
+		{glm::vec3(20.0f, -46.f, 175.f), glm::vec3(-40.0f, -46.f, 175.f), glm::vec3(-40.0f, -46.f, 175.f), glm::vec3(20.0f, -46.f, 175.f)},
+		{glm::vec3(20.0f, -46.f, 150.f), glm::vec3(-40.0f, -46.f, 150.f), glm::vec3(-40.0f, -46.f, 150.f), glm::vec3(20.0f, -46.f, 150.f)},
+
+		//{glm::vec3(0.0f, 62.f, 325.f), glm::vec3(30.0f, 62.f, 355.f), glm::vec3(60.0f, 62.f, 325.f), glm::vec3(30.0f, 62.f, 295.f)},
 	};
 
 	std::vector<std::vector<float>> dice_duration = {
-		{3.f,13.f,3.f, 2.f},
-		{3.f,17.f,3.f, 2.f},
-		{3.f,21.f,3.f, 2.f},
+		{3.f,5.f,3.f, 5.f},
+		{3.f,7.f,3.f, 7.f},
+		{3.f,9.f,3.f, 9.f},
 
-		{1.f,1.f, 1.f, 1.f},
+		{3.f,5.f,3.f, 5.f},
+		{3.f,7.f,3.f, 7.f},
+		{3.f,9.f,3.f, 9.f},
+
+		//{1.f,1.f, 1.f, 1.f},
 	};
 	std::vector<float> dice_size = {
 		10.f,
@@ -359,6 +367,10 @@ void LevelLoaderSystem::LoadLevel()
 		10.f,
 
 		10.f,
+		10.f,
+		10.f,
+
+		//10.f,
 	};
 	//moving dice
 	for (int i = 0; i < dice_positions.size(); i++) {
@@ -379,34 +391,34 @@ void LevelLoaderSystem::LoadLevel()
 			false
 			});
 	}
-	for (int i = 0; i < 15; i++) {
-		entity = controller.createEntity();
-		loaded = LoadModel("assets/models/dice/dice.gltf");
-		rotation = glm::rotate(glm::mat4(1.0f), 0.0f, glm::vec3(0.0f, 1.0f, 0.0f));
-		controller.AddComponent(entity, Transform{ glm::vec3(0.f, 0.f, 0.f), glm::quat_cast(rotation), glm::vec3(1.f) });
-		controller.AddComponent(entity, RigidBody{ nullptr, loaded.first, loaded.second, 50.0f, true, glm::vec3(0.0f), glm::vec3(0.0f) });
-		controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
-		controller.AddComponent(entity, PhysicsBody{});
-		controller.AddComponent(entity, MovingObstacle{
-			std::vector<glm::vec3>{
-				glm::vec3(65.0f + (i * 3), 54.5f, 410.f),
-				glm::vec3(65.0f + (i * 3), 54.5f, 250.f),
-				//glm::vec3(65.0f + (i * 3), 54.5f, 250.f),
-				//glm::vec3(65.0f + (i * 3), 54.5f, 410.f)
-			},
-			std::vector<glm::quat>{},
-			std::vector <float>{
-				((rand() % 101) / 100.f) + 1.f,
-				((rand() % 101) / 100.f) + 1.f,
-				//((rand() % 101) / 100.f) + 1.f,
-				//((rand() % 101) / 100.f) + 1.f
-			}, 
-			0.0f,
-			1,
-			0,
-			false
-			});
-	}
+	//for (int i = 0; i < 15; i++) {
+	//	entity = controller.createEntity();
+	//	loaded = LoadModel("assets/models/dice/dice.gltf");
+	//	rotation = glm::rotate(glm::mat4(1.0f), 0.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+	//	controller.AddComponent(entity, Transform{ glm::vec3(0.f, 0.f, 0.f), glm::quat_cast(rotation), glm::vec3(1.f) });
+	//	controller.AddComponent(entity, RigidBody{ nullptr, loaded.first, loaded.second, 50.0f, true, glm::vec3(0.0f), glm::vec3(0.0f) });
+	//	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
+	//	controller.AddComponent(entity, PhysicsBody{});
+	//	controller.AddComponent(entity, MovingObstacle{
+	//		std::vector<glm::vec3>{
+	//			glm::vec3(65.0f + (i * 3), 54.5f, 410.f),
+	//			glm::vec3(65.0f + (i * 3), 54.5f, 250.f),
+	//			//glm::vec3(65.0f + (i * 3), 54.5f, 250.f),
+	//			//glm::vec3(65.0f + (i * 3), 54.5f, 410.f)
+	//		},
+	//		std::vector<glm::quat>{},
+	//		std::vector <float>{
+	//			((rand() % 101) / 100.f) + 1.f,
+	//			((rand() % 101) / 100.f) + 1.f,
+	//			//((rand() % 101) / 100.f) + 1.f,
+	//			//((rand() % 101) / 100.f) + 1.f
+	//		}, 
+	//		0.0f,
+	//		1,
+	//		0,
+	//		false
+	//		});
+	//}
 	
 
 	for (int i = 0; i < 100; i++)
@@ -423,7 +435,8 @@ void LevelLoaderSystem::LoadLevel()
 	Entity vehicle = controller.createEntity();
 	glm::mat4 player_rotation = glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	loaded = LoadModel("assets/models/car_body_orange/car.gltf");
-	controller.AddComponent(vehicle, Transform{ glm::vec3(137.0f, -255.0f, -233.f), glm::quat(player_rotation), glm::vec3(0.2f) });
+	controller.AddComponent(vehicle, Transform{ glm::vec3(-66.0f, 93.f, 323.f), glm::quat(player_rotation), glm::vec3(0.2f) });
+	//controller.AddComponent(vehicle, Transform{ glm::vec3(137.0f, -255.0f, -233.f), glm::quat(player_rotation), glm::vec3(0.2f) });
 	controller.AddComponent(vehicle, VehicleBody{});
 	controller.AddComponent(vehicle, VehicleCommands{});
 	controller.AddComponent(vehicle, PlayerController{ 1 });
