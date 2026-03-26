@@ -74,7 +74,9 @@ private:
 		START,
 		SETTINGS,
 		QUIT,
-
+	};
+	enum SettingsMenu
+	{
 		PLAYER_COUNT,
 		AI_COUNT
 	};
@@ -103,6 +105,8 @@ private:
 	bool canNavigate = false;
 	int currentHover = 0;
 	int maxVerticalHover = 2;
+	int maxAICount = 4;
+	int maxPlayerCount = 4;
 	
 
 

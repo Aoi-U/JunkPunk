@@ -54,7 +54,7 @@ void CameraControlSystem::Update(float deltaTime)
 		float targetRadius = camerad * boostMultiplier;
 		camera.radius = glm::mix(camera.radius, targetRadius, 5.0f * deltaTime);
 	 
-		auto& playerController = controller.GetComponent<PlayerController>(entity);
+		auto& playerController = controller.GetComponent<PlayerController>(camera.playerEntity);
 		auto it = gamepads.find(playerController.playerNum);
 
 		std::shared_ptr<Gamepad> gamepad;
