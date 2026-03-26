@@ -218,5 +218,6 @@ extern bool playerWon;
 extern bool aiWon;
 
 extern int numPlayers;
+extern int numAi;
 extern std::vector<Entity> playerEntities;
 extern std::vector<Entity> cameraEntities;

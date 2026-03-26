@@ -75,7 +75,8 @@ private:
 		SETTINGS,
 		QUIT,
 
-		PLAYER_COUNT
+		PLAYER_COUNT,
+		AI_COUNT
 	};
 
 	unsigned int screenWidth = 1280;
@@ -102,6 +103,7 @@ private:
 	bool canNavigate = false;
 	int currentHover = 0;
 	int maxVerticalHover = 2;
+	
 
 
 	glm::vec3 defaultColor = glm::vec3(0.0f, 0.0f, 0.0f);

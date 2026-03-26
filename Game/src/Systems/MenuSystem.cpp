@@ -69,7 +69,7 @@ void MenuSystem::Update()
 	
 	if (canNavigate)
 	{
-		if (gamepad->LeftStick_Y() > 0.3f) // navigate left
+		if (gamepad->LeftStick_Y() > 0.3f) // navigate up
 		{
 			// navigate left
 			if (currentHover > 0)
@@ -84,7 +84,7 @@ void MenuSystem::Update()
 			}
 			canNavigate = false;
 		}
-		else if (gamepad->LeftStick_Y() < -0.3f) // navigate right
+		else if (gamepad->LeftStick_Y() < -0.3f) // navigate down
 		{
 			if (currentHover < maxVerticalHover)
 			{
@@ -99,37 +99,99 @@ void MenuSystem::Update()
 			canNavigate = false;
 		}
 
-		// Add horizontal navigation for settings (player count adjustment)
+		// Add horizontal navigation for settings
 		if (currentStateGlobal == GameState::SETTINGS)
 		{
-			if (gamepad->LeftStick_X() > 0.3f) // increase player count
+			switch (currentHover)
 			{
-				if (numPlayers < 4) // assuming max 4 players
+			case Menus::PLAYER_COUNT:
+				// horizontal navigation for player count
+				if (gamepad->LeftStick_X() > 0.3f) // increase player count
 				{
-					Event event(Events::Audio::PLAY_SOUND);
-					event.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/MenuNavigation.wav");
-					event.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
-					event.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, 0.0f);
-					controller.SendEvent(event);
-
-					numPlayers++;
+					if (numPlayers < 4) // assuming max 4 players
+					{
+						Event event(Events::Audio::PLAY_SOUND);
+						event.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/MenuNavigation.wav");
+						event.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
+						event.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, 0.0f);
+						controller.SendEvent(event);
+						numPlayers++;
+					}
+					canNavigate = false;
 				}
-				canNavigate = false;
-			}
-			else if (gamepad->LeftStick_X() < -0.3f) // decrease player count
-			{
-				if (numPlayers > 1) // minimum 1 player
+				else if (gamepad->LeftStick_X() < -0.3f) // decrease player count
 				{
-					Event event(Events::Audio::PLAY_SOUND);
-					event.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/MenuNavigation.wav");
-					event.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
-					event.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, 0.0f);
-					controller.SendEvent(event);
-
-					numPlayers--;
+					if (numPlayers > 1) // minimum 1 player
+					{
+						Event event(Events::Audio::PLAY_SOUND);
+						event.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/MenuNavigation.wav");
+						event.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
+						event.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, 0.0f);
+						controller.SendEvent(event);
+						numPlayers--;
+					}
+					canNavigate = false;
 				}
-				canNavigate = false;
+
+				break;
+
+			case Menus::AI_COUNT:
+				// horizontal navigation for AI count
+				if (gamepad->LeftStick_X() > 0.3f) // increase AI count
+				{
+					if (numAi < 4) // assuming max 4 AI
+					{
+						Event event(Events::Audio::PLAY_SOUND);
+						event.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/MenuNavigation.wav");
+						event.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
+						event.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, 0.0f);
+						controller.SendEvent(event);
+						numAi++;
+					}
+					canNavigate = false;
+				}
+				else if (gamepad->LeftStick_X() < -0.3f) // decrease AI count
+				{
+					if (numAi > 0) // minimum 0 AI
+					{
+						Event event(Events::Audio::PLAY_SOUND);
+						event.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/MenuNavigation.wav");
+						event.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
+						event.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, 0.0f);
+						controller.SendEvent(event);
+						numAi--;
+					}
+					canNavigate = false;
+				}
 			}
+			//if (gamepad->LeftStick_X() > 0.3f) // increase player count
+			//{
+			//	if (numPlayers < 4) // assuming max 4 players
+			//	{
+			//		Event event(Events::Audio::PLAY_SOUND);
+			//		event.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/MenuNavigation.wav");
+			//		event.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
+			//		event.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, 0.0f);
+			//		controller.SendEvent(event);
+
+			//		numPlayers++;
+			//	}
+			//	canNavigate = false;
+			//}
+			//else if (gamepad->LeftStick_X() < -0.3f) // decrease player count
+			//{
+			//	if (numPlayers > 1) // minimum 1 player
+			//	{
+			//		Event event(Events::Audio::PLAY_SOUND);
+			//		event.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/MenuNavigation.wav");
+			//		event.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
+			//		event.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, 0.0f);
+			//		controller.SendEvent(event);
+
+			//		numPlayers--;
+			//	}
+			//	canNavigate = false;
+			//}
 		}
 	}
 
@@ -307,6 +369,7 @@ void MenuSystem::RenderSettingsScreen()
 	float buttonSpacing = 120.0f;
 	float textScale = uniformScale;
 	RenderText("Player Count: " + std::to_string(numPlayers), ScaledX(500.0f), ScaledY(500.0f), textScale, defaultColor);
+	RenderText("AI Count: " + std::to_string(numAi), ScaledX(500.0f), ScaledY(370.0f), textScale, defaultColor);
 	
 
 	// back instruction
@@ -437,10 +500,12 @@ void MenuSystem::InitSettingsUI()
 	float buttonSpacing = 120.0f;
 
 	float playerCountY = 500.0f - buttonHeight * 0.5f;
+	float aiCountY = playerCountY - buttonSpacing;
 
 	settingsUIElements.clear();
-	settingsUIElements.emplace_back(buttonX, playerCountY, buttonWidth, buttonHeight,
-		glm::vec4(0.2f, 0.2f, 0.2f, 0.9f));
+	settingsUIElements.emplace_back(buttonX, playerCountY, buttonWidth, buttonHeight, glm::vec4(0.2f, 0.2f, 0.2f, 0.9f));
+	settingsUIElements.emplace_back(buttonX, aiCountY, buttonWidth, buttonHeight, glm::vec4(0.2f, 0.2f, 0.2f, 0.9f));
+
 }
 
 void MenuSystem::RenderElements(std::vector<UIElement>& elements)
@@ -674,6 +739,9 @@ void MenuSystem::KeyboardInputListener(Event& e)
 		case Menus::SETTINGS:
 		{
 			// settings menu
+			Event event(Events::GameState::NEW_STATE);
+			event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::SETTINGS);
+			controller.SendEvent(event);
 			break;
 		}
 		case Menus::QUIT:
