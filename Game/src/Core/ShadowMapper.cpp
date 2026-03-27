@@ -111,14 +111,14 @@ glm::mat4 ShadowMapper::GetLightSpaceMatrix(const float nearPlane, const float f
 	const auto proj = glm::perspective(fovY, aspectRatio, nearPlane, farPlane);
 	const std::vector<glm::vec4> corners = GetFrustumCornersWorldSpace(proj * view);
 
-	glm::vec3 center = glm::vec3(0, 0, 0);
+	glm::vec3 center(0.0f);
 	for (const auto& v : corners)
 	{
 		center += glm::vec3(v);
 	}
-	center /= corners.size();
+	center /= static_cast<float>(corners.size());
 
-	const auto lightView = glm::lookAt(center + light.getDirection(), center, glm::vec3(0.0f, 1.0f, 0.0f));
+	const auto lightView = glm::lookAt(center - light.getDirection() * 100.0f, center, glm::vec3(0.0f, 1.0f, 0.0f));
 
 	float minX = std::numeric_limits<float>::max();
 	float maxX = std::numeric_limits<float>::lowest();
@@ -126,6 +126,7 @@ glm::mat4 ShadowMapper::GetLightSpaceMatrix(const float nearPlane, const float f
 	float maxY = std::numeric_limits<float>::lowest();
 	float minZ = std::numeric_limits<float>::max();
 	float maxZ = std::numeric_limits<float>::lowest();
+
 	for (const auto& v : corners)
 	{
 		const auto trf = lightView * v;
@@ -137,22 +138,26 @@ glm::mat4 ShadowMapper::GetLightSpaceMatrix(const float nearPlane, const float f
 		maxZ = std::max(maxZ, trf.z);
 	}
 
-	constexpr float zMult = 10.0f;
+	constexpr float zMult = 5.0f;
 	if (minZ < 0)
 	{
 		minZ *= zMult;
+		//minZ += zMult;
 	}
 	else
 	{
 		minZ /= zMult;
+		//minZ -= zMult;
 	}
 	if (maxZ < 0)
 	{
 		maxZ /= zMult;
+		//maxZ -= zMult;
 	}
 	else
 	{
 		maxZ *= zMult;
+		//maxZ += zMult;
 	}
 
 	const glm::mat4 lightProjection = glm::ortho(minX, maxX, minY, maxY, minZ, maxZ);

@@ -207,11 +207,11 @@ void RenderSystem::DrawShadowPass(const Frustum& frust)
 	shadowMapper->BindShadowMap();
 	glViewport(0, 0, shadowMapper->SHADOW_WIDTH, shadowMapper->SHADOW_HEIGHT);
 	glClear(GL_DEPTH_BUFFER_BIT);
-	glCullFace(GL_FRONT); 
+	//glCullFace(GL_FRONT); 
+	glCullFace(GL_BACK);
 
 	std::unordered_map<Model*, std::vector<glm::mat4>> instancedModels;
 	shadowShader->setBool("u_isInstanced", false);
-
 
 	// draw entities
 	for (auto& entity : entities)
@@ -219,9 +219,6 @@ void RenderSystem::DrawShadowPass(const Frustum& frust)
 		auto& renderComp = controller.GetComponent<Render>(entity);
 		auto& transformComp = controller.GetComponent<Transform>(entity);
 
-		//glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), transformComp.position);
-		//modelMatrix = modelMatrix * glm::mat4_cast(transformComp.quatRotation);
-		//modelMatrix = glm::scale(modelMatrix, transformComp.scale);
 		glm::mat3 rot = glm::mat3_cast(transformComp.quatRotation);
 		rot[0] *= transformComp.scale.x;
 		rot[1] *= transformComp.scale.y;
@@ -229,16 +226,9 @@ void RenderSystem::DrawShadowPass(const Frustum& frust)
 		glm::mat4 modelMatrix(rot);
 		modelMatrix[3] = glm::vec4(transformComp.position, 1.0f);
 
-		bool isVisible = renderComp.boundingVolume->isOnFrustum(frust, modelMatrix);
-
-	
-		// only using culling for instanced models in shadow pass 
 		if (renderComp.isInstanced)
 		{
-			if (isVisible)
-			{
-				instancedModels[renderComp.model.get()].push_back(modelMatrix);
-			}
+			instancedModels[renderComp.model.get()].push_back(modelMatrix);
 			continue;
 		}
 
@@ -342,19 +332,19 @@ void RenderSystem::DrawLightingPass(const Frustum& frust, const ThirdPersonCamer
 	defaultInstanceShader->setBool("u_isInstanced", true);
 
 	Mesh* previousMesh = nullptr;
-	for (auto& [model, matrices] : instancedModels) // loop through each unique model that is instanced
+	for (auto& [model, matrices] : instancedModels)
 	{
-		for (Mesh& mesh : model->getMeshes()) // instance render each mesh in the model
+		for (Mesh& mesh : model->getMeshes())
 		{
-			if (previousMesh != &mesh) // only bind textures if the mesh is different from the previous one since instanced meshes will share the same texture
+			if (previousMesh != &mesh)
 			{
-				// bind textures
 				BindTextures(mesh);
 				previousMesh = &mesh;
 			}
 
-			//mesh.UpdateInstanceBuffer(matrices);
-			//mesh.SetupInstanceMesh();
+			mesh.UpdateInstanceBuffer(matrices);
+			mesh.SetupInstanceMesh();
+
 			mesh.BindVao();
 			glDrawElementsInstanced(GL_TRIANGLES, static_cast<GLsizei>(mesh.getIndices().size()), GL_UNSIGNED_INT, 0, static_cast<GLsizei>(matrices.size()));
 			mesh.UnbindVao();

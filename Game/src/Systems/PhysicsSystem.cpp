@@ -52,8 +52,8 @@ void PhysicsSystem::Init()
 	}
 
 	PxSceneDesc PhysicsSceneDesc(gPhysics->getTolerancesScale());
-	//PhysicsSceneDesc.gravity = PxVec3(0.0f, -9.81f, 0.0f);
-	PhysicsSceneDesc.gravity = PxVec3(0.0f, -20.0f, 0.0f); // double gravity for vehicle testing
+	PhysicsSceneDesc.gravity = PxVec3(0.0f, -9.81f, 0.0f);
+	//PhysicsSceneDesc.gravity = PxVec3(0.0f, -20.0f, 0.0f); // double gravity for vehicle testing
 	gDispatcher = PxDefaultCpuDispatcherCreate(2);
 	PhysicsSceneDesc.cpuDispatcher = gDispatcher;
 	//PhysicsSceneDesc.filterShader = PxDefaultSimulationFilterShader;

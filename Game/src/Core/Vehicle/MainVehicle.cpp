@@ -162,20 +162,26 @@ void MainVehicle::step(float deltaTime)
 
 	// stabalize vehicle when in the air to reduce vehicle flipping
 	auto* dyn = gVehicle.mPhysXState.physxActor.rigidBody->is<PxRigidDynamic>();
-	if (dyn && !IsGrounded(gVehicleSimulationContext.physxScene))
+	if (dyn)
 	{
-		const float dampRate = 1.0f;
-		const float dampFactor = expf(-dampRate * deltaTime);
-		PxVec3 angVel = dyn->getAngularVelocity();
-		angVel.x *= dampFactor;
-		angVel.z *= dampFactor;
-		dyn->setAngularVelocity(angVel);
+		if (!IsGrounded(gVehicleSimulationContext.physxScene))
+		{
+			const float dampRate = 1.0f;
+			const float dampFactor = expf(-dampRate * deltaTime);
+			PxVec3 angVel = dyn->getAngularVelocity();
+			angVel.x *= dampFactor;
+			angVel.z *= dampFactor;
+			dyn->setAngularVelocity(angVel);
 
-		// add torque to vehicle to align it with the up direction
-		PxTransform t = dyn->getGlobalPose();
-		PxVec3 vehicleUp = t.q.rotate(PxVec3(0.0f, 1.0f, 0.0f));
-		PxVec3 correctionTorque = vehicleUp.cross(PxVec3(0.0f, 1.0f, 0.0f)) * 10.0f;
-		dyn->addTorque(correctionTorque, PxForceMode::eACCELERATION);
+			// add torque to vehicle to align it with the up direction
+			PxTransform t = dyn->getGlobalPose();
+			PxVec3 vehicleUp = t.q.rotate(PxVec3(0.0f, 1.0f, 0.0f));
+			PxVec3 correctionTorque = vehicleUp.cross(PxVec3(0.0f, 1.0f, 0.0f)) * 10.0f;
+			dyn->addTorque(correctionTorque, PxForceMode::eACCELERATION);
+		}
+			// apply downwards force to account for lower gravity
+			float gravScale = 1.3f;
+			dyn->addForce(PxVec3(0.0f, -9.81f * gravScale * dyn->getMass(), 0.0f), PxForceMode::eFORCE);
 	}
 }
 

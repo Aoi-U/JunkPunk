@@ -475,18 +475,12 @@ void LevelLoaderSystem::LoadLevel()
 		auto& cameraComp = controller.GetComponent<ThirdPersonCamera>(controller.GetEntityByTag("Camera" + std::to_string(i + 1))); // set the camera's player entity to the vehicle
 		cameraComp.playerEntity = vehicle;
 
-	Entity vehicle = controller.createEntity();
-	glm::mat4 player_rotation = glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-	loaded = LoadModel("assets/models/car_body_orange/car.gltf");
-	controller.AddComponent(vehicle, Transform{ glm::vec3(137.0f, -255.0f, -233.f), glm::quat(player_rotation), glm::vec3(0.2f) });
-	controller.AddComponent(vehicle, VehicleBody{});
-	controller.AddComponent(vehicle, VehicleCommands{});
-	controller.AddComponent(vehicle, PlayerController{ 1 });
-	controller.AddComponent(vehicle, Render{ loaded.first, loaded.second });
-	controller.AddComponent(vehicle, PhysicsBody{});
-	controller.AssignTag(vehicle, "VehicleCommands");
-	auto& cameraComp = controller.GetComponent<ThirdPersonCamera>(camera); // set the camera's player entity to the vehicle
-	cameraComp.playerEntity = vehicle;
+		entity = controller.createEntity(); // front left wheel
+		loaded = LoadModel("assets/models/left_wheel/wheel.gltf");
+		controller.AddComponent(entity, Transform{ glm::vec3(-30.0f + i * 5.0f, -80.0f, -25.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.2f) });
+		controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
+		controller.AddComponent(entity, PhysicsBody{});
+		controller.GetComponent<VehicleBody>(vehicle).wheelEntities.push_back(entity);
 
 		entity = controller.createEntity(); // front right wheel
 		loaded = LoadModel("assets/models/right_wheel/wheel.gltf");
