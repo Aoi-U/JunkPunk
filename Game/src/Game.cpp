@@ -12,6 +12,7 @@
 #include "Components/Powerup.h"
 #include "Components/AiDriver.h"
 #include "Components/Banana.h"
+#include "Components/Sludge.h"
 
 #include "ECSController.h"
 #include "Core/Types.h"
@@ -150,6 +151,7 @@ Game::Game()
 	controller.RegisterComponent<PlayerController>();
 	controller.RegisterComponent<AiDriver>();
 	controller.RegisterComponent<Banana>();
+	controller.RegisterComponent<Sludge>();
 
 	// register systems (you must register systems before setting component signatures)
 	loaderSystem = controller.RegisterSystem<LevelLoaderSystem>();
@@ -243,6 +245,7 @@ Game::Game()
 	controller.AddEventListener(Events::GameState::NEW_STATE, [this](Event& e) { this->ChangeGameStateListener(e); });
 	controller.AddEventListener(Events::Window::INPUT, [this](Event& e) { this->KeyboardInputListener(e); });
 	controller.AddEventListener(Events::Physics::TRIGGER_ENTER, [this](Event& e) { this->TriggerEnterListener(e); });
+	controller.AddEventListener(Events::Physics::TRIGGER_EXIT, [this](Event& e) {this->TriggerExitListener(e); });
 }
 
 // main game function
@@ -367,6 +370,13 @@ void Game::Run()
 					if (p.type == 2) {
 						SpawnBananaPeel(vehicle);
 						controller.RemoveComponent<Powerup>(vehicle);
+					}
+					else if (p.type == 3) {
+						std::cout << "Blast used\n";
+						Event event(Events::Player::BLAST);
+						event.SetParam<Entity>(Events::Player::Blast::ENTITY, player);
+						controller.SendEvent(event);
+						controller.RemoveComponent<Powerup>(player);
 					}
 					else {
 						p.active = true;
@@ -594,6 +604,13 @@ void Game::KeyboardInputListener(Event& e)
 					SpawnBananaPeel(player);
 					controller.RemoveComponent<Powerup>(player);
 				}
+				else if (p.type == 3) {
+				std::cout << "Blast used\n";
+				Event event(Events::Player::BLAST);
+				event.SetParam<Entity>(Events::Player::Blast::ENTITY, player);
+				controller.SendEvent(event);
+				controller.RemoveComponent<Powerup>(player);
+				}
 				else {
 					p.active = true;
 					p.elapsed = 0.0f;
@@ -650,30 +667,33 @@ void Game::TriggerEnterListener(Event& e)
 		controller.SendEvent(spinEvent);
 		controller.DestroyEntity(triggerEntity);
 	}
-	//else if (controller.HasComponent<Powerup>(triggerEntity) && otherEntity == playerEntity && !controller.HasComponent<Powerup>(playerEntity)) {
-	//	Entity player = playerEntity;
-	//	auto pickup = controller.GetComponent<Powerup>(triggerEntity);
-	//	controller.AddComponent(player, pickup);
-	//	std::cout << "Powerup collected!" << std::endl;
-	//	controller.DestroyEntity(triggerEntity);
-	//}
-	//else if (controller.HasComponent<CheckPoint>(triggerEntity))
-	//{
-	//	Event e(Events::Checkpoint::REACHED);
-	//	e.SetParam<Entity>(Events::Checkpoint::Reached::PLAYER_ENTITY, otherEntity);
-	//	e.SetParam<Entity>(Events::Checkpoint::Reached::CHECKPOINT_ENTITY, triggerEntity);
-	//	controller.SendEvent(e);
+	else if (controller.HasComponent<Sludge>(triggerEntity) && controller.HasComponent<VehicleCommands>(otherEntity)) {
+		auto& sludge = controller.GetComponent<Sludge>(triggerEntity);
+		auto& commands = controller.GetComponent<VehicleCommands>(otherEntity);
 
-	//	controller.DestroyEntity(triggerEntity);
-	//}
-	//else if (controller.HasComponent<Banana>(triggerEntity)) {
-	//	std::cout << "Hit banana" << std::endl;
-	//	Event spinEvent(Events::Player::SPIN_OUT);
-	//	spinEvent.SetParam<Entity>(Events::Player::Spin_Out::Entity, playerEntity);
-	//	controller.SendEvent(spinEvent);
-	//	controller.DestroyEntity(triggerEntity);
-	//}
+		commands.inSludge = true;
+		commands.sludgeFactor = sludge.slowFactor;
+		std::cout << "Entered sludeg\n";
+	}
 }
+
+void Game::TriggerExitListener(Event& e)
+{
+	Entity triggerEntity = e.GetParam<Entity>(Events::Physics::Trigger_Enter::ENTITY_ONE);
+	Entity otherEntity = e.GetParam<Entity>(Events::Physics::Trigger_Enter::ENTITY_TWO);
+
+	if (controller.HasComponent<Sludge>(triggerEntity) &&
+		controller.HasComponent<VehicleCommands>(otherEntity))
+	{
+		auto& commands = controller.GetComponent<VehicleCommands>(otherEntity);
+
+		commands.inSludge = false;
+		commands.sludgeFactor = 1.0f;
+
+		std::cout << "Exited sludge\n";
+	}
+}
+
 
 void Game::SpawnBananaPeel(Entity vehicle) {
 	auto& vehicleTransform = controller.GetComponent<Transform>(vehicle);

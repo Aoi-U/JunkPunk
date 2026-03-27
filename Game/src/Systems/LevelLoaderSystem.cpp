@@ -10,6 +10,7 @@
 #include "../Components/AiDriver.h"
 #include "AiSystem.h"
 #include"../Components/Banana.h"
+#include "../Components/Sludge.h"
 
 
 #include "../ECSController.h"
@@ -377,18 +378,12 @@ void LevelLoaderSystem::LoadLevel()
 		});
 
 
-	//dice
-	/*std::vector<std::vector<glm::vec3>> dice_positions = {
-		{glm::vec3(-40.0f, -46.f, 200.f), glm::vec3(120.0f, -46.f, 200.f), glm::vec3(120.0f, -46.f, 200.f), glm::vec3(-40.0f, -46.f, 200.f)},
-		{glm::vec3(-40.0f, -46.f, 175.f), glm::vec3(120.0f, -46.f, 175.f), glm::vec3(120.0f, -46.f, 175.f), glm::vec3(-40.0f, -46.f, 175.f)},
-		{glm::vec3(-40.0f, -46.f, 150.f), glm::vec3(120.0f, -46.f, 150.f), glm::vec3(120.0f, -46.f, 150.f), glm::vec3(-40.0f, -46.f, 150.f)},
-	};*/
 
-	//dropoff 
+	//dice
 	std::vector<std::vector<glm::vec3>> dice_positions = {
-		{glm::vec3(-40.0f, -46.f, 215.f), glm::vec3(180.0f, 0.f, 215.f), glm::vec3(180.0f, 0.f, 215.f), glm::vec3(-40.0f, -46.f, 215.f)},
-		{glm::vec3(-40.0f, -46.f, 190.f), glm::vec3(180.0f, 0.f, 190.f), glm::vec3(180.0f, 0.f, 190.f), glm::vec3(-40.0f, -46.f, 190.f)},
-		{glm::vec3(-40.0f, -46.f, 165.f), glm::vec3(180.0f, 0.f, 165.f), glm::vec3(180.0f, 0.f, 165.f), glm::vec3(-40.0f, -46.f, 165.f)},
+		{glm::vec3(-40.0f, -46.f, 200.f), glm::vec3(140.0f, -46.f, 200.f), glm::vec3(140.0f, -46.f, 200.f), glm::vec3(-40.0f, -46.f, 200.f)},
+		{glm::vec3(-40.0f, -46.f, 175.f), glm::vec3(140.0f, -46.f, 175.f), glm::vec3(140.0f, -46.f, 175.f), glm::vec3(-40.0f, -46.f, 175.f)},
+		{glm::vec3(-40.0f, -46.f, 150.f), glm::vec3(140.0f, -46.f, 150.f), glm::vec3(140.0f, -46.f, 150.f), glm::vec3(-40.0f, -46.f, 150.f)},
 
 		{glm::vec3(0.0f, 62.f, 325.f), glm::vec3(30.0f, 62.f, 355.f), glm::vec3(60.0f, 62.f, 325.f), glm::vec3(30.0f, 62.f, 295.f)},
 	};
@@ -480,12 +475,18 @@ void LevelLoaderSystem::LoadLevel()
 		auto& cameraComp = controller.GetComponent<ThirdPersonCamera>(controller.GetEntityByTag("Camera" + std::to_string(i + 1))); // set the camera's player entity to the vehicle
 		cameraComp.playerEntity = vehicle;
 
-		entity = controller.createEntity(); // front left wheel
-		loaded = LoadModel("assets/models/left_wheel/wheel.gltf");
-		controller.AddComponent(entity, Transform{ glm::vec3(-30.0f + i * 5.0f, -80.0f, -25.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.2f) });
-		controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
-		controller.AddComponent(entity, PhysicsBody{});
-		controller.GetComponent<VehicleBody>(vehicle).wheelEntities.push_back(entity);
+	Entity vehicle = controller.createEntity();
+	glm::mat4 player_rotation = glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	loaded = LoadModel("assets/models/car_body_orange/car.gltf");
+	controller.AddComponent(vehicle, Transform{ glm::vec3(137.0f, -255.0f, -233.f), glm::quat(player_rotation), glm::vec3(0.2f) });
+	controller.AddComponent(vehicle, VehicleBody{});
+	controller.AddComponent(vehicle, VehicleCommands{});
+	controller.AddComponent(vehicle, PlayerController{ 1 });
+	controller.AddComponent(vehicle, Render{ loaded.first, loaded.second });
+	controller.AddComponent(vehicle, PhysicsBody{});
+	controller.AssignTag(vehicle, "VehicleCommands");
+	auto& cameraComp = controller.GetComponent<ThirdPersonCamera>(camera); // set the camera's player entity to the vehicle
+	cameraComp.playerEntity = vehicle;
 
 		entity = controller.createEntity(); // front right wheel
 		loaded = LoadModel("assets/models/right_wheel/wheel.gltf");
@@ -672,6 +673,20 @@ void LevelLoaderSystem::LoadLevel()
 		});
 
 	entity = controller.createEntity();
+	loaded = LoadModel("assets/models/bomb/scene.gltf");
+	controller.AddComponent(entity, Transform{ glm::vec3(81.0f, -260.0f, -234.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(2.0f) });
+	controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 2.0f, 1.0f });
+	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
+	controller.AddComponent(entity, PhysicsBody{});
+	controller.AddComponent(entity, Powerup{
+		3,
+		false,
+		5.0f,
+		0.0f
+		});
+
+
+	entity = controller.createEntity();
 	loaded = LoadModel("assets/models/banana_peel/banana.gltf");
 	controller.AddComponent(entity, Transform{ glm::vec3(-62.0f, -94.0f, -7.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.5f) });
 	controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 1.0f, 1.0f });
@@ -717,6 +732,27 @@ void LevelLoaderSystem::LoadLevel()
 	//	controller.AddComponent(entity, CheckPoint{ glm::quat(1.0f, 0.0f, 0.0f, 0.0f) });
 	//	controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 4.0f, 1.0f });
 	//}
+
+	entity = controller.createEntity();
+	Sludge sludge;
+	controller.AddComponent(entity, Transform{
+		glm::vec3(81.0f, -258.0f, -234.0f), // POSITION (adjust as needed)
+		glm::quat(1, 0, 0, 0),
+		glm::vec3(1.0f)
+		});
+
+	controller.AddComponent(entity, Trigger{
+		nullptr,
+		20.0f, // width
+		2.0f,  // height
+		20.0f  // length
+		});
+
+	controller.AddComponent(entity, Sludge{
+		sludge.slowFactor // slow factor
+		});
+
+	controller.AddComponent(entity, PhysicsBody{});
 }
 
 std::pair<std::shared_ptr<Model>, std::shared_ptr<AABB>> LevelLoaderSystem::LoadModel(std::string path)

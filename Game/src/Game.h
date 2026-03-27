@@ -53,6 +53,7 @@ private:
 	void KeyboardInputListener(Event& e);
 	void TriggerEnterListener(Event& e);
 	void SpawnBananaPeel(Entity vehicle);
+	void TriggerExitListener(Event& e);
 
 	//std::unique_ptr<ImGuiPanel> camera_debug_panel; // testing
 	

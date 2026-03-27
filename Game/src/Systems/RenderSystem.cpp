@@ -84,6 +84,8 @@ void RenderSystem::Init()
 	bananaIconTexture->Load("assets/UI");
 	boostIconTexture = std::make_unique<Texture>("flash.png");
 	boostIconTexture->Load("assets/UI");
+	bombIconTexture = std::make_unique<Texture>("bomb.png");
+	bombIconTexture->Load("assets/UI");
 
 	uiVAO = VAO();
 	uiVBO = VBO();
@@ -479,6 +481,8 @@ void RenderSystem::RenderPowerupUI(Entity player, int vx, int vy, int vw, int vh
 		tex = boostIconTexture.get();
 	else if (p.type == 2)
 		tex = bananaIconTexture.get();
+	else if (p.type == 3)
+		tex = bombIconTexture.get();
 
 	if (tex == nullptr)
 		return;

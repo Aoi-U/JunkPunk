@@ -15,6 +15,8 @@ struct VehicleCommands
 	float brake;
 	float steer;
 	bool isGrounded;
+	bool inSludge = false;
+	float sludgeFactor = 1.0f;
 };
 
 struct PlayerController

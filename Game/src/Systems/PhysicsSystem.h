@@ -60,8 +60,6 @@ private:
 
 	PxTriangleMesh* CreateTriangleMesh(const Mesh& mesh); // generate static triangle meshes from models
 
-
-
 	// listeners
 
 
@@ -74,6 +72,8 @@ private:
 	void CheckpointReachedListener(Event& e); // listens for checkpoint events
 
 	void SpinOutListener(Event& e);
+
+	void BlastEventListener(Event& e);
 
 	// callbacks
 
