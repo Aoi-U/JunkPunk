@@ -19,8 +19,6 @@ public:
 	void SetGoalPosition(const glm::vec3& goal) { goalPosition = goal; }
 
 	void SpawnDebugWaypoints(Entity entity);
-	// Spawns a 1x1 trigger box at every navmesh triangle centroid (node)
-	void SpawnDebugNodes();
 
 private:
 	NavMesh navMesh;
@@ -46,6 +44,9 @@ private:
 
 	// Checks if conditions are right to use a held powerup. Called during FollowPath.
 	void TryUsePowerup(Entity entity);
+
+	// Returns true if the point is inside any DangerZone whose glove is currently extended
+	bool IsPointInActiveDangerZone(const glm::vec3& point) const;
 
 	float CalculateSteeringAngle(const glm::vec3& forward, const glm::vec3& toTarget);
 };

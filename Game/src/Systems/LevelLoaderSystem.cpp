@@ -1,4 +1,6 @@
+#include <vector>
 #include "LevelLoaderSystem.h"
+#include "AiSystem.h"
 #include "../Components/Physics.h"
 #include "../Components/Render.h"
 #include "../Components/Player.h"
@@ -8,8 +10,8 @@
 #include "../Components/Particles.h"
 #include "../Components/Powerup.h"
 #include "../Components/AiDriver.h"
-#include "AiSystem.h"
-#include"../Components/Banana.h"
+#include "../Components/Banana.h"
+#include "../Components/DangerZone.h"
 #include "../NavMesh.h"
 
 
@@ -113,7 +115,7 @@ void LevelLoaderSystem::LoadLevel()
 	//controller.AddComponent(entity, PhysicsBody{});
 
 	// create dumpster
-	glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::pi<float>()/4.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::pi<float>() / 4.0f, glm::vec3(0.0f, 1.0f, 0.0f));
 	Entity entity = controller.createEntity();
 	auto loaded = LoadModel("assets/models/dumpster/dumpster.gltf");
 	controller.AddComponent(entity, Transform{ glm::vec3(0.0f, -50.0f, 50.0f), glm::quat_cast(rotation), glm::vec3(50.0f) });
@@ -140,85 +142,12 @@ void LevelLoaderSystem::LoadLevel()
 		aiSystemPtr->SetNavMesh(navMesh);
 	}
 
-	for (int i = 0; i < 10; i++)
-	{
-		entity = controller.createEntity();
-		loaded = LoadModel("assets/models/rubix_2.0/scene.gltf");
-		controller.AddComponent(entity, Transform{ glm::vec3(0.0f, -40.0f + i * 8.0f, 20.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.7f) });
-		controller.AddComponent(entity, RigidBody{ nullptr, loaded.first, loaded.second, 50.0f, true, glm::vec3(0.0f), glm::vec3(0.0f) });
-		controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
-		controller.AddComponent(entity, PhysicsBody{});
-		controller.AddComponent(entity, MovingObstacle{
-			{ // path points
-				{ -50.0f - i, -90.0f + i * 2 ,-20.0f + i },
-				{ -50.0f - i, -90.0f + i * 2, -30.0f + i },
-				{ -40.0f - i, -90.0f + i * 2, -30.0f + i },
-				{ -40.0f - i, -90.0f + i * 2, -20.0f + i },
-				{ -40.0f - i, -90.0f + i * 2, -20.0f + i }
-			},
-			{ // rotation points (must be empty or same size as path points)
-				glm::quat(glm::vec3(0.0f, glm::radians(90.0f), 0.0f)),
-				glm::quat(glm::vec3(0.0f, glm::radians(180.0f), 0.0f)),
-				glm::quat(glm::vec3(0.0f, glm::radians(-90.0f), 0.0f)),
-				glm::quat(glm::vec3(0.0f, glm::radians(180.0f), 0.0f)),
-				glm::quat(glm::vec3(0.0f, glm::radians(90.0f), 0.0f))
-			},
-			{
-				// times to reach each point (if empty, movement will be based on speed, must be empty or same size as path points)
-				1.0f,
-				2.0f,
-				3.0f,
-				5.0f,
-				5.0f
-			},
-			0.0f,
-			0,
-			5.0f,
-			false
-			});
-	}
-
-	//punching glove
-	entity = controller.createEntity();
-	loaded = LoadModel("assets/models/spring_glove/spring_glove.gltf");
-	rotation = glm::rotate(glm::mat4(1.0f), glm::pi<float>() / 4.0f, glm::vec3(0.0f, 1.0f, 0.0f));
-	controller.AddComponent(entity, Transform{ glm::vec3(-50.0f, -69.0f, 50.0f), glm::quat_cast(rotation), glm::vec3(3.f) });
-	controller.AddComponent(entity, RigidBody{ nullptr, loaded.first, loaded.second, 50.0f, true, glm::vec3(0.0f), glm::vec3(0.0f) });
-	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
-	controller.AddComponent(entity, PhysicsBody{});
-	controller.AddComponent(entity, MovingObstacle{
-		std::vector<glm::vec3>{
-			{ 50.0f, -69.0f , 50.0f},
-			{ 20.0f, -69.0f, 20.0f},
-				{ 20.0f, -69.0f, 20.0f},
-			{ 50.0f, -69.0f , 50.0f},
-		},
-		std::vector<glm::quat>{
-			glm::quat_cast(glm::rotate(glm::mat4(1.0f), -3.0f * glm::pi<float>() / 4.0f, glm::vec3(0.0f, 1.0f, 0.0f))),
-			glm::quat_cast(glm::rotate(glm::mat4(1.0f), -3.0f * glm::pi<float>() / 4.0f, glm::vec3(0.0f, 1.0f, 0.0f))),
-			glm::quat_cast(glm::rotate(glm::mat4(1.0f), -3.0f * glm::pi<float>() / 4.0f, glm::vec3(0.0f, 1.0f, 0.0f))),
-			glm::quat_cast(glm::rotate(glm::mat4(1.0f), -3.0f * glm::pi<float>() / 4.0f, glm::vec3(0.0f, 1.0f, 0.0f))),
-		},
-		std::vector <float>{
-			3.f, 1.f, 1.f, 1.f
-		},
-		0.0f,
-		1,
-		0,
-		false
-		});
-
-
-	//for (int i = 0; i < 50; i++)
-	//{
-	//	entity = controller.createEntity();
-	//	loaded = LoadModel("assets/models/rubix_2.0/scene.gltf");
-	//	controller.AddComponent(entity, Transform{ glm::vec3(-60.0f, -90.0f + i * 10.0f, 20.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.7f) });
-	//	controller.AddComponent(entity, RigidBody{ nullptr, loaded.first, loaded.second, 50.0f, true, glm::vec3(0.0f), glm::vec3(0.0f) });
-	//	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
-	//	controller.AddComponent(entity, PhysicsBody{});
-	//}
-
+	std::vector<std::string> wheelModels = {
+		"assets/models/left_wheel/wheel.gltf",
+		"assets/models/right_wheel/wheel.gltf",
+		"assets/models/left_wheel/wheel.gltf",
+		"assets/models/right_wheel/wheel.gltf"
+	};
 
 	Entity vehicle = controller.createEntity();
 	loaded = LoadModel("assets/models/car_body_orange/car.gltf");
@@ -234,33 +163,15 @@ void LevelLoaderSystem::LoadLevel()
 	auto& cameraComp = controller.GetComponent<ThirdPersonCamera>(camera); // set the camera's player entity to the vehicle
 	cameraComp.playerEntity = vehicle;
 
-	entity = controller.createEntity(); // front left wheel
-	loaded = LoadModel("assets/models/left_wheel/wheel.gltf");
-	controller.AddComponent(entity, vehicleTransform);
-	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
-	controller.AddComponent(entity, PhysicsBody{});
-	controller.GetComponent<VehicleBody>(vehicle).wheelEntities.push_back(entity);
-
-	entity = controller.createEntity(); // front right wheel
-	loaded = LoadModel("assets/models/right_wheel/wheel.gltf");
-	controller.AddComponent(entity, vehicleTransform);
-	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
-	controller.AddComponent(entity, PhysicsBody{});
-	controller.GetComponent<VehicleBody>(vehicle).wheelEntities.push_back(entity);
-
-	entity = controller.createEntity(); // back left wheel
-	loaded = LoadModel("assets/models/left_wheel/wheel.gltf");
-	controller.AddComponent(entity, vehicleTransform);
-	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
-	controller.AddComponent(entity, PhysicsBody{});
-	controller.GetComponent<VehicleBody>(vehicle).wheelEntities.push_back(entity);
-
-	entity = controller.createEntity(); // back right wheel
-	loaded = LoadModel("assets/models/right_wheel/wheel.gltf");
-	controller.AddComponent(entity, vehicleTransform);
-	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
-	controller.AddComponent(entity, PhysicsBody{});
-	controller.GetComponent<VehicleBody>(vehicle).wheelEntities.push_back(entity);
+	for (const auto& wheelModel : wheelModels)
+	{
+		entity = controller.createEntity();
+		loaded = LoadModel(wheelModel);
+		controller.AddComponent(entity, vehicleTransform);
+		controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
+		controller.AddComponent(entity, PhysicsBody{});
+		controller.GetComponent<VehicleBody>(vehicle).wheelEntities.push_back(entity);
+	}
 
 	ParticleEmitter particles = ParticleEmitter{};
 	particles.Init(20000);
@@ -281,6 +192,7 @@ void LevelLoaderSystem::LoadLevel()
 		});
 
 	// ---- AI Opponents ----
+	// ----------------------------------------------------------------------------------------
 	struct AiSpawnInfo
 	{
 		glm::vec3 startPos;
@@ -315,13 +227,6 @@ void LevelLoaderSystem::LoadLevel()
 		controller.AddComponent(aiVehicle, PhysicsBody{});
 		controller.AssignTag(aiVehicle, spawn.tag);
 
-		// Wheels
-		std::vector<std::string> wheelModels = {
-			"assets/models/left_wheel/wheel.gltf",
-			"assets/models/right_wheel/wheel.gltf",
-			"assets/models/left_wheel/wheel.gltf",
-			"assets/models/right_wheel/wheel.gltf"
-		};
 		for (const auto& wheelModel : wheelModels)
 		{
 			entity = controller.createEntity();
@@ -339,16 +244,8 @@ void LevelLoaderSystem::LoadLevel()
 			<< " at (" << spawn.startPos.x << ", " << spawn.startPos.y << ", " << spawn.startPos.z << ")" << std::endl;
 	}
 
-	// test trigger box
-	//entity = controller.createEntity();
-	//controller.AddComponent(entity, PhysicsBody{});
-	//controller.AddComponent(entity, Trigger{ nullptr, 10.0f, 2.0f, 10.0f });
-	//controller.AddComponent(entity, Transform{
-	//	glm::vec3(25.0f, 35.0f, 120.0f),
-	//	glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
-	//	glm::vec3(1.0f)
-	//	});
-
+	// ---- Powerups ----
+	// ----------------------------------------------------------------------------------------
 	entity = controller.createEntity();
 	loaded = LoadModel("assets/models/lightning_capsule/scene.gltf");
 	controller.AddComponent(entity, Transform{ glm::vec3(-80.0f, -93.0f, 19.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.25f) });
@@ -375,54 +272,157 @@ void LevelLoaderSystem::LoadLevel()
 		0.0f
 		});
 
+	// ---- Obstacles ----
+	// ----------------------------------------------------------------------------------------
+
+	std::vector<glm::vec3> bananaPeelLocations = { glm::vec3(-26.3058f, -94.7378f, -0.271198f),
+		glm::vec3(-45.2473f, -84.7378f, 40.7354f),
+		glm::vec3(82.3062f, -19.7378f, 83.7593f)
+	};
+
+	for (int i = 0; i < bananaPeelLocations.size(); i++) {
+		entity = controller.createEntity();
+		loaded = LoadModel("assets/models/banana_peel/banana.gltf");
+		controller.AddComponent(entity, Transform{ bananaPeelLocations[i], glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.5f) });
+		controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 1.0f, 1.0f });
+		controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
+		controller.AddComponent(entity, PhysicsBody{});
+		controller.AddComponent(entity, Banana{});
+	}
+
+	//punching glove
 	entity = controller.createEntity();
-	loaded = LoadModel("assets/models/banana_peel/banana.gltf");
-	controller.AddComponent(entity, Transform{ glm::vec3(-13.181f, -73.175f, 19.803f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.5f) });
-	controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 1.0f, 1.0f });
+	loaded = LoadModel("assets/models/spring_glove/spring_glove.gltf");
+	rotation = glm::rotate(glm::mat4(1.0f), glm::pi<float>() / 4.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+	controller.AddComponent(entity, Transform{ glm::vec3(-50.0f, -69.0f, 50.0f), glm::quat_cast(rotation), glm::vec3(3.f) });
+	controller.AddComponent(entity, RigidBody{ nullptr, loaded.first, loaded.second, 50.0f, true, glm::vec3(0.0f), glm::vec3(0.0f) });
 	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
 	controller.AddComponent(entity, PhysicsBody{});
-	controller.AddComponent(entity, Banana{});
-	entity = controller.createEntity();
-	loaded = LoadModel("assets/models/banana_peel/banana.gltf");
-	controller.AddComponent(entity, Transform{ glm::vec3(-8.181f, -73.175f, 24.803f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.5f) });
-	controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 1.0f, 1.0f });
-	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
-	controller.AddComponent(entity, PhysicsBody{});
-	controller.AddComponent(entity, Banana{});
+	controller.AddComponent(entity, MovingObstacle{
+		std::vector<glm::vec3>{
+			{ 50.0f, -69.0f , 50.0f},
+			{ 20.0f, -69.0f, 20.0f},
+				{ 20.0f, -69.0f, 20.0f},
+			{ 50.0f, -69.0f , 50.0f},
+		},
+		std::vector<glm::quat>{
+			glm::quat_cast(glm::rotate(glm::mat4(1.0f), -3.0f * glm::pi<float>() / 4.0f, glm::vec3(0.0f, 1.0f, 0.0f))),
+			glm::quat_cast(glm::rotate(glm::mat4(1.0f), -3.0f * glm::pi<float>() / 4.0f, glm::vec3(0.0f, 1.0f, 0.0f))),
+			glm::quat_cast(glm::rotate(glm::mat4(1.0f), -3.0f * glm::pi<float>() / 4.0f, glm::vec3(0.0f, 1.0f, 0.0f))),
+			glm::quat_cast(glm::rotate(glm::mat4(1.0f), -3.0f * glm::pi<float>() / 4.0f, glm::vec3(0.0f, 1.0f, 0.0f))),
+		},
+		std::vector <float>{
+			3.f, 1.f, 1.f, 1.f
+		},
+		0.0f,
+		1,
+		0,
+		false
+		});
+
+	Entity gloveEntity = entity; // save the glove entity we just created
+
+	// Spawn danger zone covering the glove's full sweep path
+	{
+		// Compute bounding box from all path points
+		std::vector<glm::vec3> glovePathPoints = {
+			{ 50.0f, -69.0f, 50.0f },
+			{ 20.0f, -69.0f, 20.0f },
+		};
+
+		glm::vec3 minPt = glovePathPoints[0];
+		glm::vec3 maxPt = glovePathPoints[0];
+		for (auto& p : glovePathPoints)
+		{
+			minPt = glm::min(minPt, p);
+			maxPt = glm::max(maxPt, p);
+		}
+
+		float dangerPadding = 6.0f; // extra width around the path to account for glove model size
+		glm::vec3 center = (minPt + maxPt) * 0.5f;
+		glm::vec3 halfExtents = (maxPt - minPt) * 0.5f + glm::vec3(dangerPadding);
+
+		Entity dangerEntity = controller.createEntity();
+		controller.AddComponent(dangerEntity, DangerZone{ center, halfExtents, gloveEntity, dangerPadding });
+		controller.AddComponent(dangerEntity, PhysicsBody{}); // needed so ECS tracks it
+
+		std::cout << "[LevelLoader] Danger zone spawned at ("
+			<< center.x << ", " << center.y << ", " << center.z
+			<< ") halfExtents=(" << halfExtents.x << ", " << halfExtents.y << ", " << halfExtents.z << ")" << std::endl;
+	}
+
+	//struct PunchingGloveSpawn
+	//{
+	//	glm::vec3 startPos;     // retracted position
+	//	glm::vec3 extendedPos;  // fully punched out position
+	//	float rotationDeg;      // Y-axis rotation in radians
+	//};
+
+	//std::vector<PunchingGloveSpawn> punchingGloves = {
+	//	{ glm::vec3(-50.0f, -69.0f, 50.0f),   glm::vec3(20.0f, -69.0f, 20.0f),     glm::pi<float>() / 4.0f },
+	//	//{ glm::vec3(0.0f, -55, 44.755f), glm::vec3(-14.030f, -55, 40.0f), glm::pi<float>() / 4.0f },
+	//};
+
+	//for (int i = 0; i < punchingGloves.size(); i++)
+	//{
+	//	glm::mat4 rot = glm::rotate(glm::mat4(1.0f), punchingGloves[i].rotationDeg, glm::vec3(0.0f, 1.0f, 0.0f));
+	//	glm::quat rotQuat = glm::quat_cast(rot);
+
+	//	entity = controller.createEntity();
+	//	loaded = LoadModel("assets/models/spring_glove/spring_glove.gltf");
+	//	controller.AddComponent(entity, Transform{ punchingGloves[i].startPos, rotQuat, glm::vec3(3.f) });
+	//	controller.AddComponent(entity, RigidBody{ nullptr, loaded.first, loaded.second, 50.0f, true, glm::vec3(0.0f), glm::vec3(0.0f) });
+	//	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
+	//	controller.AddComponent(entity, PhysicsBody{});
+	//	controller.AddComponent(entity, MovingObstacle{
+	//		std::vector<glm::vec3>{
+	//			 punchingGloves[i].startPos,
+	//			 punchingGloves[i].extendedPos,
+	//			 punchingGloves[i].extendedPos,
+	//			 punchingGloves[i].startPos,
+	//		},
+	//		std::vector<glm::quat>{ rotQuat, rotQuat, rotQuat, rotQuat },
+	//		std::vector<float>{ 3.f, 1.f, 1.f, 1.f },
+	//		0.0f,
+	//		1,
+	//		0,
+	//		false
+	//		});
+
+	//	// Spawn danger zone for this glove
+	//	Entity gloveEntity = entity;
+	//	{
+	//		glm::vec3 minPt = glm::min(punchingGloves[i].startPos, punchingGloves[i].extendedPos);
+	//		glm::vec3 maxPt = glm::max(punchingGloves[i].startPos, punchingGloves[i].extendedPos);
+	//		float dangerPadding = 6.0f;
+	//		glm::vec3 center = (minPt + maxPt) * 0.5f;
+	//		glm::vec3 halfExtents = (maxPt - minPt) * 0.5f + glm::vec3(dangerPadding);
+
+	//		Entity dangerEntity = controller.createEntity();
+	//		controller.AddComponent(dangerEntity, DangerZone{ center, halfExtents, gloveEntity, dangerPadding });
+	//		controller.AddComponent(dangerEntity, PhysicsBody{});
+	//	}
+	//}
 
 	// finish line
-  entity = controller.createEntity();
-  loaded = LoadModel("assets/models/finishline/finishline.gltf");
-  //controller.AddComponent(entity, StaticBody{ nullptr, loaded.first });
-  controller.AddComponent(entity, Render{ loaded.first, loaded.second });
-  controller.AddComponent(entity, PhysicsBody{});
-  controller.AddComponent(entity, Trigger{ nullptr, 0.5f, 4.0f, 10.0f });
-  controller.AddComponent(entity, Transform{
-    glm::vec3(25.0f, -3.5f, 120.0f),
-    glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
-    glm::vec3(5.0f, 5.0f, 5.0f)
-    });
-  controller.AssignTag(entity, "FinishLine");
-
 	entity = controller.createEntity();
+	loaded = LoadModel("assets/models/finishline/finishline.gltf");
+	controller.AddComponent(entity, Render{ loaded.first, loaded.second });
 	controller.AddComponent(entity, PhysicsBody{});
-	controller.AddComponent(entity, Transform{ glm::vec3(-60.0f, -93.0f, 19.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.25f) });
-	controller.AddComponent(entity, CheckPoint{ glm::quat(1.0f, 0.0f, 0.0f, 0.0f) });
-	controller.AddComponent(entity, Trigger{ nullptr, 5.0f, 2.0f, 5.0f });
+	controller.AddComponent(entity, Trigger{ nullptr, 0.5f, 4.0f, 10.0f });
+	controller.AddComponent(entity, Transform{
+	  glm::vec3(25.0f, -3.5f, 120.0f),
+	  glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
+	  glm::vec3(5.0f, 5.0f, 5.0f)
+		});
+	controller.AssignTag(entity, "FinishLine");
 
 	// Used strictly for testing AI navpoints, can be removed later
-	entity = controller.createEntity();
-	controller.AddComponent(entity, PhysicsBody{});
-	controller.AddComponent(entity, Transform{ glm::vec3(-60.0f, -93.0f, 19.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.25f) });
-	controller.AddComponent(entity, CheckPoint{ glm::quat(1.0f, 0.0f, 0.0f, 0.0f) });
-	controller.AddComponent(entity, Trigger{ nullptr, 5.0f, 2.0f, 5.0f });
-
 	// Debug: spawn visible trigger markers at each navmesh waypoint
 	if (aiSystemPtr)
 	{
 		Entity aiVehicle = controller.GetEntityByTag("AIVehicle1");
 		aiSystemPtr->SpawnDebugWaypoints(aiVehicle);
-		//aiSystemPtr->SpawnDebugNodes();
 	}
 }
 
