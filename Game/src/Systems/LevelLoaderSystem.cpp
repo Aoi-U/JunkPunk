@@ -121,43 +121,43 @@ void LevelLoaderSystem::LoadLevel()
 	controller.AddComponent(entity, Render{ loaded.first, loaded.second });
 	controller.AddComponent(entity, PhysicsBody{});
 
-	for (int i = 0; i < 10; i++)
-	{
-		entity = controller.createEntity();
-		loaded = LoadModel("assets/models/rubix_2.0/scene.gltf");
-		controller.AddComponent(entity, Transform{ glm::vec3(0.0f, -40.0f + i * 8.0f, 20.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.7f) });
-		controller.AddComponent(entity, RigidBody{ nullptr, loaded.first, loaded.second, 50.0f, true, glm::vec3(0.0f), glm::vec3(0.0f) });
-		controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
-		controller.AddComponent(entity, PhysicsBody{});
-		controller.AddComponent(entity, MovingObstacle{
-			{ // path points
-				{ -50.0f - i, -90.0f + i * 2 ,-20.0f + i },
-				{ -50.0f - i, -90.0f + i * 2, -30.0f + i },
-				{ -40.0f - i, -90.0f + i * 2, -30.0f + i },
-				{ -40.0f - i, -90.0f + i * 2, -20.0f + i },
-				{ -40.0f - i, -90.0f + i * 2, -20.0f + i }
-			},
-			{ // rotation points (must be empty or same size as path points)
-				glm::quat(glm::vec3(0.0f, glm::radians(90.0f), 0.0f)),
-				glm::quat(glm::vec3(0.0f, glm::radians(180.0f), 0.0f)),
-				glm::quat(glm::vec3(0.0f, glm::radians(-90.0f), 0.0f)),
-				glm::quat(glm::vec3(0.0f, glm::radians(180.0f), 0.0f)),
-				glm::quat(glm::vec3(0.0f, glm::radians(90.0f), 0.0f))
-			},
-			{
-				// times to reach each point (if empty, movement will be based on speed, must be empty or same size as path points)
-				1.0f,
-				2.0f,
-				3.0f,
-				5.0f,
-				5.0f
-			},
-			0.0f,
-			0,
-			5.0f,
-			false
-			});
-	}
+	//for (int i = 0; i < 10; i++)
+	//{
+	//	entity = controller.createEntity();
+	//	loaded = LoadModel("assets/models/rubix_2.0/scene.gltf");
+	//	controller.AddComponent(entity, Transform{ glm::vec3(0.0f, -40.0f + i * 8.0f, 20.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.7f) });
+	//	controller.AddComponent(entity, RigidBody{ nullptr, loaded.first, loaded.second, 50.0f, true, glm::vec3(0.0f), glm::vec3(0.0f) });
+	//	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
+	//	controller.AddComponent(entity, PhysicsBody{});
+	//	controller.AddComponent(entity, MovingObstacle{
+	//		{ // path points
+	//			{ -50.0f - i, -90.0f + i * 2 ,-20.0f + i },
+	//			{ -50.0f - i, -90.0f + i * 2, -30.0f + i },
+	//			{ -40.0f - i, -90.0f + i * 2, -30.0f + i },
+	//			{ -40.0f - i, -90.0f + i * 2, -20.0f + i },
+	//			{ -40.0f - i, -90.0f + i * 2, -20.0f + i }
+	//		},
+	//		{ // rotation points (must be empty or same size as path points)
+	//			glm::quat(glm::vec3(0.0f, glm::radians(90.0f), 0.0f)),
+	//			glm::quat(glm::vec3(0.0f, glm::radians(180.0f), 0.0f)),
+	//			glm::quat(glm::vec3(0.0f, glm::radians(-90.0f), 0.0f)),
+	//			glm::quat(glm::vec3(0.0f, glm::radians(180.0f), 0.0f)),
+	//			glm::quat(glm::vec3(0.0f, glm::radians(90.0f), 0.0f))
+	//		},
+	//		{
+	//			// times to reach each point (if empty, movement will be based on speed, must be empty or same size as path points)
+	//			1.0f,
+	//			2.0f,
+	//			3.0f,
+	//			5.0f,
+	//			5.0f
+	//		},
+	//		0.0f,
+	//		0,
+	//		5.0f,
+	//		false
+	//		});
+	//}
 
 	//punching glove
 	std::vector<std::vector<glm::vec3>> glove_positions = {
@@ -436,7 +436,8 @@ void LevelLoaderSystem::LoadLevel()
 	Entity vehicle = controller.createEntity();
 	glm::mat4 player_rotation = glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	loaded = LoadModel("assets/models/car_body_orange/car.gltf");
-	controller.AddComponent(vehicle, Transform{ glm::vec3(-66.0f, 93.f, 323.f), glm::quat(player_rotation), glm::vec3(0.2f) });
+	//controller.AddComponent(vehicle, Transform{ glm::vec3(-66.0f, 93.f, 323.f), glm::quat(player_rotation), glm::vec3(0.2f) });
+	controller.AddComponent(vehicle, Transform{ glm::vec3(148.0f, -26.f, 400.f), glm::quat(player_rotation), glm::vec3(0.2f) });
 	//controller.AddComponent(vehicle, Transform{ glm::vec3(137.0f, -255.0f, -233.f), glm::quat(player_rotation), glm::vec3(0.2f) });
 	controller.AddComponent(vehicle, VehicleBody{});
 	controller.AddComponent(vehicle, VehicleCommands{});
@@ -552,7 +553,7 @@ void LevelLoaderSystem::LoadLevel()
 
 	entity = controller.createEntity();
 	loaded = LoadModel("assets/models/lightning_capsule/scene.gltf");
-	controller.AddComponent(entity, Transform{ glm::vec3(-80.0f, -93.0f, 19.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.25f) });
+	controller.AddComponent(entity, Transform{ glm::vec3(81.0f, -260.0f, -214.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.25f) });
 	controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 2.0f, 1.0f });
 	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
 	controller.AddComponent(entity, PhysicsBody{});
@@ -565,7 +566,7 @@ void LevelLoaderSystem::LoadLevel()
 
 	entity = controller.createEntity();
 	loaded = LoadModel("assets/models/banana/scene.gltf");
-	controller.AddComponent(entity, Transform{ glm::vec3(-60.0f, -94.0f, -7.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(1.0f) });
+	controller.AddComponent(entity, Transform{ glm::vec3(81.0f, -260.0f, -254.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(1.0f) });
 	controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 2.0f, 1.0f });
 	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
 	controller.AddComponent(entity, PhysicsBody{});
@@ -637,26 +638,72 @@ void LevelLoaderSystem::LoadLevel()
 	//	controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 4.0f, 1.0f });
 	//}
 
-	entity = controller.createEntity();
-	Sludge sludge;
-	controller.AddComponent(entity, Transform{
-		glm::vec3(81.0f, -258.0f, -234.0f), // POSITION (adjust as needed)
-		glm::quat(1, 0, 0, 0),
-		glm::vec3(1.0f)
-		});
+	std::vector<glm::vec3> sludge_positions = {
+		glm::vec3(81.0f, -260.25f, -234.0f), // POSITION (adjust as needed)
+		glm::vec3(-68.0f, -28.f, 258.7f),
+		glm::vec3(-140.0f, -28.f, 315.f),
+		glm::vec3(2.6f, -28.f, 392.5),
+		glm::vec3(150.f, -28.f, 342.5),
 
-	controller.AddComponent(entity, Trigger{
-		nullptr,
-		20.0f, // width
-		2.0f,  // height
-		20.0f  // length
-		});
+		glm::vec3(90.f, -12.f, 412.5),
+		glm::vec3(-45.f, -28.f, 382.5),
+	};
+	std::vector<glm::mat4> sludge_rotation = {
+		glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 1.0f, 0.0f)),
+		glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 1.0f, 0.0f)),
+		glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 1.0f, 0.0f)),
+		glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 1.0f, 0.0f)),
+		glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 1.0f, 0.0f)),
 
-	controller.AddComponent(entity, Sludge{
-		sludge.slowFactor // slow factor
-		});
+		glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f)),
+		glm::rotate(glm::mat4(1.0f), glm::radians(45.0f), glm::vec3(1.0f, 0.0f, 0.0f)),
+	};
+	std::vector<glm::vec3> sludge_scale = {
+		glm::vec3(20.0f, 16.f, 20.f),
+		glm::vec3(20.0f, 16.f, 40.f),
+		glm::vec3(20.0f, 16.f, 40.f),
+		glm::vec3(80.0f, 16.f, 20.f),
+		glm::vec3(20.0f, 16.f, 40.f),
 
-	controller.AddComponent(entity, PhysicsBody{});
+		glm::vec3(40.0f, 32.f, 20.f),
+		glm::vec3(40.0f, 32.f, 20.f),
+	};
+	std::vector<glm::vec3> sludge_trigger_size = {
+		glm::vec3(20.0f, 0.5f, 20.f),
+		glm::vec3(20.0f, 0.5f, 40.f),
+		glm::vec3(20.0f, 0.5f, 40.f),
+		glm::vec3(80.0f, 0.5f, 20.f),
+		glm::vec3(20.0f, 0.5f, 40.f),
+
+		glm::vec3(40.0f, 1.f, 20.f),
+		glm::vec3(40.0f, 1.f, 20.f),
+	};
+
+	for (int i = 0; i < sludge_positions.size(); i++) {
+		entity = controller.createEntity();
+		Sludge sludge;
+		loaded = LoadModel("assets/models/sludge/sludge.gltf");
+		controller.AddComponent(entity, Render{ loaded.first, loaded.second });
+		controller.AddComponent(entity, Transform{
+			sludge_positions[i],
+			glm::quat(sludge_rotation[i]),
+			sludge_scale[i],
+			});
+
+		controller.AddComponent(entity, Trigger{
+			nullptr,
+			sludge_trigger_size[i].x, // width
+			sludge_trigger_size[i].y,  // height
+			sludge_trigger_size[i].z  // length
+			});
+
+		controller.AddComponent(entity, Sludge{
+			sludge.slowFactor // slow factor
+			});
+
+		controller.AddComponent(entity, PhysicsBody{});
+	}
+	
 }
 
 std::pair<std::shared_ptr<Model>, std::shared_ptr<AABB>> LevelLoaderSystem::LoadModel(std::string path)
