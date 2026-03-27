@@ -652,8 +652,8 @@ void PhysicsSystem::SpinOutListener(Event& e) {
 void PhysicsSystem::BlastEventListener(Event& e) {
 	Entity source = e.GetParam<Entity>(Events::Player::Blast::ENTITY);
 
-	float radius = 40.0f;
-	float strength = 20000.0f;
+	float radius = 30.0f;
+	float strength = 40000.0f;
 
 	glm::vec3 origin = controller.GetComponent<Transform>(source).position;
 
