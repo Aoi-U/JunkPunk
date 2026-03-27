@@ -381,6 +381,10 @@ void Game::Run()
 						SpawnBananaPeel(player);
 						controller.RemoveComponent<Powerup>(player);
 					}
+					else if (p.type == 3) {
+						std::cout << "Blast used\n";
+						controller.RemoveComponent<Powerup>(player);
+					}
 					else {
 						p.active = true;
 						p.elapsed = 0.0f;
@@ -573,6 +577,10 @@ void Game::KeyboardInputListener(Event& e)
 			if (key == Keys::KEY_USE && action == true && !p.active) {
 				if (p.type == 2) {
 					SpawnBananaPeel(player);
+					controller.RemoveComponent<Powerup>(player);
+				}
+				else if (p.type == 3) {
+					std::cout << "Bomb used\n";
 					controller.RemoveComponent<Powerup>(player);
 				}
 				else {
