@@ -10,6 +10,7 @@
 #include "../Components/AiDriver.h"
 #include "AiSystem.h"
 #include"../Components/Banana.h"
+#include "../Components/Sludge.h"
 
 
 #include "../ECSController.h"
@@ -576,6 +577,20 @@ void LevelLoaderSystem::LoadLevel()
 		});
 
 	entity = controller.createEntity();
+	loaded = LoadModel("assets/models/bomb/scene.gltf");
+	controller.AddComponent(entity, Transform{ glm::vec3(81.0f, -260.0f, -234.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(2.0f) });
+	controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 2.0f, 1.0f });
+	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
+	controller.AddComponent(entity, PhysicsBody{});
+	controller.AddComponent(entity, Powerup{
+		3,
+		false,
+		5.0f,
+		0.0f
+		});
+
+
+	entity = controller.createEntity();
 	loaded = LoadModel("assets/models/banana_peel/banana.gltf");
 	controller.AddComponent(entity, Transform{ glm::vec3(-62.0f, -94.0f, -7.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.5f) });
 	controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 1.0f, 1.0f });
@@ -621,6 +636,27 @@ void LevelLoaderSystem::LoadLevel()
 	//	controller.AddComponent(entity, CheckPoint{ glm::quat(1.0f, 0.0f, 0.0f, 0.0f) });
 	//	controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 4.0f, 1.0f });
 	//}
+
+	entity = controller.createEntity();
+	Sludge sludge;
+	controller.AddComponent(entity, Transform{
+		glm::vec3(81.0f, -258.0f, -234.0f), // POSITION (adjust as needed)
+		glm::quat(1, 0, 0, 0),
+		glm::vec3(1.0f)
+		});
+
+	controller.AddComponent(entity, Trigger{
+		nullptr,
+		20.0f, // width
+		2.0f,  // height
+		20.0f  // length
+		});
+
+	controller.AddComponent(entity, Sludge{
+		sludge.slowFactor // slow factor
+		});
+
+	controller.AddComponent(entity, PhysicsBody{});
 }
 
 std::pair<std::shared_ptr<Model>, std::shared_ptr<AABB>> LevelLoaderSystem::LoadModel(std::string path)

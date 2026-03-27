@@ -78,6 +78,8 @@ public:
 
 	void SpinOut();
 
+	void ApplySludgeDrag(float factor);
+
 private:
 	//DirectDriveVehicle gVehicle;
 	EngineDriveVehicle gVehicle;
