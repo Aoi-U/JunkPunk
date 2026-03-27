@@ -383,6 +383,9 @@ void Game::Run()
 					}
 					else if (p.type == 3) {
 						std::cout << "Blast used\n";
+						Event event(Events::Player::BLAST);
+						event.SetParam<Entity>(Events::Player::Blast::ENTITY, player);
+						controller.SendEvent(event);
 						controller.RemoveComponent<Powerup>(player);
 					}
 					else {
@@ -580,8 +583,11 @@ void Game::KeyboardInputListener(Event& e)
 					controller.RemoveComponent<Powerup>(player);
 				}
 				else if (p.type == 3) {
-					std::cout << "Bomb used\n";
-					controller.RemoveComponent<Powerup>(player);
+				std::cout << "Blast used\n";
+				Event event(Events::Player::BLAST);
+				event.SetParam<Entity>(Events::Player::Blast::ENTITY, player);
+				controller.SendEvent(event);
+				controller.RemoveComponent<Powerup>(player);
 				}
 				else {
 					p.active = true;

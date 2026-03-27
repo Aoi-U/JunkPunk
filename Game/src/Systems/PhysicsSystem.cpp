@@ -18,7 +18,8 @@ PhysicsSystem::PhysicsSystem()
 	controller.AddEventListener(Events::Player::RESET_VEHICLE, [this](Event& e) { this->ResetVehicleEventListener(e); });
 	controller.AddEventListener(Events::Checkpoint::REACHED, [this](Event& e) {this->CheckpointReachedListener(e); });
 	controller.AddEventListener(Events::Player::SPIN_OUT, [this](Event& e) {this->SpinOutListener(e); });
-
+	controller.AddEventListener(Events::Player::BLAST, [this](Event& e) {this->BlastEventListener(e); });
+	
 	auto rigidBodyArray = controller.GetComponentArray<RigidBody>();
 	rigidBodyArray->BindOnRemoveCallback([this](Entity entity, RigidBody& rb) { this->ReleaseActorCallback(entity, rb); });
 
@@ -647,3 +648,39 @@ void PhysicsSystem::SpinOutListener(Event& e) {
 	spinning = true;
 	spinTimer = 0.0f;
 }
+
+void PhysicsSystem::BlastEventListener(Event& e) {
+	Entity source = e.GetParam<Entity>(Events::Player::Blast::ENTITY);
+
+	float radius = 40.0f;
+	float strength = 20000.0f;
+
+	glm::vec3 origin = controller.GetComponent<Transform>(source).position;
+
+	for (auto& [entity, vehicle] : vehicles) {
+		if (entity == source)
+			continue;
+
+		if (!controller.HasComponent<Transform>(entity))
+			continue;
+
+		glm::vec3 targetPos = controller.GetComponent<Transform>(entity).position;
+
+		glm::vec3 dir = targetPos - origin;
+		float dist = glm::length(dir);
+
+		if (dist > radius || dist <= 0.001f)
+			continue;
+
+		float falloff = 1.0f - (dist / radius);
+
+		falloff = falloff * falloff;
+
+		float force = strength * falloff;
+		
+		PxVec3 impulse = PxVec3(dir.x, dir.y, dir.z) * force;
+		impulse.y += 0.5f * force;
+		std::cout << "BLASTED\n";
+		vehicle->ApplyImpulse(impulse);
+	}
+	}

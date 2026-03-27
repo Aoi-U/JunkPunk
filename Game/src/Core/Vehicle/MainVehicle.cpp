@@ -333,3 +333,12 @@ void MainVehicle::ApplySludgeDrag(float factor)
 
 	dyn->setLinearVelocity(vel);
 }
+
+void MainVehicle::ApplyImpulse(const PxVec3& impulse)
+{
+	auto* body = gVehicle.mPhysXState.physxActor.rigidBody;
+	auto dyn = body->is<PxRigidDynamic>();
+	if (!dyn)
+		return;
+	dyn->addForce(impulse, PxForceMode::eIMPULSE);
+}

@@ -80,6 +80,8 @@ public:
 
 	void ApplySludgeDrag(float factor);
 
+	void ApplyImpulse(const PxVec3& impulse);
+
 private:
 	//DirectDriveVehicle gVehicle;
 	EngineDriveVehicle gVehicle;
