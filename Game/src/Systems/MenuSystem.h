@@ -112,4 +112,7 @@ private:
 	std::vector<UIElement> controlsUIElements;
 	std::vector<UIElement> settingsUIElements;
 
+	std::unique_ptr<Texture> winBackground;
+	std::unique_ptr<Texture> loseBackground;
+
 };
