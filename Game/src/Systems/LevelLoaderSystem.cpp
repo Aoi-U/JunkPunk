@@ -131,12 +131,17 @@ void LevelLoaderSystem::LoadLevel()
 			glm::vec3(0.0f, -100.0f, 50.0f),          // same position as the dumpster
 			glm::quat_cast(rotation),                   // same rotation
 			glm::vec3(200.0f),                            // same scale
-			35.0f                                        // max slope angle � tweak if too many/few triangles
+			35.0f                                        // max slope angle – tweak if too many/few triangles
 		);
 		navMesh.Subdivide();    // 1023 -> 4092 triangles (4x denser)
 		//navMesh.Subdivide(); // uncomment for 16368 triangles (16x denser) if needed
 		navMesh.BuildAdjacency();
+		navMesh.StitchDisconnectedIslands(30.0f, 3.0f);  // bridge gaps: 30 units horizontal, 15 units vertical max
 		navMesh.ComputeEdgeDanger(3);  // spread danger 3 triangles inward from edges
+
+		int32_t componentCount = navMesh.CountConnectedComponents();
+		std::cout << "[LevelLoader] NavMesh has " << componentCount << " disconnected island(s) after stitching" << std::endl;
+
 		aiSystemPtr->SetNavMesh(navMesh);
 	}
 
@@ -203,7 +208,7 @@ void LevelLoaderSystem::LoadLevel()
 		entity = controller.createEntity();
 		loaded = LoadModel("assets/models/spring_glove/spring_glove.gltf");
 		rotation = glm::rotate(glm::mat4(1.0f), glm::pi<float>() / 4.0f, glm::vec3(0.0f, 1.0f, 0.0f));
-		controller.AddComponent(entity, Transform{ glm::vec3(-50.0f, -69.0f, 50.0f), glm::quat_cast(rotation), glm::vec3(glove_size[i])});
+		controller.AddComponent(entity, Transform{ glove_positions[i][0], glm::quat_cast(rotation), glm::vec3(glove_size[i])});
 		controller.AddComponent(entity, RigidBody{ nullptr, loaded.first, loaded.second, 50.0f, true, glm::vec3(0.0f), glm::vec3(0.0f) });
 		controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
 		controller.AddComponent(entity, PhysicsBody{});
@@ -445,7 +450,7 @@ void LevelLoaderSystem::LoadLevel()
 	loaded = LoadModel("assets/models/car_body_orange/car.gltf");
 
 	glm::mat4 playerRotation = glm::rotate(glm::mat4(1.0f), glm::radians(38.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-	Transform vehicleTransform{ glm::vec3(-29.0f, -80.0f, -20.0f), glm::quat(playerRotation), glm::vec3(0.2f) };
+	Transform vehicleTransform{ glm::vec3(133.0f, -259.0f, -257.0f), glm::quat(playerRotation), glm::vec3(0.2f) };
 	controller.AddComponent(vehicle, vehicleTransform);
 
 	controller.AddComponent(vehicle, VehicleBody{});
@@ -516,7 +521,7 @@ void LevelLoaderSystem::LoadLevel()
 	glm::quat flippedRotation = glm::angleAxis(glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
 	std::vector<AiSpawnInfo> aiSpawns = {
-		{ glm::vec3(-28.0f, -94.0f, -21.0f), -40.0f, "AIVehicle1", "assets/models/car_body_blue/car.gltf" },
+		{ glm::vec3(150.0f, -259.0f, -249.0f), -40.0f, "AIVehicle1", "assets/models/car_body_blue/car.gltf" },
 		//{ glm::vec3(-32.0f, -80.0f, -25.0f), -40.0f, "AIVehicle2", "assets/models/car_body_pink/car.gltf" },
 		//{ glm::vec3(-24.0f, -80.0f, -17.0f), -40.0f, "AIVehicle3", "assets/models/car_body_red/car.gltf" },
 	};
@@ -643,6 +648,9 @@ void LevelLoaderSystem::LoadLevel()
 	// Debug: spawn visible trigger markers at each navmesh waypoint
 	if (aiSystemPtr)
 	{
+		// Build danger zones from all obstacles so AI can make informed decisions
+		aiSystemPtr->BuildObstacleDangerZones();
+
 		Entity aiVehicle = controller.GetEntityByTag("AIVehicle1");
 		aiSystemPtr->SpawnDebugWaypoints(aiVehicle);
 		//aiSystemPtr->SpawnDebugNodes();

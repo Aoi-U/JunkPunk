@@ -257,6 +257,178 @@ void NavMesh::BuildAdjacency()
 		<< " triangles, " << (adjacentPairs / 2) << " shared edges" << std::endl;
 }
 
+void NavMesh::StitchDisconnectedIslands(float maxGapDistance, float maxHeightDiff)
+{
+	int32_t count = static_cast<int32_t>(triangles.size());
+	if (count == 0)
+		return;
+
+	// Step 1: Label each triangle with its component ID using BFS
+	std::vector<int32_t> component(count, -1);
+	int32_t componentId = 0;
+
+	for (int32_t seed = 0; seed < count; ++seed)
+	{
+		if (component[seed] >= 0)
+			continue;
+
+		std::queue<int32_t> frontier;
+		frontier.push(seed);
+		component[seed] = componentId;
+
+		while (!frontier.empty())
+		{
+			int32_t current = frontier.front();
+			frontier.pop();
+
+			for (int e = 0; e < 3; ++e)
+			{
+				int32_t nb = triangles[current].neighbours[e];
+				if (nb >= 0 && component[nb] < 0)
+				{
+					component[nb] = componentId;
+					frontier.push(nb);
+				}
+			}
+		}
+
+		++componentId;
+	}
+
+	std::cout << "[NavMesh] StitchDisconnectedIslands: Found " << componentId
+		<< " disconnected components before stitching" << std::endl;
+
+	if (componentId <= 1)
+	{
+		std::cout << "[NavMesh] Navmesh already fully connected, no stitching needed" << std::endl;
+		return;
+	}
+
+	// Step 2: For each boundary triangle (has at least one unconnected edge),
+	// find the closest triangle from a different component within maxGapDistance
+	int32_t bridgeCount = 0;
+	float maxGapSq = maxGapDistance * maxGapDistance;
+
+	for (int32_t i = 0; i < count; ++i)
+	{
+		// Only consider boundary triangles (has at least one -1 neighbour)
+		bool isBoundary = false;
+		for (int e = 0; e < 3; ++e)
+		{
+			if (triangles[i].neighbours[e] < 0)
+			{
+				isBoundary = true;
+				break;
+			}
+		}
+
+		if (!isBoundary)
+			continue;
+
+		int32_t myComponent = component[i];
+		int32_t closestOther = -1;
+		float closestDistSq = maxGapSq;
+
+		// Search for the nearest triangle from a different component
+		for (int32_t j = 0; j < count; ++j)
+		{
+			if (component[j] == myComponent)
+				continue;
+
+			// Check vertical distance constraint FIRST (cheap check)
+			float heightDiff = std::abs(triangles[j].centroid.y - triangles[i].centroid.y);
+			if (heightDiff > maxHeightDiff)
+				continue;
+
+			// Compute horizontal (XZ) distance between centroids
+			float dx = triangles[j].centroid.x - triangles[i].centroid.x;
+			float dz = triangles[j].centroid.z - triangles[i].centroid.z;
+			float distSq = dx * dx + dz * dz;
+
+			if (distSq < closestDistSq)
+			{
+				closestDistSq = distSq;
+				closestOther = j;
+			}
+		}
+
+		// If we found a close triangle from another component, link them bidirectionally
+		if (closestOther >= 0)
+		{
+			// Find the first free neighbour slot in triangle i
+			for (int e = 0; e < 3; ++e)
+			{
+				if (triangles[i].neighbours[e] < 0)
+				{
+					triangles[i].neighbours[e] = closestOther;
+					break;
+				}
+			}
+
+			// And link back from the other triangle
+			for (int e = 0; e < 3; ++e)
+			{
+				if (triangles[closestOther].neighbours[e] < 0)
+				{
+					triangles[closestOther].neighbours[e] = i;
+					break;
+				}
+			}
+
+			++bridgeCount;
+		}
+	}
+
+	std::cout << "[NavMesh] StitchDisconnectedIslands: Created " << bridgeCount
+		<< " bridge connections (maxGapDistance=" << maxGapDistance 
+		<< ", maxHeightDiff=" << maxHeightDiff << ")" << std::endl;
+}
+
+int32_t NavMesh::CountConnectedComponents() const
+{
+	int32_t count = static_cast<int32_t>(triangles.size());
+	if (count == 0)
+		return 0;
+
+	std::vector<bool> visited(count, false);
+	int32_t componentCount = 0;
+
+	for (int32_t seed = 0; seed < count; ++seed)
+	{
+		if (visited[seed])
+			continue;
+
+		// BFS from this seed
+		std::queue<int32_t> frontier;
+		frontier.push(seed);
+		visited[seed] = true;
+		int32_t componentSize = 0;
+
+		while (!frontier.empty())
+		{
+			int32_t current = frontier.front();
+			frontier.pop();
+			++componentSize;
+
+			for (int e = 0; e < 3; ++e)
+			{
+				int32_t nb = triangles[current].neighbours[e];
+				if (nb >= 0 && !visited[nb])
+				{
+					visited[nb] = true;
+					frontier.push(nb);
+				}
+			}
+		}
+
+		++componentCount;
+
+		std::cout << "[NavMesh] Component " << componentCount << ": " << componentSize << " triangles" << std::endl;
+	}
+
+	return componentCount;
+}
+
 // ---- Edge Danger ----
 
 void NavMesh::ComputeEdgeDanger(int spreadRadius)

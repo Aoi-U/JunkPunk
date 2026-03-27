@@ -43,6 +43,15 @@ public:
 	void Subdivide();
 	void BuildAdjacency();
 
+	// Bridge disconnected navmesh islands by linking closest triangles across gaps.
+	// maxGapDistance = maximum horizontal (XZ) distance to bridge between islands.
+	// maxHeightDiff = maximum vertical (Y) difference to allow bridging (prevents connecting walls/cliffs).
+	void StitchDisconnectedIslands(float maxGapDistance, float maxHeightDiff = 15.0f);
+
+	// Count the number of disconnected components in the navmesh graph.
+	// Returns the number of islands (1 = fully connected).
+	int32_t CountConnectedComponents() const;
+
 	// Call after BuildAdjacency. Computes edgeDanger for each triangle and
 	// propagates it inward so A* avoids paths near cliffs.
 	// spreadRadius = how many triangles inward the danger spreads (default 3).

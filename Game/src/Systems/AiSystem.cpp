@@ -32,13 +32,23 @@ void AiSystem::ComputeNavPath(Entity entity)
 
 	glm::vec3 startPos = transform.position;
 
+	// Strategic waypoints for track navigation
+	glm::vec3 beforeGap(-56.0f, -31.0f, 161.0f);
+	glm::vec3 afterGap(135.0f, -31.0f, 185.0f);
+
+	std::cout << "[AiSystem] Computing path from (" << startPos.x << ", " << startPos.y << ", " << startPos.z << ")" 
+		<< " to waypoint before gap (" << beforeGap.x << ", " << beforeGap.y << ", " << beforeGap.z << ")" << std::endl;
+
+	// For now: just path to the waypoint before the gap
 	int32_t startTri = navMesh.FindTriangle(startPos);
 	if (startTri < 0) startTri = navMesh.FindClosestTriangle(startPos);
 
-	int32_t goalTri = navMesh.FindTriangle(goalPosition);
-	if (goalTri < 0) goalTri = navMesh.FindClosestTriangle(goalPosition);
+	int32_t goalTri = navMesh.FindTriangle(beforeGap);
+	if (goalTri < 0) goalTri = navMesh.FindClosestTriangle(beforeGap);
 
-	NavPath path = navMesh.FindPath(startTri, goalTri, startPos, goalPosition);
+	std::cout << "[AiSystem] Start triangle: " << startTri << ", Goal triangle: " << goalTri << std::endl;
+
+	NavPath path = navMesh.FindPath(startTri, goalTri, startPos, beforeGap);
 
 	ai.navWaypoints = path.waypoints;
 	ai.currentWaypointIndex = 0;
@@ -48,6 +58,11 @@ void AiSystem::ComputeNavPath(Entity entity)
 
 	std::cout << "[AiSystem] Path computed: " << path.triangleIndices.size()
 		<< " corridor triangles -> " << ai.navWaypoints.size() << " waypoints" << std::endl;
+
+	if (path.waypoints.empty())
+	{
+		std::cout << "[AiSystem] WARNING: Path computation returned 0 waypoints!" << std::endl;
+	}
 }
 
 void AiSystem::RecomputeNavPath(Entity entity)
@@ -162,6 +177,76 @@ void AiSystem::SpawnDebugNodes()
 	}
 
 	std::cout << "[AiSystem] Done spawning " << triangles.size() << " node markers." << std::endl;
+}
+
+void AiSystem::BuildObstacleDangerZones()
+{
+	dangerZones.clear();
+
+	auto obstacleArray = controller.GetComponentArray<MovingObstacle>();
+	if (!obstacleArray)
+		return;
+
+	int zoneCount = 0;
+	for (auto& [obsEntity, idx] : obstacleArray->GetEntityToIndexMap())
+	{
+		auto& obstacle = controller.GetComponent<MovingObstacle>(obsEntity);
+
+		if (obstacle.pathPoints.empty())
+			continue;
+
+		// Calculate bounding sphere for entire movement range
+		glm::vec3 minPos = obstacle.pathPoints[0];
+		glm::vec3 maxPos = obstacle.pathPoints[0];
+
+		for (const auto& point : obstacle.pathPoints)
+		{
+			minPos.x = std::min(minPos.x, point.x);
+			minPos.y = std::min(minPos.y, point.y);
+			minPos.z = std::min(minPos.z, point.z);
+
+			maxPos.x = std::max(maxPos.x, point.x);
+			maxPos.y = std::max(maxPos.y, point.y);
+			maxPos.z = std::max(maxPos.z, point.z);
+		}
+
+		glm::vec3 center = (minPos + maxPos) * 0.5f;
+		float radius = glm::length(maxPos - center);
+
+		// Add safety margin (obstacle size)
+		radius += 10.0f;
+
+		dangerZones.push_back({ center, radius, obsEntity });
+		zoneCount++;
+
+		std::cout << "[AiSystem] Danger zone " << zoneCount 
+			<< ": center=(" << center.x << "," << center.y << "," << center.z << ")"
+			<< " radius=" << radius << std::endl;
+	}
+
+	std::cout << "[AiSystem] Built " << dangerZones.size() << " obstacle danger zones" << std::endl;
+}
+
+float AiSystem::CheckDangerZone(const glm::vec3& position) const
+{
+	float closestDanger = -1.0f;
+
+	for (const auto& zone : dangerZones)
+	{
+		// Check XZ distance only (ignore Y for now)
+		glm::vec3 toZone = zone.center - position;
+		toZone.y = 0.0f;
+		float dist = glm::length(toZone);
+
+		float penetration = zone.radius - dist;
+		if (penetration > 0.0f)
+		{
+			if (closestDanger < 0.0f || dist < closestDanger)
+				closestDanger = dist;
+		}
+	}
+
+	return closestDanger;
 }
 
 void AiSystem::Update(float deltaTime)
@@ -281,28 +366,53 @@ void AiSystem::UpdateStateMachine(Entity entity, float deltaTime)
 			float closestDist = ai.obstacleDetectionRange;
 			glm::vec3 closestObstaclePos(0.0f);
 
+			static float obstacleDebugTimer = 0.0f;
+			obstacleDebugTimer += deltaTime;
+			bool logObstacles = obstacleDebugTimer >= 1.0f;
+			if (logObstacles) obstacleDebugTimer = 0.0f;
+
 			// Scan MovingObstacles
 			auto obstacleArray = controller.GetComponentArray<MovingObstacle>();
+			int obstacleCount = 0;
+			int obstaclesInRange = 0;
+			int obstaclesInCone = 0;
+
 			for (auto& [obsEntity, idx] : obstacleArray->GetEntityToIndexMap())
 			{
 				if (!controller.HasComponent<Transform>(obsEntity))
 					continue;
 
+				obstacleCount++;
 				auto& obsTransform = controller.GetComponent<Transform>(obsEntity);
 				glm::vec3 toObs = obsTransform.position - carPos;
 				toObs.y = 0.0f;
 				float dist = glm::length(toObs);
 
 				if (dist < 1e-5f || dist > closestDist)
+				{
+					if (logObstacles && dist <= ai.obstacleDetectionRange && dist > 1e-5f)
+					{
+						obstaclesInRange++;
+					}
 					continue;
+				}
+
+				obstaclesInRange++;
 
 				float dot = glm::dot(forward, glm::normalize(toObs));
 				if (dot > ai.obstacleDetectionCone)
 				{
+					obstaclesInCone++;
 					closestDist = dist;
 					closestObstacle = obsEntity;
 					closestObstaclePos = obsTransform.position;
 				}
+			}
+
+			if (logObstacles)
+			{
+				std::cout << "[AI] Obstacle scan: " << obstacleCount << " total, "
+					<< obstaclesInRange << " in range, " << obstaclesInCone << " in cone" << std::endl;
 			}
 
 			// Scan Bananas
@@ -690,6 +800,7 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 
 	vc.steer = steer;
 	vc.throttle = throttle;
+	vc.brake = 0.0f;
 	vc.isGrounded = true;
 }
 
@@ -848,36 +959,33 @@ void AiSystem::UpdateAvoidObstacleState(Entity entity, float deltaTime)
 		return;
 	}
 
-	// If the obstacle was destroyed or no longer exists, resume early
-	bool obstacleGone = true;
-	if (ai.detectedObstacleEntity != 0)
+	// Calculate distance to obstacle
+	float distToObstacle = 999.0f;
+	bool obstacleStillThreat = false;
+
+	if (ai.detectedObstacleEntity != 0 && controller.HasComponent<Transform>(ai.detectedObstacleEntity))
 	{
-		if (controller.HasComponent<Transform>(ai.detectedObstacleEntity))
+		glm::vec3 forward = transform.quatRotation * glm::vec3(0.0f, 0.0f, 1.0f);
+		forward.y = 0.0f;
+		if (glm::length(forward) > 1e-6f) forward = glm::normalize(forward);
+
+		auto& obsTransform = controller.GetComponent<Transform>(ai.detectedObstacleEntity);
+		glm::vec3 toObs = obsTransform.position - transform.position;
+		toObs.y = 0.0f;
+		distToObstacle = glm::length(toObs);
+
+		if (distToObstacle > 1e-5f)
 		{
-			// Check if it's still ahead of us
-			glm::vec3 forward = transform.quatRotation * glm::vec3(0.0f, 0.0f, 1.0f);
-			forward.y = 0.0f;
-			if (glm::length(forward) > 1e-6f) forward = glm::normalize(forward);
-
-			auto& obsTransform = controller.GetComponent<Transform>(ai.detectedObstacleEntity);
-			glm::vec3 toObs = obsTransform.position - transform.position;
-			toObs.y = 0.0f;
-			float dist = glm::length(toObs);
-
-			if (dist > 1e-5f)
-			{
-				float dot = glm::dot(forward, glm::normalize(toObs));
-
-				// Obstacle is still ahead and in range -- keep avoiding
-				if (dot > 0.0f && dist < ai.obstacleDetectionRange * 1.5f)
-					obstacleGone = false;
-			}
+			float dot = glm::dot(forward, glm::normalize(toObs));
+			// Obstacle is still ahead and in range
+			if (dot > 0.0f && distToObstacle < ai.obstacleDetectionRange * 1.5f)
+				obstacleStillThreat = true;
 		}
 	}
 
-	if (obstacleGone && ai.avoidTimer > 0.5f)
+	// If obstacle cleared or passed, resume path
+	if (!obstacleStillThreat && ai.avoidTimer > 0.5f)
 	{
-		// Obstacle passed or destroyed, safe to resume
 		std::cout << "[AI] Obstacle cleared, resuming path" << std::endl;
 		ai.detectedObstacleEntity = 0;
 		RecomputeNavPath(entity);
@@ -885,39 +993,90 @@ void AiSystem::UpdateAvoidObstacleState(Entity entity, float deltaTime)
 		return;
 	}
 
-	// --- Avoidance steering ---
-	// Combine the avoidance steer with a gentle pull toward the next waypoint
-	// so the AI doesn't just veer off into a wall
-	float avoidSteer = ai.avoidanceSteerDirection * ai.avoidSteerStrength;
+	// --- Cautious behavior: stop before obstacle, wait for it to clear ---
+	float speed = glm::length(glm::vec3(body.linearVelocity.x, 0.0f, body.linearVelocity.z));
+	float safeStoppingDistance = 10.0f;  // stop at least 10 units before obstacle
+	float throttle = 0.0f;
+	float brake = 0.0f;
+	float steer = 0.0f;
 
-	// Blend with waypoint steering as avoidance progresses (more waypoint pull later)
-	float blendFactor = glm::clamp(ai.avoidTimer / ai.avoidDuration, 0.0f, 1.0f);
-	float waypointSteer = 0.0f;
-
-	if (ai.currentWaypointIndex < static_cast<uint32_t>(ai.navWaypoints.size()))
+	if (distToObstacle < safeStoppingDistance)
 	{
-		glm::vec3 forward = transform.quatRotation * glm::vec3(0.0f, 0.0f, 1.0f);
-		forward.y = 0.0f;
-		if (glm::length(forward) < 1e-6f) forward = glm::vec3(0, 0, 1);
-		forward = glm::normalize(forward);
+		// STOP: we're too close to the obstacle
+		if (speed > 0.5f)
+		{
+			brake = 1.0f;  // full brake
+			throttle = 0.0f;
+		}
+		else
+		{
+			// Already stopped, just hold position
+			brake = 1.0f;
+			throttle = 0.0f;
+		}
+		steer = 0.0f;  // don't turn while stopped
+	}
+	else if (distToObstacle < safeStoppingDistance * 2.0f)
+	{
+		// SLOW APPROACH: obstacle is close but not immediate threat
+		// Creep forward slowly to get closer
+		float targetSpeed = 5.0f;  // crawl speed
+		if (speed < targetSpeed)
+		{
+			throttle = 0.1f;  // gentle acceleration
+			brake = 0.0f;
+		}
+		else
+		{
+			throttle = 0.0f;
+			brake = 0.5f;  // light braking to maintain crawl speed
+		}
 
-		glm::vec3 toWp = ai.navWaypoints[ai.currentWaypointIndex] - transform.position;
-		toWp.y = 0.0f;
-		waypointSteer = CalculateSteeringAngle(forward, toWp);
+		// Steer toward path while approaching
+		if (ai.currentWaypointIndex < static_cast<uint32_t>(ai.navWaypoints.size()))
+		{
+			glm::vec3 forward = transform.quatRotation * glm::vec3(0.0f, 0.0f, 1.0f);
+			forward.y = 0.0f;
+			if (glm::length(forward) < 1e-6f) forward = glm::vec3(0, 0, 1);
+			forward = glm::normalize(forward);
+
+			glm::vec3 toWp = ai.navWaypoints[ai.currentWaypointIndex] - transform.position;
+			toWp.y = 0.0f;
+			steer = CalculateSteeringAngle(forward, toWp);
+		}
+	}
+	else
+	{
+		// BRAKE HARD: obstacle detected ahead but we have room to brake
+		if (speed > 5.0f)
+		{
+			brake = 1.0f;
+			throttle = 0.0f;
+		}
+		else
+		{
+			// Already slow, coast to a stop
+			throttle = 0.0f;
+			brake = 0.3f;
+		}
+
+		// Steer toward path while braking
+		if (ai.currentWaypointIndex < static_cast<uint32_t>(ai.navWaypoints.size()))
+		{
+			glm::vec3 forward = transform.quatRotation * glm::vec3(0.0f, 0.0f, 1.0f);
+			forward.y = 0.0f;
+			if (glm::length(forward) < 1e-6f) forward = glm::vec3(0, 0, 1);
+			forward = glm::normalize(forward);
+
+			glm::vec3 toWp = ai.navWaypoints[ai.currentWaypointIndex] - transform.position;
+			toWp.y = 0.0f;
+			steer = CalculateSteeringAngle(forward, toWp);
+		}
 	}
 
-	// Early: mostly dodge. Late: blend back toward waypoint
-	float finalSteer = glm::mix(avoidSteer, waypointSteer, blendFactor * blendFactor);
-	finalSteer = glm::clamp(finalSteer, -1.0f, 1.0f);
-
-	// Slow down during avoidance
-	float speed = glm::length(glm::vec3(body.linearVelocity.x, 0.0f, body.linearVelocity.z));
-	float targetSpeed = ai.maxSpeed * ai.avoidThrottleScale;
-	float throttle = glm::clamp((targetSpeed - speed) * ai.throttleKp, 0.0f, ai.maxThrottle);
-
-	vc.steer = finalSteer;
+	vc.steer = steer;
 	vc.throttle = throttle;
-	//vc.brake = (speed > targetSpeed + 2.0f) ? glm::clamp((speed - targetSpeed) * ai.brakeKp, 0.0f, ai.maxBrake) : 0.0f;
+	vc.brake = brake;
 	vc.isGrounded = true;
 }
 

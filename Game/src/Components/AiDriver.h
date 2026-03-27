@@ -106,12 +106,18 @@ struct AiDriver
 	float flippedTimeThreshold = 1.0f;  // seconds upside-down before auto-reset
 
 	// Obstacle avoidance
-	float obstacleDetectionRange = 15.0f;   // how far ahead to detect. Increase if the AI reacts too late at high speed.
-	float obstacleDetectionCone = 0.7f;     // dot product threshold -- 0.7 = ~45 degree forward cone. Lower to detect obstacles further to the side.
+	float obstacleDetectionRange = 40.0f;   // how far ahead to detect. Increase if the AI reacts too late at high speed.
+	float obstacleDetectionCone = 0.5f;     // dot product threshold -- 0.5 = ~60 degree forward cone. Lower to detect obstacles further to the side.
 	float avoidanceSteerDirection = 0.0f;   // -1.0 = steer left, 1.0 = steer right (set on detection)
 	Entity detectedObstacleEntity = 0;      // entity we're currently avoiding
 	float avoidTimer = 0.0f;                // how long we've been avoiding
-	float avoidDuration = 1.5f;             // how long to steer away. Increase for larger obstacles like spinning pushers.
+	float avoidDuration = 6.0f;             // how long to steer away. Increase for larger obstacles like spinning pushers.
 	float avoidSteerStrength = 1.0f;        // how hard to steer while avoiding. `1.0` = full lock. Lower for gentler swerves.
-	float avoidThrottleScale = 0.5f;        // slow down while avoiding (0.5 = half throttle). speed reduction during avoidance. Lower for more cautious dodging.
+	float avoidThrottleScale = 0.3f;        // slow down while avoiding (0.3 = 30% throttle). speed reduction during avoidance. Lower for more cautious dodging.
+
+	// Sequential obstacle passing (for synchronized obstacles like gloves)
+	Entity currentObstacleTarget = 0;       // the obstacle we're currently waiting to pass
+	bool observedExtended = false;          // have we seen the current target extend?
+	float obstacleWaitStopDistance = 35.0f; // stop this far before the obstacle
+	float obstacleCommitDistance = 3.0f;    // once this close (INSIDE zone), commit to passing (don't stop again)
 };
