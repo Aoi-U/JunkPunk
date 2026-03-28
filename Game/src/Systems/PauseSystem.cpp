@@ -17,7 +17,7 @@ PauseSystem::PauseSystem()
 	controller.AddEventListener(Events::Window::INPUT, [this](Event& e) { this->KeyboardInputListener(e); });
 }
 
-void PauseSystem::Init(std::shared_ptr<Gamepad> gamepad)
+void PauseSystem::Init(std::vector<std::shared_ptr<Gamepad>> gamepad)
 {
 	this->gamepad = gamepad;
 
@@ -69,6 +69,35 @@ void PauseSystem::Init(std::shared_ptr<Gamepad> gamepad)
 
 void PauseSystem::Update()
 {
+	// Helper: check if any gamepad has the button down
+	auto AnyButtonDown = [&](int button) -> bool {
+		for (auto& gp : gamepad)
+		{
+			if (gp->Connected() && gp->GetButtonDown(button))
+				return true;
+		}
+		return false;
+	};
+
+	// Helper: check if all gamepads are in deadzone
+	auto AllSticksInDeadzone = [&]() -> bool {
+		for (auto& gp : gamepad)
+		{
+			if (gp->Connected() && !gp->LStick_InDeadzone())
+				return false;
+		}
+		return true;
+	};
+
+	// Helper: get the first non-deadzone left stick X value
+	auto AnyLeftStickX = [&]() -> float {
+		for (auto& gp : gamepad)
+		{
+			if (gp->Connected() && !gp->LStick_InDeadzone())
+				return gp->LeftStick_X();
+		}
+		return 0.0f;
+	};
 
 	if (showingPowerupScreen)
 	{
@@ -76,7 +105,7 @@ void PauseSystem::Update()
 
 		RenderElements(powerupUIElements);
 
-		if (gamepad->GetButtonDown(Buttons::JUMP))
+		if (AnyButtonDown(Buttons::JUMP))
 		{
 			showingPowerupScreen = false;
 		}
@@ -84,21 +113,23 @@ void PauseSystem::Update()
 		return;
 	}
 
-	if (gamepad->LStick_InDeadzone())
+	if (AllSticksInDeadzone())
 	{
 		canNavigate = true;
 	}
 
 	if (canNavigate)
 	{
-		if (gamepad->LeftStick_X() < -0.5f) // navigate left
+		float stickX = AnyLeftStickX();
+
+		if (stickX < -0.5f) // navigate left
 		{
 			// navigate left
 			if (currentHover > 0)
 			{
 				Event event(Events::Audio::PLAY_SOUND);
 				event.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/MenuNavigation.wav");
-				event.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
+				event.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3 { 0.0f, 0.0f, 0.0f });
 				event.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, 0.0f);
 				controller.SendEvent(event);
 
@@ -106,13 +137,13 @@ void PauseSystem::Update()
 			}
 			canNavigate = false;
 		}
-		else if (gamepad->LeftStick_X() > 0.5f) // navigate right
+		else if (stickX > 0.5f) // navigate right
 		{
 			if (currentHover < 3)
 			{
 				Event event(Events::Audio::PLAY_SOUND);
 				event.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/MenuNavigation.wav");
-				event.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
+				event.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3 { 0.0f, 0.0f, 0.0f });
 				event.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, 0.0f);
 				controller.SendEvent(event);
 
@@ -122,7 +153,7 @@ void PauseSystem::Update()
 		}
 	}
 
-	if (gamepad->GetButtonDown(Buttons::JUMP))
+	if (AnyButtonDown(Buttons::JUMP))
 	{
 		switch (currentHover)
 		{

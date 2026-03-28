@@ -20,7 +20,7 @@ class PauseSystem : public System
 {
 public:
 	PauseSystem();
-	void Init(std::shared_ptr<Gamepad> gamepad);
+	void Init(std::vector<std::shared_ptr<Gamepad>> gamepad);
 	void Update();
 	void Reset();
 
@@ -50,7 +50,7 @@ private:
 	VBO textVBO;
 	std::shared_ptr<Shader> textShader;
 
-	std::shared_ptr<Gamepad> gamepad;
+	std::vector<std::shared_ptr<Gamepad>> gamepad;
 	bool canNavigate = true;
 	int currentHover = 0;
 	glm::vec3 defaultColor = glm::vec3(0.5f, 0.8f, 0.2f);

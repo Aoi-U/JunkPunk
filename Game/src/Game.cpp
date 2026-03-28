@@ -247,7 +247,7 @@ Game::Game()
 	vehicleControlSystem->Init(gamepads);
 	camControlSystem->Init(gamepads);
 	menuSystem->Init(gamepads[0]);
-	pauseSystem->Init(gamepads[0]);
+	pauseSystem->Init(gamepads);
 
 	controller.AddEventListener(Events::GameState::NEW_STATE, [this](Event& e) { this->ChangeGameStateListener(e); });
 	controller.AddEventListener(Events::Window::INPUT, [this](Event& e) { this->KeyboardInputListener(e); });
@@ -497,13 +497,9 @@ void Game::ChangeGameStateListener(Event& e)
 			}
 			vehicleControlSystem->Init(gamepads);
 			camControlSystem->Init(gamepads);
-			for (int i = 0; i < (int)gamepads.size(); i++) {
-				menuSystem->Init(gamepads[i]);
-				pauseSystem->Init(gamepads[i]);
-				break;
-			}
-			//menuSystem->Init(gamepads[0]);
-			//pauseSystem->Init(gamepads[0]);
+
+			menuSystem->Init(gamepads[0]);
+			pauseSystem->Init(gamepads);
 
 			aiSystem->Init();
 			loaderSystem->LoadLevel();
@@ -575,13 +571,8 @@ void Game::ChangeGameStateListener(Event& e)
 		}
 		vehicleControlSystem->Init(gamepads);
 		camControlSystem->Init(gamepads);
-		for (int i = 0; i < (int)gamepads.size(); i++) {
-			menuSystem->Init(gamepads[i]);
-			pauseSystem->Init(gamepads[i]);
-			break;
-		}
-		//menuSystem->Init(gamepads[0]);
-		//pauseSystem->Init(gamepads[0]);
+		menuSystem->Init(gamepads[0]);
+		pauseSystem->Init(gamepads);
 
 		aiSystem->Init();
 		loaderSystem->LoadLevel();
