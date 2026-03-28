@@ -278,41 +278,73 @@ void MenuSystem::Reset()
 }
 
 void MenuSystem::RenderWinText() {
-	if (!playerWon)
-		return;
 	glDisable(GL_DEPTH_TEST);
 	float scale = uniformScale * 2.0f;
-	RenderText(
-		"YOU WIN!",
-		ScaledX(500.0f),
-		ScaledY(600.0f),
-		scale,
-		glm::vec3(0.2f, 1.0f, 0.2f)
-	);
+	if (!playerWon && !aiWon)
+		return;
+	if (playerWon) {
+		std::string text = "YOU WIN";
+		RenderText(
+			text,
+			GetCenteredX(text, scale),
+			ScaledY(600.0f),
+			scale,
+			glm::vec3(0.2f, 1.0f, 0.2f)
+		);
+	}
+	else {
+		std::string text = "OPPONENT WINS!";
+		RenderText(
+			text,
+			GetCenteredX(text, scale),
+			ScaledY(600.0f),
+			scale,
+			glm::vec3(1.0f, 0.2f, 0.2f)
+		);
+	}
 }
 
 void MenuSystem::RenderEndScreen() {
 	glDisable(GL_DEPTH_TEST);
 	Clear(0.05f, 0.05f, 0.05f, 1.0f);
 	float titleScale = uniformScale * 2.0f;
+	
+	Texture* bg = nullptr;
 
-	RenderElements(endUIElements);
+	if (playerWon)
+		bg = winBackground.get();
+	else if (aiWon)
+		bg = loseBackground.get();
+	if (bg) {
+		RenderUITexture(
+			0.0f,
+			0.0f,
+			(float)screenWidth,
+			(float)screenHeight,
+			bg,
+			glm::vec4(1.0f)
+			);
+	}
+	else
+		RenderElements(endUIElements);
 
 	if (aiWon) 	{
 		 //titleScale = uniformScale * 1.5f;
+		std::string text = "OPPONENT WINS!";
 		RenderText(
-			"Opponent WINS!",
-			ScaledX(480.0f),
-			ScaledY(500.0f),
+			text,
+			GetCenteredX(text, titleScale),
+			ScaledY(600.0f),
 			titleScale,
 			glm::vec3(1.0f, 0.2f, 0.2f)
 		);
 	}
 	else if (playerWon){
+		std::string text = "YOU WIN!";
 		RenderText(
-			"YOU WIN!",
-			ScaledX(480.0f),
-			ScaledY(500.0f),
+			text,
+			GetCenteredX(text, titleScale),
+			ScaledY(600.0f),
 			titleScale,
 			glm::vec3(0.2f, 1.0f, 0.2f)
 		);
@@ -433,7 +465,7 @@ void MenuSystem::RenderUITexture(float x, float y, float width, float height, Te
 void MenuSystem::InitUI()
 {
 	uiElements.clear();
-	Texture tex("background2.png");	
+	Texture tex("JunkPunk intro.png");	
 	tex.Load("assets/textures");
 	uiElements.emplace_back(0.0f, 0.0f, 1280.0f, 720.0f, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), ScaleMode::FILL, std::make_unique<Texture>(tex));
 }
@@ -442,6 +474,13 @@ void MenuSystem::InitEndUI() {
 	endUIElements.clear();
 	Texture tex("dumpster sunset.jpg");
 	tex.Load("assets/textures");
+
+	winBackground = std::make_unique<Texture>("JunkPunk win.png");
+	winBackground->Load("assets/textures");
+
+	loseBackground = std::make_unique<Texture>("JunkPunk lose.png");
+	loseBackground->Load("assets/textures");
+
 	endUIElements.emplace_back(
 		0.0f,
 		0.0f,
