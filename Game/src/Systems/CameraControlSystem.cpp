@@ -26,19 +26,17 @@ void CameraControlSystem::Init(std::vector<std::shared_ptr<Gamepad>> gamepads)
 
 void CameraControlSystem::Update(float deltaTime)
 {
+	bool boosting = false;
 	for (int i = 0; i < numPlayers; i++)
 	{
 		Entity player = controller.GetEntityByTag("Player" + std::to_string(i + 1));
 
-		bool boosting = false;
 		if (controller.HasComponent<Powerup>(player)) {
 			auto& p = controller.GetComponent<Powerup>(player);
 			if (p.type == 1 && p.active)
 				boosting = true;
 		}
 	}
-
-	bool boosting = false;
 
 	for (auto const& entity : entities)
 	{

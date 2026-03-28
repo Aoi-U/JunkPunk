@@ -314,6 +314,8 @@ void Game::Run()
 				time->totalTime += time->deltaTime;
 			}
 
+			UpdatePowerupRespawns(time->frameTime);
+
 			vehicleControlSystem->Update(); // handle vehicle controls
 
 			camControlSystem->Update(time->frameTime); // handle camera controls
@@ -669,6 +671,22 @@ void Game::TriggerEnterListener(Event& e)
 		controller.HasComponent<PlayerController>(otherEntity) &&
 		!controller.HasComponent<Powerup>(otherEntity)) {
 		auto pickup = controller.GetComponent<Powerup>(triggerEntity);
+		auto& t = controller.GetComponent<Transform>(triggerEntity);
+		auto& trig = controller.GetComponent<Trigger>(triggerEntity);
+
+		// store respawn data before destroying
+		PowerupRespawnData data;
+		data.position = t.position;
+		data.rotation = t.quatRotation;
+		data.scale = t.scale;
+		data.powerup = pickup;
+		data.trigger = trig;
+		data.timer = 5.0f;
+		if (pickup.type == 1) data.modelPath = "assets/models/lightning_capsule/scene.gltf";
+		else if (pickup.type == 2) data.modelPath = "assets/models/banana/scene.gltf";
+		else if (pickup.type == 3) data.modelPath = "assets/models/bomb/scene.gltf";
+		pendingRespawns.push_back(data);
+
 		controller.AddComponent(otherEntity, pickup);
 		std::cout << "Powerup collected!" << std::endl;
 		controller.DestroyEntity(triggerEntity);
@@ -749,4 +767,33 @@ void Game::SpawnBananaPeel(Entity vehicle) {
 	Event createEvent(Events::Physics::CREATE_ACTOR);
 	createEvent.SetParam<Entity>(Events::Physics::Create_Actor::ENTITY, banana);
 	controller.SendEvent(createEvent);
+}
+
+void Game::UpdatePowerupRespawns(float deltaTime)
+{
+	for (auto& data : pendingRespawns)
+		data.timer -= deltaTime;
+
+	pendingRespawns.erase(
+		std::remove_if(pendingRespawns.begin(), pendingRespawns.end(),
+			[this](PowerupRespawnData& data) {
+				if (data.timer > 0.0f)
+					return false;
+
+				auto loaded = loaderSystem->LoadModel(data.modelPath);
+				Entity entity = controller.createEntity();
+				controller.AddComponent(entity, Transform{ data.position, data.rotation, data.scale });
+				controller.AddComponent(entity, Trigger{ nullptr, data.trigger.width, data.trigger.height, data.trigger.length });
+				controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
+				controller.AddComponent(entity, PhysicsBody{});
+				controller.AddComponent(entity, Powerup{ data.powerup.type, false, data.powerup.duration, 0.0f });
+
+				Event createEvent(Events::Physics::CREATE_ACTOR);
+				createEvent.SetParam<Entity>(Events::Physics::Create_Actor::ENTITY, entity);
+				controller.SendEvent(createEvent);
+
+				return true;
+			}),
+		pendingRespawns.end()
+	);
 }

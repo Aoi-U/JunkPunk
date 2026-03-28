@@ -54,9 +54,21 @@ private:
 	void TriggerEnterListener(Event& e);
 	void SpawnBananaPeel(Entity vehicle);
 	void TriggerExitListener(Event& e);
+	void UpdatePowerupRespawns(float deltaTime);
 
 	//std::unique_ptr<ImGuiPanel> camera_debug_panel; // testing
 	
 	// current game state
 	GameState currentState = GameState::STARTMENU;
+
+	struct PowerupRespawnData {
+		glm::vec3 position;
+		glm::quat rotation;
+		glm::vec3 scale;
+		std::string modelPath;
+		Powerup powerup;
+		Trigger trigger;
+		float timer;
+	};
+	std::vector<PowerupRespawnData> pendingRespawns;
 };

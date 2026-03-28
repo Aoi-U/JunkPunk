@@ -308,6 +308,14 @@ void MainVehicle::ApplyBoost(float multiplier) {
 		basePeakTorque = engine.peakTorque;
 
 	engine.peakTorque = basePeakTorque * multiplier;
+	auto* body = gVehicle.mPhysXState.physxActor.rigidBody;
+	auto dyn = body->is<PxRigidDynamic>();
+
+	if (dyn)
+	{
+		PxVec3 forward = dyn->getGlobalPose().q.rotate(PxVec3(0, 0, 1));
+		dyn->addForce(forward * 500.0f, PxForceMode::eIMPULSE);
+	}
 }
 
 void MainVehicle::ClearBoost() {
