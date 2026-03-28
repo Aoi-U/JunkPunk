@@ -26,19 +26,17 @@ void CameraControlSystem::Init(std::vector<std::shared_ptr<Gamepad>> gamepads)
 
 void CameraControlSystem::Update(float deltaTime)
 {
+	bool boosting = false;
 	for (int i = 0; i < numPlayers; i++)
 	{
 		Entity player = controller.GetEntityByTag("Player" + std::to_string(i + 1));
 
-		bool boosting = false;
 		if (controller.HasComponent<Powerup>(player)) {
 			auto& p = controller.GetComponent<Powerup>(player);
 			if (p.type == 1 && p.active)
 				boosting = true;
 		}
 	}
-
-	bool boosting = false;
 
 	for (auto const& entity : entities)
 	{
@@ -49,11 +47,11 @@ void CameraControlSystem::Update(float deltaTime)
 	 
 		float speed = glm::length(vehicleComp.linearVelocity);
 		float camerad = glm::mix(camera.baseRadius, camera.baseRadius * 1.5f, glm::smoothstep(0.0f, 20.0f, speed)); // zoom out the camera asedon /speed using smoothstep for a smoother transition
-	 
-		float boostMultiplier = boosting ? 1.35f : 1.0f;
-		float targetRadius = camerad * boostMultiplier;
-		camera.radius = glm::mix(camera.radius, targetRadius, 5.0f * deltaTime);
-	 
+
+		camera.radius = glm::mix(camera.radius, camerad, 5.0f * deltaTime);
+		float targetFov = boosting ? 60.0f * 1.3f : 60.0f;
+		camera.fov = glm::mix(camera.fov, targetFov, 6.0f * deltaTime);
+
 		auto& gamepad = gamepads[1]; // assuming single player for now
 	 
 		if (gamepad->Connected())
