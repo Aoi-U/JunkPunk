@@ -21,7 +21,7 @@ void AudioSystem::Init()
 
 	aEngine.LoadSound("assets/audio/main.mp3", false);
 	aEngine.LoadSound("assets/audio/main2.mp3", false);
-	aEngine.LoadSound("assets/audio/intro.mp3", false);
+	aEngine.LoadSound("assets/audio/intro.mp3", false, true);
 	aEngine.LoadSound("assets/audio/outro.mp3", false);
 	aEngine.LoadSound("assets/audio/pause.mp3", false);
 
