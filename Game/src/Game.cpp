@@ -342,11 +342,15 @@ void Game::Run()
 				}
 			}
 
-			if (gamepads[0]->GetButtonDown(Buttons::PAUSE))
-			{
-				Event event(Events::GameState::NEW_STATE);
-				event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::PAUSED);
-				controller.SendEvent(event);
+			// Any player can pause
+			for (auto& gp : gamepads) {
+				if (gp->GetButtonDown(Buttons::PAUSE))
+				{
+					Event event(Events::GameState::NEW_STATE);
+					event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::PAUSED);
+					controller.SendEvent(event);
+					break;
+				}
 			}
 
 			// powerup update/use per player vehicle
@@ -493,6 +497,13 @@ void Game::ChangeGameStateListener(Event& e)
 			}
 			vehicleControlSystem->Init(gamepads);
 			camControlSystem->Init(gamepads);
+			for (int i = 0; i < (int)gamepads.size(); i++) {
+				menuSystem->Init(gamepads[i]);
+				pauseSystem->Init(gamepads[i]);
+				break;
+			}
+			//menuSystem->Init(gamepads[0]);
+			//pauseSystem->Init(gamepads[0]);
 
 			aiSystem->Init();
 			loaderSystem->LoadLevel();
@@ -564,6 +575,13 @@ void Game::ChangeGameStateListener(Event& e)
 		}
 		vehicleControlSystem->Init(gamepads);
 		camControlSystem->Init(gamepads);
+		for (int i = 0; i < (int)gamepads.size(); i++) {
+			menuSystem->Init(gamepads[i]);
+			pauseSystem->Init(gamepads[i]);
+			break;
+		}
+		//menuSystem->Init(gamepads[0]);
+		//pauseSystem->Init(gamepads[0]);
 
 		aiSystem->Init();
 		loaderSystem->LoadLevel();
