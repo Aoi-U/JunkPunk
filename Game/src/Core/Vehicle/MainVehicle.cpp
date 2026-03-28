@@ -244,7 +244,7 @@ void MainVehicle::setCheckpoint(const glm::vec3& position, const glm::quat& rota
 {
 	checkpointPosition = position;
 	checkpointRotation = rotation;
-	//std::cout << "checkpoint reached at: " << checkpointPosition.x << " " << checkpointPosition.y << " " << checkpointPosition.z << std::endl;
+	std::cout << "checkpoint reached at: " << checkpointPosition.x << " " << checkpointPosition.y << " " << checkpointPosition.z << std::endl;
 }
 
 void MainVehicle::respawnAtCheckpoint()

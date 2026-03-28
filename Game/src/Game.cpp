@@ -12,7 +12,6 @@
 #include "Components/Powerup.h"
 #include "Components/AiDriver.h"
 #include "Components/Banana.h"
-#include "Components/DangerZone.h"
 
 #include "ECSController.h"
 #include "Core/Types.h"
@@ -147,7 +146,6 @@ Game::Game()
 	controller.RegisterComponent<PlayerController>();
 	controller.RegisterComponent<AiDriver>();
 	controller.RegisterComponent<Banana>();
-	controller.RegisterComponent<DangerZone>();
 
 	// register systems (you must register systems before setting component signatures)
 	loaderSystem = controller.RegisterSystem<LevelLoaderSystem>();
