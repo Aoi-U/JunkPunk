@@ -130,6 +130,13 @@ Game::Game()
 		gamepads.push_back(std::make_shared<Gamepad>(i + 1)); // initialize all connected gamepads
 	}
 
+	// Print gamepad connection status
+	for (int i = 0; i < (int)gamepads.size(); i++) {
+		std::cout << "Gamepad: " << (i + 1) << " (XInput " << gamepads[i]->GetIndex() << "): " << (gamepads[i]->Connected() ? "Connected" : "Not Connected") << std::endl;
+	}
+
+
+
 	time = std::make_unique<Time>();
 	glfwSwapInterval(1); // Enable vsync to limit fps
 
@@ -477,6 +484,14 @@ void Game::ChangeGameStateListener(Event& e)
 	{
 		if (currentState == GameState::STARTMENU || currentState == GameState::CONTROLS) // set up the world when coming from the main menu
 		{
+			gamepads.clear();
+			for (int i = 0; i < numPlayers; i++) {
+				gamepads.push_back(std::make_shared<Gamepad>(i + 1));
+				std::cout << "Gamepad: " << (i + 1) << ": " << (gamepads.back()->Connected() ? "Connected" : "Not Connected") << std::endl;
+			}
+			vehicleControlSystem->Init(gamepads);
+			camControlSystem->Init(gamepads);
+
 			aiSystem->Init();
 			loaderSystem->LoadLevel();
 			renderSystem->Init();
@@ -539,6 +554,14 @@ void Game::ChangeGameStateListener(Event& e)
 		controller.Reset();
 		physicsSystem->Cleanup();
 		renderSystem->Reset();
+
+		gamepads.clear();
+		for (int i = 0; i < numPlayers; i++) {
+			gamepads.push_back(std::make_shared<Gamepad>(i + 1));
+			std::cout << "Gamepad: " << (i + 1) << ": " << (gamepads.back()->Connected() ? "Connected" : "Not Connected") << std::endl;
+		}
+		vehicleControlSystem->Init(gamepads);
+		camControlSystem->Init(gamepads);
 
 		aiSystem->Init();
 		loaderSystem->LoadLevel();
