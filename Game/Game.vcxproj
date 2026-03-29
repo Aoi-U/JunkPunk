@@ -204,6 +204,7 @@
     <ClInclude Include="src\Components\Camera.h" />
     <ClInclude Include="src\Components\ComponentArray.h" />
     <ClInclude Include="src\Components\ComponentManager.h" />
+    <ClInclude Include="src\Components\DangerZone.h" />
     <ClInclude Include="src\Components\Obstacle.h" />
     <ClInclude Include="src\Components\Particles.h" />
     <ClInclude Include="src\Components\Physics.h" />
