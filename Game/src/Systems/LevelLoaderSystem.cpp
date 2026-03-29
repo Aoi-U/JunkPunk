@@ -520,6 +520,24 @@ void LevelLoaderSystem::LoadLevel()
 		controller.AddComponent(entity, ParticleEmitter{
 			particles
 			});
+
+		particles = ParticleEmitter{};
+		particles.Init(3000);
+		particles.targetEntity = controller.GetEntityByTag("Player" + std::to_string(i + 1));
+		particles.offset = glm::vec3(0.0f, 0.2f, 0.0f);
+		particles.spawnRate = 0.0f;
+		particles.life = 1.0f;
+		particles.isBlastEmitter = true;
+		particles.useBlastTexture = true;
+
+		// set these to blast.png layout
+		particles.atlasColumns = 9;
+		particles.atlasRows = 8;
+		particles.atlasFrameCount = 64;
+		entity = controller.createEntity();
+		controller.AddComponent(entity, ParticleEmitter{
+			particles
+			});
 	}
 
 	//Entity vehicle = controller.createEntity();
@@ -628,6 +646,44 @@ void LevelLoaderSystem::LoadLevel()
 		//ai.maxSteerRadians = 1.0f;
 		//ai.throttleKp = 0.6f;
 		controller.AddComponent(vehicle, AiDriver{});
+
+		ParticleEmitter particles = ParticleEmitter{};
+		particles.Init(10000);
+		//particles.targetEntity = controller.GetEntityByTag("Player" + std::to_string(i + 1));
+		particles.targetEntity = vehicle;
+		particles.offset = glm::vec3(-0.3f, 0.0f, -1.3f);
+		Entity particleEntity = controller.createEntity();
+		controller.AddComponent(particleEntity, ParticleEmitter{
+			particles
+			});
+
+		particles = ParticleEmitter{};
+		particles.Init(10000);
+		//particles.targetEntity = controller.GetEntityByTag("Player" + std::to_string(i + 1));
+		particles.targetEntity = vehicle;
+		particles.offset = glm::vec3(0.3f, 0.0f, -1.3f);
+		particleEntity = controller.createEntity();
+		controller.AddComponent(particleEntity, ParticleEmitter{
+			particles
+			});
+
+		particles = ParticleEmitter{};
+		particles.Init(3000);
+		particles.targetEntity = vehicle;
+		particles.offset = glm::vec3(0.0f, 0.2f, 0.0f);
+		particles.spawnRate = 0.0f;
+		particles.life = 1.0f;
+		particles.isBlastEmitter = true;
+		particles.useBlastTexture = true;
+
+		// set these to blast.png layout
+		particles.atlasColumns = 9;
+		particles.atlasRows = 8;
+		particles.atlasFrameCount = 64;
+		particleEntity = controller.createEntity();
+		controller.AddComponent(particleEntity, ParticleEmitter{
+			particles
+			});
 	}
 
 	// test trigger box

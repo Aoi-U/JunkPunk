@@ -228,10 +228,14 @@ void RenderSystem::DrawShadowPass(const Frustum& frust)
 
 		if (renderComp.isInstanced)
 		{
-			instancedModels[renderComp.model.get()].push_back(modelMatrix);
+			if (renderComp.boundingVolume->isOnFrustum(frust, modelMatrix))
+			{
+				instancedModels[renderComp.model.get()].push_back(modelMatrix);
+			}
 			continue;
 		}
 
+		// render non-instanced entities normally
 		shadowShader->setMat4("u_model", modelMatrix);
 		for (auto& mesh : renderComp.model->getMeshes())
 		{

@@ -248,6 +248,7 @@ Game::Game()
 	camControlSystem->Init(gamepads);
 	menuSystem->Init(gamepads[0]);
 	pauseSystem->Init(gamepads);
+	particleSystem->Init();
 
 	controller.AddEventListener(Events::GameState::NEW_STATE, [this](Event& e) { this->ChangeGameStateListener(e); });
 	controller.AddEventListener(Events::Window::INPUT, [this](Event& e) { this->KeyboardInputListener(e); });
@@ -284,7 +285,6 @@ void Game::Run()
 		{
 		case GAME:
 		{
-			Entity player = playerEntity;
 			// -----------------------------------------------------------------------------------
 			// FOr logging player position every 0.5 seconds, can be removed later, just for testing
 			//posLogTimer += time->frameTime;
@@ -387,9 +387,9 @@ void Game::Run()
 					else if (p.type == 3) {
 						std::cout << "Blast used\n";
 						Event event(Events::Player::BLAST);
-						event.SetParam<Entity>(Events::Player::Blast::ENTITY, player);
+						event.SetParam<Entity>(Events::Player::Blast::ENTITY, vehicle);
 						controller.SendEvent(event);
-						controller.RemoveComponent<Powerup>(player);
+						controller.RemoveComponent<Powerup>(vehicle);
 					}
 					else {
 						p.active = true;

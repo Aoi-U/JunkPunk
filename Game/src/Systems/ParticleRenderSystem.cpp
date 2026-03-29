@@ -12,6 +12,8 @@ ParticleRenderSystem::ParticleRenderSystem()
 	particleTexture = std::make_unique<Texture>("smoke.png");
 	particleTexture->Load("assets/textures");
 
+	blastParticleTexture = std::make_unique<Texture>("blast.png");
+	blastParticleTexture->Load("assets/textures");
 
 	glGenVertexArrays(1, &particleVAO);
 	glBindVertexArray(particleVAO);
@@ -61,9 +63,7 @@ void ParticleRenderSystem::Update(ThirdPersonCamera& tpp)
 	particleShader->setVec3("u_up", &up.x);
 	particleShader->setMat4("u_view", tpp.viewMatrix);
 	particleShader->setMat4("u_projection", tpp.getProjectionMatrix());
-
 	particleShader->setInt("u_particleTexture", 0);
-	particleTexture->Bind(GL_TEXTURE0);
 
 	glDepthMask(GL_FALSE);
 
@@ -71,8 +71,18 @@ void ParticleRenderSystem::Update(ThirdPersonCamera& tpp)
 	{
 		glBindVertexArray(particleVAO);
 
-		// setup particle data
 		auto& emitter = controller.GetComponent<ParticleEmitter>(entity);
+
+		particleShader->setInt("u_atlasColumns", emitter.atlasColumns);
+		particleShader->setInt("u_atlasRows", emitter.atlasRows);
+		particleShader->setInt("u_atlasFrameCount", emitter.atlasFrameCount);
+
+		if (emitter.useBlastTexture)
+			blastParticleTexture->Bind(GL_TEXTURE0);
+		else
+			particleTexture->Bind(GL_TEXTURE0);
+
+		// setup particle data
 		//std::cout << "rendering: " << emitter.particleCount << std::endl;
 		glBindBuffer(GL_ARRAY_BUFFER, particlePositionVBO);
 		glBufferData(GL_ARRAY_BUFFER, emitter.maxParticles * 4 * sizeof(GLfloat), nullptr, GL_STREAM_DRAW);

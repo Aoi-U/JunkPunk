@@ -21,6 +21,7 @@ private:
 
 	std::unique_ptr<Shader> particleShader;
 	std::unique_ptr<Texture> particleTexture;
+	std::unique_ptr<Texture> blastParticleTexture;
 
 
 	GLuint particleVAO{};
