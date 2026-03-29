@@ -12,7 +12,6 @@
 #include "Components/Powerup.h"
 #include "Components/AiDriver.h"
 #include "Components/Banana.h"
-#include "Components/Sludge.h"
 #include "Components/DangerZone.h"
 
 #include "ECSController.h"
@@ -148,7 +147,6 @@ Game::Game()
 	controller.RegisterComponent<PlayerController>();
 	controller.RegisterComponent<AiDriver>();
 	controller.RegisterComponent<Banana>();
-	controller.RegisterComponent<Sludge>();
 	controller.RegisterComponent<DangerZone>();
 
 	// register systems (you must register systems before setting component signatures)
@@ -243,7 +241,6 @@ Game::Game()
 	controller.AddEventListener(Events::GameState::NEW_STATE, [this](Event& e) { this->ChangeGameStateListener(e); });
 	controller.AddEventListener(Events::Window::INPUT, [this](Event& e) { this->KeyboardInputListener(e); });
 	controller.AddEventListener(Events::Physics::TRIGGER_ENTER, [this](Event& e) { this->TriggerEnterListener(e); });
-	controller.AddEventListener(Events::Physics::TRIGGER_EXIT, [this](Event& e) {this->TriggerExitListener(e); });
 }
 
 // main game function
@@ -381,10 +378,6 @@ void Game::Run()
 				if (gamepads[0]->GetButtonDown(Buttons::POWERUP) && !p.active) {
 					if (p.type == 2) {
 						SpawnBananaPeel(player);
-						controller.RemoveComponent<Powerup>(player);
-					}
-					else if (p.type == 3) {
-						std::cout << "Blast used\n";
 						controller.RemoveComponent<Powerup>(player);
 					}
 					else {
@@ -581,10 +574,6 @@ void Game::KeyboardInputListener(Event& e)
 					SpawnBananaPeel(player);
 					controller.RemoveComponent<Powerup>(player);
 				}
-				else if (p.type == 3) {
-					std::cout << "Bomb used\n";
-					controller.RemoveComponent<Powerup>(player);
-				}
 				else {
 					p.active = true;
 					p.elapsed = 0.0f;
@@ -639,33 +628,7 @@ void Game::TriggerEnterListener(Event& e)
 		controller.SendEvent(spinEvent);
 		controller.DestroyEntity(triggerEntity);
 	}
-	else if (controller.HasComponent<Sludge>(triggerEntity) && controller.HasComponent<VehicleCommands>(otherEntity)) {
-		auto& sludge = controller.GetComponent<Sludge>(triggerEntity);
-		auto& commands = controller.GetComponent<VehicleCommands>(otherEntity);
-
-		commands.inSludge = true;
-		commands.sludgeFactor = sludge.slowFactor;
-		std::cout << "Entered sludeg\n";
-	}
 }
-
-void Game::TriggerExitListener(Event& e)
-{
-	Entity triggerEntity = e.GetParam<Entity>(Events::Physics::Trigger_Enter::ENTITY_ONE);
-	Entity otherEntity = e.GetParam<Entity>(Events::Physics::Trigger_Enter::ENTITY_TWO);
-
-	if (controller.HasComponent<Sludge>(triggerEntity) &&
-		controller.HasComponent<VehicleCommands>(otherEntity))
-	{
-		auto& commands = controller.GetComponent<VehicleCommands>(otherEntity);
-
-		commands.inSludge = false;
-		commands.sludgeFactor = 1.0f;
-
-		std::cout << "Exited sludge\n";
-	}
-}
-
 
 void Game::SpawnBananaPeel(Entity vehicle) {
 	auto& vehicleTransform = controller.GetComponent<Transform>(vehicle);

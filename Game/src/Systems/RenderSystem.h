@@ -77,7 +77,6 @@ private:
 
 	std::unique_ptr<Texture> bananaIconTexture;
 	std::unique_ptr<Texture> boostIconTexture;
-	std::unique_ptr<Texture> bombIconTexture;
 
 	GLuint debugVao{}, debugVbo{};
 	const size_t maxDebugLines = 10000;

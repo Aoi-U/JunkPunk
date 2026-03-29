@@ -13,7 +13,6 @@
 #include "../Components/Banana.h"
 #include "../Components/DangerZone.h"
 #include "../NavMesh.h"
-#include "../Components/Sludge.h"
 
 
 #include "../ECSController.h"
@@ -124,43 +123,36 @@ void LevelLoaderSystem::LoadLevel()
 	controller.AddComponent(entity, Render{ loaded.first, loaded.second });
 	controller.AddComponent(entity, PhysicsBody{});
 
-	for (int i = 0; i < 10; i++)
+
+	// Update this when moving to new map
+	if (aiSystemPtr)
 	{
-		entity = controller.createEntity();
-		loaded = LoadModel("assets/models/rubix_2.0/scene.gltf");
-		controller.AddComponent(entity, Transform{ glm::vec3(0.0f, -40.0f + i * 8.0f, 20.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.7f) });
-		controller.AddComponent(entity, RigidBody{ nullptr, loaded.first, loaded.second, 50.0f, true, glm::vec3(0.0f), glm::vec3(0.0f) });
-		controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
-		controller.AddComponent(entity, PhysicsBody{});
-		controller.AddComponent(entity, MovingObstacle{
-			{ // path points
-				{ -50.0f - i, -90.0f + i * 2 ,-20.0f + i },
-				{ -50.0f - i, -90.0f + i * 2, -30.0f + i },
-				{ -40.0f - i, -90.0f + i * 2, -30.0f + i },
-				{ -40.0f - i, -90.0f + i * 2, -20.0f + i },
-				{ -40.0f - i, -90.0f + i * 2, -20.0f + i }
-			},
-			{ // rotation points (must be empty or same size as path points)
-				glm::quat(glm::vec3(0.0f, glm::radians(90.0f), 0.0f)),
-				glm::quat(glm::vec3(0.0f, glm::radians(180.0f), 0.0f)),
-				glm::quat(glm::vec3(0.0f, glm::radians(-90.0f), 0.0f)),
-				glm::quat(glm::vec3(0.0f, glm::radians(180.0f), 0.0f)),
-				glm::quat(glm::vec3(0.0f, glm::radians(90.0f), 0.0f))
-			},
-			{
-				// times to reach each point (if empty, movement will be based on speed, must be empty or same size as path points)
-				1.0f,
-				2.0f,
-				3.0f,
-				5.0f,
-				5.0f
-			},
-			0.0f,
-			0,
-			5.0f,
-			false
-			});
+		NavMesh navMesh;
+		navMesh.BuildFromModel(
+			loaded.first,
+			glm::vec3(0.0f, -100.0f, 50.0f),          // same position as the dumpster
+			glm::quat_cast(rotation),                   // same rotation
+			glm::vec3(200.0f),                            // same scale
+			35.0f                                        // max slope angle – tweak if too many/few triangles
+		);
+		navMesh.Subdivide();    // 1023 -> 4092 triangles (4x denser)
+		//navMesh.Subdivide(); // uncomment for 16368 triangles (16x denser) if needed
+		navMesh.BuildAdjacency();
+		navMesh.StitchDisconnectedIslands(30.0f, 3.0f);  // bridge gaps: 30 units horizontal, 15 units vertical max
+		navMesh.ComputeEdgeDanger(3);  // spread danger 3 triangles inward from edges
+
+		int32_t componentCount = navMesh.CountConnectedComponents();
+		std::cout << "[LevelLoader] NavMesh has " << componentCount << " disconnected island(s) after stitching" << std::endl;
+
+		aiSystemPtr->SetNavMesh(navMesh);
 	}
+
+	std::vector<std::string> wheelModels = {
+		"assets/models/left_wheel/wheel.gltf",
+		"assets/models/right_wheel/wheel.gltf",
+		"assets/models/left_wheel/wheel.gltf",
+		"assets/models/right_wheel/wheel.gltf"
+	};
 
 	//punching glove
 	std::vector<std::vector<glm::vec3>> glove_positions = {
@@ -228,8 +220,8 @@ void LevelLoaderSystem::LoadLevel()
 		glm::vec3(37.f, -32.f, 295.f),
 		glm::vec3(37.f, -34.f, 295.f),
 
-		//glm::vec3(-56.f, 53.f, 358.f),
-		//glm::vec3(-56.0f, 53.f, 293.f),
+		glm::vec3(-56.f, 53.f, 358.f),
+		glm::vec3(-56.0f, 53.f, 293.f),
 	};
 	std::vector<float> spinner_rotation = {
 		-1.f,
@@ -245,8 +237,8 @@ void LevelLoaderSystem::LoadLevel()
 		1.f,
 		-1.f,
 
-		//1.f,
-		//-1.f
+		1.f,
+		-1.f
 	};
 	std::vector<float> spinner_duration = {
 		2.f,
@@ -262,8 +254,8 @@ void LevelLoaderSystem::LoadLevel()
 		6.f,
 		6.f,
 
-		//1.2f,
-		//1.2f
+		1.2f,
+		1.2f
 	};
 	std::vector<float> spinner_size = {
 		4.f,
@@ -279,8 +271,8 @@ void LevelLoaderSystem::LoadLevel()
 		4.f,
 		4.f,
 
-		//3.f,
-		//3.f
+		3.f,
+		3.f
 	};
 
 	for (int i = 0; i < spinner_positions.size(); i++) {
@@ -343,27 +335,19 @@ void LevelLoaderSystem::LoadLevel()
 
 	//dice
 	std::vector<std::vector<glm::vec3>> dice_positions = {
-		{glm::vec3(40.0f, -46.f, 200.f), glm::vec3(140.0f, -41.f, 200.f), glm::vec3(140.0f, -41.f, 200.f), glm::vec3(40.0f, -46.f, 200.f)},
-		{glm::vec3(40.0f, -46.f, 175.f), glm::vec3(140.0f, -41.f, 175.f), glm::vec3(140.0f, -41.f, 175.f), glm::vec3(40.0f, -46.f, 175.f)},
-		{glm::vec3(40.0f, -46.f, 150.f), glm::vec3(140.0f, -41.f, 150.f), glm::vec3(140.0f, -41.f, 150.f), glm::vec3(40.0f, -46.f, 150.f)},
+		{glm::vec3(-40.0f, -46.f, 200.f), glm::vec3(140.0f, -46.f, 200.f), glm::vec3(140.0f, -46.f, 200.f), glm::vec3(-40.0f, -46.f, 200.f)},
+		{glm::vec3(-40.0f, -46.f, 175.f), glm::vec3(140.0f, -46.f, 175.f), glm::vec3(140.0f, -46.f, 175.f), glm::vec3(-40.0f, -46.f, 175.f)},
+		{glm::vec3(-40.0f, -46.f, 150.f), glm::vec3(140.0f, -46.f, 150.f), glm::vec3(140.0f, -46.f, 150.f), glm::vec3(-40.0f, -46.f, 150.f)},
 
-		{glm::vec3(20.0f, -46.f, 200.f), glm::vec3(-40.0f, -46.f, 200.f), glm::vec3(-40.0f, -46.f, 200.f), glm::vec3(20.0f, -46.f, 200.f)},
-		{glm::vec3(20.0f, -46.f, 175.f), glm::vec3(-40.0f, -46.f, 175.f), glm::vec3(-40.0f, -46.f, 175.f), glm::vec3(20.0f, -46.f, 175.f)},
-		{glm::vec3(20.0f, -46.f, 150.f), glm::vec3(-40.0f, -46.f, 150.f), glm::vec3(-40.0f, -46.f, 150.f), glm::vec3(20.0f, -46.f, 150.f)},
-
-		//{glm::vec3(0.0f, 62.f, 325.f), glm::vec3(30.0f, 62.f, 355.f), glm::vec3(60.0f, 62.f, 325.f), glm::vec3(30.0f, 62.f, 295.f)},
+		{glm::vec3(0.0f, 62.f, 325.f), glm::vec3(30.0f, 62.f, 355.f), glm::vec3(60.0f, 62.f, 325.f), glm::vec3(30.0f, 62.f, 295.f)},
 	};
 
 	std::vector<std::vector<float>> dice_duration = {
-		{3.f,5.f,3.f, 5.f},
-		{3.f,7.f,3.f, 7.f},
-		{3.f,9.f,3.f, 9.f},
+		{3.f,13.f,3.f, 2.f},
+		{3.f,17.f,3.f, 2.f},
+		{3.f,21.f,3.f, 2.f},
 
-		{3.f,5.f,3.f, 5.f},
-		{3.f,7.f,3.f, 7.f},
-		{3.f,9.f,3.f, 9.f},
-
-		//{1.f,1.f, 1.f, 1.f},
+		{1.f,1.f, 1.f, 1.f},
 	};
 	std::vector<float> dice_size = {
 		10.f,
@@ -371,10 +355,6 @@ void LevelLoaderSystem::LoadLevel()
 		10.f,
 
 		10.f,
-		10.f,
-		10.f,
-
-		//10.f,
 	};
 	//moving dice
 	for (int i = 0; i < dice_positions.size(); i++) {
@@ -439,7 +419,11 @@ void LevelLoaderSystem::LoadLevel()
 	Entity vehicle = controller.createEntity();
 	glm::mat4 player_rotation = glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	loaded = LoadModel("assets/models/car_body_orange/car.gltf");
-	controller.AddComponent(vehicle, Transform{ glm::vec3(137.0f, -255.0f, -233.f), glm::quat(player_rotation), glm::vec3(0.2f) });
+
+	glm::mat4 playerRotation = glm::rotate(glm::mat4(1.0f), glm::radians(38.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	Transform vehicleTransform{ glm::vec3(133.0f, -259.0f, -257.0f), glm::quat(playerRotation), glm::vec3(0.2f) };
+	controller.AddComponent(vehicle, vehicleTransform);
+
 	controller.AddComponent(vehicle, VehicleBody{});
 	controller.AddComponent(vehicle, VehicleCommands{});
 	controller.AddComponent(vehicle, PlayerController{ 1 });
@@ -534,7 +518,7 @@ void LevelLoaderSystem::LoadLevel()
 	// ----------------------------------------------------------------------------------------
 	entity = controller.createEntity();
 	loaded = LoadModel("assets/models/lightning_capsule/scene.gltf");
-	controller.AddComponent(entity, Transform{ glm::vec3(81.0f, -260.0f, -214.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.25f) });
+	controller.AddComponent(entity, Transform{ glm::vec3(-80.0f, -93.0f, 19.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.25f) });
 	controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 2.0f, 1.0f });
 	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
 	controller.AddComponent(entity, PhysicsBody{});
@@ -547,7 +531,7 @@ void LevelLoaderSystem::LoadLevel()
 
 	entity = controller.createEntity();
 	loaded = LoadModel("assets/models/banana/scene.gltf");
-	controller.AddComponent(entity, Transform{ glm::vec3(81.0f, -260.0f, -254.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(1.0f) });
+	controller.AddComponent(entity, Transform{ glm::vec3(-60.0f, -94.0f, -7.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(1.0f) });
 	controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 2.0f, 1.0f });
 	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
 	controller.AddComponent(entity, PhysicsBody{});
@@ -558,6 +542,25 @@ void LevelLoaderSystem::LoadLevel()
 		0.0f
 		});
 
+	// ---- Obstacles ----
+	// ----------------------------------------------------------------------------------------
+
+	std::vector<glm::vec3> bananaPeelLocations = { glm::vec3(-26.3058f, -94.7378f, -0.271198f),
+		glm::vec3(-45.2473f, -84.7378f, 40.7354f),
+		glm::vec3(82.3062f, -19.7378f, 83.7593f)
+	};
+
+	for (int i = 0; i < bananaPeelLocations.size(); i++) {
+		entity = controller.createEntity();
+		loaded = LoadModel("assets/models/banana_peel/banana.gltf");
+		controller.AddComponent(entity, Transform{ bananaPeelLocations[i], glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.5f) });
+		controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 1.0f, 1.0f });
+		controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
+		controller.AddComponent(entity, PhysicsBody{});
+		controller.AddComponent(entity, Banana{});
+	}
+
+	//punching glove
 	entity = controller.createEntity();
 	loaded = LoadModel("assets/models/spring_glove/spring_glove.gltf");
 	rotation = glm::rotate(glm::mat4(1.0f), glm::pi<float>() / 4.0f, glm::vec3(0.0f, 1.0f, 0.0f));
@@ -685,30 +688,16 @@ void LevelLoaderSystem::LoadLevel()
     });
   controller.AssignTag(entity, "FinishLine");
 
-	entity = controller.createEntity();
-	controller.AddComponent(entity, PhysicsBody{});
-	controller.AddComponent(entity, Transform{ glm::vec3(-60.0f, -93.0f, 19.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.25f) });
-	controller.AddComponent(entity, CheckPoint{ glm::quat(1.0f, 0.0f, 0.0f, 0.0f) });
-	controller.AddComponent(entity, Trigger{ nullptr, 5.0f, 2.0f, 5.0f });
+	// Used strictly for testing AI navpoints, can be removed later
+	// Debug: spawn visible trigger markers at each navmesh waypoint
+	if (aiSystemPtr)
+	{
+		// Build danger zones from all obstacles so AI can make informed decisions
+		aiSystemPtr->BuildObstacleDangerZones();
 
-	// Used strictly for testing AI waypoints, can be removed later
-	//std::vector<Waypoint> waypoints;
-	//if (aiSystemPtr) {
-	//	waypoints = aiSystemPtr->GetWaypoints();
-	//	std::cout << "Loaded " << waypoints.size() << " waypoints for AI from AiSystem" << std::endl;
-	//}
-	//else {
-	//	// fallback: leave empty or build defaults
-	//	std::cout << "Warning: AiSystem not set in LevelLoaderSystem, no waypoints loaded for AI" << std::endl;
-	//}
-	//
-	//for (const Waypoint& wp : waypoints) {
-	//	entity = controller.createEntity();
-	//	controller.AddComponent(entity, PhysicsBody{});
-	//	controller.AddComponent(entity, Transform{ wp.position, glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.25f) });
-	//	controller.AddComponent(entity, CheckPoint{ glm::quat(1.0f, 0.0f, 0.0f, 0.0f) });
-	//	controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 4.0f, 1.0f });
-	//}
+		Entity aiVehicle = controller.GetEntityByTag("AIVehicle1");
+		aiSystemPtr->SpawnDebugWaypoints(aiVehicle);
+	}
 }
 
 std::pair<std::shared_ptr<Model>, std::shared_ptr<AABB>> LevelLoaderSystem::LoadModel(std::string path)

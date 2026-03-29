@@ -317,19 +317,3 @@ void MainVehicle::SpinOut()
 
 	body->addTorque(PxVec3(0.0f, 800.0f, 0.0f), PxForceMode::eIMPULSE);
 }
-
-void MainVehicle::ApplySludgeDrag(float factor)
-{
-	auto* body = gVehicle.mPhysXState.physxActor.rigidBody;
-	auto dyn = body->is<PxRigidDynamic>();
-
-	if (!dyn)
-		return;
-
-	PxVec3 vel = dyn->getLinearVelocity();
-
-	// Apply drag
-	vel *= factor;
-
-	dyn->setLinearVelocity(vel);
-}
