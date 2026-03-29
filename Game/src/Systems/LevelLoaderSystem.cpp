@@ -11,6 +11,7 @@
 #include "AiSystem.h"
 #include"../Components/Banana.h"
 #include "../NavMesh.h"
+#include "../Components/DangerZone.h"
 
 
 #include "../ECSController.h"
@@ -228,6 +229,49 @@ void LevelLoaderSystem::LoadLevel()
 			0,
 			false
 			});
+
+		Entity gloveEntity = entity; // save the glove entity we just created
+
+		// Spawn danger zone covering the glove's full sweep path
+		{
+			// For punching gloves: only use the retracted and extended positions (indices 0 and 1)
+			glm::vec3 retractedPos = glove_positions[i][0];  // e.g., (20, -169, 40)
+			glm::vec3 extendedPos = glove_positions[i][1];   // e.g., (20, -169, -45)
+
+			glm::vec3 extensionVector = extendedPos - retractedPos;
+			float extensionLength = glm::length(extensionVector);
+			glm::vec3 extensionDirection = glm::normalize(extensionVector);
+
+			float SIDE_PADDING = 12.0f;      // width of the glove (X/Y perpendicular to extension)
+			float EXTENSION_PADDING = 30.0f; // extra reach beyond extended position (for glove physical size + safety)
+			float REAR_PADDING = 5.0f;       // small buffer behind retracted position
+
+			glm::vec3 fullyExtendedPos = extendedPos + (extensionDirection * EXTENSION_PADDING);
+			glm::vec3 paddedRetractedPos = retractedPos - (extensionDirection * REAR_PADDING);
+
+			// Calculate AABB covering the full sweep
+			glm::vec3 minPt = glm::min(paddedRetractedPos, fullyExtendedPos);
+			glm::vec3 maxPt = glm::max(paddedRetractedPos, fullyExtendedPos);
+
+			glm::vec3 center = (minPt + maxPt) * 0.5f;
+			glm::vec3 halfExtents = (maxPt - minPt) * 0.5f;
+
+			// Add side padding to X and Y dimensions only
+			glm::vec3 finalHalfExtents = halfExtents;
+			finalHalfExtents.x += SIDE_PADDING;
+			finalHalfExtents.y += SIDE_PADDING;
+
+			// Create the danger zone entity
+			Entity dangerEntity = controller.createEntity();
+			controller.AddComponent(dangerEntity, DangerZone{ center, finalHalfExtents, gloveEntity, SIDE_PADDING });
+			controller.AddComponent(dangerEntity, PhysicsBody{});
+			controller.AddComponent(dangerEntity, Transform{ center, glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(1.0f) });
+			controller.AddComponent(dangerEntity, Trigger{ nullptr, finalHalfExtents.x, finalHalfExtents.y, finalHalfExtents.z });
+
+			std::cout << "[LevelLoader] Danger zone for glove " << i
+				<< " spans from (" << minPt.x << ", " << minPt.y << ", " << minPt.z << ")"
+				<< " to (" << maxPt.x << ", " << maxPt.y << ", " << maxPt.z << ")" << std::endl;
+		}
 
 	}
 
@@ -521,7 +565,7 @@ void LevelLoaderSystem::LoadLevel()
 	glm::quat flippedRotation = glm::angleAxis(glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
 	std::vector<AiSpawnInfo> aiSpawns = {
-		{ glm::vec3(150.0f, -259.0f, -249.0f), -40.0f, "AIVehicle1", "assets/models/car_body_blue/car.gltf" },
+		{ glm::vec3(83.0f, -183.0f, -50.0f), -40.0f, "AIVehicle1", "assets/models/car_body_blue/car.gltf" },
 		//{ glm::vec3(-32.0f, -80.0f, -25.0f), -40.0f, "AIVehicle2", "assets/models/car_body_pink/car.gltf" },
 		//{ glm::vec3(-24.0f, -80.0f, -17.0f), -40.0f, "AIVehicle3", "assets/models/car_body_red/car.gltf" },
 	};
@@ -648,12 +692,8 @@ void LevelLoaderSystem::LoadLevel()
 	// Debug: spawn visible trigger markers at each navmesh waypoint
 	if (aiSystemPtr)
 	{
-		// Build danger zones from all obstacles so AI can make informed decisions
-		aiSystemPtr->BuildObstacleDangerZones();
-
 		Entity aiVehicle = controller.GetEntityByTag("AIVehicle1");
 		aiSystemPtr->SpawnDebugWaypoints(aiVehicle);
-		//aiSystemPtr->SpawnDebugNodes();
 	}
 }
 

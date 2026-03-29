@@ -11,6 +11,7 @@
 #include <cmath>
 #include <iostream>
 #include "../NavMesh.h"
+#include "../Components/DangerZone.h"
 
 extern ECSController controller;
 
@@ -33,7 +34,7 @@ void AiSystem::ComputeNavPath(Entity entity)
 	glm::vec3 startPos = transform.position;
 
 	// Strategic waypoints for track navigation
-	glm::vec3 beforeGap(-56.0f, -31.0f, 161.0f);
+	glm::vec3 beforeGap(-60.0f, -31.0f, 170.0f);
 	glm::vec3 afterGap(135.0f, -31.0f, 185.0f);
 
 	std::cout << "[AiSystem] Computing path from (" << startPos.x << ", " << startPos.y << ", " << startPos.z << ")" 
@@ -151,104 +152,6 @@ void AiSystem::SpawnDebugWaypoints(Entity aiEntity)
 	}
 }
 
-void AiSystem::SpawnDebugNodes()
-{
-	if (navMesh.IsEmpty())
-	{
-		std::cout << "[AiSystem] No navmesh loaded, cannot spawn debug nodes." << std::endl;
-		return;
-	}
-
-	const auto& triangles = navMesh.GetTriangles();
-
-	std::cout << "[AiSystem] Spawning " << triangles.size() << " debug node markers (1x1 triggers at each centroid)" << std::endl;
-
-	for (size_t i = 0; i < triangles.size(); ++i)
-	{
-		Entity marker = controller.createEntity();
-		controller.AddComponent(marker, PhysicsBody{});
-		controller.AddComponent(marker, Transform{
-			triangles[i].centroid,
-			glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
-			glm::vec3(0.1f)
-			});
-		controller.AddComponent(marker, CheckPoint{ glm::quat(1.0f, 0.0f, 0.0f, 0.0f) });
-		controller.AddComponent(marker, Trigger{ nullptr, 1.0f, 1.0f, 1.0f });
-	}
-
-	std::cout << "[AiSystem] Done spawning " << triangles.size() << " node markers." << std::endl;
-}
-
-void AiSystem::BuildObstacleDangerZones()
-{
-	dangerZones.clear();
-
-	auto obstacleArray = controller.GetComponentArray<MovingObstacle>();
-	if (!obstacleArray)
-		return;
-
-	int zoneCount = 0;
-	for (auto& [obsEntity, idx] : obstacleArray->GetEntityToIndexMap())
-	{
-		auto& obstacle = controller.GetComponent<MovingObstacle>(obsEntity);
-
-		if (obstacle.pathPoints.empty())
-			continue;
-
-		// Calculate bounding sphere for entire movement range
-		glm::vec3 minPos = obstacle.pathPoints[0];
-		glm::vec3 maxPos = obstacle.pathPoints[0];
-
-		for (const auto& point : obstacle.pathPoints)
-		{
-			minPos.x = std::min(minPos.x, point.x);
-			minPos.y = std::min(minPos.y, point.y);
-			minPos.z = std::min(minPos.z, point.z);
-
-			maxPos.x = std::max(maxPos.x, point.x);
-			maxPos.y = std::max(maxPos.y, point.y);
-			maxPos.z = std::max(maxPos.z, point.z);
-		}
-
-		glm::vec3 center = (minPos + maxPos) * 0.5f;
-		float radius = glm::length(maxPos - center);
-
-		// Add safety margin (obstacle size)
-		radius += 10.0f;
-
-		dangerZones.push_back({ center, radius, obsEntity });
-		zoneCount++;
-
-		std::cout << "[AiSystem] Danger zone " << zoneCount 
-			<< ": center=(" << center.x << "," << center.y << "," << center.z << ")"
-			<< " radius=" << radius << std::endl;
-	}
-
-	std::cout << "[AiSystem] Built " << dangerZones.size() << " obstacle danger zones" << std::endl;
-}
-
-float AiSystem::CheckDangerZone(const glm::vec3& position) const
-{
-	float closestDanger = -1.0f;
-
-	for (const auto& zone : dangerZones)
-	{
-		// Check XZ distance only (ignore Y for now)
-		glm::vec3 toZone = zone.center - position;
-		toZone.y = 0.0f;
-		float dist = glm::length(toZone);
-
-		float penetration = zone.radius - dist;
-		if (penetration > 0.0f)
-		{
-			if (closestDanger < 0.0f || dist < closestDanger)
-				closestDanger = dist;
-		}
-	}
-
-	return closestDanger;
-}
-
 void AiSystem::Update(float deltaTime)
 {
 	for (auto entity : entities)
@@ -355,6 +258,59 @@ void AiSystem::UpdateStateMachine(Entity entity, float deltaTime)
 			break;
 		}
 
+		// --- Danger zone check: stop if upcoming waypoints enter a danger zone ---
+		{
+			bool pathEntersDanger = false;
+			int32_t firstDangerWaypoint = -1;
+			int32_t nextSafeWaypoint = -1;
+
+			uint32_t lookAheadForDanger = glm::min(
+				ai.currentWaypointIndex + 3u, // Look 3 ahead for early warning
+				static_cast<uint32_t>(ai.navWaypoints.size())
+			);
+			std::cout << "[AI] Checking for danger zones ahead, waypoints [" << ai.currentWaypointIndex
+				<< "] to [" << lookAheadForDanger - 1 << "]" << std::endl;
+
+			for (uint32_t i = ai.currentWaypointIndex; i < lookAheadForDanger; ++i)
+			{
+				if (IsPointInDangerZone(ai.navWaypoints[i]))
+				{
+					std::cout << "[AI] Danger Zone ahead at waypoint[" << i << "]" << std::endl;
+					pathEntersDanger = true;
+					firstDangerWaypoint = static_cast<int32_t>(i);
+					break;  // Stop at FIRST danger found
+				}
+			}
+
+			// If we found danger, calculate the next safe waypoint now
+			if (pathEntersDanger)
+			{
+				// Search forward from the danger waypoint to find first safe waypoint
+				uint32_t searchIdx = static_cast<uint32_t>(firstDangerWaypoint);
+				uint32_t maxSearchAhead = 10;  // Don't search too far ahead
+				uint32_t searchCount = 0;
+
+				while (searchIdx < static_cast<uint32_t>(ai.navWaypoints.size()) &&
+					IsPointInDangerZone(ai.navWaypoints[searchIdx]) &&
+					searchCount < maxSearchAhead)
+				{
+					searchIdx++;
+					searchCount++;
+				}
+
+				if (searchIdx < static_cast<uint32_t>(ai.navWaypoints.size()))
+				{
+					nextSafeWaypoint = static_cast<int32_t>(searchIdx);
+					std::cout << "[AI] Calculated next safe waypoint: [" << nextSafeWaypoint
+						<< "] (skipping " << (nextSafeWaypoint - firstDangerWaypoint) << " danger waypoints)" << std::endl;
+					ai.targetSafeWaypoint = nextSafeWaypoint;
+				}
+
+				std::cout << "[AI] Danger ahead, entering waiting state" << std::endl;
+				TransitionToState(entity, AiState::WaitingAtDangerZone);
+				break;
+			}
+		}
 		// --- Obstacle detection: scan for MovingObstacles and Bananas ahead ---
 		{
 			glm::vec3 carPos = transform.position;
@@ -461,6 +417,7 @@ void AiSystem::UpdateStateMachine(Entity entity, float deltaTime)
 			}
 		}
 
+
 		// Check for nearby powerups (only if we don't already have one)
 		if (!ai.hasPowerup)
 		{
@@ -537,6 +494,9 @@ void AiSystem::UpdateStateMachine(Entity entity, float deltaTime)
 		break;
 	case AiState::Overtaking:
 		UpdateOvertakingState(entity, deltaTime);
+		break;
+	case AiState::WaitingAtDangerZone:
+		UpdateWaitingAtDangerZoneState(entity, deltaTime);
 		break;
 	}
 }
@@ -700,85 +660,26 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 		steer = CalculateSteeringAngle(forward, toSteerXZ);
 	}
 
-	// --- Dynamic speed: scan ahead for corners and modulate throttle ---
-	float sharpestTurnDot = 1.0f;
-	float distToSharpest = 999999.0f;
-
-	uint32_t wpCount = static_cast<uint32_t>(ai.navWaypoints.size());
-	uint32_t scanStart = ai.currentWaypointIndex;
-	uint32_t scanEnd = glm::min(scanStart + static_cast<uint32_t>(ai.lookaheadWaypoints), wpCount);
-
-	float accumDist = distXZ;
-
-	for (uint32_t i = scanStart; i + 2 < scanEnd; ++i)
-	{
-		glm::vec3 a = ai.navWaypoints[i];
-		glm::vec3 b = ai.navWaypoints[i + 1];
-		glm::vec3 c = ai.navWaypoints[i + 2];
-
-		glm::vec3 dirAB = b - a;
-		glm::vec3 dirBC = c - b;
-		dirAB.y = 0.0f;
-		dirBC.y = 0.0f;
-
-		float lenAB = glm::length(dirAB);
-		float lenBC = glm::length(dirBC);
-
-		if (lenAB < 1e-5f || lenBC < 1e-5f)
-		{
-			accumDist += lenAB;
-			continue;
-		}
-
-		float turnDot = glm::dot(dirAB / lenAB, dirBC / lenBC);
-
-		if (turnDot < sharpestTurnDot)
-		{
-			sharpestTurnDot = turnDot;
-			distToSharpest = accumDist + lenAB;
-		}
-
-		accumDist += lenAB;
-	}
-
-	if (forwardDot < sharpestTurnDot)
-	{
-		sharpestTurnDot = forwardDot;
-		distToSharpest = distXZ;
-	}
-
-	float turnSeverity = 1.0f - glm::clamp(sharpestTurnDot, 0.0f, 1.0f);
-	float distanceFade = glm::clamp(distToSharpest / ai.brakingDistance, 0.0f, 1.0f);
-	float throttleFactor = glm::mix(1.0f - turnSeverity, 1.0f, distanceFade);
-	throttleFactor = glm::clamp(throttleFactor, 0.0f, 1.0f);
-
-	// Also scale throttle by alignment -- don't floor it mid-turn
-	float alignFactor = glm::clamp(forwardDot, 0.0f, 1.0f);
-	throttleFactor *= alignFactor;
-
 	// --- Throttle output ---
 	float throttle = 0.0f;
 
-	if (speed < ai.maxSpeed)
+	if (speed < ai.desiredSpeed)
 	{
-		float targetThrottle = glm::mix(ai.minThrottle, ai.maxThrottle, throttleFactor);
-		float speedRatio = speed / ai.maxSpeed;
-		float speedFade = 1.0f - glm::clamp(speedRatio * speedRatio, 0.0f, 1.0f);
-		throttle = targetThrottle * speedFade;
+		throttle = glm::clamp((ai.desiredSpeed - speed) * ai.throttleKp, 0.0f, ai.maxThrottle);
 	}
 
-	if (shouldLog)
-	{
-		std::cout << "[AI] pos=(" << carPos.x << ", " << carPos.y << ", " << carPos.z << ")"
-			<< " | wp[" << ai.currentWaypointIndex << "/" << ai.navWaypoints.size() << "]=("
-			<< waypointPosition.x << ", " << waypointPosition.y << ", " << waypointPosition.z << ")"
-			<< " | distXZ=" << distXZ
-			<< " | fwdDot=" << forwardDot
-			<< " | steer=" << steer
-			<< " | speed=" << speed
-			<< " | throttle=" << throttle
-			<< std::endl;
-	}
+	//if (shouldLog)
+	//{
+	//	std::cout << "[AI] pos=(" << carPos.x << ", " << carPos.y << ", " << carPos.z << ")"
+	//		<< " | wp[" << ai.currentWaypointIndex << "/" << ai.navWaypoints.size() << "]=("
+	//		<< waypointPosition.x << ", " << waypointPosition.y << ", " << waypointPosition.z << ")"
+	//		<< " | distXZ=" << distXZ
+	//		<< " | fwdDot=" << forwardDot
+	//		<< " | steer=" << steer
+	//		<< " | speed=" << speed
+	//		<< " | throttle=" << throttle
+	//		<< std::endl;
+	//}
 
 	// Stuck detection -- check if car wants to move but physically can't
 	// Use desiredSpeed > 0 as intent, not throttle output (which gets scaled down)
@@ -845,6 +746,8 @@ void AiSystem::UpdateBackingUpState(Entity entity, float deltaTime)
 	float angle = std::atan2(cross, dot);
 
 	float steer = glm::clamp(-angle * 1.0f, -1.0f, 1.0f);
+
+	std::cout << "[AI] Backing up... steer=" << steer << std::endl;
 
 	vc.steer = -steer;
 	vc.throttle = 0.0f;
@@ -938,8 +841,6 @@ float AiSystem::CalculateSteeringAngle(const glm::vec3& forward, const glm::vec3
 	return glm::clamp(-angle * 1.0f, -1.0f, 1.0f);
 }
 
-// ---- Stubs for future states ----
-
 void AiSystem::UpdateAvoidObstacleState(Entity entity, float deltaTime)
 {
 	auto& ai = controller.GetComponent<AiDriver>(entity);
@@ -963,6 +864,8 @@ void AiSystem::UpdateAvoidObstacleState(Entity entity, float deltaTime)
 	float distToObstacle = 999.0f;
 	bool obstacleStillThreat = false;
 
+	std::cout << "[AI] Avoiding obstacle: timer=" << ai.avoidTimer << "s, entity=" << ai.detectedObstacleEntity << std::endl;
+
 	if (ai.detectedObstacleEntity != 0 && controller.HasComponent<Transform>(ai.detectedObstacleEntity))
 	{
 		glm::vec3 forward = transform.quatRotation * glm::vec3(0.0f, 0.0f, 1.0f);
@@ -974,12 +877,17 @@ void AiSystem::UpdateAvoidObstacleState(Entity entity, float deltaTime)
 		toObs.y = 0.0f;
 		distToObstacle = glm::length(toObs);
 
+		std::cout << "[AI] Checking obstacle: dist=" << distToObstacle << std::endl;
+
 		if (distToObstacle > 1e-5f)
 		{
 			float dot = glm::dot(forward, glm::normalize(toObs));
 			// Obstacle is still ahead and in range
-			if (dot > 0.0f && distToObstacle < ai.obstacleDetectionRange * 1.5f)
+			if (dot > 0.0f && distToObstacle < ai.obstacleDetectionRange * 1.5f) {
 				obstacleStillThreat = true;
+				std::cout << "[AI] Obstacle check: dist=" << distToObstacle << ", dot=" << dot
+					<< ", still threat=" << obstacleStillThreat << std::endl;
+			}
 		}
 	}
 
@@ -1080,11 +988,270 @@ void AiSystem::UpdateAvoidObstacleState(Entity entity, float deltaTime)
 	vc.isGrounded = true;
 }
 
+bool AiSystem::HasDangerZone(Entity obstacleEntity) const
+{
+	auto dangerArray = controller.GetComponentArray<DangerZone>();
+	if (!dangerArray)
+		return false;
+
+	for (auto& [dzEntity, idx] : dangerArray->GetEntityToIndexMap())
+	{
+		auto& dz = controller.GetComponent<DangerZone>(dzEntity);
+		if (dz.obstacleEntity == obstacleEntity)
+			return true;
+	}
+	return false;
+}
+
+bool AiSystem::IsPointInActiveDangerZone(const glm::vec3& point) const
+{
+	auto dangerArray = controller.GetComponentArray<DangerZone>();
+	for (auto& [dzEntity, idx] : dangerArray->GetEntityToIndexMap())
+	{
+		auto& dz = controller.GetComponent<DangerZone>(dzEntity);
+
+		// Check if the linked obstacle is currently extended (dangerous)
+		if (dz.obstacleEntity != 0 && controller.HasComponent<MovingObstacle>(dz.obstacleEntity))
+		{
+			auto& obstacle = controller.GetComponent<MovingObstacle>(dz.obstacleEntity);
+
+			// Path indices 0->1 = extending, 1->2 = holding extended
+			// Path indices 2->3 = retracting
+			// Only dangerous when extending or holding (indices 0 or 1)
+			bool gloveIsOut = (obstacle.currentPathIndex <= 1);
+			if (!gloveIsOut)
+				continue; // glove is retracting, safe to pass
+		}
+
+		// Simple AABB point-in-box test (ignoring Y for a flat arena)
+		glm::vec3 diff = glm::abs(point - dz.center);
+		if (diff.x <= dz.halfExtents.x &&
+			diff.y <= dz.halfExtents.y &&
+			diff.z <= dz.halfExtents.z)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+bool AiSystem::IsPointInDangerZone(const glm::vec3& point) const
+{
+	auto dangerArray = controller.GetComponentArray<DangerZone>();
+	if (!dangerArray)
+		return false;
+
+	for (auto& [dzEntity, idx] : dangerArray->GetEntityToIndexMap())
+	{
+		auto& dz = controller.GetComponent<DangerZone>(dzEntity);
+
+		// Simple AABB point-in-box test (no obstacle position check)
+		glm::vec3 diff = glm::abs(point - dz.center);
+		if (diff.x <= dz.halfExtents.x &&
+			diff.z <= dz.halfExtents.z)
+		{
+			return true; // point is in A danger zone
+		}
+	}
+	return false;
+}
+
+bool AiSystem::IsObstacleInDangerZone(const glm::vec3& point) const
+{
+	auto dangerArray = controller.GetComponentArray<DangerZone>();
+	if (!dangerArray)
+		return false;
+
+	for (auto& [dzEntity, idx] : dangerArray->GetEntityToIndexMap())
+	{
+		auto& dz = controller.GetComponent<DangerZone>(dzEntity);
+
+		// First check if the POINT is in this danger zone (AABB test)
+		glm::vec3 diff = glm::abs(point - dz.center);
+		if (!(diff.x <= dz.halfExtents.x && diff.z <= dz.halfExtents.z))
+			continue; // point not in this zone, skip it
+
+		// Point IS in the zone, now check if the obstacle is physically present
+		if (dz.obstacleEntity != 0 && controller.HasComponent<MovingObstacle>(dz.obstacleEntity))
+		{
+			auto& obstacle = controller.GetComponent<MovingObstacle>(dz.obstacleEntity);
+
+			// Is the glove currently extended (blocking the zone)?
+			// Path indices 0->1 = extending/extended (GLOVE IS THERE)
+			// Path indices 2->3 = retracting/retracted (GLOVE IS GONE)
+			bool gloveIsPhysicallyPresent = (obstacle.currentPathIndex <= 1);
+
+			if (gloveIsPhysicallyPresent)
+			{
+				// Glove is blocking - return true without logging (caller will log if needed)
+				return true; // YES, glove is blocking the zone!
+			}
+		}
+	}
+
+	return false; // either no zone found, or glove is retracted
+}
+
+void AiSystem::UpdateWaitingAtDangerZoneState(Entity entity, float deltaTime)
+{
+	auto& ai = controller.GetComponent<AiDriver>(entity);
+	auto& transform = controller.GetComponent<Transform>(entity);
+	auto& body = controller.GetComponent<VehicleBody>(entity);
+	auto& vc = controller.GetComponent<VehicleCommands>(entity);
+
+	glm::vec3 carPos = transform.position;
+	glm::vec3 forward = transform.quatRotation * glm::vec3(0.0f, 0.0f, 1.0f);
+	forward.y = 0.0f;
+	if (glm::length(forward) < 1e-6f) forward = glm::vec3(0, 0, 1);
+	forward = glm::normalize(forward);
+
+	// Throttle logging to once per second
+	static float logTimer = 0.0f;
+	logTimer += deltaTime;
+	bool shouldLog = (logTimer >= 1.0f);
+	if (shouldLog) logTimer = 0.0f;
+
+	// Find the closest danger zone edge in front of us
+	float distToZoneEdge = 999.0f;
+	int32_t dangerWaypointIndex = -1;
+
+	// Check the next few waypoints to find how far until we enter danger
+	uint32_t checkEnd = glm::min(
+		ai.currentWaypointIndex + 5u,
+		static_cast<uint32_t>(ai.navWaypoints.size())
+	);
+
+	for (uint32_t i = ai.currentWaypointIndex; i < checkEnd; ++i)
+	{
+		if (IsPointInDangerZone(ai.navWaypoints[i]))  // Use version that ignores glove position
+		{
+			dangerWaypointIndex = static_cast<int32_t>(i);
+			// This waypoint is IN the danger zone, so the edge is before it
+			glm::vec3 toWp = ai.navWaypoints[i] - carPos;
+			toWp.y = 0.0f;
+			distToZoneEdge = glm::length(toWp);
+			break;
+		}
+	}
+
+	// Safety check: if knocked far away from danger zone, give up and resume normal navigation
+	float MAX_WAITING_DISTANCE = 50.0f;
+	if (distToZoneEdge > MAX_WAITING_DISTANCE || dangerWaypointIndex < 0)
+	{
+		std::cout << "[AI] Knocked away from danger zone (dist=" << distToZoneEdge 
+			<< "), giving up and re-pathing" << std::endl;
+		RecomputeNavPath(entity);
+		TransitionToState(entity, AiState::FollowPath);
+		return;
+	}
+
+
+	float SAFE_DISTANCE = 13.0f; // stop 3 units before entering danger zone
+	float speed = glm::length(glm::vec3(body.linearVelocity.x, 0.0f, body.linearVelocity.z));
+
+	// --- PHASE 1: Approach the danger zone ---
+	if (distToZoneEdge > SAFE_DISTANCE)
+	{
+		if (shouldLog)
+		{
+			std::cout << "[AI] PHASE 1: Approaching danger zone at wp[" << dangerWaypointIndex 
+				<< "], dist=" << distToZoneEdge << ", speed=" << speed << std::endl;
+		}
+		// Creep forward slowly toward the danger zone edge
+		float targetSpeed = 5.0f; // slow approach speed
+
+		if (speed > targetSpeed + 1.0f)
+		{
+			// Going too fast, brake hard
+			vc.throttle = 0.0f;
+			vc.brake = 0.8f;
+		}
+		else if (speed > targetSpeed)
+		{
+			// Going slightly too fast, gentle brake
+			vc.throttle = 0.0f;
+			vc.brake = 0.3f;
+		}
+		else if (speed < targetSpeed - 1.0f)
+		{
+			// Too slow, gentle acceleration
+			vc.throttle = 0.2f;
+			vc.brake = 0.0f;
+		}
+		else
+		{
+			// At target speed, maintain
+			vc.throttle = 0.0f;
+			vc.brake = 0.0f;
+		}
+
+		// Steer toward next waypoint
+		if (ai.currentWaypointIndex < ai.navWaypoints.size())
+		{
+			glm::vec3 toWp = ai.navWaypoints[ai.currentWaypointIndex] - carPos;
+			toWp.y = 0.0f;
+			vc.steer = CalculateSteeringAngle(forward, toWp);
+		}
+		else
+		{
+			vc.steer = 0.0f;
+		}
+
+		vc.isGrounded = true;
+		return; // stay in this state, keep approaching
+	}
+
+	// --- PHASE 2: At the edge, hold position and wait for glove to retract ---
+
+	// Check if the glove is physically blocking our path
+	bool gloveIsBlocking = false;
+	for (uint32_t i = ai.currentWaypointIndex; i < checkEnd; ++i)
+	{
+		if (IsObstacleInDangerZone(ai.navWaypoints[i]))
+		{
+			gloveIsBlocking = true;
+			break;
+		}
+	}
+
+	if (!gloveIsBlocking)
+	{
+		// Glove has retracted, advance to pre-calculated safe waypoint
+		if (ai.targetSafeWaypoint >= 0)
+		{
+			std::cout << "[AI] PHASE 2: Glove cleared! Advancing to pre-calculated safe waypoint ["
+				<< ai.targetSafeWaypoint << "]" << std::endl;
+			ai.currentWaypointIndex = static_cast<uint32_t>(ai.targetSafeWaypoint);
+			ai.targetSafeWaypoint = -1;  // Clear it
+		}
+		else
+		{
+			std::cout << "[AI] PHASE 2: Glove cleared but no safe waypoint stored, staying at current" << std::endl;
+		}
+
+		TransitionToState(entity, AiState::FollowPath);
+		return;
+	}
+	else
+	{
+		// Glove still blocking, hold position
+		if (shouldLog)
+		{
+			std::cout << "[AI] PHASE 2: Holding at wp[" << ai.currentWaypointIndex 
+				<< "], waiting for glove to retract (dangerWp=" << dangerWaypointIndex << ")" << std::endl;
+		}
+		vc.throttle = 0.0f;
+		vc.brake = 0.0f;
+		vc.steer = 0.0f;
+		vc.isGrounded = true;
+	}
+}
+
 void AiSystem::UpdateBrakingState(Entity entity, float deltaTime)
 {
 	// TODO: Slow down before sharp turns, then resume FollowPath.
 	//
-	// Suggested approach:
+	// Possible approach:
 	// - Check the angle between current forward and the direction to a waypoint
 	//   brakingLookaheadWaypoints ahead
 	// - If the dot product is below brakingAngleThreshold, apply brakes
@@ -1143,8 +1310,6 @@ void AiSystem::UpdateSeekPowerupState(Entity entity, float deltaTime)
 
 	// Close enough to "collect" -- the trigger system handles the actual pickup
 	// but we also handle it here in case trigger doesn't fire for AI
-	// Close enough to "collect" -- the trigger system handles the actual pickup
-	// but we also handle it here in case trigger doesn't fire for AI
 	if (distXZ < ai.arrivalRadius)
 	{
 		auto& pickup = controller.GetComponent<Powerup>(ai.targetPowerupEntity);
@@ -1169,7 +1334,7 @@ void AiSystem::UpdateSeekPowerupState(Entity entity, float deltaTime)
 	float steer = CalculateSteeringAngle(forward, toPowerupXZ);
 
 	float speed = glm::length(glm::vec3(body.linearVelocity.x, 0.0f, body.linearVelocity.z));
-	float throttle = glm::clamp((ai.maxSpeed * 0.7f - speed) * ai.throttleKp, 0.0f, ai.maxThrottle);
+	float throttle = glm::clamp((ai.desiredSpeed * 0.7f - speed) * ai.throttleKp, 0.0f, ai.maxThrottle);
 
 	vc.steer = steer;
 	vc.throttle = throttle;
@@ -1261,11 +1426,22 @@ void AiSystem::UpdateOvertakingState(Entity entity, float deltaTime)
 {
 	// TODO: Pass the player vehicle when close behind.
 	//
-	// Suggested approach:
+	// Possible approach:
 	// - Detect the player entity ("VehicleCommands" tag) within overtakeDetectionRange
 	// - If player is ahead and in the car's forward cone, steer to one side
 	//   using overtakeSteerOffset
 	// - Once past the player (player is now behind), transition back to FollowPath
 
 	TransitionToState(entity, AiState::FollowPath);
+}
+
+void AiSystem::AdvanceThroughBoxingGlove(Entity entity)
+{
+	auto& ai = controller.GetComponent<AiDriver>(entity);
+	auto& transform = controller.GetComponent<Transform>(entity);
+	auto& vc = controller.GetComponent<VehicleCommands>(entity);
+	// This function is called when we detect an obstacle with a danger zone (boxing glove)
+	// We want to wait until the glove retracts before proceeding, so we transition to a special state
+	std::cout << "[AI] Detected boxing glove obstacle, waiting for it to retract..." << std::endl;
+	TransitionToState(entity, AiState::WaitingAtDangerZone);
 }

@@ -13,6 +13,7 @@ enum class AiState
 {
 	FollowPath,
 	AvoidObstacle,
+	WaitingAtDangerZone,
 	BackingUp,
 	Overtaking,
 	RecoveringFromOffTrack,
@@ -39,11 +40,8 @@ struct AiDriver
 	float maxSteerRadians = 1.0f;
 	float steerDeadzoneDot = 0.98f;
 
-	// Speed control
-	float maxSpeed = 50.0f;         // top speed on straight sections
-	float cornerSpeed = 4.0f;       // minimum throttle speed at sharp corners
-	float brakingDistance = 15.0f;   // how far ahead to start easing off throttle for a corner
-	int lookaheadWaypoints = 8;     // how many waypoints ahead to scan for turns
+	// Speed -- constant for now
+	float desiredSpeed = 15.0f;
 
 	// Throttle
 	float throttleKp = 1.5f;
@@ -70,6 +68,12 @@ struct AiDriver
 	//float obstacleDetectionRange = 10.0f;
 	float avoidanceSteerMultiplier = 1.5f;
 	glm::vec3 detectedObstaclePosition = glm::vec3(0.0f);
+
+	// Danger zone navigation
+	Entity waitingForObstacleEntity = 0;   // which obstacle we're waiting for
+	float advanceDistance = 0.0f;          // how far to advance after waiting
+	bool isAdvancingThroughDanger = false; // flag for controlled advance
+	glm::vec3 advanceStartPos = glm::vec3(0.0f); // where we started advancing from
 
 	// Off-track recovery
 	float offTrackHeightThreshold = 8.0f;
@@ -106,7 +110,7 @@ struct AiDriver
 	float flippedTimeThreshold = 1.0f;  // seconds upside-down before auto-reset
 
 	// Obstacle avoidance
-	float obstacleDetectionRange = 40.0f;   // how far ahead to detect. Increase if the AI reacts too late at high speed.
+	float obstacleDetectionRange = 20.0f;   // how far ahead to detect. Increase if the AI reacts too late at high speed.
 	float obstacleDetectionCone = 0.5f;     // dot product threshold -- 0.5 = ~60 degree forward cone. Lower to detect obstacles further to the side.
 	float avoidanceSteerDirection = 0.0f;   // -1.0 = steer left, 1.0 = steer right (set on detection)
 	Entity detectedObstacleEntity = 0;      // entity we're currently avoiding
@@ -120,4 +124,6 @@ struct AiDriver
 	bool observedExtended = false;          // have we seen the current target extend?
 	float obstacleWaitStopDistance = 35.0f; // stop this far before the obstacle
 	float obstacleCommitDistance = 3.0f;    // once this close (INSIDE zone), commit to passing (don't stop again)
+
+	int32_t targetSafeWaypoint = -1;  // Waypoint to advance to after danger clears
 };
