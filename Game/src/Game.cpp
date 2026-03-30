@@ -647,7 +647,7 @@ void Game::TriggerEnterListener(Event& e)
 		auto& sludge = controller.GetComponent<Sludge>(triggerEntity);
 		auto& commands = controller.GetComponent<VehicleCommands>(otherEntity);
 
-		commands.inSludge = true;
+		commands.inSludge++;
 		commands.sludgeFactor = sludge.slowFactor;
 		std::cout << "Entered sludeg\n";
 	}
@@ -663,8 +663,9 @@ void Game::TriggerExitListener(Event& e)
 	{
 		auto& commands = controller.GetComponent<VehicleCommands>(otherEntity);
 
-		commands.inSludge = false;
-		commands.sludgeFactor = 1.0f;
+		commands.inSludge = commands.inSludge > 0 ? commands.inSludge - 1 : 0;
+		if (commands.inSludge == 0)
+			commands.sludgeFactor = 1.0f;
 
 		std::cout << "Exited sludge\n";
 	}

@@ -162,7 +162,7 @@ void PhysicsSystem::Update(float deltaTime)
 		}
 
 
-		if (vehicleCommands.inSludge) {
+		if (vehicleCommands.inSludge > 0) {
 			float drag = vehicleCommands.sludgeFactor;
 			float factor = 1.0f - drag * deltaTime;
 			factor = PxMax(factor, 0.0f);
