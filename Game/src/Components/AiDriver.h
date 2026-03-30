@@ -41,7 +41,7 @@ struct AiDriver
 	float steerDeadzoneDot = 0.98f;
 
 	// Speed -- constant for now
-	float desiredSpeed = 15.0f;
+	float desiredSpeed = 30.0f;
 
 	// Throttle
 	float throttleKp = 1.5f;
@@ -107,7 +107,7 @@ struct AiDriver
 
 	// Flip detection
 	float flippedTimer = 0.0f;
-	float flippedTimeThreshold = 1.0f;  // seconds upside-down before auto-reset
+	float flippedTimeThreshold = 3.0f;  // seconds upside-down before auto-reset
 
 	// Obstacle avoidance
 	float obstacleDetectionRange = 20.0f;   // how far ahead to detect. Increase if the AI reacts too late at high speed.
@@ -126,4 +126,6 @@ struct AiDriver
 	float obstacleCommitDistance = 3.0f;    // once this close (INSIDE zone), commit to passing (don't stop again)
 
 	int32_t targetSafeWaypoint = -1;  // Waypoint to advance to after danger clears
+
+	bool passingThroughDangerZone = false; // Flag to indicate if we're currently passing through a danger zone
 };

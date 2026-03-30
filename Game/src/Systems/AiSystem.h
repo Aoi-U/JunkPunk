@@ -59,5 +59,9 @@ private:
 
 	bool HasDangerZone(Entity obstacleEntity) const;
 
+	float GetDistanceToDangerZone(glm::vec3 carPos);
+
+	bool IsArmBlocking(glm::vec3 carPos);
+
 	float CalculateSteeringAngle(const glm::vec3& forward, const glm::vec3& toTarget);
 };
