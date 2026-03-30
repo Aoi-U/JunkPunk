@@ -27,6 +27,7 @@ void CameraControlSystem::Init(std::vector<std::shared_ptr<Gamepad>> gamepads)
 void CameraControlSystem::Update(float deltaTime)
 {
 	bool boosting = false;
+	std::vector<std::pair<Entity, bool>> playerHasBoost; // list of pairs of player entities and whether they have an active boost powerup
 	for (int i = 0; i < numPlayers; i++)
 	{
 		Entity player = controller.GetEntityByTag("Player" + std::to_string(i + 1));
@@ -34,7 +35,8 @@ void CameraControlSystem::Update(float deltaTime)
 		if (controller.HasComponent<Powerup>(player)) {
 			auto& p = controller.GetComponent<Powerup>(player);
 			if (p.type == 1 && p.active)
-				boosting = true;
+				//boosting = true;
+				playerHasBoost.emplace_back(player, true);
 		}
 	}
 
@@ -48,7 +50,16 @@ void CameraControlSystem::Update(float deltaTime)
 		float speed = glm::length(vehicleComp.linearVelocity);
 		float camerad = glm::mix(camera.baseRadius, camera.baseRadius * 1.5f, glm::smoothstep(0.0f, 20.0f, speed)); // zoom out the camera asedon /speed using smoothstep for a smoother transition
 	 
-		float boostMultiplier = boosting ? 1.35f : 1.0f;
+		//float boostMultiplier = boosting ? 1.35f : 1.0f;
+		float boostMultiplier = 1.0f;
+		for (auto& [playerEntity, hasBoost] : playerHasBoost)
+		{
+			if (playerEntity == camera.playerEntity && hasBoost)
+			{
+				boostMultiplier = 1.35f;
+				break;
+			}
+		}
 		float targetRadius = camerad * boostMultiplier;
 		camera.radius = glm::mix(camera.radius, targetRadius, 5.0f * deltaTime);
 	 
