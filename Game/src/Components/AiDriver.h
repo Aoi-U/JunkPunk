@@ -128,4 +128,6 @@ struct AiDriver
 	int32_t targetSafeWaypoint = -1;  // Waypoint to advance to after danger clears
 
 	bool passingThroughDangerZone = false; // Flag to indicate if we're currently passing through a danger zone
+	float dangerDetectionCooldown = 0.0f;  // Cooldown after exiting a danger zone before detecting another
+	float dangerDetectionCooldownDuration = 1.45f; // Duration of cooldown in seconds
 };

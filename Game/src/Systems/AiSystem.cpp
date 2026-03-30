@@ -264,8 +264,12 @@ void AiSystem::UpdateStateMachine(Entity entity, float deltaTime)
 			break;
 		}
 
+		// Tick danger detection cooldown
+		if (ai.dangerDetectionCooldown > 0.0f)
+			ai.dangerDetectionCooldown -= deltaTime;
+
 		// --- Danger zone check: stop if upcoming waypoints enter a danger zone ---
-		if (!ai.passingThroughDangerZone)
+		if (!ai.passingThroughDangerZone && ai.dangerDetectionCooldown <= 0.0f)
 		{
 			bool pathEntersDanger = false;
 
@@ -492,14 +496,19 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 
 	static float debugTimer = 0.0f;
 	debugTimer += deltaTime;
-	bool shouldLog = debugTimer >= 0.5f;
+	bool shouldLog = debugTimer >= 0.1f;
 	if (shouldLog) debugTimer = 0.0f;
-	std::cout << GetDistanceToDangerZone(transform.position) << std::endl;
-	// Clear passing flag once we're out of danger zones
-	if (ai.passingThroughDangerZone && GetDistanceToDangerZone(transform.position) > 6.0f)
+
+	// Clear passing flag the moment we exit the danger zone
+	if (ai.passingThroughDangerZone)
 	{
-		ai.passingThroughDangerZone = false;
-		if (shouldLog) std::cout << "[AI] Exited danger zone, re-enabling detection" << std::endl;
+		if (!IsPointInDangerZone(transform.position))
+		{
+			ai.passingThroughDangerZone = false;
+			ai.dangerDetectionCooldown = ai.dangerDetectionCooldownDuration;
+			if (shouldLog) std::cout << "[AI] Exited danger zone, starting cooldown (" 
+				<< ai.dangerDetectionCooldownDuration << "s)" << std::endl;
+		}
 	}
 
 	if (ai.currentWaypointIndex >= static_cast<uint32_t>(ai.navWaypoints.size()))
@@ -653,18 +662,18 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 		throttle = glm::clamp((ai.desiredSpeed - speed) * ai.throttleKp, 0.0f, ai.maxThrottle);
 	}
 
-	//if (shouldLog)
-	//{
-	//	std::cout << "[AI] pos=(" << carPos.x << ", " << carPos.y << ", " << carPos.z << ")"
-	//		<< " | wp[" << ai.currentWaypointIndex << "/" << ai.navWaypoints.size() << "]=("
-	//		<< waypointPosition.x << ", " << waypointPosition.y << ", " << waypointPosition.z << ")"
-	//		<< " | distXZ=" << distXZ
-	//		<< " | fwdDot=" << forwardDot
-	//		<< " | steer=" << steer
-	//		<< " | speed=" << speed
-	//		<< " | throttle=" << throttle
-	//		<< std::endl;
-	//}
+	if (shouldLog)
+	{
+		std::cout << "[AI] pos=(" << carPos.x << ", " << carPos.y << ", " << carPos.z << ")"
+			<< " | wp[" << ai.currentWaypointIndex << "/" << ai.navWaypoints.size() << "]=("
+			<< waypointPosition.x << ", " << waypointPosition.y << ", " << waypointPosition.z << ")"
+			<< " | distXZ=" << distXZ
+			<< " | fwdDot=" << forwardDot
+			<< " | steer=" << steer
+			<< " | speed=" << speed
+			<< " | throttle=" << throttle
+			<< std::endl;
+	}
 
 	// Stuck detection -- check if car wants to move but physically can't
 	// Use desiredSpeed > 0 as intent, not throttle output (which gets scaled down)
@@ -1154,9 +1163,9 @@ void AiSystem::UpdateWaitingAtDangerZoneState(Entity entity, float deltaTime)
 		}
 	}
 
-	// KEEP YOUR CURRENT STEERING IT SHOULD WORK JUST FINE : )
-	// Steer toward next waypoint
-	if (ai.currentWaypointIndex < ai.navWaypoints.size())
+	// Steer toward next waypoint ONLY if moving
+	// When stopped or nearly stopped (speed < 2.0), hold steering straight to prevent spinning
+	if (speed > 2.0f && ai.currentWaypointIndex < ai.navWaypoints.size())
 	{
 		glm::vec3 toWp = ai.navWaypoints[ai.currentWaypointIndex] - carPos;
 		toWp.y = 0.0f;
@@ -1164,6 +1173,7 @@ void AiSystem::UpdateWaitingAtDangerZoneState(Entity entity, float deltaTime)
 	}
 	else
 	{
+		// Hold straight when stopped/slow or no waypoint
 		vc.steer = 0.0f;
 	}
 
@@ -1195,7 +1205,7 @@ float AiSystem::GetDistanceToDangerZone(glm::vec3 point)
 
 		// Calculate distance (ignoring Y for flat distance)
 		glm::vec3 diff = point - closestPoint;
-		diff.y = 0.0f;
+		//diff.y = 0.0f;
 		float dist = glm::length(diff);
 
 		if (dist < minDist)
@@ -1226,10 +1236,8 @@ bool AiSystem::IsArmBlocking(glm::vec3 carPos)
 			auto& obstacle = controller.GetComponent<MovingObstacle>(dz.obstacleEntity);
 			if (obstacle.currentPathIndex < 3) // glove not fully retracted
 			{
-				std::cout << "[AI] Glove still blocking! currentPathIndex=" << obstacle.currentPathIndex << std::endl;
 				return true;
 			}
-		std::cout << "[AI] Detected glove not in danger zone! currentPathIndex=" << obstacle.currentPathIndex << std::endl;
 		}
 	}
 
