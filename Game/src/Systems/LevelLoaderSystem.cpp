@@ -508,12 +508,12 @@ void LevelLoaderSystem::LoadLevel()
     // controller.AddComponent(vehicle, Transform{ glm::vec3(137.0f, -255.0f, -233.f), glm::quat(player_rotation), glm::vec3(0.2f) }); //beginning
     controller.AddComponent(vehicle, VehicleBody{});
     controller.AddComponent(vehicle, VehicleCommands{});
-    controller.AddComponent(vehicle, PlayerController{1});
-    controller.AddComponent(vehicle, Render{loaded.first, loaded.second});
-    controller.AddComponent(vehicle, PhysicsBody{});
-    controller.AssignTag(vehicle, "VehicleCommands");
-    auto &cameraComp = controller.GetComponent<ThirdPersonCamera>(camera); // set the camera's player entity to the vehicle
-    cameraComp.playerEntity = vehicle;
+		controller.AddComponent(vehicle, PlayerController{ i + 1 });
+		controller.AddComponent(vehicle, Render{ loaded.first, loaded.second });
+		controller.AddComponent(vehicle, PhysicsBody{});
+		controller.AssignTag(vehicle, "Player" + std::to_string(i + 1));
+		auto& cameraComp = controller.GetComponent<ThirdPersonCamera>(controller.GetEntityByTag("Camera" + std::to_string(i + 1))); // set the camera's player entity to the vehicle
+		cameraComp.playerEntity = vehicle;
 
     entity = controller.createEntity(); // front left wheel
 		loaded = LoadModel("assets/models/left_wheel/wheel.gltf");
