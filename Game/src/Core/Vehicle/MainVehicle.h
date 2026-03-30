@@ -76,7 +76,7 @@ public:
 	void ApplyBoost(float multiplier);
 	void ClearBoost();
 
-	void SpinOut();
+	void SpinOut(float deltaTime);
 
 private:
 	//DirectDriveVehicle gVehicle;
