@@ -494,9 +494,9 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 	debugTimer += deltaTime;
 	bool shouldLog = debugTimer >= 0.5f;
 	if (shouldLog) debugTimer = 0.0f;
-
+	std::cout << GetDistanceToDangerZone(transform.position) << std::endl;
 	// Clear passing flag once we're out of danger zones
-	if (ai.passingThroughDangerZone && GetDistanceToDangerZone(transform.position) > 10.0f)
+	if (ai.passingThroughDangerZone && GetDistanceToDangerZone(transform.position) > 6.0f)
 	{
 		ai.passingThroughDangerZone = false;
 		if (shouldLog) std::cout << "[AI] Exited danger zone, re-enabling detection" << std::endl;
