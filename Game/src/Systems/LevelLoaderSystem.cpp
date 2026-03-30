@@ -135,7 +135,7 @@ void LevelLoaderSystem::LoadLevel()
 	controller.AddComponent(entity, PhysicsBody{});
 
 	// Update this when moving to new map
-	if (aiSystemPtr)
+	if (aiSystemPtr && numAi > 0)
 	{
 		NavMesh navMesh;
 		navMesh.BuildFromModel(
@@ -574,7 +574,7 @@ void LevelLoaderSystem::LoadLevel()
     glm::mat4 player_rotation = glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     loaded = LoadModel("assets/models/car_body_orange/car.gltf");
     glm::mat4 playerRotation = glm::rotate(glm::mat4(1.0f), glm::radians(38.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    Transform vehicleTransform{glm::vec3(133.0f, -259.0f, -257.0f), glm::quat(playerRotation), glm::vec3(0.2f)};
+    Transform vehicleTransform{glm::vec3(133.0f - i * 2.0f, -259.0f, -257.0f), glm::quat(playerRotation), glm::vec3(0.2f)};
     controller.AddComponent(vehicle, vehicleTransform);
     // controller.AddComponent(vehicle, Transform{ glm::vec3(148.0f, -26.f, 400.f), glm::quat(player_rotation), glm::vec3(0.2f) }); //testing tunnel
     // controller.AddComponent(vehicle, Transform{ glm::vec3(137.0f, -255.0f, -233.f), glm::quat(player_rotation), glm::vec3(0.2f) }); //beginning
@@ -654,7 +654,7 @@ void LevelLoaderSystem::LoadLevel()
 		Entity vehicle = controller.createEntity();
 		loaded = LoadModel("assets/models/car_body_blue/car.gltf");
 		glm::mat4 aiRotation = glm::rotate(glm::mat4(1.0f), glm::radians(-30.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-		controller.AddComponent(vehicle, Transform{ glm::vec3(-35.0f + i * 2, -80.0f, -15.0f + i * 2), glm::quat(aiRotation), glm::vec3(0.2f) });
+		controller.AddComponent(vehicle, Transform{ glm::vec3(133.0f + i * 2.0f, -259.0f, -257.0f), glm::quat(aiRotation), glm::vec3(0.2f) });
 		controller.AddComponent(vehicle, VehicleBody{});
 		controller.AddComponent(vehicle, VehicleCommands{});
 		controller.AddComponent(vehicle, Render{ loaded.first, loaded.second });
