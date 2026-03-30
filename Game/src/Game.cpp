@@ -557,6 +557,8 @@ void Game::ChangeGameStateListener(Event& e)
 		playerWon = false;
 		aiWon = false;
 
+		audioSystem->ResetMusicState();
+
 		currentState = GameState::GAME;
 		currentStateGlobal = GameState::GAME;
 
