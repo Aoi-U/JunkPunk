@@ -13,6 +13,7 @@
 #include "Components/AiDriver.h"
 #include "Components/Banana.h"
 #include "Components/Sludge.h"
+#include "Components/DangerZone.h"
 
 #include "ECSController.h"
 #include "Core/Types.h"
@@ -159,6 +160,7 @@ Game::Game()
 	controller.RegisterComponent<AiDriver>();
 	controller.RegisterComponent<Banana>();
 	controller.RegisterComponent<Sludge>();
+	controller.RegisterComponent<DangerZone>();
 
 	// register systems (you must register systems before setting component signatures)
 	loaderSystem = controller.RegisterSystem<LevelLoaderSystem>();
@@ -242,6 +244,7 @@ Game::Game()
 		controller.SetSystemSignature<AiSystem>(signature);
 	}
 	loaderSystem->SetAiSystem(aiSystem);
+	aiSystem->SetGame(this);
 
 	audioSystem->Init();
 	vehicleControlSystem->Init(gamepads);

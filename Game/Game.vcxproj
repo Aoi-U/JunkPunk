@@ -176,6 +176,7 @@
     <ClCompile Include="src\ImGuiTest.cpp" />
     <ClCompile Include="src\InputManager.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\NavMesh.cpp" />
     <ClCompile Include="src\Systems\AiSystem.cpp" />
     <ClCompile Include="src\Systems\AudioSystem.cpp" />
     <ClCompile Include="src\Systems\CameraControlSystem.cpp" />
@@ -203,6 +204,7 @@
     <ClInclude Include="src\Components\Camera.h" />
     <ClInclude Include="src\Components\ComponentArray.h" />
     <ClInclude Include="src\Components\ComponentManager.h" />
+    <ClInclude Include="src\Components\DangerZone.h" />
     <ClInclude Include="src\Components\Obstacle.h" />
     <ClInclude Include="src\Components\Particles.h" />
     <ClInclude Include="src\Components\Physics.h" />

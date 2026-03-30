@@ -86,9 +86,9 @@ void PhysicsSystem::Init()
 	PxPvdSceneClient* pvdClient = gPhysicsScene->getScenePvdClient();
 	if (pvdClient)
 	{
-		pvdClient->setScenePvdFlag(PxPvdSceneFlag::eTRANSMIT_CONSTRAINTS, true);
-		pvdClient->setScenePvdFlag(PxPvdSceneFlag::eTRANSMIT_CONTACTS, true);
-		pvdClient->setScenePvdFlag(PxPvdSceneFlag::eTRANSMIT_SCENEQUERIES, true);
+		pvdClient->setScenePvdFlag(PxPvdSceneFlag::eTRANSMIT_CONSTRAINTS, false);
+		pvdClient->setScenePvdFlag(PxPvdSceneFlag::eTRANSMIT_CONTACTS, false);
+		pvdClient->setScenePvdFlag(PxPvdSceneFlag::eTRANSMIT_SCENEQUERIES, false);
 	}
 
 	PxInitVehicleExtension(*gFoundation); // initialize vehicle extension
@@ -509,13 +509,20 @@ PxTriangleMesh* PhysicsSystem::CreateTriangleMesh(const Mesh& mesh)
 
 	// https://nvidia-omniverse.github.io/PhysX/physx/5.6.1/docs/Geometry.html
 	PxTriangleMeshDesc meshDesc;
+	//meshDesc.points.count = static_cast<PxU32>(positions.size());
+	//meshDesc.points.stride = sizeof(PxVec3);
+	//meshDesc.points.data = positions.data();
 	meshDesc.points.count = static_cast<PxU32>(positions.size());
-	meshDesc.points.stride = sizeof(PxVec3);
+	meshDesc.points.stride = sizeof(positions[0]);
 	meshDesc.points.data = positions.data();
 
-	meshDesc.triangles.count = static_cast<PxU32>(mesh.getIndices().size() / 3);
-	meshDesc.triangles.stride = 3 * sizeof(GLuint);
-	meshDesc.triangles.data = mesh.getIndices().data();
+	//meshDesc.triangles.count = static_cast<PxU32>(mesh.getIndices().size() / 3);
+	//meshDesc.triangles.stride = 3 * sizeof(GLuint);
+	//meshDesc.triangles.data = mesh.getIndices().data();
+	const auto& indices = mesh.getIndices();
+	meshDesc.triangles.count = static_cast<PxU32>(indices.size() / 3);
+	meshDesc.triangles.stride = 3 * sizeof(indices[0]);
+	meshDesc.triangles.data = indices.data();
 
 	PxTolerancesScale scale = PxTolerancesScale();
 	PxCookingParams params(scale);
