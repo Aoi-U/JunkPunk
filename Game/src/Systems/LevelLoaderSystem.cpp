@@ -12,6 +12,7 @@
 #include"../Components/Banana.h"
 #include "../NavMesh.h"
 #include "../Components/DangerZone.h"
+#include "../Components/Sludge.h"
 
 
 #include "../ECSController.h"
@@ -121,30 +122,6 @@ void LevelLoaderSystem::LoadLevel()
 	controller.AddComponent(entity, StaticBody{ nullptr, loaded.first });
 	controller.AddComponent(entity, Render{ loaded.first, loaded.second });
 	controller.AddComponent(entity, PhysicsBody{});
-
-
-	// Update this when moving to new map
-	if (aiSystemPtr)
-	{
-		NavMesh navMesh;
-		navMesh.BuildFromModel(
-			loaded.first,
-			glm::vec3(0.0f, -100.0f, 50.0f),          // same position as the dumpster
-			glm::quat_cast(rotation),                   // same rotation
-			glm::vec3(200.0f),                            // same scale
-			35.0f                                        // max slope angle – tweak if too many/few triangles
-		);
-		navMesh.Subdivide();    // 1023 -> 4092 triangles (4x denser)
-		//navMesh.Subdivide(); // uncomment for 16368 triangles (16x denser) if needed
-		navMesh.BuildAdjacency();
-		navMesh.StitchDisconnectedIslands(30.0f, 3.0f);  // bridge gaps: 30 units horizontal, 15 units vertical max
-		navMesh.ComputeEdgeDanger(3);  // spread danger 3 triangles inward from edges
-
-		int32_t componentCount = navMesh.CountConnectedComponents();
-		std::cout << "[LevelLoader] NavMesh has " << componentCount << " disconnected island(s) after stitching" << std::endl;
-
-		aiSystemPtr->SetNavMesh(navMesh);
-	}
 
 	for (int i = 0; i < 10; i++)
 	{
@@ -293,8 +270,8 @@ void LevelLoaderSystem::LoadLevel()
 		glm::vec3(37.f, -32.f, 295.f),
 		glm::vec3(37.f, -34.f, 295.f),
 
-		glm::vec3(-56.f, 53.f, 358.f),
-		glm::vec3(-56.0f, 53.f, 293.f),
+		//glm::vec3(-56.f, 53.f, 358.f),
+		//glm::vec3(-56.0f, 53.f, 293.f),
 	};
 	std::vector<float> spinner_rotation = {
 		-1.f,
@@ -310,8 +287,8 @@ void LevelLoaderSystem::LoadLevel()
 		1.f,
 		-1.f,
 
-		1.f,
-		-1.f
+		//1.f,
+		//-1.f
 	};
 	std::vector<float> spinner_duration = {
 		2.f,
@@ -327,8 +304,8 @@ void LevelLoaderSystem::LoadLevel()
 		6.f,
 		6.f,
 
-		1.2f,
-		1.2f
+		//1.2f,
+		//1.2f
 	};
 	std::vector<float> spinner_size = {
 		4.f,
@@ -344,8 +321,8 @@ void LevelLoaderSystem::LoadLevel()
 		4.f,
 		4.f,
 
-		3.f,
-		3.f
+		//3.f,
+		//3.f
 	};
 
 	for (int i = 0; i < spinner_positions.size(); i++) {
@@ -408,19 +385,27 @@ void LevelLoaderSystem::LoadLevel()
 
 	//dice
 	std::vector<std::vector<glm::vec3>> dice_positions = {
-		{glm::vec3(-40.0f, -46.f, 200.f), glm::vec3(140.0f, -46.f, 200.f), glm::vec3(140.0f, -46.f, 200.f), glm::vec3(-40.0f, -46.f, 200.f)},
-		{glm::vec3(-40.0f, -46.f, 175.f), glm::vec3(140.0f, -46.f, 175.f), glm::vec3(140.0f, -46.f, 175.f), glm::vec3(-40.0f, -46.f, 175.f)},
-		{glm::vec3(-40.0f, -46.f, 150.f), glm::vec3(140.0f, -46.f, 150.f), glm::vec3(140.0f, -46.f, 150.f), glm::vec3(-40.0f, -46.f, 150.f)},
+		{glm::vec3(40.0f, -46.f, 200.f), glm::vec3(140.0f, -41.f, 200.f), glm::vec3(140.0f, -41.f, 200.f), glm::vec3(40.0f, -46.f, 200.f)},
+		{glm::vec3(40.0f, -46.f, 175.f), glm::vec3(140.0f, -41.f, 175.f), glm::vec3(140.0f, -41.f, 175.f), glm::vec3(40.0f, -46.f, 175.f)},
+		{glm::vec3(40.0f, -46.f, 150.f), glm::vec3(140.0f, -41.f, 150.f), glm::vec3(140.0f, -41.f, 150.f), glm::vec3(40.0f, -46.f, 150.f)},
 
-		{glm::vec3(0.0f, 62.f, 325.f), glm::vec3(30.0f, 62.f, 355.f), glm::vec3(60.0f, 62.f, 325.f), glm::vec3(30.0f, 62.f, 295.f)},
+		{glm::vec3(20.0f, -46.f, 200.f), glm::vec3(-40.0f, -46.f, 200.f), glm::vec3(-40.0f, -46.f, 200.f), glm::vec3(20.0f, -46.f, 200.f)},
+		{glm::vec3(20.0f, -46.f, 175.f), glm::vec3(-40.0f, -46.f, 175.f), glm::vec3(-40.0f, -46.f, 175.f), glm::vec3(20.0f, -46.f, 175.f)},
+		{glm::vec3(20.0f, -46.f, 150.f), glm::vec3(-40.0f, -46.f, 150.f), glm::vec3(-40.0f, -46.f, 150.f), glm::vec3(20.0f, -46.f, 150.f)},
+
+		//{glm::vec3(0.0f, 62.f, 325.f), glm::vec3(30.0f, 62.f, 355.f), glm::vec3(60.0f, 62.f, 325.f), glm::vec3(30.0f, 62.f, 295.f)},
 	};
 
 	std::vector<std::vector<float>> dice_duration = {
-		{3.f,13.f,3.f, 2.f},
-		{3.f,17.f,3.f, 2.f},
-		{3.f,21.f,3.f, 2.f},
+		{3.f,5.f,3.f, 5.f},
+		{3.f,7.f,3.f, 7.f},
+		{3.f,9.f,3.f, 9.f},
 
-		{1.f,1.f, 1.f, 1.f},
+		{3.f,5.f,3.f, 5.f},
+		{3.f,7.f,3.f, 7.f},
+		{3.f,9.f,3.f, 9.f},
+
+		//{1.f,1.f, 1.f, 1.f},
 	};
 	std::vector<float> dice_size = {
 		10.f,
@@ -428,6 +413,10 @@ void LevelLoaderSystem::LoadLevel()
 		10.f,
 
 		10.f,
+		10.f,
+		10.f,
+
+		//10.f,
 	};
 	//moving dice
 	for (int i = 0; i < dice_positions.size(); i++) {
@@ -492,11 +481,7 @@ void LevelLoaderSystem::LoadLevel()
 	Entity vehicle = controller.createEntity();
 	glm::mat4 player_rotation = glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	loaded = LoadModel("assets/models/car_body_orange/car.gltf");
-
-	glm::mat4 playerRotation = glm::rotate(glm::mat4(1.0f), glm::radians(38.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-	Transform vehicleTransform{ glm::vec3(133.0f, -259.0f, -257.0f), glm::quat(playerRotation), glm::vec3(0.2f) };
-	controller.AddComponent(vehicle, vehicleTransform);
-
+	controller.AddComponent(vehicle, Transform{ glm::vec3(137.0f, -255.0f, -233.f), glm::quat(player_rotation), glm::vec3(0.2f) });
 	controller.AddComponent(vehicle, VehicleBody{});
 	controller.AddComponent(vehicle, VehicleCommands{});
 	controller.AddComponent(vehicle, PlayerController{ 1 });
@@ -623,7 +608,7 @@ void LevelLoaderSystem::LoadLevel()
 
 	entity = controller.createEntity();
 	loaded = LoadModel("assets/models/lightning_capsule/scene.gltf");
-	controller.AddComponent(entity, Transform{ glm::vec3(-80.0f, -93.0f, 19.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.25f) });
+	controller.AddComponent(entity, Transform{ glm::vec3(81.0f, -260.0f, -214.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.25f) });
 	controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 2.0f, 1.0f });
 	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
 	controller.AddComponent(entity, PhysicsBody{});
@@ -636,7 +621,7 @@ void LevelLoaderSystem::LoadLevel()
 
 	entity = controller.createEntity();
 	loaded = LoadModel("assets/models/banana/scene.gltf");
-	controller.AddComponent(entity, Transform{ glm::vec3(-60.0f, -94.0f, -7.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(1.0f) });
+	controller.AddComponent(entity, Transform{ glm::vec3(81.0f, -260.0f, -254.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(1.0f) });
 	controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 2.0f, 1.0f });
 	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
 	controller.AddComponent(entity, PhysicsBody{});
@@ -682,19 +667,24 @@ void LevelLoaderSystem::LoadLevel()
 	controller.AddComponent(entity, CheckPoint{ glm::quat(1.0f, 0.0f, 0.0f, 0.0f) });
 	controller.AddComponent(entity, Trigger{ nullptr, 5.0f, 2.0f, 5.0f });
 
-	// Used strictly for testing AI navpoints, can be removed later
-	entity = controller.createEntity();
-	controller.AddComponent(entity, PhysicsBody{});
-	controller.AddComponent(entity, Transform{ glm::vec3(-60.0f, -93.0f, 19.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.25f) });
-	controller.AddComponent(entity, CheckPoint{ glm::quat(1.0f, 0.0f, 0.0f, 0.0f) });
-	controller.AddComponent(entity, Trigger{ nullptr, 5.0f, 2.0f, 5.0f });
-
-	// Debug: spawn visible trigger markers at each navmesh waypoint
-	if (aiSystemPtr)
-	{
-		Entity aiVehicle = controller.GetEntityByTag("AIVehicle1");
-		aiSystemPtr->SpawnDebugWaypoints(aiVehicle);
-	}
+	// Used strictly for testing AI waypoints, can be removed later
+	//std::vector<Waypoint> waypoints;
+	//if (aiSystemPtr) {
+	//	waypoints = aiSystemPtr->GetWaypoints();
+	//	std::cout << "Loaded " << waypoints.size() << " waypoints for AI from AiSystem" << std::endl;
+	//}
+	//else {
+	//	// fallback: leave empty or build defaults
+	//	std::cout << "Warning: AiSystem not set in LevelLoaderSystem, no waypoints loaded for AI" << std::endl;
+	//}
+	//
+	//for (const Waypoint& wp : waypoints) {
+	//	entity = controller.createEntity();
+	//	controller.AddComponent(entity, PhysicsBody{});
+	//	controller.AddComponent(entity, Transform{ wp.position, glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.25f) });
+	//	controller.AddComponent(entity, CheckPoint{ glm::quat(1.0f, 0.0f, 0.0f, 0.0f) });
+	//	controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 4.0f, 1.0f });
+	//}
 }
 
 std::pair<std::shared_ptr<Model>, std::shared_ptr<AABB>> LevelLoaderSystem::LoadModel(std::string path)
