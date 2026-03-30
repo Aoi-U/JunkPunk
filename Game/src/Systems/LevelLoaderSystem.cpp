@@ -123,6 +123,29 @@ void LevelLoaderSystem::LoadLevel()
 	controller.AddComponent(entity, Render{ loaded.first, loaded.second });
 	controller.AddComponent(entity, PhysicsBody{});
 
+	// Update this when moving to new map
+	if (aiSystemPtr)
+	{
+		NavMesh navMesh;
+		navMesh.BuildFromModel(
+			loaded.first,
+			glm::vec3(0.0f, -100.0f, 50.0f),          // same position as the dumpster
+			glm::quat_cast(rotation),                   // same rotation
+			glm::vec3(200.0f),                            // same scale
+			35.0f                                        // max slope angle – tweak if too many/few triangles
+		);
+		navMesh.Subdivide();    // 1023 -> 4092 triangles (4x denser)
+		//navMesh.Subdivide(); // uncomment for 16368 triangles (16x denser) if needed
+		navMesh.BuildAdjacency();
+		navMesh.StitchDisconnectedIslands(30.0f, 3.0f);  // bridge gaps: 30 units horizontal, 15 units vertical max
+		navMesh.ComputeEdgeDanger(3);  // spread danger 3 triangles inward from edges
+
+		int32_t componentCount = navMesh.CountConnectedComponents();
+		std::cout << "[LevelLoader] NavMesh has " << componentCount << " disconnected island(s) after stitching" << std::endl;
+
+		aiSystemPtr->SetNavMesh(navMesh);
+	}
+
 	for (int i = 0; i < 10; i++)
 	{
 		entity = controller.createEntity();
