@@ -53,6 +53,7 @@ private:
 	void ChangeGameStateListener(Event& e);
 	void KeyboardInputListener(Event& e);
 	void TriggerEnterListener(Event& e);
+	void TriggerExitListener(Event& e);
 
 	std::unique_ptr<ImGuiPanel> camera_debug_panel; // testing
 	

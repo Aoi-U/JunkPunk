@@ -167,8 +167,10 @@ void LevelLoaderSystem::LoadLevel()
 		{glm::vec3(-15.0f, -169.f, 40.f), glm::vec3(-15.0f, -169.f, -45.f), glm::vec3(-15.0f, -169.f, -45.f), glm::vec3(-15.0f, -169.f, 40.f)},
 		{glm::vec3(-50.0f, -169.f, 40.f), glm::vec3(-50.0f, -169.f, -45.f), glm::vec3(-50.0f, -169.f, -45.f), glm::vec3(-50.0f, -169.f, 40.f)},
 		{glm::vec3(45.0f, -70.f, 440.f), glm::vec3(45.0f, -67.f, 301.f), glm::vec3(45.0f, -67.f, 301.f), glm::vec3(45.0f, -70.f, 440.f)},
+		{glm::vec3(-74.0f, 59.f, 500.f), glm::vec3(-74.0f, 64.f, 363.f), glm::vec3(-74.0f, 64.f, 363.f), glm::vec3(-74.0f, 59.f, 500.f)}, //top area
 	};
 	std::vector<float> glove_size = {
+		10.f,
 		10.f,
 		10.f,
 		10.f,
@@ -179,6 +181,7 @@ void LevelLoaderSystem::LoadLevel()
 		1.5f,
 		1.5f,
 		1.5f,
+		1.5f
 	};
 
 	for (int i = 0; i < glove_positions.size(); i++) {
@@ -253,6 +256,30 @@ void LevelLoaderSystem::LoadLevel()
 	}
 
 
+	entity = controller.createEntity();
+	loaded = LoadModel("assets/models/spring_glove/spring_glove.gltf");
+	rotation = glm::rotate(glm::mat4(1.0f), -glm::pi<float>() / 2.5f, glm::vec3(1.0f, 0.0f, 0.0f));
+	controller.AddComponent(entity, Transform{ glm::vec3(-50.0f, -69.0f, 50.0f), glm::quat_cast(rotation), glm::vec3(10.f) });
+	controller.AddComponent(entity, RigidBody{ nullptr, loaded.first, loaded.second, 50.0f, true, glm::vec3(0.0f), glm::vec3(0.0f) });
+	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
+	controller.AddComponent(entity, PhysicsBody{});
+	controller.AddComponent(entity, MovingObstacle{
+		{glm::vec3(-4.0f, -232.f, 1.f), glm::vec3(-4.0f, -150.f, 11.f), glm::vec3(-4.0f, -150.f, 11.f), glm::vec3(-4.0f, -232.f, 1.f)},
+		std::vector<glm::quat>{
+			glm::quat_cast(rotation),
+			glm::quat_cast(rotation),
+			glm::quat_cast(rotation),
+			glm::quat_cast(rotation),
+		},
+		std::vector <float>{
+			2.0f, 2.f, 0.5f, 0.5f
+		},
+		0.0f,
+		1,
+		0,
+		false
+		});
+
 
 
 	//spinner
@@ -269,9 +296,9 @@ void LevelLoaderSystem::LoadLevel()
 
 		glm::vec3(37.f, -32.f, 295.f),
 		glm::vec3(37.f, -34.f, 295.f),
-
-		//glm::vec3(-56.f, 53.f, 358.f),
-		//glm::vec3(-56.0f, 53.f, 293.f),
+		//top area
+		glm::vec3(-39.f, 53.f, 330.f),
+		glm::vec3(33.0f, 53.f, 305.f),
 	};
 	std::vector<float> spinner_rotation = {
 		-1.f,
@@ -287,8 +314,8 @@ void LevelLoaderSystem::LoadLevel()
 		1.f,
 		-1.f,
 
-		//1.f,
-		//-1.f
+		1.f,
+		-1.f
 	};
 	std::vector<float> spinner_duration = {
 		2.f,
@@ -304,8 +331,8 @@ void LevelLoaderSystem::LoadLevel()
 		6.f,
 		6.f,
 
-		//1.2f,
-		//1.2f
+		1.2f,
+		1.2f
 	};
 	std::vector<float> spinner_size = {
 		4.f,
@@ -321,15 +348,15 @@ void LevelLoaderSystem::LoadLevel()
 		4.f,
 		4.f,
 
-		//3.f,
-		//3.f
+		3.f,
+		3.f
 	};
 
 	for (int i = 0; i < spinner_positions.size(); i++) {
 		entity = controller.createEntity();
 		loaded = LoadModel("assets/models/spinner/spinner.gltf");
 		rotation = glm::rotate(glm::mat4(1.0f), 0.0f, glm::vec3(0.0f, 1.0f, 0.0f));
-		controller.AddComponent(entity, Transform{ spinner_positions[i], glm::quat_cast(rotation), glm::vec3(spinner_size[i])});
+		controller.AddComponent(entity, Transform{ spinner_positions[i], glm::quat_cast(rotation), glm::vec3(spinner_size[i]) });
 		controller.AddComponent(entity, RigidBody{ nullptr, loaded.first, loaded.second, 50.0f, true, glm::vec3(0.0f), glm::vec3(0.0f) });
 		controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
 		controller.AddComponent(entity, PhysicsBody{});
@@ -342,7 +369,7 @@ void LevelLoaderSystem::LoadLevel()
 			std::vector<glm::quat>{
 				glm::quat_cast(glm::rotate(glm::mat4(1.0f), -glm::pi<float>() * spinner_rotation[i], glm::vec3(0.0f, 1.0f, 0.0f))),
 				glm::quat_cast(glm::rotate(glm::mat4(1.0f), 0.f, glm::vec3(0.0f, 1.0f, 0.0f))),
-				glm::quat_cast(glm::rotate(glm::mat4(1.0f), glm::pi<float>() * spinner_rotation[i], glm::vec3(0.0f, 1.0f, 0.0f))),
+				glm::quat_cast(glm::rotate(glm::mat4(1.0f), glm::pi<float>()* spinner_rotation[i], glm::vec3(0.0f, 1.0f, 0.0f))),
 			},
 			std::vector <float>{
 				0.f,spinner_duration[i],spinner_duration[i]
@@ -471,7 +498,7 @@ void LevelLoaderSystem::LoadLevel()
 	{
 		entity = controller.createEntity();
 		loaded = LoadModel("assets/models/dice/dice.gltf");
-		controller.AddComponent(entity, Transform{ glm::vec3(0.0f, -247.0f + (i * 10.0f),-208.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(1.f) });
+		controller.AddComponent(entity, Transform{ glm::vec3(0.0f, -247.0f + (i * 10.0f),-248.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(1.f) });
 		controller.AddComponent(entity, RigidBody{ nullptr, loaded.first, loaded.second, 50.0f, true, glm::vec3(0.0f), glm::vec3(0.0f) });
 		controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
 		controller.AddComponent(entity, PhysicsBody{});
@@ -481,7 +508,14 @@ void LevelLoaderSystem::LoadLevel()
 	Entity vehicle = controller.createEntity();
 	glm::mat4 player_rotation = glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	loaded = LoadModel("assets/models/car_body_orange/car.gltf");
-	controller.AddComponent(vehicle, Transform{ glm::vec3(137.0f, -255.0f, -233.f), glm::quat(player_rotation), glm::vec3(0.2f) });
+	glm::mat4 playerRotation = glm::rotate(glm::mat4(1.0f), glm::radians(38.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	Transform vehicleTransform{ glm::vec3(133.0f, -259.0f, -257.0f), glm::quat(playerRotation), glm::vec3(0.2f) };
+	controller.AddComponent(vehicle, vehicleTransform);
+
+	//controller.AddComponent(vehicle, Transform{ glm::vec3(148.0f, -26.f, 400.f), glm::quat(player_rotation), glm::vec3(0.2f) }); //testing tunnel
+	//controller.AddComponent(vehicle, Transform{ glm::vec3(137.0f, -255.0f, -233.f), glm::quat(player_rotation), glm::vec3(0.2f) }); //beginning
+
+
 	controller.AddComponent(vehicle, VehicleBody{});
 	controller.AddComponent(vehicle, VehicleCommands{});
 	controller.AddComponent(vehicle, PlayerController{ 1 });
@@ -606,46 +640,98 @@ void LevelLoaderSystem::LoadLevel()
 	//	glm::vec3(1.0f)
 	//	});
 
-	entity = controller.createEntity();
-	loaded = LoadModel("assets/models/lightning_capsule/scene.gltf");
-	controller.AddComponent(entity, Transform{ glm::vec3(81.0f, -260.0f, -214.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.25f) });
-	controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 2.0f, 1.0f });
-	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
-	controller.AddComponent(entity, PhysicsBody{});
-	controller.AddComponent(entity, Powerup{
-		1,
-		false,
-		5.0f,
-		0.0f
-		});
+	std::vector<glm::vec3> boost_powerup_positions = {
+		glm::vec3(81.0f, -259.5f, -214.0f), //starter
+		glm::vec3(-139.0f, -135.f, 113.0f), //in the corner of the first tunnel
+		glm::vec3(17.f, -138.f, -17.f), //behind the vertical puncher
+		glm::vec3(45.f, -77.f, 290.f), //in the punching cave on the spinner area
+		glm::vec3(150.f, -27.f, 289.f), //at the beginning of the sludge tunnel
+		glm::vec3(-51.f, -8.f, 360.f), //at the end of the sludge tunnel
+		glm::vec3(-161.f, 55.f, 296.f), //at the top ramp side
+	};
 
-	entity = controller.createEntity();
-	loaded = LoadModel("assets/models/banana/scene.gltf");
-	controller.AddComponent(entity, Transform{ glm::vec3(81.0f, -260.0f, -254.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(1.0f) });
-	controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 2.0f, 1.0f });
-	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
-	controller.AddComponent(entity, PhysicsBody{});
-	controller.AddComponent(entity, Powerup{
-		2,
-		false,
-		5.0f,
-		0.0f
-		});
+	for (int i = 0; i < boost_powerup_positions.size(); i++) {
+		entity = controller.createEntity();
+		loaded = LoadModel("assets/models/batterybox/battery_powerup.gltf");
+		controller.AddComponent(entity, Transform{ boost_powerup_positions[i], glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(1.f)});
+		controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 2.0f, 1.0f });
+		controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
+		controller.AddComponent(entity, PhysicsBody{});
+		controller.AddComponent(entity, Powerup{
+			1,
+			false,
+			5.0f,
+			0.0f
+			});
+	}
 
-	entity = controller.createEntity();
-	loaded = LoadModel("assets/models/banana_peel/banana.gltf");
-	controller.AddComponent(entity, Transform{ glm::vec3(-13.181f, -73.175f, 19.803f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.5f) });
-	controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 1.0f, 1.0f });
-	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
-	controller.AddComponent(entity, PhysicsBody{});
-	controller.AddComponent(entity, Banana{});
-	entity = controller.createEntity();
-	loaded = LoadModel("assets/models/banana_peel/banana.gltf");
-	controller.AddComponent(entity, Transform{ glm::vec3(-8.181f, -73.175f, 24.803f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.5f) });
-	controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 1.0f, 1.0f });
-	controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
-	controller.AddComponent(entity, PhysicsBody{});
-	controller.AddComponent(entity, Banana{});
+	std::vector<glm::vec3> banana_powerup_positions = {
+		glm::vec3(81.0f, -259.5f, -254.0f), //starter
+		glm::vec3(-10.0f, -210.5f, -108.0f), //on the path
+		glm::vec3(-3.f, -138.f, -33.f), //behind the vertical puncher
+		glm::vec3(108.f, -78.f, 214.f), //in the left corner of the spinner area
+		glm::vec3(160.f, -26.f, 289.f), //at the beginning of the sludge tunnel
+		glm::vec3(-15.f, -26.f, 279.f), //at the end of the sludge tunnel
+		glm::vec3(162.f, 55.f, 378.f), //at the top, back side
+		glm::vec3(1.f, 55.f, 416.f), //at the top, front side
+	};
+	for (int i = 0; i < banana_powerup_positions.size(); i++) {
+		entity = controller.createEntity();
+		loaded = LoadModel("assets/models/bananabox/banana_powerup.gltf");
+		controller.AddComponent(entity, Transform{ banana_powerup_positions[i], glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(1.0f)});
+		controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 2.0f, 1.0f });
+		controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
+		controller.AddComponent(entity, PhysicsBody{});
+		controller.AddComponent(entity, Powerup{
+			2,
+			false,
+			5.0f,
+			0.0f
+			});
+	}
+
+
+	std::vector<glm::vec3> bomb_powerup_positions = {
+		glm::vec3(81.0f, -259.5f, -234.0f), //starter
+		glm::vec3(-10.0f, -210.5f, -93.0f), //on the path
+		glm::vec3(-20.f, -138.f, -15.f), //behind the vertical puncher
+		glm::vec3(-81.f, -33.f, 96.f), //on the ledge before the dice crossing
+		glm::vec3(140.f, -26.f, 289.f), //at the beginning of the sludge tunnel
+		glm::vec3(-62.f, -26.f, 314.f), //at the end of the sludge tunnel
+		glm::vec3(-104.f, 55.f, 322.f), //at the top
+	};
+	for (int i = 0; i < bomb_powerup_positions.size(); i++) {
+		entity = controller.createEntity();
+		loaded = LoadModel("assets/models/bombbox/bomb_powerup.gltf");
+		controller.AddComponent(entity, Transform{ bomb_powerup_positions[i], glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(1.0f)});
+		controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 2.0f, 1.0f });
+		controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
+		controller.AddComponent(entity, PhysicsBody{});
+		controller.AddComponent(entity, Powerup{
+			3,
+			false,
+			5.0f,
+			0.0f
+			});
+	}
+
+
+
+	std::vector<glm::vec3> banana_peel_positions = {
+		glm::vec3(-69.f, 56.f, 305.f), //at the top
+		glm::vec3(-77.f, 56.f, 342.f), //at the top
+		glm::vec3(-70.f, 56.f, 326.f), //at the top
+	};
+	for (int i = 0; i < banana_peel_positions.size(); i++) {
+		entity = controller.createEntity();
+		loaded = LoadModel("assets/models/banana_peel/banana.gltf");
+		controller.AddComponent(entity, Transform{ banana_peel_positions[i], glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(2.f)});
+		controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 1.0f, 1.0f });
+		controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
+		controller.AddComponent(entity, PhysicsBody{});
+		controller.AddComponent(entity, Banana{});
+	}
+
 
 	// finish line
   entity = controller.createEntity();
@@ -685,6 +771,73 @@ void LevelLoaderSystem::LoadLevel()
 	//	controller.AddComponent(entity, CheckPoint{ glm::quat(1.0f, 0.0f, 0.0f, 0.0f) });
 	//	controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 4.0f, 1.0f });
 	//}
+
+	std::vector<glm::vec3> sludge_positions = {
+		glm::vec3(81.0f, -260.25f, -234.0f), // POSITION (adjust as needed)
+		glm::vec3(-68.0f, -28.f, 258.7f),
+		glm::vec3(-140.0f, -28.f, 315.f),
+		glm::vec3(2.6f, -28.f, 392.5),
+		glm::vec3(150.f, -28.f, 342.5),
+
+		glm::vec3(90.f, -12.f, 412.5),
+		glm::vec3(-45.f, -28.f, 382.5),
+	};
+	std::vector<glm::mat4> sludge_rotation = {
+		glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 1.0f, 0.0f)),
+		glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 1.0f, 0.0f)),
+		glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 1.0f, 0.0f)),
+		glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 1.0f, 0.0f)),
+		glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 1.0f, 0.0f)),
+
+		glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f)),
+		glm::rotate(glm::mat4(1.0f), glm::radians(45.0f), glm::vec3(1.0f, 0.0f, 0.0f)),
+	};
+	std::vector<glm::vec3> sludge_scale = {
+		glm::vec3(20.0f, 16.f, 20.f),
+		glm::vec3(20.0f, 16.f, 40.f),
+		glm::vec3(20.0f, 16.f, 40.f),
+		glm::vec3(80.0f, 16.f, 20.f),
+		glm::vec3(20.0f, 16.f, 40.f),
+
+		glm::vec3(40.0f, 32.f, 20.f),
+		glm::vec3(40.0f, 32.f, 20.f),
+	};
+	std::vector<glm::vec3> sludge_trigger_size = {
+		glm::vec3(20.0f, 0.5f, 20.f),
+		glm::vec3(20.0f, 0.5f, 40.f),
+		glm::vec3(20.0f, 0.5f, 40.f),
+		glm::vec3(80.0f, 0.5f, 20.f),
+		glm::vec3(20.0f, 0.5f, 40.f),
+
+		glm::vec3(40.0f, 1.f, 20.f),
+		glm::vec3(40.0f, 1.f, 20.f),
+	};
+
+	for (int i = 0; i < sludge_positions.size(); i++) {
+		entity = controller.createEntity();
+		Sludge sludge;
+		loaded = LoadModel("assets/models/sludge/sludge.gltf");
+		controller.AddComponent(entity, Render{ loaded.first, loaded.second });
+		controller.AddComponent(entity, Transform{
+			sludge_positions[i],
+			glm::quat(sludge_rotation[i]),
+			sludge_scale[i],
+			});
+
+		controller.AddComponent(entity, Trigger{
+			nullptr,
+			sludge_trigger_size[i].x, // width
+			sludge_trigger_size[i].y,  // height
+			sludge_trigger_size[i].z  // length
+			});
+
+		controller.AddComponent(entity, Sludge{
+			sludge.slowFactor // slow factor
+			});
+
+		controller.AddComponent(entity, PhysicsBody{});
+	}
+
 }
 
 std::pair<std::shared_ptr<Model>, std::shared_ptr<AABB>> LevelLoaderSystem::LoadModel(std::string path)
