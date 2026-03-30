@@ -324,12 +324,22 @@ void MainVehicle::ClearBoost() {
 	gVehicle.mEngineDriveParams.engineParams.peakTorque = basePeakTorque;
 }
 
-void MainVehicle::SpinOut()
+void MainVehicle::SpinOut(float deltaTime)
 {
 	auto* body = gVehicle.mPhysXState.physxActor.rigidBody;
 	if (!body) return;
 
-	body->addTorque(PxVec3(0.0f, 800.0f, 0.0f), PxForceMode::eIMPULSE);
+	auto* dyn = body->is<PxRigidDynamic>();
+	if (!dyn) return;
+
+	PxVec3 angVel = dyn->getAngularVelocity();
+	angVel.y = 8.0f;
+	dyn->setAngularVelocity(angVel);
+
+	PxVec3 linVel = dyn->getLinearVelocity();
+	linVel.x *= (1.0f - 5.0f * deltaTime);
+	linVel.z *= (1.0f - 5.0f * deltaTime);
+	dyn->setLinearVelocity(linVel);
 }
 
 void MainVehicle::ApplySludgeDrag(float factor)

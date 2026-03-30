@@ -12,6 +12,7 @@ class AudioSystem : public System
 public:
 	void Init();
 	void Update();
+	void ResetMusicState() { lastState = GameState::ENDMENU; }
 
 private:
 	CAudioEngine aEngine;

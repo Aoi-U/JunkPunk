@@ -150,11 +150,11 @@ void PhysicsSystem::Update(float deltaTime)
 
 			command.throttle = 0.0f;
 			command.brake = 0.3f;
-			command.steer = sin(spinTimer * 20.0f);
+			command.steer = 0.0f;
 
-			vehicle->SpinOut();
+			vehicle->SpinOut(deltaTime);
 
-			if (spinTimer > 1.0f)
+			if (spinTimer > 1.5f)
 			{
 				spinning = false;
 				spinTimer = 0.0f;
