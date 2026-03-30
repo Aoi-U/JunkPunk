@@ -24,6 +24,7 @@ public:
 	~Game() = default;
 
 	void Run();
+	void SpawnBananaPeel(Entity vehicle);
 
 private:
 	//std::shared_ptr<Gamepad> gamepad;
@@ -52,7 +53,6 @@ private:
 	void ChangeGameStateListener(Event& e);
 	void KeyboardInputListener(Event& e);
 	void TriggerEnterListener(Event& e);
-	void SpawnBananaPeel(Entity vehicle);
 
 	std::unique_ptr<ImGuiPanel> camera_debug_panel; // testing
 	

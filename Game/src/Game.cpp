@@ -231,6 +231,7 @@ Game::Game()
 		controller.SetSystemSignature<AiSystem>(signature);
 	}
 	loaderSystem->SetAiSystem(aiSystem);
+	aiSystem->SetGame(this);
 
 	audioSystem->Init();
 	vehicleControlSystem->Init(gamepads);

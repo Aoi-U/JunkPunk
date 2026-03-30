@@ -7,12 +7,14 @@
 
 enum class AiState;
 
+class Game;
+
 class AiSystem : public System
 {
 public:
 	void Init();
 	void Update(float deltaTime);
-
+	void SetGame(Game* game) { gameInstance = game; }
 	void SetNavMesh(const NavMesh& mesh);
 	const NavMesh& GetNavMesh() const { return navMesh; }
 
@@ -26,6 +28,7 @@ public:
 	float CheckDangerZone(const glm::vec3& position) const;
 
 private:
+	Game* gameInstance = nullptr;
 	NavMesh navMesh;
 	glm::vec3 goalPosition = glm::vec3(25.0f, -3.5f, 120.0f);
 
