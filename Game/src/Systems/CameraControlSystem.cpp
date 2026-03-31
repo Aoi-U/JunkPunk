@@ -26,13 +26,18 @@ void CameraControlSystem::Init(std::vector<std::shared_ptr<Gamepad>> gamepads)
 
 void CameraControlSystem::Update(float deltaTime)
 {
-	Entity player = controller.GetEntityByTag("VehicleCommands");
-
 	bool boosting = false;
-	if (controller.HasComponent<Powerup>(player)) {
-		auto& p = controller.GetComponent<Powerup>(player);
-		if (p.type == 1 && p.active)
-			boosting = true;
+	std::vector<std::pair<Entity, bool>> playerHasBoost; // list of pairs of player entities and whether they have an active boost powerup
+	for (int i = 0; i < numPlayers; i++)
+	{
+		Entity player = controller.GetEntityByTag("Player" + std::to_string(i + 1));
+
+		if (controller.HasComponent<Powerup>(player)) {
+			auto& p = controller.GetComponent<Powerup>(player);
+			if (p.type == 1 && p.active)
+				//boosting = true;
+				playerHasBoost.emplace_back(player, true);
+		}
 	}
 
 	for (auto const& entity : entities)
@@ -41,49 +46,127 @@ void CameraControlSystem::Update(float deltaTime)
 		auto& transform = controller.GetComponent<Transform>(entity);
 		auto& playerTransform = controller.GetComponent<Transform>(camera.playerEntity);
 		auto& vehicleComp = controller.GetComponent<VehicleBody>(camera.playerEntity);
-
+	 
 		float speed = glm::length(vehicleComp.linearVelocity);
-		float camerad = glm::mix(camera.baseRadius, camera.baseRadius * 1.5f, glm::smoothstep(0.0f, 20.0f, speed)); // zoom out the camera based on speed using smoothstep for a smoother transition
-
-		float boostMultiplier = boosting ? 1.35f : 1.0f;
-		float targetRadius = camerad * boostMultiplier;
-		camera.radius = glm::mix(camera.radius, targetRadius, 5.0f * deltaTime);
-
-		auto& gamepad = gamepads[1]; // assuming single player for now
-
-		if (gamepad->Connected())
+		float camerad = glm::mix(camera.baseRadius, camera.baseRadius * 1.5f, glm::smoothstep(0.0f, 20.0f, speed)); // zoom out the camera asedon /speed using smoothstep for a smoother transition
+	 
+		//float boostMultiplier = boosting ? 1.35f : 1.0f;
+		float boostMultiplier = 1.0f;
+		for (auto& [playerEntity, hasBoost] : playerHasBoost)
 		{
-			if (!gamepad->RStick_InDeadzone())
+			if (playerEntity == camera.playerEntity && hasBoost)
 			{
-				// orbit camera around player
-				camera.yaw +=  -gamepad->RightStick_X() * camera.horizontalLookSpeed * deltaTime;
-				camera.pitch += -gamepad->RightStick_Y() * camera.verticalLookSpeed * deltaTime;
-				camera.pitch = glm::clamp(camera.pitch, glm::radians(-89.0f), glm::radians(89.0f));
+				boostMultiplier = 1.35f;
+				break;
 			}
 		}
-			
+		float targetRadius = camerad * boostMultiplier;
+		camera.radius = glm::mix(camera.radius, targetRadius, 5.0f * deltaTime);
+	 
+		auto& playerController = controller.GetComponent<PlayerController>(camera.playerEntity);
+		auto it = gamepads.find(playerController.playerNum);
+
+		std::shared_ptr<Gamepad> gamepad;
+		if (it != gamepads.end())
+		{
+			gamepad = it->second;
+		}
+
+		if (gamepad)
+		{
+			if (gamepad->Connected())
+			{
+	 			if (!gamepad->RStick_InDeadzone())
+	 			{
+	 				// orbit camera around player
+	 				camera.yaw +=  -gamepad->RightStick_X() * camera.horizontalLookSpeed * deltaTime;
+	 				camera.pitch += -gamepad->RightStick_Y() * camera.verticalLookSpeed * deltaTime;
+	 				camera.pitch = glm::clamp(camera.pitch, glm::radians(-89.0f), glm::radians(89.0f));
+	 			}
+			}
+		}
+	 		
 		glm::vec3 playerForward = glm::normalize(playerTransform.quatRotation * glm::vec3(0.0f, 0.0f, 1.0f));
-		
+	 	
 		float targetYaw = glm::atan(playerForward.x, playerForward.z);
 		float deltaYaw = targetYaw - camera.yaw;
 		deltaYaw = glm::mod(deltaYaw + glm::pi<float>(), glm::two_pi<float>()) - glm::pi<float>();
-
+	 
 		// lerp the camera for smooth rotation
 		float lerpFactor = camera.lerpSpeed * deltaTime;
 		camera.yaw = camera.yaw + glm::mix(0.0f, deltaYaw, lerpFactor);
-			
+	 		
 		camera.yaw = glm::mod(camera.yaw + glm::pi<float>(), glm::two_pi<float>()) - glm::pi<float>();
-
+	 
 		glm::vec3 targetPosition = glm::vec3(playerTransform.position);
 		targetPosition.y += camera.heightOffset;
-
+	 
 		glm::vec3 localOffset = glm::vec3(0.0f, camera.radius * glm::sin(camera.pitch), -camera.radius * glm::cos(camera.pitch));
 		glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), camera.yaw, glm::vec3(0.0f, 1.0f, 0.0f));
 		glm::vec3 offset = glm::vec3(rotation * glm::vec4(localOffset, 0.0f));
 		transform.position = targetPosition + offset;
-
+	 
 		camera.viewMatrix = glm::lookAt(transform.position, targetPosition, glm::vec3(0.0f, 1.0f, 0.0f));
 	}
+
+	//Entity player = controller.GetEntityByTag("VehicleCommands");
+	//
+	//bool boosting = false;
+	//if (controller.HasComponent<Powerup>(player)) {
+	//	auto& p = controller.GetComponent<Powerup>(player);
+	//	if (p.type == 1 && p.active)
+	//		boosting = true;
+	//}
+	//
+	//for (auto const& entity : entities)
+	//{
+	//	auto& camera = controller.GetComponent<ThirdPersonCamera>(entity);
+	//	auto& transform = controller.GetComponent<Transform>(entity);
+	//	auto& playerTransform = controller.GetComponent<Transform>(camera.playerEntity);
+	//	auto& vehicleComp = controller.GetComponent<VehicleBody>(camera.playerEntity);
+	//
+	//	float speed = glm::length(vehicleComp.linearVelocity);
+	//	float camerad = glm::mix(camera.baseRadius, camera.baseRadius * 1.5f, glm::smoothstep(0.0f, 20.0f, speed)); // zoom out the camera based /on /speed using smoothstep for a smoother transition
+	//
+	//	float boostMultiplier = boosting ? 1.35f : 1.0f;
+	//	float targetRadius = camerad * boostMultiplier;
+	//	camera.radius = glm::mix(camera.radius, targetRadius, 5.0f * deltaTime);
+	//
+	//	auto& gamepad = gamepads[1]; // assuming single player for now
+	//
+	//	if (gamepad->Connected())
+	//	{
+	//		if (!gamepad->RStick_InDeadzone())
+	//		{
+	//			// orbit camera around player
+	//			camera.yaw +=  -gamepad->RightStick_X() * camera.horizontalLookSpeed * deltaTime;
+	//			camera.pitch += -gamepad->RightStick_Y() * camera.verticalLookSpeed * deltaTime;
+	//			camera.pitch = glm::clamp(camera.pitch, glm::radians(-89.0f), glm::radians(89.0f));
+	//		}
+	//	}
+	//		
+	//	glm::vec3 playerForward = glm::normalize(playerTransform.quatRotation * glm::vec3(0.0f, 0.0f, 1.0f));
+	//	
+	//	float targetYaw = glm::atan(playerForward.x, playerForward.z);
+	//	float deltaYaw = targetYaw - camera.yaw;
+	//	deltaYaw = glm::mod(deltaYaw + glm::pi<float>(), glm::two_pi<float>()) - glm::pi<float>();
+	//
+	//	// lerp the camera for smooth rotation
+	//	float lerpFactor = camera.lerpSpeed * deltaTime;
+	//	camera.yaw = camera.yaw + glm::mix(0.0f, deltaYaw, lerpFactor);
+	//		
+	//	camera.yaw = glm::mod(camera.yaw + glm::pi<float>(), glm::two_pi<float>()) - glm::pi<float>();
+	//
+	//	glm::vec3 targetPosition = glm::vec3(playerTransform.position);
+	//	targetPosition.y += camera.heightOffset;
+	//
+	//	glm::vec3 localOffset = glm::vec3(0.0f, camera.radius * glm::sin(camera.pitch), -camera.radius * glm::cos(camera.pitch));
+	//	glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), camera.yaw, glm::vec3(0.0f, 1.0f, 0.0f));
+	//	glm::vec3 offset = glm::vec3(rotation * glm::vec4(localOffset, 0.0f));
+	//	transform.position = targetPosition + offset;
+	//
+	//	camera.viewMatrix = glm::lookAt(transform.position, targetPosition, glm::vec3(0.0f, 1.0f, 0.0f));
+	//}
 }
 
 void CameraControlSystem::WindowSizeListener(Event& e)

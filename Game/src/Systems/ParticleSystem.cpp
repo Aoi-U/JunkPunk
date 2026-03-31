@@ -10,15 +10,14 @@
 
 extern ECSController controller;
 
-
 void ParticleSystem::Init()
 {
-
+	controller.AddEventListener(Events::Player::BLAST, [this](Event& e) { this->BlastEventListener(e); });
 }
 
 void ParticleSystem::Update(float deltaTime)
 {
-	auto camera = controller.GetEntityByTag("Camera");
+	auto camera = controller.GetEntityByTag("Camera1");
 	auto& cameraTransform = controller.GetComponent<Transform>(camera);
 
 	for (auto& entity : entities)
@@ -44,18 +43,29 @@ void ParticleSystem::Update(float deltaTime)
 		}
 
 		int newParticles = 0;
-		float minSpeed = 0.2f;
-		float maxSpeed = 60.0f;
-		if (linearVelocity > minSpeed) // scale the amount of particles spawning with vehicle speed (not working)
+
+		if (emitter.pendingBlastParticles > 0)
 		{
-			float speedFactor = (linearVelocity - minSpeed) / (maxSpeed - minSpeed);
-			if (speedFactor > 1.0f)
-				speedFactor = 1.0f;
-			newParticles = (int)(deltaTime * emitter.spawnRate * speedFactor);
+			newParticles += emitter.pendingBlastParticles;
+			emitter.pendingBlastParticles = 0;
 		}
-		if (newParticles > (int)(0.016f * 20000.0))
+
+		if (!emitter.isBlastEmitter)
 		{
-			newParticles = (int)(0.016f * 20000.0);
+			float minSpeed = 0.2f;
+			float maxSpeed = 60.0f;
+			if (linearVelocity > minSpeed)
+			{
+				float speedFactor = (linearVelocity - minSpeed) / (maxSpeed - minSpeed);
+				if (speedFactor > 1.0f)
+					speedFactor = 1.0f;
+				newParticles += (int)(deltaTime * emitter.spawnRate * speedFactor);
+			}
+		}
+
+		if (newParticles > emitter.maxParticles)
+		{
+			newParticles = emitter.maxParticles;
 		}
 
 		for (int i = 0; i < newParticles; i++)
@@ -63,21 +73,44 @@ void ParticleSystem::Update(float deltaTime)
 			int particleIndex = FindUnusedParticle(emitter);
 			emitter.particles[particleIndex].life = emitter.life; // This particle will live for 2 seconds.
 			emitter.particles[particleIndex].position = entityPos;
-			glm::vec3 mainDir = glm::vec3(0.0f, 1.0f, -1.0f);
-			glm::vec3 randomDir = glm::vec3(
-				(rand() % 2000 - 1000.0f) / 1000.0f,
-				(rand() % 2000 - 1000.0f) / 1000.0f,
-				(rand() % 2000 - 1000.0f) / 1000.0f
-			);
 
-			emitter.particles[particleIndex].speed = mainDir + randomDir * 0.5f;
+			if (emitter.isBlastEmitter)
+			{
+				glm::vec3 randomDir = glm::vec3(
+					(rand() % 2000 - 1000.0f) / 1000.0f,
+					(rand() % 2000 - 1000.0f) / 1000.0f,
+					(rand() % 2000 - 1000.0f) / 1000.0f
+				);
 
-			emitter.particles[particleIndex].r = rand() % 256;
-			emitter.particles[particleIndex].g = rand() % 256;
-			emitter.particles[particleIndex].b = rand() % 256;
-			emitter.particles[particleIndex].a = 255;
+				if (glm::length2(randomDir) < 0.0001f)
+					randomDir = glm::vec3(0.0f, 1.0f, 0.0f);
 
-			emitter.particles[particleIndex].size = (rand() % 1000) / 4000.0f + 0.1f;
+				randomDir = glm::normalize(randomDir);
+				float speedScale = 0.6f + (rand() % 1000) / 1000.0f;
+				emitter.particles[particleIndex].speed = randomDir * emitter.burstSpeed * speedScale;
+
+				emitter.particles[particleIndex].r = 255;
+				emitter.particles[particleIndex].g = (unsigned char)(180 + rand() % 76);
+				emitter.particles[particleIndex].b = (unsigned char)(40 + rand() % 60);
+				emitter.particles[particleIndex].a = 255;
+				emitter.particles[particleIndex].size = 0.3f + (rand() % 1000) / 2500.0f;
+			}
+			else
+			{
+				glm::vec3 mainDir = glm::vec3(0.0f, 1.0f, -1.0f);
+				glm::vec3 randomDir = glm::vec3(
+					(rand() % 2000 - 1000.0f) / 1000.0f,
+					(rand() % 2000 - 1000.0f) / 1000.0f,
+					(rand() % 2000 - 1000.0f) / 1000.0f
+				);
+
+				emitter.particles[particleIndex].speed = mainDir + randomDir * 0.5f;
+				emitter.particles[particleIndex].r = rand() % 256;
+				emitter.particles[particleIndex].g = rand() % 256;
+				emitter.particles[particleIndex].b = rand() % 256;
+				emitter.particles[particleIndex].a = 255;
+				emitter.particles[particleIndex].size = (rand() % 1000) / 4000.0f + 0.1f;
+			}
 		}
 
 		int particleCount = 0;
@@ -104,9 +137,11 @@ void ParticleSystem::Update(float deltaTime)
 					emitter.particleColorData[4 * particleCount + 1] = p.g;
 					emitter.particleColorData[4 * particleCount + 2] = p.b;
 
-					emitter.particleLifeData[particleCount] = p.life;
-
 					float lifeRatio = p.life / emitter.life;
+					lifeRatio = glm::clamp(lifeRatio, 0.0f, 1.0f);
+
+					emitter.particleLifeData[particleCount] = lifeRatio;
+
 					p.a = (unsigned char)(lifeRatio * 255.0f);
 					emitter.particleColorData[4 * particleCount + 3] = p.a;
 				}
@@ -144,4 +179,22 @@ int ParticleSystem::FindUnusedParticle(ParticleEmitter& emitter)
 	}
 
 	return 0;
+}
+
+void ParticleSystem::BlastEventListener(Event& e)
+{
+	Entity blastEntity = e.GetParam<Entity>(Events::Player::Blast::ENTITY);
+
+	for (const auto& entity : entities)
+	{
+		auto& emitter = controller.GetComponent<ParticleEmitter>(entity);
+		if (!emitter.isBlastEmitter)
+			continue;
+		if (emitter.targetEntity != blastEntity)
+			continue;
+
+		emitter.pendingBlastParticles += 450;
+		if (emitter.pendingBlastParticles > emitter.maxParticles)
+			emitter.pendingBlastParticles = emitter.maxParticles;
+	}
 }

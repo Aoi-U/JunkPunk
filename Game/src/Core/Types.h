@@ -2,6 +2,7 @@
 
 #include <bitset>
 #include <cstdint>
+#include <vector>
 
 // defines types used for ECS
 
@@ -183,11 +184,17 @@ namespace Events::Player // player related events
 	const EventId PLAYER_JUMPED = "Events::Player::PLAYER_JUMPED"_hash; // player jumped event
 	const EventId RESET_VEHICLE = "Events::Player::RESET_VEHICLE"_hash; // reset vehicle event
 	const EventId SPIN_OUT = "Events::Player::SPIN_OUT"_hash; // Banana peel effect
+	const EventId BLAST = "Events::Player::BLAST"_hash; // blast powerup
 }
 
 namespace Events::Player::Spin_Out
 {
 	const ParamId Entity = "Events::Player::Spin_Out::ENTITY"_hash;
+}
+
+namespace Events::Player::Blast
+{
+	const ParamId ENTITY = "Events::Player::Blast::ENTITY"_hash;
 }
 
 namespace Events::Player::Player_Jumped // parameters for player jumped event
@@ -217,3 +224,6 @@ extern bool playerWon;
 extern bool aiWon;
 
 extern int numPlayers;
+extern int numAi;
+extern std::vector<Entity> playerEntities;
+extern std::vector<Entity> cameraEntities;

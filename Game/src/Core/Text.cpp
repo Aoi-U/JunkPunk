@@ -5,7 +5,8 @@
 
 Text::Text()
 {
-  charArial = initFont("assets/fonts/arial/ARIAL.TTF");
+  //charArial = initFont("assets/fonts/arial/ARIAL.TTF");
+  charArial = initFont("assets/fonts/rustic_printed/Rustic Printed.ttf");
 }
 
 void Text::initVAO(VAO* vao, VBO* vbo)

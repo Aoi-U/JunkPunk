@@ -26,7 +26,7 @@ struct Particle
 
 struct ParticleEmitter
 {
-	Entity targetEntity; // entity the particle emitter is attached to (if any)
+	Entity targetEntity = MAX_ENTITIES; // entity the particle emitter is attached to (if any)
 	int maxParticles = 10000;
 	float spawnRate = 5000.0f;
 	float life = 1.0f;
@@ -39,6 +39,15 @@ struct ParticleEmitter
 	std::vector<GLubyte> particleColorData;
 	std::vector<GLfloat> particleLifeData;
 	int particleCount = 0;
+
+	int atlasColumns = 6;
+	int atlasRows = 5;
+	int atlasFrameCount = 30;
+
+	bool isBlastEmitter = false; // whether this emitter is for the blast powerup or not
+	bool useBlastTexture = false; // whether the blast emitter should be used or not (set to true when blast is activated and set back to false when blast is deactivated)
+	int pendingBlastParticles = 0; // number of blast particles that still need to be spawned
+	float burstSpeed = 25.0f;
 
 	void Init(int max)
 	{

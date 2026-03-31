@@ -76,7 +76,11 @@ public:
 	void ApplyBoost(float multiplier);
 	void ClearBoost();
 
-	void SpinOut();
+	void SpinOut(float deltaTime);
+
+	void ApplySludgeDrag(float factor);
+
+	void ApplyImpulse(const PxVec3& impulse);
 
 private:
 	//DirectDriveVehicle gVehicle;

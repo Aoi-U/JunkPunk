@@ -162,20 +162,26 @@ void MainVehicle::step(float deltaTime)
 
 	// stabalize vehicle when in the air to reduce vehicle flipping
 	auto* dyn = gVehicle.mPhysXState.physxActor.rigidBody->is<PxRigidDynamic>();
-	if (dyn && !IsGrounded(gVehicleSimulationContext.physxScene))
+	if (dyn)
 	{
-		const float dampRate = 1.0f;
-		const float dampFactor = expf(-dampRate * deltaTime);
-		PxVec3 angVel = dyn->getAngularVelocity();
-		angVel.x *= dampFactor;
-		angVel.z *= dampFactor;
-		dyn->setAngularVelocity(angVel);
+		if (!IsGrounded(gVehicleSimulationContext.physxScene))
+		{
+			const float dampRate = 1.0f;
+			const float dampFactor = expf(-dampRate * deltaTime);
+			PxVec3 angVel = dyn->getAngularVelocity();
+			angVel.x *= dampFactor;
+			angVel.z *= dampFactor;
+			dyn->setAngularVelocity(angVel);
 
-		// add torque to vehicle to align it with the up direction
-		PxTransform t = dyn->getGlobalPose();
-		PxVec3 vehicleUp = t.q.rotate(PxVec3(0.0f, 1.0f, 0.0f));
-		PxVec3 correctionTorque = vehicleUp.cross(PxVec3(0.0f, 1.0f, 0.0f)) * 10.0f;
-		dyn->addTorque(correctionTorque, PxForceMode::eACCELERATION);
+			// add torque to vehicle to align it with the up direction
+			PxTransform t = dyn->getGlobalPose();
+			PxVec3 vehicleUp = t.q.rotate(PxVec3(0.0f, 1.0f, 0.0f));
+			PxVec3 correctionTorque = vehicleUp.cross(PxVec3(0.0f, 1.0f, 0.0f)) * 10.0f;
+			dyn->addTorque(correctionTorque, PxForceMode::eACCELERATION);
+		}
+			// apply downwards force to account for lower gravity
+			float gravScale = 1.3f;
+			dyn->addForce(PxVec3(0.0f, -9.81f * gravScale * dyn->getMass(), 0.0f), PxForceMode::eFORCE);
 	}
 }
 
@@ -302,6 +308,14 @@ void MainVehicle::ApplyBoost(float multiplier) {
 		basePeakTorque = engine.peakTorque;
 
 	engine.peakTorque = basePeakTorque * multiplier;
+	auto* body = gVehicle.mPhysXState.physxActor.rigidBody;
+	auto dyn = body->is<PxRigidDynamic>();
+
+	if (dyn)
+	{
+		PxVec3 forward = dyn->getGlobalPose().q.rotate(PxVec3(0, 0, 1));
+		dyn->addForce(forward * 500.0f, PxForceMode::eIMPULSE);
+	}
 }
 
 void MainVehicle::ClearBoost() {
@@ -310,10 +324,45 @@ void MainVehicle::ClearBoost() {
 	gVehicle.mEngineDriveParams.engineParams.peakTorque = basePeakTorque;
 }
 
-void MainVehicle::SpinOut()
+void MainVehicle::SpinOut(float deltaTime)
 {
 	auto* body = gVehicle.mPhysXState.physxActor.rigidBody;
 	if (!body) return;
 
-	body->addTorque(PxVec3(0.0f, 800.0f, 0.0f), PxForceMode::eIMPULSE);
+	auto* dyn = body->is<PxRigidDynamic>();
+	if (!dyn) return;
+
+	PxVec3 angVel = dyn->getAngularVelocity();
+	angVel.y = 12.0f;
+	dyn->setAngularVelocity(angVel);
+
+	PxVec3 linVel = dyn->getLinearVelocity();
+	linVel.x *= (1.0f - 5.0f * deltaTime);
+	linVel.z *= (1.0f - 5.0f * deltaTime);
+	dyn->setLinearVelocity(linVel);
+}
+
+void MainVehicle::ApplySludgeDrag(float factor)
+{
+	auto* body = gVehicle.mPhysXState.physxActor.rigidBody;
+	auto dyn = body->is<PxRigidDynamic>();
+
+	if (!dyn)
+		return;
+
+	PxVec3 vel = dyn->getLinearVelocity();
+
+	// Apply drag
+	vel *= factor;
+
+	dyn->setLinearVelocity(vel);
+}
+
+void MainVehicle::ApplyImpulse(const PxVec3& impulse)
+{
+	auto* body = gVehicle.mPhysXState.physxActor.rigidBody;
+	auto dyn = body->is<PxRigidDynamic>();
+	if (!dyn)
+		return;
+	dyn->addForce(impulse, PxForceMode::eIMPULSE);
 }

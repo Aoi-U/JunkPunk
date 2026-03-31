@@ -18,7 +18,8 @@ PhysicsSystem::PhysicsSystem()
 	controller.AddEventListener(Events::Player::RESET_VEHICLE, [this](Event& e) { this->ResetVehicleEventListener(e); });
 	controller.AddEventListener(Events::Checkpoint::REACHED, [this](Event& e) {this->CheckpointReachedListener(e); });
 	controller.AddEventListener(Events::Player::SPIN_OUT, [this](Event& e) {this->SpinOutListener(e); });
-
+	controller.AddEventListener(Events::Player::BLAST, [this](Event& e) {this->BlastEventListener(e); });
+	
 	auto rigidBodyArray = controller.GetComponentArray<RigidBody>();
 	rigidBodyArray->BindOnRemoveCallback([this](Entity entity, RigidBody& rb) { this->ReleaseActorCallback(entity, rb); });
 
@@ -51,8 +52,8 @@ void PhysicsSystem::Init()
 	}
 
 	PxSceneDesc PhysicsSceneDesc(gPhysics->getTolerancesScale());
-	//PhysicsSceneDesc.gravity = PxVec3(0.0f, -9.81f, 0.0f);
-	PhysicsSceneDesc.gravity = PxVec3(0.0f, -20.0f, 0.0f); // double gravity for vehicle testing
+	PhysicsSceneDesc.gravity = PxVec3(0.0f, -9.81f, 0.0f);
+	//PhysicsSceneDesc.gravity = PxVec3(0.0f, -20.0f, 0.0f); // double gravity for vehicle testing
 	gDispatcher = PxDefaultCpuDispatcherCreate(2);
 	PhysicsSceneDesc.cpuDispatcher = gDispatcher;
 	//PhysicsSceneDesc.filterShader = PxDefaultSimulationFilterShader;
@@ -127,7 +128,7 @@ void PhysicsSystem::Update(float deltaTime)
 
 		Command command;
 		command.throttle = vehicleCommands.throttle;
-		
+
 		if (controller.HasComponent<Powerup>(entity)) {
 			auto& p = controller.GetComponent<Powerup>(entity);
 			if (p.active && p.type == 1) {
@@ -149,15 +150,24 @@ void PhysicsSystem::Update(float deltaTime)
 
 			command.throttle = 0.0f;
 			command.brake = 0.3f;
-			command.steer = sin(spinTimer * 20.0f);
+			command.steer = 0.0f;
 
-			vehicle->SpinOut();
+			vehicle->SpinOut(deltaTime);
 
-			if (spinTimer > 1.0f)
+			if (spinTimer > 1.5f)
 			{
 				spinning = false;
 				spinTimer = 0.0f;
 			}
+		}
+
+
+		if (vehicleCommands.inSludge > 0) {
+			float drag = vehicleCommands.sludgeFactor;
+			float factor = 1.0f - drag * deltaTime;
+			factor = PxMax(factor, 0.0f);
+
+			vehicle->ApplySludgeDrag(factor);
 		}
 	}
 
@@ -297,21 +307,48 @@ void PhysicsSystem::Cleanup()
 
 	for (auto& [_, vehicle] : vehicles)
 	{
-		vehicle->cleanup();
-		vehicle.reset();
+		if (vehicle)
+		{
+			vehicle->cleanup();
+			vehicle.reset();
+		}
 	}
+	vehicles.clear();
+
+	actorsToDelete.clear();
 
 	PxCloseVehicleExtension();
-	gPhysicsScene->release();
-	gDispatcher->release();
-	gPhysics->release();
+
+	if (gPhysicsScene)
+	{
+		gPhysicsScene->release();
+		gPhysicsScene = nullptr;
+	}
+
+	if (gDispatcher)
+	{
+		gDispatcher->release();
+		gDispatcher = nullptr;
+	}
+
+	if (gPhysics)
+	{
+		gPhysics->release();
+		gPhysics = nullptr;
+	}
+
 	if (gPvd)
 	{
 		PxPvdTransport* transport = gPvd->getTransport();
 		gPvd->release();
 		transport->release();
 	}
-	gFoundation->release();
+
+	if (gFoundation)
+	{
+		gFoundation->release();
+		gFoundation = nullptr;
+	}
 }
 
 void PhysicsSystem::CreateMap()
@@ -645,3 +682,39 @@ void PhysicsSystem::SpinOutListener(Event& e) {
 	spinning = true;
 	spinTimer = 0.0f;
 }
+
+void PhysicsSystem::BlastEventListener(Event& e) {
+	Entity source = e.GetParam<Entity>(Events::Player::Blast::ENTITY);
+
+	float radius = 30.0f;
+	float strength = 40000.0f;
+
+	glm::vec3 origin = controller.GetComponent<Transform>(source).position;
+
+	for (auto& [entity, vehicle] : vehicles) {
+		if (entity == source)
+			continue;
+
+		if (!controller.HasComponent<Transform>(entity))
+			continue;
+
+		glm::vec3 targetPos = controller.GetComponent<Transform>(entity).position;
+
+		glm::vec3 dir = targetPos - origin;
+		float dist = glm::length(dir);
+
+		if (dist > radius || dist <= 0.001f)
+			continue;
+
+		float falloff = 1.0f - (dist / radius);
+
+		falloff = falloff * falloff;
+
+		float force = strength * falloff;
+		
+		PxVec3 impulse = PxVec3(dir.x, dir.y, dir.z) * force;
+		impulse.y += 0.5f * force;
+		std::cout << "BLASTED\n";
+		vehicle->ApplyImpulse(impulse);
+	}
+	}

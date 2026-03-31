@@ -61,29 +61,17 @@ float ShadowCalculation(vec3 fragPosWorldSpace, vec3 norm)
 		layer = u_cascadeCount;
 	}
 	vec4 fragPosLightSpace = lightSpaceMatrices[layer] * vec4(fragPosWorldSpace, 1.0);
-
-	// perform perspective divide
 	vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
-	// transform to [0,1] range
 	projCoords = projCoords * 0.5 + 0.5;
-	
-	float currentDepth = projCoords.z;
 
+	float currentDepth = projCoords.z;
 	if (currentDepth > 1.0)
 	{
 		return 0.0;
 	}
 
-	float bias = max(0.05 * (1.0 - dot(norm, u_lightDir)), 0.005);
-	const float biasModifier = 0.5f;
-	if (layer == u_cascadeCount)
-	{
-		bias *= 1 / (u_farPlane * biasModifier);
-	}
-	else
-	{
-		bias *= 1 / (cascadePlaneDistances[layer] * biasModifier);
-	}
+	float ndotl = max(dot(normalize(norm), normalize(u_lightDir)), 0.0); // calculate angle between normal and light direction
+	float bias = max(0.0015 * (1.0 - ndotl), 0.0002);
 
 	float shadow = 0.0;
 	vec2 texelSize = 1.0 / vec2(textureSize(depthMaps, 0));
@@ -102,32 +90,20 @@ float ShadowCalculation(vec3 fragPosWorldSpace, vec3 norm)
 }
 
 void main()
-{	
+{
 	vec3 sampledColor = texture(texture_diffuse1, texCoord).rgb;
-	
-	vec3 norm;
-	//if (hasNormalTex)
-	//{
-		//norm = texture(texture_normal1, texCoord).rgb
-		//norm = normalize(norm * 2.0 - 1.0);
-	//}
-	//else
-	//{
-		norm = normalize(normal);
-		if (dot(norm, u_lightDir) < 0.0)
-			norm = -norm;
-	//}
+	vec3 norm = normalize(normal);
 
 	// ambient
 	vec3 ambient = u_light.ambient * sampledColor;
 
 	// diffuse
-	float diff = max(dot(norm, u_lightDir), 0.0);
+	float diff = max(dot(norm, normalize(u_lightDir)), 0.0);
 	vec3 diffuse = diff * u_light.diffuse;
 
 	// specular
 	vec3 viewDir = normalize(u_cameraPos - fragPos);
-	vec3 halfwayDir = normalize(u_lightDir + viewDir);
+	vec3 halfwayDir = normalize(normalize(u_lightDir) + viewDir);
 	float spec = pow(max(dot(norm, halfwayDir), 0.0), 32.0);
 
 	vec3 specular = vec3(0.0);

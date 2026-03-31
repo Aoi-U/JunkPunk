@@ -69,9 +69,9 @@ void MenuSystem::Update()
 	
 	if (canNavigate)
 	{
-		if (gamepad->LeftStick_Y() > 0.3f) // navigate left
+		if (gamepad->LeftStick_Y() > 0.3f) // navigate up
 		{
-			// navigate left
+			// navigate up
 			if (currentHover > 0)
 			{
 				Event event(Events::Audio::PLAY_SOUND);
@@ -84,7 +84,7 @@ void MenuSystem::Update()
 			}
 			canNavigate = false;
 		}
-		else if (gamepad->LeftStick_Y() < -0.3f) // navigate right
+		else if (gamepad->LeftStick_Y() < -0.3f) // navigate down
 		{
 			if (currentHover < maxVerticalHover)
 			{
@@ -99,36 +99,70 @@ void MenuSystem::Update()
 			canNavigate = false;
 		}
 
-		// Add horizontal navigation for settings (player count adjustment)
+		// add horizontal navigation for settings
 		if (currentStateGlobal == GameState::SETTINGS)
 		{
-			if (gamepad->LeftStick_X() > 0.3f) // increase player count
+			switch (currentHover)
 			{
-				if (numPlayers < 4) // assuming max 4 players
+			case SettingsMenu::PLAYER_COUNT:
+				// horizontal navigation for player count
+				if (gamepad->LeftStick_X() > 0.3f) // increase player count
 				{
-					Event event(Events::Audio::PLAY_SOUND);
-					event.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/MenuNavigation.wav");
-					event.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
-					event.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, 0.0f);
-					controller.SendEvent(event);
-
-					numPlayers++;
+					if (numPlayers < maxPlayerCount) // assuming max 4 players
+					{
+						Event event(Events::Audio::PLAY_SOUND);
+						event.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/MenuNavigation.wav");
+						event.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
+						event.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, 0.0f);
+						controller.SendEvent(event);
+						numPlayers++;
+					}
+					canNavigate = false;
 				}
-				canNavigate = false;
-			}
-			else if (gamepad->LeftStick_X() < -0.3f) // decrease player count
-			{
-				if (numPlayers > 1) // minimum 1 player
+				else if (gamepad->LeftStick_X() < -0.3f) // decrease player count
 				{
-					Event event(Events::Audio::PLAY_SOUND);
-					event.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/MenuNavigation.wav");
-					event.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
-					event.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, 0.0f);
-					controller.SendEvent(event);
-
-					numPlayers--;
+					if (numPlayers > 1) // minimum 1 player
+					{
+						Event event(Events::Audio::PLAY_SOUND);
+						event.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/MenuNavigation.wav");
+						event.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
+						event.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, 0.0f);
+						controller.SendEvent(event);
+						numPlayers--;
+					}
+					canNavigate = false;
 				}
-				canNavigate = false;
+
+				break;
+
+			case SettingsMenu::AI_COUNT:
+				// horizontal navigation for AI count
+				if (gamepad->LeftStick_X() > 0.3f) // increase AI count
+				{
+					if (numAi < maxAICount) 
+					{
+						Event event(Events::Audio::PLAY_SOUND);
+						event.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/MenuNavigation.wav");
+						event.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
+						event.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, 0.0f);
+						controller.SendEvent(event);
+						numAi++;
+					}
+					canNavigate = false;
+				}
+				else if (gamepad->LeftStick_X() < -0.3f) // decrease AI count
+				{
+					if (numAi > 0) 
+					{
+						Event event(Events::Audio::PLAY_SOUND);
+						event.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/MenuNavigation.wav");
+						event.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
+						event.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, 0.0f);
+						controller.SendEvent(event);
+						numAi--;
+					}
+					canNavigate = false;
+				}
 			}
 		}
 	}
@@ -136,6 +170,7 @@ void MenuSystem::Update()
 	glDisable(GL_DEPTH_TEST);
 	Clear(0.1f, 0.1f, 0.1f, 1.0f);
 
+	// render different menu screens based on current game state
 	switch (currentStateGlobal)
 	{
 	case GameState::STARTMENU:
@@ -143,13 +178,31 @@ void MenuSystem::Update()
 		RenderElements(uiElements);
 		float buttonSpacing = 120.0f;
 		float textScale = uniformScale;
-		RenderText("START", ScaledX(550.0f), ScaledY(480.0f), textScale,
-			currentHover == Menus::START ? hoverColor : defaultColor);
-		RenderText("SETTINGS", ScaledX(510.0f), ScaledY(480.0f - buttonSpacing), textScale,
-			currentHover == Menus::SETTINGS ? hoverColor : defaultColor);
-		RenderText("QUIT", ScaledX(570.0f), ScaledY(480.0f - buttonSpacing * 2), textScale,
-			currentHover == Menus::QUIT ? hoverColor : defaultColor);
 
+		float startY = ScaledY(420.0f);
+		std::string startText = "START";
+		std::string settingsText = "SETTINGS";
+		std::string quitText = "QUIT";
+
+		RenderText(startText,
+			GetCenteredX(startText, textScale),
+			startY,
+			textScale,
+			currentHover == Menus::START ? hoverColor : defaultColor);
+
+		RenderText(settingsText,
+			GetCenteredX(settingsText, textScale),
+			startY - buttonSpacing,
+			textScale,
+			currentHover == Menus::SETTINGS ? hoverColor : defaultColor);
+
+		RenderText(quitText,
+			GetCenteredX(quitText, textScale),
+			startY - buttonSpacing * 2,
+			textScale,
+			currentHover == Menus::QUIT ? hoverColor : defaultColor);
+		
+		// handle button press for current selection in main menu
 		if (gamepad->GetButtonDown(Buttons::JUMP))
 		{
 			switch (currentHover)
@@ -163,7 +216,8 @@ void MenuSystem::Update()
 			}
 			case Menus::SETTINGS:
 			{
-				maxVerticalHover = 0;
+				currentHover = 0;
+				maxVerticalHover = 1;
 
 				Event event(Events::GameState::NEW_STATE);
 				event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::SETTINGS);
@@ -189,6 +243,7 @@ void MenuSystem::Update()
 	{
 		RenderControlsScreen();
 
+		// start game when A is pressed on controls screen
 		if (gamepad->GetButtonDown(Buttons::JUMP)) {
 			Event event(Events::GameState::NEW_STATE);
 			event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::GAME);
@@ -200,6 +255,7 @@ void MenuSystem::Update()
 	{
 		RenderSettingsScreen();
 
+		// return to main menu when B is pressed on settings screen
 		if (gamepad->GetButtonDown(Buttons::POWERUP))
 		{
 			currentHover = 0;
@@ -222,41 +278,73 @@ void MenuSystem::Reset()
 }
 
 void MenuSystem::RenderWinText() {
-	if (!playerWon)
-		return;
 	glDisable(GL_DEPTH_TEST);
 	float scale = uniformScale * 2.0f;
-	RenderText(
-		"YOU WIN!",
-		ScaledX(500.0f),
-		ScaledY(600.0f),
-		scale,
-		glm::vec3(0.2f, 1.0f, 0.2f)
-	);
+	if (!playerWon && !aiWon)
+		return;
+	if (playerWon) {
+		std::string text = "YOU WIN";
+		RenderText(
+			text,
+			GetCenteredX(text, scale),
+			ScaledY(600.0f),
+			scale,
+			glm::vec3(0.2f, 1.0f, 0.2f)
+		);
+	}
+	else {
+		std::string text = "OPPONENT WINS!";
+		RenderText(
+			text,
+			GetCenteredX(text, scale),
+			ScaledY(600.0f),
+			scale,
+			glm::vec3(1.0f, 0.2f, 0.2f)
+		);
+	}
 }
 
 void MenuSystem::RenderEndScreen() {
 	glDisable(GL_DEPTH_TEST);
 	Clear(0.05f, 0.05f, 0.05f, 1.0f);
 	float titleScale = uniformScale * 2.0f;
+	
+	Texture* bg = nullptr;
 
-	RenderElements(endUIElements);
+	if (playerWon)
+		bg = winBackground.get();
+	else if (aiWon)
+		bg = loseBackground.get();
+	if (bg) {
+		RenderUITexture(
+			0.0f,
+			0.0f,
+			(float)screenWidth,
+			(float)screenHeight,
+			bg,
+			glm::vec4(1.0f)
+			);
+	}
+	else
+		RenderElements(endUIElements);
 
 	if (aiWon) 	{
 		 //titleScale = uniformScale * 1.5f;
+		std::string text = "OPPONENT WINS!";
 		RenderText(
-			"Opponent WINS!",
-			ScaledX(480.0f),
-			ScaledY(500.0f),
+			text,
+			GetCenteredX(text, titleScale),
+			ScaledY(600.0f),
 			titleScale,
 			glm::vec3(1.0f, 0.2f, 0.2f)
 		);
 	}
 	else if (playerWon){
+		std::string text = "YOU WIN!";
 		RenderText(
-			"YOU WIN!",
-			ScaledX(480.0f),
-			ScaledY(500.0f),
+			text,
+			GetCenteredX(text, titleScale),
+			ScaledY(600.0f),
 			titleScale,
 			glm::vec3(0.2f, 1.0f, 0.2f)
 		);
@@ -289,7 +377,8 @@ void MenuSystem::RenderSettingsScreen()
 
 	float buttonSpacing = 120.0f;
 	float textScale = uniformScale;
-	RenderText("Player Count: " + std::to_string(numPlayers), ScaledX(500.0f), ScaledY(500.0f), textScale, defaultColor);
+	RenderText("Player Count: " + std::to_string(numPlayers), ScaledX(500.0f), ScaledY(500.0f), textScale, currentHover == SettingsMenu::PLAYER_COUNT ? hoverColor : defaultColor);
+	RenderText("AI Count: " + std::to_string(numAi), ScaledX(500.0f), ScaledY(370.0f), textScale, currentHover == SettingsMenu::AI_COUNT ? hoverColor : defaultColor);
 	
 
 	// back instruction
@@ -376,33 +465,22 @@ void MenuSystem::RenderUITexture(float x, float y, float width, float height, Te
 void MenuSystem::InitUI()
 {
 	uiElements.clear();
-	Texture tex("background.png");	
+	Texture tex("JunkPunk intro.png");	
 	tex.Load("assets/textures");
 	uiElements.emplace_back(0.0f, 0.0f, 1280.0f, 720.0f, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), ScaleMode::FILL, std::make_unique<Texture>(tex));
-
-
-	float buttonWidth = 300.0f;
-	float buttonHeight = 80.0f;
-	float buttonX = 640.0f - buttonWidth * 0.5f;
-	float buttonSpacing = 120.0f;
-
-	float startY = 500.0f - buttonHeight * 0.5f;
-	float settingsY = startY - buttonSpacing;
-	float quitY = settingsY - buttonSpacing;
-
-	// Create UI elements for each button
-	uiElements.emplace_back(buttonX, startY, buttonWidth, buttonHeight,
-		glm::vec4(0.2f, 0.2f, 0.2f, 0.9f));
-	uiElements.emplace_back(buttonX, settingsY, buttonWidth, buttonHeight,
-		glm::vec4(0.2f, 0.2f, 0.2f, 0.9f));
-	uiElements.emplace_back(buttonX, quitY, buttonWidth, buttonHeight,
-		glm::vec4(0.2f, 0.2f, 0.2f, 0.9f));
 }
 
 void MenuSystem::InitEndUI() {
 	endUIElements.clear();
 	Texture tex("dumpster sunset.jpg");
 	tex.Load("assets/textures");
+
+	winBackground = std::make_unique<Texture>("JunkPunk win.png");
+	winBackground->Load("assets/textures");
+
+	loseBackground = std::make_unique<Texture>("JunkPunk lose.png");
+	loseBackground->Load("assets/textures");
+
 	endUIElements.emplace_back(
 		0.0f,
 		0.0f,
@@ -438,10 +516,12 @@ void MenuSystem::InitSettingsUI()
 	float buttonSpacing = 120.0f;
 
 	float playerCountY = 500.0f - buttonHeight * 0.5f;
+	float aiCountY = playerCountY - buttonSpacing;
 
 	settingsUIElements.clear();
-	settingsUIElements.emplace_back(buttonX, playerCountY, buttonWidth, buttonHeight,
-		glm::vec4(0.2f, 0.2f, 0.2f, 0.9f));
+	settingsUIElements.emplace_back(buttonX, playerCountY, buttonWidth, buttonHeight, glm::vec4(0.2f, 0.2f, 0.2f, 0.9f));
+	settingsUIElements.emplace_back(buttonX, aiCountY, buttonWidth, buttonHeight, glm::vec4(0.2f, 0.2f, 0.2f, 0.9f));
+
 }
 
 void MenuSystem::RenderElements(std::vector<UIElement>& elements)
@@ -675,6 +755,9 @@ void MenuSystem::KeyboardInputListener(Event& e)
 		case Menus::SETTINGS:
 		{
 			// settings menu
+			Event event(Events::GameState::NEW_STATE);
+			event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::SETTINGS);
+			controller.SendEvent(event);
 			break;
 		}
 		case Menus::QUIT:
@@ -698,4 +781,17 @@ void MenuSystem::KeyboardInputListener(Event& e)
 		event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::GAME);
 		controller.SendEvent(event);
 	}
+}
+
+float MenuSystem::GetCenteredX(std::string text, float scale)
+{
+	float width = 0.0f;
+
+	for (char c : text)
+	{
+		Character ch = fonts.charArial[c];
+		width += (ch.Advance >> 6) * scale;
+	}
+
+	return (screenWidth * 0.5f) - (width * 0.5f);
 }
