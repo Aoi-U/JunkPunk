@@ -662,18 +662,18 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 		throttle = glm::clamp((ai.desiredSpeed - speed) * ai.throttleKp, 0.0f, ai.maxThrottle);
 	}
 
-	if (shouldLog)
-	{
-		std::cout << "[AI] pos=(" << carPos.x << ", " << carPos.y << ", " << carPos.z << ")"
-			<< " | wp[" << ai.currentWaypointIndex << "/" << ai.navWaypoints.size() << "]=("
-			<< waypointPosition.x << ", " << waypointPosition.y << ", " << waypointPosition.z << ")"
-			<< " | distXZ=" << distXZ
-			<< " | fwdDot=" << forwardDot
-			<< " | steer=" << steer
-			<< " | speed=" << speed
-			<< " | throttle=" << throttle
-			<< std::endl;
-	}
+	//if (shouldLog)
+	//{
+	//	std::cout << "[AI] pos=(" << carPos.x << ", " << carPos.y << ", " << carPos.z << ")"
+	//		<< " | wp[" << ai.currentWaypointIndex << "/" << ai.navWaypoints.size() << "]=("
+	//		<< waypointPosition.x << ", " << waypointPosition.y << ", " << waypointPosition.z << ")"
+	//		<< " | distXZ=" << distXZ
+	//		<< " | fwdDot=" << forwardDot
+	//		<< " | steer=" << steer
+	//		<< " | speed=" << speed
+	//		<< " | throttle=" << throttle
+	//		<< std::endl;
+	//}
 
 	// Stuck detection -- check if car wants to move but physically can't
 	// Use desiredSpeed > 0 as intent, not throttle output (which gets scaled down)
@@ -1165,7 +1165,7 @@ void AiSystem::UpdateWaitingAtDangerZoneState(Entity entity, float deltaTime)
 
 	// Steer toward next waypoint ONLY if moving
 	// When stopped or nearly stopped (speed < 2.0), hold steering straight to prevent spinning
-	if (speed > 2.0f && ai.currentWaypointIndex < ai.navWaypoints.size())
+	if (ai.currentWaypointIndex < ai.navWaypoints.size())
 	{
 		glm::vec3 toWp = ai.navWaypoints[ai.currentWaypointIndex] - carPos;
 		toWp.y = 0.0f;

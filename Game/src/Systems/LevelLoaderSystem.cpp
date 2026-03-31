@@ -155,6 +155,12 @@ void LevelLoaderSystem::LoadLevel()
 		std::cout << "[LevelLoader] NavMesh has " << componentCount << " disconnected island(s) after stitching" << std::endl;
 
 		aiSystemPtr->SetNavMesh(navMesh);
+
+		// Spawn random banana peels along the track
+		//SpawnRandomBananaPeels(30, navMesh);  // Spawn 30 random banana peels
+
+		// Spawn random powerups along the track
+		//SpawnRandomMixedPowerups(10, 10, navMesh);  // 10 speed boosts, 10 banana pickups
 	}
 
 	//punching glove
@@ -865,6 +871,12 @@ void LevelLoaderSystem::LoadLevel()
 		controller.AddComponent(entity, PhysicsBody{});
 	}
 
+		if (aiSystemPtr)
+	{
+		Entity aiVehicle = controller.GetEntityByTag("AIVehicle1");
+		aiSystemPtr->SpawnDebugWaypoints(aiVehicle);
+	}
+
 }
 
 std::pair<std::shared_ptr<Model>, std::shared_ptr<AABB>> LevelLoaderSystem::LoadModel(std::string path)
@@ -878,4 +890,110 @@ std::pair<std::shared_ptr<Model>, std::shared_ptr<AABB>> LevelLoaderSystem::Load
 	}
 
 	return loadedModels[path];
+}
+
+void LevelLoaderSystem::SpawnRandomBananaPeels(int count, const NavMesh& navMesh)
+{
+	if (navMesh.IsEmpty())
+	{
+		std::cout << "[LevelLoader] Cannot spawn bananas: NavMesh is empty" << std::endl;
+		return;
+	}
+
+	auto loaded = LoadModel("assets/models/banana_peel/banana.gltf");
+
+	std::cout << "[LevelLoader] Spawning " << count << " random banana peels..." << std::endl;
+
+	for (int i = 0; i < count; ++i)
+	{
+		// Get a random triangle from the navmesh
+		int32_t randomTriIndex = rand() % navMesh.TriangleCount();
+		glm::vec3 spawnPos = navMesh.GetTriangles()[randomTriIndex].centroid;
+
+		// Add a small upward offset so banana doesn't spawn inside the ground
+		spawnPos.y += 1.0f;
+
+		// Spawn banana peel entity
+		Entity entity = controller.createEntity();
+		controller.AddComponent(entity, Transform{ spawnPos, glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.5f) });
+		controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 1.0f, 1.0f });
+		controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
+		controller.AddComponent(entity, PhysicsBody{});
+		controller.AddComponent(entity, Banana{});
+
+		std::cout << "  Banana peel " << (i + 1) << "/" << count
+			<< " at (" << spawnPos.x << ", " << spawnPos.y << ", " << spawnPos.z << ")" << std::endl;
+	}
+}
+
+void LevelLoaderSystem::SpawnRandomPowerups(int count, int powerupType, const NavMesh& navMesh)
+{
+	if (navMesh.IsEmpty())
+	{
+		std::cout << "[LevelLoader] Cannot spawn powerups: NavMesh is empty" << std::endl;
+		return;
+	}
+
+	// Determine model path and scale based on powerup type
+	std::string modelPath;
+	glm::vec3 scale;
+	std::string typeName;
+
+	if (powerupType == 1)
+	{
+		modelPath = "assets/models/lightning_capsule/scene.gltf";
+		scale = glm::vec3(0.25f);
+		typeName = "Speed Boost";
+	}
+	else if (powerupType == 2)
+	{
+		modelPath = "assets/models/banana/scene.gltf";
+		scale = glm::vec3(1.0f);
+		typeName = "Banana Pickup";
+	}
+	else
+	{
+		std::cout << "[LevelLoader] Invalid powerup type: " << powerupType << std::endl;
+		return;
+	}
+
+	auto loaded = LoadModel(modelPath);
+
+	std::cout << "[LevelLoader] Spawning " << count << " random " << typeName << " powerups..." << std::endl;
+
+	for (int i = 0; i < count; ++i)
+	{
+		// Get a random triangle from the navmesh
+		int32_t randomTriIndex = rand() % navMesh.TriangleCount();
+		glm::vec3 spawnPos = navMesh.GetTriangles()[randomTriIndex].centroid;
+
+		// Add a small upward offset so powerup doesn't spawn inside the ground
+		spawnPos.y += 2.0f;
+
+		// Spawn powerup entity
+		Entity entity = controller.createEntity();
+		controller.AddComponent(entity, Transform{ spawnPos, glm::quat(1.0f, 0.0f, 0.0f, 0.0f), scale });
+		controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 2.0f, 1.0f });
+		controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
+		controller.AddComponent(entity, PhysicsBody{});
+		controller.AddComponent(entity, Powerup{
+			powerupType,
+			false,  // not active
+			5.0f,   // duration
+			0.0f    // timer
+		});
+
+		std::cout << "  " << typeName << " " << (i + 1) << "/" << count
+			<< " at (" << spawnPos.x << ", " << spawnPos.y << ", " << spawnPos.z << ")" << std::endl;
+	}
+}
+
+void LevelLoaderSystem::SpawnRandomMixedPowerups(int speedBoostCount, int bananaCount, const NavMesh& navMesh)
+{
+	std::cout << "[LevelLoader] Spawning mixed powerups: "
+		<< speedBoostCount << " Speed Boosts, "
+		<< bananaCount << " Banana Pickups" << std::endl;
+
+	SpawnRandomPowerups(speedBoostCount, 1, navMesh);  // Speed boosts
+	SpawnRandomPowerups(bananaCount, 2, navMesh);      // Banana pickups
 }

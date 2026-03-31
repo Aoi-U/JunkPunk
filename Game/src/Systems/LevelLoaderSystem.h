@@ -14,6 +14,7 @@
 #include "../Systems/System.h"
 
 class AiSystem;
+class NavMesh;
 
 class LevelLoaderSystem : public System
 {
@@ -23,6 +24,16 @@ public:
 
 	// returns the model and its bounding volume for the render component
 	std::pair<std::shared_ptr<Model>, std::shared_ptr<AABB>> LoadModel(std::string path);
+
+	// Spawns banana peels at random positions along the NavMesh
+	void SpawnRandomBananaPeels(int count, const NavMesh& navMesh);
+
+	// Spawns powerups of a specific type at random positions along the NavMesh
+	// powerupType: 1 = Speed Boost (lightning), 2 = Banana Pickup
+	void SpawnRandomPowerups(int count, int powerupType, const NavMesh& navMesh);
+
+	// Spawns a mix of both powerup types randomly across the NavMesh
+	void SpawnRandomMixedPowerups(int speedBoostCount, int bananaCount, const NavMesh& navMesh);
 private:
 
 	// maps file name to its corresponding model and its bounding volume
