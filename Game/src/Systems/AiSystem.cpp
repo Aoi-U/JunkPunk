@@ -1165,7 +1165,7 @@ void AiSystem::UpdateWaitingAtDangerZoneState(Entity entity, float deltaTime)
 
 	// Steer toward next waypoint ONLY if moving
 	// When stopped or nearly stopped (speed < 2.0), hold steering straight to prevent spinning
-	if (speed > 2.0f && ai.currentWaypointIndex < ai.navWaypoints.size())
+	if (ai.currentWaypointIndex < ai.navWaypoints.size())
 	{
 		glm::vec3 toWp = ai.navWaypoints[ai.currentWaypointIndex] - carPos;
 		toWp.y = 0.0f;

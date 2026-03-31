@@ -146,10 +146,10 @@ void LevelLoaderSystem::LoadLevel()
 		aiSystemPtr->SetNavMesh(navMesh);
 
 		// Spawn random banana peels along the track
-		SpawnRandomBananaPeels(30, navMesh);  // Spawn 30 random banana peels
+		//SpawnRandomBananaPeels(30, navMesh);  // Spawn 30 random banana peels
 
 		// Spawn random powerups along the track
-		SpawnRandomMixedPowerups(10, 10, navMesh);  // 10 speed boosts, 10 banana pickups
+		//SpawnRandomMixedPowerups(10, 10, navMesh);  // 10 speed boosts, 10 banana pickups
 	}
 
 	//punching glove
@@ -582,19 +582,6 @@ void LevelLoaderSystem::LoadLevel()
 			<< " at (" << spawn.startPos.x << ", " << spawn.startPos.y << ", " << spawn.startPos.z << ")" << std::endl;
 	}
 
-	// test trigger box
-	//entity = controller.createEntity();
-	//controller.AddComponent(entity, PhysicsBody{});
-	//controller.AddComponent(entity, Trigger{ nullptr, 10.0f, 2.0f, 10.0f });
-	//controller.AddComponent(entity, Transform{
-	//	glm::vec3(25.0f, 35.0f, 120.0f),
-	//	glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
-	//	glm::vec3(1.0f)
-	//	});
-
-	// Note: Random powerups are spawned via SpawnRandomMixedPowerups() earlier in LoadLevel()
-	// These manual spawns can be used for specific testing locations if needed
-
 	// finish line
   entity = controller.createEntity();
   loaded = LoadModel("assets/models/finishline/finishline.gltf");
@@ -609,12 +596,12 @@ void LevelLoaderSystem::LoadLevel()
     });
   controller.AssignTag(entity, "FinishLine");
 
-	//// Debug: spawn visible trigger markers at each navmesh waypoint
-	//if (aiSystemPtr)
-	//{
-	//	Entity aiVehicle = controller.GetEntityByTag("AIVehicle1");
-	//	aiSystemPtr->SpawnDebugWaypoints(aiVehicle);
-	//}
+	// Debug: spawn visible trigger markers at each navmesh waypoint
+	if (aiSystemPtr)
+	{
+		Entity aiVehicle = controller.GetEntityByTag("AIVehicle1");
+		aiSystemPtr->SpawnDebugWaypoints(aiVehicle);
+	}
 }
 
 std::pair<std::shared_ptr<Model>, std::shared_ptr<AABB>> LevelLoaderSystem::LoadModel(std::string path)
