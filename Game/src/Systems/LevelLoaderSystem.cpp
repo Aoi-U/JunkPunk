@@ -157,7 +157,7 @@ void LevelLoaderSystem::LoadLevel()
 		aiSystemPtr->SetNavMesh(navMesh);
 
 		// Spawn random banana peels along the track
-		//SpawnRandomBananaPeels(30, navMesh);  // Spawn 30 random banana peels
+		SpawnRandomBananaPeels(30, navMesh);  // Spawn 30 random banana peels
 
 		// Spawn random powerups along the track
 		//SpawnRandomMixedPowerups(10, 10, navMesh);  // 10 speed boosts, 10 banana pickups
@@ -769,25 +769,6 @@ void LevelLoaderSystem::LoadLevel()
 	controller.AddComponent(entity, CheckPoint{ glm::quat(1.0f, 0.0f, 0.0f, 0.0f) });
 	controller.AddComponent(entity, Trigger{ nullptr, 5.0f, 2.0f, 5.0f });
 
-	// Used strictly for testing AI waypoints, can be removed later
-	//std::vector<Waypoint> waypoints;
-	//if (aiSystemPtr) {
-	//	waypoints = aiSystemPtr->GetWaypoints();
-	//	std::cout << "Loaded " << waypoints.size() << " waypoints for AI from AiSystem" << std::endl;
-	//}
-	//else {
-	//	// fallback: leave empty or build defaults
-	//	std::cout << "Warning: AiSystem not set in LevelLoaderSystem, no waypoints loaded for AI" << std::endl;
-	//}
-	//
-	//for (const Waypoint& wp : waypoints) {
-	//	entity = controller.createEntity();
-	//	controller.AddComponent(entity, PhysicsBody{});
-	//	controller.AddComponent(entity, Transform{ wp.position, glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.25f) });
-	//	controller.AddComponent(entity, CheckPoint{ glm::quat(1.0f, 0.0f, 0.0f, 0.0f) });
-	//	controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 4.0f, 1.0f });
-	//}
-
 	std::vector<glm::vec3> sludge_positions = {
 		//glm::vec3(81.0f, -260.25f, -234.0f), // POSITION (adjust as needed)
 		glm::vec3(-83.0f, -28.f, 258.7f),
@@ -871,11 +852,12 @@ void LevelLoaderSystem::LoadLevel()
 		controller.AddComponent(entity, PhysicsBody{});
 	}
 
-		if (aiSystemPtr)
-	{
-		Entity aiVehicle = controller.GetEntityByTag("AIVehicle1");
-		aiSystemPtr->SpawnDebugWaypoints(aiVehicle);
-	}
+	// Used for testing A* pathfinding and debug rendering of AI waypoints
+	//if (aiSystemPtr)
+	//{
+	//	Entity aiVehicle = controller.GetEntityByTag("AIVehicle1");
+	//	aiSystemPtr->SpawnDebugWaypoints(aiVehicle);
+	//}
 
 }
 
