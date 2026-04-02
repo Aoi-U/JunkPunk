@@ -682,8 +682,8 @@ void Game::TriggerEnterListener(Event& e)
 		return;
 	}
 	else if (controller.HasComponent<Powerup>(triggerEntity) &&
-		controller.HasComponent<PlayerController>(otherEntity) &&
-		!controller.HasComponent<Powerup>(otherEntity)) {
+		!controller.HasComponent<Powerup>(otherEntity) &&
+		(controller.HasComponent<PlayerController>(otherEntity) || controller.HasComponent<AiDriver>(otherEntity))) {
 		auto pickup = controller.GetComponent<Powerup>(triggerEntity);
 		auto& t = controller.GetComponent<Transform>(triggerEntity);
 		auto& trig = controller.GetComponent<Trigger>(triggerEntity);
@@ -811,4 +811,29 @@ void Game::UpdatePowerupRespawns(float deltaTime)
 			}),
 		pendingRespawns.end()
 	);
+}
+
+void Game::SchedulePowerupRespawn(Entity entity)
+{
+	if (!controller.HasComponent<Transform>(entity) ||
+		!controller.HasComponent<Powerup>(entity) ||
+		!controller.HasComponent<Trigger>(entity))
+		return;
+
+	auto& t = controller.GetComponent<Transform>(entity);
+	auto& p = controller.GetComponent<Powerup>(entity);
+	auto& trig = controller.GetComponent<Trigger>(entity);
+
+	PowerupRespawnData data;
+	data.position = t.position;
+	data.rotation = t.quatRotation;
+	data.scale = t.scale;
+	data.powerup = p;
+	data.trigger = trig;
+	data.timer = 5.0f;
+	if (p.type == 1) data.modelPath = "assets/models/lightning_capsule/scene.gltf";
+	else if (p.type == 2) data.modelPath = "assets/models/banana/scene.gltf";
+	else if (p.type == 3) data.modelPath = "assets/models/bomb/scene.gltf";
+
+	pendingRespawns.push_back(data);
 }

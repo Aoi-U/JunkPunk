@@ -1313,6 +1313,10 @@ void AiSystem::UpdateSeekPowerupState(Entity entity, float deltaTime)
 		ai.hasPowerup = true;
 		ai.heldPowerupType = pickup.type;
 		std::cout << "[AI] Collected powerup type " << pickup.type << std::endl;
+
+		if (gameInstance)
+			gameInstance->SchedulePowerupRespawn(ai.targetPowerupEntity);
+
 		controller.DestroyEntity(ai.targetPowerupEntity);
 		ai.targetPowerupEntity = 0;
 
