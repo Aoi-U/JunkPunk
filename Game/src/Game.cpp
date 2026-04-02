@@ -696,9 +696,9 @@ void Game::TriggerEnterListener(Event& e)
 		data.powerup = pickup;
 		data.trigger = trig;
 		data.timer = 5.0f;
-		if (pickup.type == 1) data.modelPath = "assets/models/lightning_capsule/scene.gltf";
-		else if (pickup.type == 2) data.modelPath = "assets/models/banana/scene.gltf";
-		else if (pickup.type == 3) data.modelPath = "assets/models/bomb/scene.gltf";
+		if (pickup.type == 1) data.modelPath = "assets/models/batterybox/battery_powerup.gltf";
+		else if (pickup.type == 2) data.modelPath = "assets/models/bananabox/banana_powerup.gltf";
+		else if (pickup.type == 3) data.modelPath = "assets/models/bombbox/bomb_powerup.gltf";
 		pendingRespawns.push_back(data);
 
 		controller.AddComponent(otherEntity, pickup);
@@ -831,9 +831,9 @@ void Game::SchedulePowerupRespawn(Entity entity)
 	data.powerup = p;
 	data.trigger = trig;
 	data.timer = 5.0f;
-	if (p.type == 1) data.modelPath = "assets/models/lightning_capsule/scene.gltf";
-	else if (p.type == 2) data.modelPath = "assets/models/banana/scene.gltf";
-	else if (p.type == 3) data.modelPath = "assets/models/bomb/scene.gltf";
+	if (p.type == 1) data.modelPath = "assets/models/batterybox/battery_powerup.gltf";
+	else if (p.type == 2) data.modelPath = "assets/models/bananabox/banana_powerup.gltf";
+	else if (p.type == 3) data.modelPath = "assets/models/bombbox/bomb_powerup.gltf";
 
 	pendingRespawns.push_back(data);
 }
