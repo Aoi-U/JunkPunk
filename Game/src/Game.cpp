@@ -764,10 +764,11 @@ void Game::SpawnBananaPeel(Entity vehicle) {
 	//spawnPos = glm::vec3(-60.0f, -94.0f, -7.0f);
 	Entity banana = controller.createEntity();
 	auto loaded = loaderSystem->LoadModel("assets/models/banana_peel/banana.gltf");
+	spawnPos.y += 0.5f;
 	controller.AddComponent(banana, Transform{
 		spawnPos,
 		glm::quat(1.0f,0.0f,0.0f,0.0f),
-		glm::vec3(0.5f)
+		glm::vec3(1.0f)
 		});
 	controller.AddComponent(banana, Trigger{ nullptr, 1.0f, 1.0f, 1.0f });
 	controller.AddComponent(banana, Render{ loaded.first, loaded.second, true });
