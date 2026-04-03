@@ -333,7 +333,7 @@ void MainVehicle::SpinOut(float deltaTime)
 	if (!dyn) return;
 
 	PxVec3 angVel = dyn->getAngularVelocity();
-	angVel.y = 18.0f;
+	angVel.y = 10.0f;
 	dyn->setAngularVelocity(angVel);
 
 	PxVec3 linVel = dyn->getLinearVelocity();

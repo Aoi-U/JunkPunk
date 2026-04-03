@@ -30,7 +30,7 @@ float posLogTimer = 0.0f;
 const float POS_LOG_INTERVAL = 1.0f; // 500 ms
 // -------------------------
 float winTimer = 0.0f;
-const float WIN_DELAY = 5.0f;
+const float WIN_DELAY = 3.0f;
 float fadeAlpha = 0.0f;
 Entity playerEntity;
 Entity aiEntity;
