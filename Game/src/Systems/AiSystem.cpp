@@ -25,46 +25,150 @@ void AiSystem::SetNavMesh(const NavMesh& mesh)
 	navMesh = mesh;
 	std::cout << "[AiSystem] NavMesh set: " << navMesh.TriangleCount() << " triangles ("
 		<< navMesh.TriangleCount() << " nodes available for pathfinding)" << std::endl;
+
+	// Print bounding box
+	if (!navMesh.IsEmpty()) {
+		glm::vec3 minPos(FLT_MAX), maxPos(-FLT_MAX);
+		for (const auto& tri : navMesh.GetTriangles()) {
+			minPos = (glm::min)(minPos, tri.centroid);
+			maxPos = (glm::max)(maxPos, tri.centroid);
+		}
+		std::cout << "[AiSystem] NavMesh bounding box:" << std::endl;
+		std::cout << "  Min: (" << minPos.x << ", " << minPos.y << ", " << minPos.z << ")" << std::endl;
+		std::cout << "  Max: (" << maxPos.x << ", " << maxPos.y << ", " << maxPos.z << ")" << std::endl;
+	}
 }
 
 void AiSystem::ComputeNavPath(Entity entity)
 {
 	auto& ai = controller.GetComponent<AiDriver>(entity);
 	auto& transform = controller.GetComponent<Transform>(entity);
-
+	
 	glm::vec3 startPos = transform.position;
-
-	// Strategic waypoints for track navigation
 	glm::vec3 beforeGap(-60.0f, -31.0f, 170.0f);
-	glm::vec3 afterGap(135.0f, -31.0f, 185.0f);
+	glm::vec3 afterGap(150.0f, -28.0f, 185.0f);
+	glm::vec3 beforeTunnel(150.0f, -31.0f, 244.0f);
+	glm::vec3 midTunnel(-135.600f, -28.000f, 392.500f);
+	glm::vec3 inTunnel(-62.000f, -26.000f, 314.000f);
+	glm::vec3 uppertrack(107.854f, 54.011f, 318.240f);
 
-	std::cout << "[AiSystem] Computing path from (" << startPos.x << ", " << startPos.y << ", " << startPos.z << ")" 
-		<< " to waypoint before gap (" << beforeGap.x << ", " << beforeGap.y << ", " << beforeGap.z << ")" << std::endl;
+	std::cout << "\n=== TUNNEL CEILING CHECK ===" << std::endl;
 
-	// For now: just path to the waypoint before the gap
+	auto countTrianglesAtHeight = [this](const glm::vec3& point, float minY, float maxY, float radius) -> int {
+		int count = 0;
+		for (const auto& tri : navMesh.GetTriangles()) {
+			float dist = glm::length(glm::vec3(tri.centroid.x - point.x, 0.0f, tri.centroid.z - point.z));
+			if (dist < radius && tri.centroid.y >= minY && tri.centroid.y <= maxY) {
+				count++;
+			}
+		}
+		return count;
+		};
+
+	std::cout << "Triangles near tunnel at Y=-35 to -20 (floor): "
+		<< countTrianglesAtHeight(midTunnel, -35.0f, -20.0f, 50.0f) << std::endl;
+	std::cout << "Triangles near tunnel at Y=0 to 30 (potential ceiling): "
+		<< countTrianglesAtHeight(midTunnel, 0.0f, 30.0f, 50.0f) << std::endl;
+
+	// SEGMENT 1: Start -> beforeGap
 	int32_t startTri = navMesh.FindTriangle(startPos);
 	if (startTri < 0) startTri = navMesh.FindClosestTriangle(startPos);
+	int32_t beforeGapTri = navMesh.FindTriangle(beforeGap);
+	if (beforeGapTri < 0) beforeGapTri = navMesh.FindClosestTriangle(beforeGap);
+	NavPath path1 = navMesh.FindPath(startTri, beforeGapTri, startPos, beforeGap);
 
-	int32_t goalTri = navMesh.FindTriangle(beforeGap);
-	if (goalTri < 0) goalTri = navMesh.FindClosestTriangle(beforeGap);
+	// SEGMENT 2: After gap -> before tunnel
+	// Use FindTriangleAtHeight to avoid matching ceiling/wall triangles
+	int32_t afterGapTri = navMesh.FindTriangleAtHeight(afterGap, 5.0f);
+	if (afterGapTri < 0) afterGapTri = navMesh.FindClosestTriangleAtHeight(afterGap, 5.0f);
 
-	std::cout << "[AiSystem] Start triangle: " << startTri << ", Goal triangle: " << goalTri << std::endl;
+	int32_t beforeTunnelTri = navMesh.FindTriangleAtHeight(beforeTunnel, 5.0f);
+	if (beforeTunnelTri < 0) beforeTunnelTri = navMesh.FindClosestTriangleAtHeight(beforeTunnel, 5.0f);
+	NavPath path2 = navMesh.FindPath(afterGapTri, beforeTunnelTri, afterGap, beforeTunnel);
 
-	NavPath path = navMesh.FindPath(startTri, goalTri, startPos, beforeGap);
+	int32_t midTunnelTri = navMesh.FindTriangleAtHeight(midTunnel, 5.0f);
+	if (midTunnelTri < 0) midTunnelTri = navMesh.FindClosestTriangleAtHeight(midTunnel, 5.0f);
+	NavPath path3 = navMesh.FindPath(beforeTunnelTri, midTunnelTri, beforeTunnel, midTunnel);
 
-	ai.navWaypoints = path.waypoints;
+	// SEGMENT 3: Before tunnel -> inside tunnel
+	int32_t inTunnelTri = navMesh.FindTriangle(inTunnel);
+	if (inTunnelTri < 0) inTunnelTri = navMesh.FindClosestTriangle(inTunnel);
+	NavPath path4 = navMesh.FindPath(midTunnelTri, inTunnelTri, midTunnel, inTunnel);
+
+	// SEGMENT 5: Inside tunnel -> upper track
+	int32_t upperTrackTri = navMesh.FindTriangle(uppertrack);
+	if (upperTrackTri < 0) upperTrackTri = navMesh.FindClosestTriangle(uppertrack);
+	NavPath path5 = navMesh.FindPath(inTunnelTri, upperTrackTri, inTunnel, uppertrack);
+
+	// SEGMENT 6: Upper track -> goal
+	int32_t goalTri = navMesh.FindTriangle(goalPosition);
+	//std::cout << "[AiSystem] Segment 4: Goal position triangle using FindTriangle = " << goalTri << std::endl;
+	if (goalTri < 0) goalTri = navMesh.FindClosestTriangle(goalPosition);
+	//std::cout << "[AiSystem] Segment 4: Goal position triangle using FindClosestTriangle = " << goalTri << std::endl;
+
+	NavPath path6 = navMesh.FindPath(upperTrackTri, goalTri, uppertrack, goalPosition);
+
+	// Assemble the full waypoint path from all segments
+	ai.navWaypoints = path1.waypoints;
+
+	// Manual gap crossing
+	ai.navWaypoints.push_back(beforeGap);  // approach platform
+	ai.navWaypoints.push_back(afterGap);   // exit platform
+
+	// Segment 2 (afterGap -> beforeTunnel)
+	ai.navWaypoints.insert(ai.navWaypoints.end(),
+		path2.waypoints.begin(),
+		path2.waypoints.end());
+
+	ai.navWaypoints.push_back(beforeTunnel);
+
+	// Segment 3 (beforeTunnel -> midTunnel)
+	if (!path3.waypoints.empty())
+	{
+		ai.navWaypoints.insert(ai.navWaypoints.end(),
+			path3.waypoints.begin(),
+			path3.waypoints.end());
+	}
+	else
+	{
+		ai.navWaypoints.push_back(midTunnel);  // Only if A* failed
+	}
+
+	// Segment 4: midTunnel -> inTunnel
+	if (!path4.waypoints.empty())
+	{
+		ai.navWaypoints.insert(ai.navWaypoints.end(),
+			path4.waypoints.begin(),
+			path4.waypoints.end());
+	}
+	else
+	{
+		ai.navWaypoints.push_back(inTunnel);  // Only if A* failed
+	}
+
+	// Segment 4 (inside tunnel -> upper track)
+	if (!path5.waypoints.empty())
+	{
+		ai.navWaypoints.insert(ai.navWaypoints.end(),
+			path5.waypoints.begin(),
+			path5.waypoints.end());
+	}
+	else
+	{
+		ai.navWaypoints.push_back(uppertrack);  // Only if A* failed
+	}
+
+	// Bridge to Segment 5
+	ai.navWaypoints.push_back(uppertrack);
+
+	// Segment 5 (uppertrack -> goal)
+	ai.navWaypoints.insert(ai.navWaypoints.end(),
+		path6.waypoints.begin(),
+		path6.waypoints.end());
+
 	ai.currentWaypointIndex = 0;
-
 	if (ai.navWaypoints.size() > 1)
 		ai.currentWaypointIndex = 1;
-
-	std::cout << "[AiSystem] Path computed: " << path.triangleIndices.size()
-		<< " corridor triangles -> " << ai.navWaypoints.size() << " waypoints" << std::endl;
-
-	if (path.waypoints.empty())
-	{
-		std::cout << "[AiSystem] WARNING: Path computation returned 0 waypoints!" << std::endl;
-	}
 }
 
 void AiSystem::RecomputeNavPath(Entity entity)
@@ -939,18 +1043,18 @@ void AiSystem::UpdateAvoidObstacleState(Entity entity, float deltaTime)
 		toBanana.y = 0.0f;
 
 		float dotToBanana = glm::dot(forward, glm::normalize(toBanana));
-		std::cout << "test1" << std::endl;
+
 		//if (dotToBanana < 0.0f)  // banana is now behind us
 		//{
 		//	std::cout << "test2" << std::endl;
 		//	std::cout << "[AI] Banana passed, resuming normal path" << std::endl;
 		//}
-		std::cout << "test3" << std::endl;
-			ai.temporaryAvoidTarget = glm::vec3(0.0f);  // clear the avoidance target
-			ai.detectedObstacleEntity = 0;
-			RecomputeNavPath(entity);  // get back on track
-			TransitionToState(entity, AiState::FollowPath);
-			return;
+
+		ai.temporaryAvoidTarget = glm::vec3(0.0f);  // clear the avoidance target
+		ai.detectedObstacleEntity = 0;
+		RecomputeNavPath(entity);  // get back on track
+		TransitionToState(entity, AiState::FollowPath);
+		return;
 
 		// Alternative exit condition: if we have a valid path and are close to the temporary target, exit avoidance
 		// float distToAvoidTarget = glm::length(toAvoidTarget);
@@ -1232,20 +1336,6 @@ bool AiSystem::IsArmBlocking(glm::vec3 carPos)
 	return false;
 }
 
-void AiSystem::UpdateBrakingState(Entity entity, float deltaTime)
-{
-	// TODO: Slow down before sharp turns, then resume FollowPath.
-	//
-	// Possible approach:
-	// - Check the angle between current forward and the direction to a waypoint
-	//   brakingLookaheadWaypoints ahead
-	// - If the dot product is below brakingAngleThreshold, apply brakes
-	//   and reduce speed to brakingSpeed
-	// - Once speed is low enough or the turn is passed, transition to FollowPath
-
-	TransitionToState(entity, AiState::FollowPath);
-}
-
 void AiSystem::UpdateSeekPowerupState(Entity entity, float deltaTime)
 {
 	auto& ai = controller.GetComponent<AiDriver>(entity);
@@ -1403,6 +1493,22 @@ void AiSystem::TryUsePowerup(Entity entity)
 	}
 }
 
+
+void AiSystem::UpdateBoxingGloveZoneState(Entity entity, float deltaTime)
+{
+	TransitionToState(entity, AiState::FollowPath);
+}
+
+void AiSystem::UpdateCrossingGap(Entity entity, float deltaTime)
+{
+	TransitionToState(entity, AiState::FollowPath);
+}
+
+void AiSystem::UpdateFloorItState(Entity entity, float deltaTime)
+{
+	TransitionToState(entity, AiState::FollowPath);
+}
+
 void AiSystem::UpdateUsePowerupState(Entity entity, float deltaTime)
 {
 	// Powerup usage is now handled inline in FollowPath via TryUsePowerup.
@@ -1419,6 +1525,20 @@ void AiSystem::UpdateOvertakingState(Entity entity, float deltaTime)
 	// - If player is ahead and in the car's forward cone, steer to one side
 	//   using overtakeSteerOffset
 	// - Once past the player (player is now behind), transition back to FollowPath
+
+	TransitionToState(entity, AiState::FollowPath);
+}
+
+void AiSystem::UpdateBrakingState(Entity entity, float deltaTime)
+{
+	// TODO: Slow down before sharp turns, then resume FollowPath.
+	//
+	// Possible approach:
+	// - Check the angle between current forward and the direction to a waypoint
+	//   brakingLookaheadWaypoints ahead
+	// - If the dot product is below brakingAngleThreshold, apply brakes
+	//   and reduce speed to brakingSpeed
+	// - Once speed is low enough or the turn is passed, transition to FollowPath
 
 	TransitionToState(entity, AiState::FollowPath);
 }

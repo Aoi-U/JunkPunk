@@ -145,10 +145,43 @@ void LevelLoaderSystem::LoadLevel()
 			glm::vec3(200.0f),                            // same scale
 			35.0f                                        // max slope angle – tweak if too many/few triangles
 		);
+		// Manually add bridge triangles across the gap
+		// Replace your single AddTriangle call with this full bridge:
+
+		// Left edge of bridge
+		glm::vec3 p1(-60.0f, -31.0f, 155.0f);  // back-left
+		glm::vec3 p2(-60.0f, -31.0f, 200.0f);  // front-left
+
+		// Quarter point
+		glm::vec3 p3(10.0f, -31.0f, 155.0f);   // mid-back-left
+		glm::vec3 p4(10.0f, -31.0f, 200.0f);   // mid-front-left
+
+		// Halfway point
+		glm::vec3 p5(80.0f, -31.0f, 155.0f);   // mid-back-right
+		glm::vec3 p6(80.0f, -31.0f, 200.0f);   // mid-front-right
+
+		// Right edge of bridge
+		glm::vec3 p7(150.0f, -31.0f, 155.0f);  // end-back-right
+		glm::vec3 p8(150.0f, -31.0f, 200.0f);  // end-front-right
+
+		// First quad (2 triangles)
+		navMesh.AddTriangle(p1, p2, p3);
+		navMesh.AddTriangle(p2, p4, p3);
+
+		// Second quad (2 triangles)
+		navMesh.AddTriangle(p3, p4, p5);
+		navMesh.AddTriangle(p4, p6, p5);
+
+		// Third quad (2 triangles)
+		navMesh.AddTriangle(p5, p6, p7);
+		navMesh.AddTriangle(p6, p8, p7);
+
+
+		// Add more triangles as needed to cover the gap..
 		navMesh.Subdivide();    // 1023 -> 4092 triangles (4x denser)
 		//navMesh.Subdivide(); // uncomment for 16368 triangles (16x denser) if needed
 		navMesh.BuildAdjacency();
-		navMesh.StitchDisconnectedIslands(30.0f, 3.0f);  // bridge gaps: 30 units horizontal, 15 units vertical max
+		navMesh.StitchDisconnectedIslands(400.0f, 3.0f);
 		navMesh.ComputeEdgeDanger(3);  // spread danger 3 triangles inward from edges
 
 		int32_t componentCount = navMesh.CountConnectedComponents();
@@ -157,7 +190,7 @@ void LevelLoaderSystem::LoadLevel()
 		aiSystemPtr->SetNavMesh(navMesh);
 
 		// Spawn random banana peels along the track
-		SpawnRandomBananaPeels(30, navMesh);  // Spawn 30 random banana peels
+		SpawnRandomBananaPeels(100, navMesh);  // Spawn 100 random banana peels
 
 		// Spawn random powerups along the track
 		//SpawnRandomMixedPowerups(10, 10, navMesh);  // 10 speed boosts, 10 banana pickups
@@ -646,15 +679,15 @@ void LevelLoaderSystem::LoadLevel()
 			});
 	}
 
-	// test trigger box
-	//entity = controller.createEntity();
-	//controller.AddComponent(entity, PhysicsBody{});
-	//controller.AddComponent(entity, Trigger{ nullptr, 10.0f, 2.0f, 10.0f });
-	//controller.AddComponent(entity, Transform{
-	//	glm::vec3(25.0f, 35.0f, 120.0f),
-	//	glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
-	//	glm::vec3(1.0f)
-	//	});
+	 //test trigger box
+	entity = controller.createEntity();
+	controller.AddComponent(entity, PhysicsBody{});
+	controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 4.0f, 1.0f });
+	controller.AddComponent(entity, Transform{
+		glm::vec3(-134.0f, 90.f, 323.0f),
+		glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
+		glm::vec3(1.0f)
+		});
 
 	std::vector<glm::vec3> boost_powerup_positions = {
 		glm::vec3(81.0f, -259.5f, -214.0f), //starter
@@ -853,11 +886,11 @@ void LevelLoaderSystem::LoadLevel()
 	}
 
 	// Used for testing A* pathfinding and debug rendering of AI waypoints
-	//if (aiSystemPtr)
-	//{
-	//	Entity aiVehicle = controller.GetEntityByTag("AIVehicle1");
-	//	aiSystemPtr->SpawnDebugWaypoints(aiVehicle);
-	//}
+	if (aiSystemPtr)
+	{
+		Entity aiVehicle = controller.GetEntityByTag("AIVehicle0");
+		aiSystemPtr->SpawnDebugWaypoints(aiVehicle);
+	}
 
 }
 
@@ -884,7 +917,7 @@ void LevelLoaderSystem::SpawnRandomBananaPeels(int count, const NavMesh& navMesh
 
 	auto loaded = LoadModel("assets/models/banana_peel/banana.gltf");
 
-	std::cout << "[LevelLoader] Spawning " << count << " random banana peels..." << std::endl;
+	//std::cout << "[LevelLoader] Spawning " << count << " random banana peels..." << std::endl;
 
 	for (int i = 0; i < count; ++i)
 	{
@@ -903,8 +936,8 @@ void LevelLoaderSystem::SpawnRandomBananaPeels(int count, const NavMesh& navMesh
 		controller.AddComponent(entity, PhysicsBody{});
 		controller.AddComponent(entity, Banana{});
 
-		std::cout << "  Banana peel " << (i + 1) << "/" << count
-			<< " at (" << spawnPos.x << ", " << spawnPos.y << ", " << spawnPos.z << ")" << std::endl;
+		//std::cout << "  Banana peel " << (i + 1) << "/" << count
+		//	<< " at (" << spawnPos.x << ", " << spawnPos.y << ", " << spawnPos.z << ")" << std::endl;
 	}
 }
 

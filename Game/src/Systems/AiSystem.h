@@ -30,7 +30,7 @@ public:
 private:
 	Game* gameInstance = nullptr;
 	NavMesh navMesh;
-	glm::vec3 goalPosition = glm::vec3(25.0f, -3.5f, 120.0f);
+	glm::vec3 goalPosition = glm::vec3(-70.000f, 56.000f, 326.000f);
 
 	// Computes A* path from the entity's current position to the goal
 	void ComputeNavPath(Entity entity);
