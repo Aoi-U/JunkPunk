@@ -326,6 +326,12 @@ void Game::Run()
 			particleSystem->Update(time->frameTime); // update particles
 
 			renderSystem->Update(time->fps(), physicsSystem->GetRenderBuffer()); // render physics debug data
+			if (controller.HasComponent<Transform>(playerEntity))
+			{
+				auto& t = controller.GetComponent<Transform>(playerEntity);
+				float dist = aiSystem->CalculateDistanceToFinish(t.position);
+				renderSystem->RenderDistanceToFinish(dist);
+			}
 			menuSystem->RenderWinText();
 			//camera_debug_panel->render(); // render debug panel
 			aiSystem->Update(time->frameTime); // update ai drivers

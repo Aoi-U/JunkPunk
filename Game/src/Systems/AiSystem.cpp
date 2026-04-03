@@ -1438,3 +1438,49 @@ void AiSystem::UpdateOvertakingState(Entity entity, float deltaTime)
 
 	TransitionToState(entity, AiState::FollowPath);
 }
+
+float AiSystem::CalculateDistanceToFinish(const glm::vec3& position) const
+{
+	if (entities.empty())
+		return 0.0f;
+
+	Entity aiEntity = *entities.begin();
+	if (!controller.HasComponent<AiDriver>(aiEntity))
+		return 0.0f;
+
+	const auto& navWaypoints = controller.GetComponent<AiDriver>(aiEntity).navWaypoints;
+
+	if (navWaypoints.empty())
+		return 0.0f;
+
+	int closestIndex = 0;
+	float closestDist = (std::numeric_limits<float>::max)();
+	for (int i = 0; i < static_cast<int>(navWaypoints.size()); i++)
+	{
+		float d = glm::length(navWaypoints[i] - position);
+		if (d < closestDist)
+		{
+			closestDist = d;
+			closestIndex = i;
+		}
+	}
+
+	float total = 0.0f;
+
+	if (closestIndex < static_cast<int>(navWaypoints.size()) - 1)
+	{
+		glm::vec3 segDir = glm::normalize(navWaypoints[closestIndex + 1] - navWaypoints[closestIndex]);
+		glm::vec3 toPlayer = position - navWaypoints[closestIndex];
+		float projectedAlong = glm::dot(toPlayer, segDir);
+
+		total = glm::length(navWaypoints[closestIndex + 1] - navWaypoints[closestIndex]) - projectedAlong;
+		closestIndex++;
+	}
+
+	for (int i = closestIndex; i < static_cast<int>(navWaypoints.size()) - 1; i++)
+	{
+		total += glm::length(navWaypoints[i + 1] - navWaypoints[i]);
+	}
+
+	return total > 0.0f ? total : 0.0f;
+}
