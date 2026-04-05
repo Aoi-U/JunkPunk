@@ -399,10 +399,20 @@ void Game::Run()
 						event.SetParam<Entity>(Events::Player::Blast::ENTITY, vehicle);
 						controller.SendEvent(event);
 						controller.RemoveComponent<Powerup>(vehicle);
+						Event soundEvent(Events::Audio::PLAY_SOUND);
+						soundEvent.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/explosion.wav");
+						soundEvent.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
+						soundEvent.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, -10.0f);
+						controller.SendEvent(soundEvent);
 					}
 					else {
 						p.active = true;
 						p.elapsed = 0.0f;
+						Event soundEvent(Events::Audio::PLAY_SOUND);
+						soundEvent.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/boost.wav");
+						soundEvent.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
+						soundEvent.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, -10.0f);
+						controller.SendEvent(soundEvent);
 					}
 					std::cout << "Powerup Used by player " << playerCtrl.playerNum << std::endl;
 				}
@@ -655,10 +665,20 @@ void Game::KeyboardInputListener(Event& e)
 				event.SetParam<Entity>(Events::Player::Blast::ENTITY, player);
 				controller.SendEvent(event);
 				controller.RemoveComponent<Powerup>(player);
+				Event soundEvent(Events::Audio::PLAY_SOUND);
+				soundEvent.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/explosion.wav");
+				soundEvent.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
+				soundEvent.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, -10.0f);
+				controller.SendEvent(soundEvent);
 				}
 				else {
 					p.active = true;
 					p.elapsed = 0.0f;
+					Event soundEvent(Events::Audio::PLAY_SOUND);
+					soundEvent.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/boost.wav");
+					soundEvent.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
+					soundEvent.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, -10.0f);
+					controller.SendEvent(soundEvent);
 				}
 				std::cout << "Powerup Used" << std::endl;
 			}
@@ -709,6 +729,11 @@ void Game::TriggerEnterListener(Event& e)
 
 		controller.AddComponent(otherEntity, pickup);
 		std::cout << "Powerup collected!" << std::endl;
+		Event soundEvent(Events::Audio::PLAY_SOUND);
+		soundEvent.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/powerup.ogg");
+		soundEvent.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
+		soundEvent.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, -10.0f);
+		controller.SendEvent(soundEvent);
 		controller.DestroyEntity(triggerEntity);
 	}
 	else if (controller.HasComponent<CheckPoint>(triggerEntity))
@@ -726,6 +751,11 @@ void Game::TriggerEnterListener(Event& e)
 		Event spinEvent(Events::Player::SPIN_OUT);
 		spinEvent.SetParam<Entity>(Events::Player::Spin_Out::Entity, otherEntity);
 		controller.SendEvent(spinEvent);
+		Event soundEvent(Events::Audio::PLAY_SOUND);
+		soundEvent.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/slip.wav");
+		soundEvent.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
+		soundEvent.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, -10.0f);
+		controller.SendEvent(soundEvent);
 		controller.DestroyEntity(triggerEntity);
 	}
 	else if (controller.HasComponent<Sludge>(triggerEntity) && controller.HasComponent<VehicleCommands>(otherEntity)) {
@@ -789,6 +819,11 @@ void Game::SpawnBananaPeel(Entity vehicle) {
 	Event createEvent(Events::Physics::CREATE_ACTOR);
 	createEvent.SetParam<Entity>(Events::Physics::Create_Actor::ENTITY, banana);
 	controller.SendEvent(createEvent);
+	Event soundEvent(Events::Audio::PLAY_SOUND);
+	soundEvent.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/banana.wav");
+	soundEvent.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
+	soundEvent.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, -10.0f);
+	controller.SendEvent(soundEvent);
 }
 
 void Game::UpdatePowerupRespawns(float deltaTime)

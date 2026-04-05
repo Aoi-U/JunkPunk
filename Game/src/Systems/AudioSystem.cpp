@@ -25,6 +25,12 @@ void AudioSystem::Init()
 	aEngine.LoadSound("assets/audio/outro.mp3", false, true);
 	aEngine.LoadSound("assets/audio/pause.mp3", false);
 
+	aEngine.LoadSound("assets/audio/slip.wav", false);
+	aEngine.LoadSound("assets/audio/boost.wav", false);
+	aEngine.LoadSound("assets/audio/explosion.wav", false);
+	aEngine.LoadSound("assets/audio/powerup.ogg", false);
+	aEngine.LoadSound("assets/audio/banana.wav", false);
+
 	// event listeners
 	controller.AddEventListener(Events::Audio::PLAY_SOUND, [this](Event& e) {this->AudioEventListener(e); });
 	controller.AddEventListener(Events::Player::PLAYER_JUMPED, [this](Event& e) {this->JumpEventListener(e); });
