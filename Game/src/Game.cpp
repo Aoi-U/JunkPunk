@@ -23,6 +23,7 @@ static bool split_camera = false;
 static bool first_time_held_right_click = false;
 bool playerWon = false;
 bool aiWon = false;
+int winningPlayerNum = 0;
 // -------------------------
 // For logging player position
 // position logging
@@ -35,7 +36,7 @@ float fadeAlpha = 0.0f;
 Entity playerEntity;
 Entity aiEntity;
 
-int numPlayers = 1;
+int numPlayers = 2;
 int numAi = 4;
 std::vector<Entity> playerEntities(numPlayers);
 std::vector<Entity> cameraEntities(numPlayers);
@@ -493,6 +494,7 @@ void Game::ChangeGameStateListener(Event& e)
 		currentStateGlobal = state;
 		playerWon = false;
 		aiWon = false;
+		winningPlayerNum = 0;
 		winTimer = 0.0f;
 		fadeAlpha = 0.0f;
 		break;
@@ -618,6 +620,7 @@ void Game::ChangeGameStateListener(Event& e)
 		fadeAlpha = 0.0f;
 		playerWon = false;
 		aiWon = false;
+		winningPlayerNum = 0;
 
 		audioSystem->ResetMusicState();
 
@@ -697,12 +700,20 @@ void Game::TriggerEnterListener(Event& e)
 			playerWon = true;
 			fadeAlpha = 0.0f;
 			winTimer = 0.0f;
-			std::cout << "you win!" << std::endl;
+			//std::cout << "you win!" << std::endl;
+			for (int i = 0; i < static_cast<int>(playerEntities.size()); i++) {
+				if (playerEntities[i] == otherEntity) {
+					winningPlayerNum = i + 1;
+					break;
+				}
+			}
+			std::cout << "Player " << winningPlayerNum << " wins!" << std::endl;
 		}
 		else if (!playerWon && !aiWon && controller.HasComponent<AiDriver>(otherEntity)) {
 			aiWon = true;
 			fadeAlpha = 0.0f;
 			winTimer = 0.0f;
+			winningPlayerNum = -1;
 			std::cout << "AI wins!" << std::endl;
 		}
 		return;
