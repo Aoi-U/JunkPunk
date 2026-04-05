@@ -198,10 +198,10 @@ void LevelLoaderSystem::LoadLevel()
 		controller.AddComponent(entity, MovingObstacle{
 			glove_positions[i],
 			std::vector<glm::quat>{
-				glm::quat_cast(glm::rotate(glm::mat4(1.0f), glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f))),
-				glm::quat_cast(glm::rotate(glm::mat4(1.0f), glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f))),
-				glm::quat_cast(glm::rotate(glm::mat4(1.0f), glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f))),
-				glm::quat_cast(glm::rotate(glm::mat4(1.0f), glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f))),
+				glm::quat_cast(glm::rotate(glm::rotate(glm::mat4(1.0f), glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f)), glm::pi<float>()/2.0f, glm::vec3(0.0f, 0.0f, 1.0f))),
+				glm::quat_cast(glm::rotate(glm::rotate(glm::mat4(1.0f), glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f)), glm::pi<float>()/2.0f, glm::vec3(0.0f, 0.0f, 1.0f))),
+				glm::quat_cast(glm::rotate(glm::rotate(glm::mat4(1.0f), glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f)), glm::pi<float>()/2.0f, glm::vec3(0.0f, 0.0f, 1.0f))),
+				glm::quat_cast(glm::rotate(glm::rotate(glm::mat4(1.0f), glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f)), glm::pi<float>()/2.0f, glm::vec3(0.0f, 0.0f, 1.0f))),
 			},
 			std::vector <float>{
 				2.0f, glove_speed[i], 0.5f, 0.5f
