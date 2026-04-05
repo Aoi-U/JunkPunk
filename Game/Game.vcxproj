@@ -144,6 +144,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Gamepad.cpp" />
+    <ClCompile Include="src\AiSystemDebug.cpp" />
     <ClCompile Include="src\Core\AudioEngine.cpp" />
     <ClCompile Include="src\Core\EBO.cpp" />
     <ClCompile Include="src\Core\Light.cpp" />
@@ -200,6 +201,7 @@
   <ItemGroup>
     <ClInclude Include="assets\shaders\colliders.vert" />
     <ClInclude Include="Gamepad.h" />
+    <ClInclude Include="src\AiSystemDebug.h" />
     <ClInclude Include="src\Components\AiDriver.h" />
     <ClInclude Include="src\Components\Camera.h" />
     <ClInclude Include="src\Components\ComponentArray.h" />

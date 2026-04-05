@@ -9,8 +9,11 @@ enum class AiState;
 
 class Game;
 
+class AiSystemDebug; // forward declaration
+
 class AiSystem : public System
 {
+	friend class AiSystemDebug; // Allow access to private members
 public:
 	void Init();
 	void Update(float deltaTime);
@@ -19,11 +22,6 @@ public:
 	const NavMesh& GetNavMesh() const { return navMesh; }
 
 	void SetGoalPosition(const glm::vec3& goal) { goalPosition = goal; }
-
-	void SpawnDebugWaypoints(Entity entity);
-	void SpawnDebugZoneTriggers();
-	// Spawns a 1x1 trigger box at every navmesh triangle centroid (node)
-	void SpawnDebugNodes();
 
 	// Check if a position is in a danger zone (returns closest danger distance, or -1 if safe)
 	float CheckDangerZone(const glm::vec3& position) const;
@@ -52,7 +50,7 @@ private:
 	void RecomputeNavPath(Entity entity);
 
 	void UpdateStateMachine(Entity entity, float deltaTime);
-	void TransitionToState(Entity entity, AiState newState);
+	void TransitionToState(Entity entity, AiState newState, float deltaTime);
 
 	void UpdateFollowPathState(Entity entity, float deltaTime);
 	void UpdateBackingUpState(Entity entity, float deltaTime);
@@ -66,9 +64,12 @@ private:
 	void UpdateGapZoneState(Entity entity, float deltaTime);
 	void UpdateTunnelZoneState(Entity entity, float deltaTime);
 	void UpdateWaitingAtDangerZoneState(Entity entity, float deltaTime);
+	void UpdateIsFlippedState(Entity entity, float deltaTime);
+	void UpdateIsStuckState(Entity entity, float deltaTime);
+	void UpdateFloorItState(Entity entity, float deltaTime);
+
 	bool IsObstacleInDangerZone(const glm::vec3& point) const;
 	void AdvanceThroughBoxingGlove(Entity entity);
-	void UpdateFloorItState(Entity entity, float deltaTime);
 
 	// Checks if conditions are right to use a held powerup. Called during FollowPath.
 	void TryUsePowerup(Entity entity);

@@ -14,6 +14,7 @@
 #include "../Systems/System.h"
 
 class AiSystem;
+class AiSystemDebug; // forward declaration
 class NavMesh;
 
 class LevelLoaderSystem : public System

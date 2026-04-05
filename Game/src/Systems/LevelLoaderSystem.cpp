@@ -9,7 +9,8 @@
 #include "../Components/Powerup.h"
 #include "../Components/AiDriver.h"
 #include "AiSystem.h"
-#include"../Components/Banana.h"
+#include "../AiSystemDebug.h"
+#include "../Components/Banana.h"
 #include "../NavMesh.h"
 #include "../Components/DangerZone.h"
 #include "../Components/Sludge.h"
@@ -893,8 +894,8 @@ void LevelLoaderSystem::LoadLevel()
 	if (aiSystemPtr)
 	{
 		Entity aiVehicle = controller.GetEntityByTag("AIVehicle0");
-		aiSystemPtr->SpawnDebugWaypoints(aiVehicle);
-		//aiSystemPtr->SpawnDebugZoneTriggers();
+		AiSystemDebug::SpawnDebugWaypoints(*aiSystemPtr, aiVehicle);
+		//AiSystemDebug::SpawnDebugZoneTriggers(*aiSystemPtr);
 	}
 
 }

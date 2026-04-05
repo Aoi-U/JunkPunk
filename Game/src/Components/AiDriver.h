@@ -24,6 +24,8 @@ enum class AiState
 	BoxingGloveZone,
 	GapZone,
 	TunnelZone,
+	IsFlipped,
+	IsStuck,
 };
 
 struct AiDriver
