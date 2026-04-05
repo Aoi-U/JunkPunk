@@ -19,7 +19,11 @@ enum class AiState
 	RecoveringFromOffTrack,
 	SeekPowerup,
 	UsePowerup,
-	Braking
+	Braking,
+	NextDangerZone,
+	BoxingGloveZone,
+	GapZone,
+	TunnelZone,
 };
 
 struct AiDriver
@@ -80,8 +84,8 @@ struct AiDriver
 	float recoveryTimer = 0.0f;
 
 	// Powerup seeking
-	float powerupSeekRange = 50.0f;        // max distance to detour for a powerup
-	float powerupSeekMaxAngle = -0.3f;      // dot product threshold -- -0.3 = nearly full 360, excludes directly behind
+	float powerupSeekRange = 30.0f;        // max distance to detour for a powerup
+	float powerupSeekMaxAngle = -0.1f;      // dot product threshold -- -0.3 = nearly full 360, excludes directly behind
 	//### Reference for `powerupSeekMaxAngle`
 
 	//	| Value | Detection cone |

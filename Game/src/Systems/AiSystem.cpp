@@ -227,9 +227,9 @@ void AiSystem::RecomputeNavPath(Entity entity)
 	ai.lastDistToWaypoint = 999999.0f;
 	ai.repathCooldown = ai.repathCooldownDuration;
 
-	std::cout << "[AiSystem] Re-pathed: " << path.triangleIndices.size()
-		<< " corridor tris -> " << ai.navWaypoints.size()
-		<< " waypoints, starting at wp[" << ai.currentWaypointIndex << "]" << std::endl;
+	//std::cout << "[AiSystem] Re-pathed: " << path.triangleIndices.size()
+	//	<< " corridor tris -> " << ai.navWaypoints.size()
+	//	<< " waypoints, starting at wp[" << ai.currentWaypointIndex << "]" << std::endl;
 }
 
 void AiSystem::SpawnDebugWaypoints(Entity aiEntity)
@@ -297,6 +297,17 @@ void AiSystem::TransitionToState(Entity entity, AiState newState)
 	}
 }
 
+bool AiSystem::ShouldLog(float& timer, float interval, float deltaTime)
+{
+	timer += deltaTime;
+	if (timer >= interval)
+	{
+		timer = 0.0f;
+		return true;
+	}
+	return false;
+}
+
 void AiSystem::UpdateStateMachine(Entity entity, float deltaTime)
 {
 	auto& ai = controller.GetComponent<AiDriver>(entity);
@@ -305,11 +316,6 @@ void AiSystem::UpdateStateMachine(Entity entity, float deltaTime)
 	// Tick re-path cooldown in all states
 	if (ai.repathCooldown > 0.0f)
 		ai.repathCooldown -= deltaTime;
-
-	static float debugTimer = 0.0f;
-	debugTimer += deltaTime;
-	bool shouldLog = debugTimer >= 0.5f;
-	if (shouldLog) debugTimer = 0.0f;
 
 	// --- Flip detection ---
 	// Check if the vehicle's local up vector is pointing downward (flipped over)
@@ -368,6 +374,39 @@ void AiSystem::UpdateStateMachine(Entity entity, float deltaTime)
 			break;
 		}
 
+		/////////////////////////////////
+		// --- Special zone checks --- //
+		/////////////////////////////////
+
+		// Check waypoints ahead for special zones (similar to danger zone detection)
+		uint32_t lookAheadForZones = ai.currentWaypointIndex + 2u; // Look 2 waypoints ahead
+		
+		for (uint32_t i = ai.currentWaypointIndex; i < lookAheadForZones && i < static_cast<uint32_t>(ai.navWaypoints.size()); ++i)
+		{
+			const glm::vec3& waypoint = ai.navWaypoints[i];
+
+			// Boxing Glove Zone Check
+			if (IsInBoxingGloveZone(waypoint)) {
+				if (ShouldLog(m_stateMachineLogTimer, 0.5f, deltaTime)) {
+					std::cout << "[AI] Boxing glove zone detected ahead, transitioning" << std::endl;
+				}
+				TransitionToState(entity, AiState::BoxingGloveZone);
+				return;
+			}
+
+			// Gap zone check
+			if (IsInGapZone(waypoint)) {
+				TransitionToState(entity, AiState::GapZone);
+				return;
+			}
+
+			// Tunnel zone check
+			if (IsInTunnelZone(waypoint)) {
+				TransitionToState(entity, AiState::TunnelZone);
+				return;
+			}
+		}
+
 		///////////////////////////////////////////////////////////////////////////////
 		// --- Danger zone check: stop if upcoming waypoints enter a danger zone --- //
 		///////////////////////////////////////////////////////////////////////////////
@@ -393,7 +432,7 @@ void AiSystem::UpdateStateMachine(Entity entity, float deltaTime)
 
 			if (pathEntersDanger)
 			{
-				if (shouldLog) {
+				if (ShouldLog(m_stateMachineLogTimer, 0.5f, deltaTime)) {
 					std::cout << "[AI] Danger ahead, entering waiting state" << std::endl;
 				}
 				TransitionToState(entity, AiState::WaitingAtDangerZone);
@@ -491,7 +530,7 @@ void AiSystem::UpdateStateMachine(Entity entity, float deltaTime)
 			{
 				ai.targetPowerupEntity = bestPowerup;
 				ai.seekTimer = 0.0f;
-				std::cout << "[AI] Spotted powerup, detouring to collect" << std::endl;
+				//std::cout << "[AI] Spotted powerup, detouring to collect" << std::endl;
 				TransitionToState(entity, AiState::SeekPowerup);
 				break;
 			}
@@ -530,6 +569,15 @@ void AiSystem::UpdateStateMachine(Entity entity, float deltaTime)
 	case AiState::WaitingAtDangerZone:
 		UpdateWaitingAtDangerZoneState(entity, deltaTime);
 		break;
+	case AiState::BoxingGloveZone:
+		UpdateBoxingGloveZoneState(entity, deltaTime);
+		break;
+	case AiState::GapZone:
+		UpdateGapZoneState(entity, deltaTime);
+		break;
+	case AiState::TunnelZone:
+		UpdateTunnelZoneState(entity, deltaTime);
+		break;
 	}
 }
 
@@ -544,11 +592,6 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 	if (ai.repathCooldown > 0.0f)
 		ai.repathCooldown -= deltaTime;
 
-	static float debugTimer = 0.0f;
-	debugTimer += deltaTime;
-	bool shouldLog = debugTimer >= 0.1f;
-	if (shouldLog) debugTimer = 0.0f;
-
 	// Clear passing flag the moment we exit the danger zone
 	if (ai.passingThroughDangerZone)
 	{
@@ -556,14 +599,18 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 		{
 			ai.passingThroughDangerZone = false;
 			ai.dangerDetectionCooldown = ai.dangerDetectionCooldownDuration;
-			if (shouldLog) std::cout << "[AI] Exited danger zone, starting cooldown (" 
-				<< ai.dangerDetectionCooldownDuration << "s)" << std::endl;
+			if (ShouldLog(m_followPathLogTimer, 0.1f, deltaTime)) {
+				std::cout << "[AI] Exited danger zone, starting cooldown (" 
+					<< ai.dangerDetectionCooldownDuration << "s)" << std::endl;
+			}
 		}
 	}
 
 	if (ai.currentWaypointIndex >= static_cast<uint32_t>(ai.navWaypoints.size()))
 	{
-		if (shouldLog) std::cout << "[AI] Reached end of path, stopping." << std::endl;
+		if (ShouldLog(m_followPathLogTimer, 0.1f, deltaTime)) {
+			std::cout << "[AI] Reached end of path, stopping." << std::endl;
+		}
 		vc.throttle = 0.0f;
 		vc.brake = 1.0f;
 		vc.steer = 0.0f;
@@ -712,7 +759,7 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 		throttle = glm::clamp((ai.desiredSpeed - speed) * ai.throttleKp, 0.0f, ai.maxThrottle);
 	}
 
-	//if (shouldLog)
+	//if (ShouldLog(m_followPathLogTimer, 0.1f, deltaTime))
 	//{
 	//	std::cout << "[AI] pos=(" << carPos.x << ", " << carPos.y << ", " << carPos.z << ")"
 	//		<< " | wp[" << ai.currentWaypointIndex << "/" << ai.navWaypoints.size() << "]=("
@@ -901,7 +948,7 @@ void AiSystem::UpdateAvoidObstacleState(Entity entity, float deltaTime)
 
 	if (ai.avoidTimer < deltaTime * 1.5f)
 	{
-		std::cout << "[AI] Avoiding obstacle..." << std::endl;
+		//std::cout << "[AI] Avoiding obstacle..." << std::endl;
 		// Calculate distance to obstacle
 		float distToObstacle = 999.0f;
 		bool obstacleStillThreat = false;
@@ -917,7 +964,7 @@ void AiSystem::UpdateAvoidObstacleState(Entity entity, float deltaTime)
 		toObs.y = 0.0f;
 		distToObstacle = glm::length(toObs);
 
-		std::cout << "[AI] Checking obstacle: dist=" << distToObstacle << std::endl;
+		//std::cout << "[AI] Checking obstacle: dist=" << distToObstacle << std::endl;
 
 		// Get perpendicular vector to your forward direction
 		// Vectors perpendicular to the AI's forward vector
@@ -953,12 +1000,12 @@ void AiSystem::UpdateAvoidObstacleState(Entity entity, float deltaTime)
 				if (distToLeftOffset < distToRightOffset)
 				{
 					ai.temporaryAvoidTarget = leftOffset;
-					std::cout << "[AI] Both sides valid, choosing LEFT (closer to waypoint)" << std::endl;
+					//std::cout << "[AI] Both sides valid, choosing LEFT (closer to waypoint)" << std::endl;
 				}
 				else
 				{
 					ai.temporaryAvoidTarget = rightOffset;
-					std::cout << "[AI] Both sides valid, choosing RIGHT (closer to waypoint)" << std::endl;
+					//std::cout << "[AI] Both sides valid, choosing RIGHT (closer to waypoint)" << std::endl;
 				}
 			}
 			else
@@ -973,14 +1020,14 @@ void AiSystem::UpdateAvoidObstacleState(Entity entity, float deltaTime)
 			// Only left is drivable
 			ai.temporaryAvoidTarget = leftOffset;
 			hasValidPath = true;
-			std::cout << "[AI] Choosing LEFT (only valid option)" << std::endl;
+			//std::cout << "[AI] Choosing LEFT (only valid option)" << std::endl;
 		}
 		else if (veerRight >= 0)
 		{
 			// Only right is drivable
 			ai.temporaryAvoidTarget = rightOffset;
 			hasValidPath = true;
-			std::cout << "[AI] Choosing RIGHT (only valid option)" << std::endl;
+			//std::cout << "[AI] Choosing RIGHT (only valid option)" << std::endl;
 		}
 		else
 		{
@@ -998,13 +1045,13 @@ void AiSystem::UpdateAvoidObstacleState(Entity entity, float deltaTime)
 				float rightDist = glm::length(rightOffset - rightSurface);
 
 				ai.temporaryAvoidTarget = (leftDist < rightDist) ? leftOffset : rightOffset;
-				std::cout << "[AI] Neither side perfect, choosing less bad option" << std::endl;
+				//std::cout << "[AI] Neither side perfect, choosing less bad option" << std::endl;
 			}
 			else
 			{
 				// Last resort: just pick left and hope for the best
 				ai.temporaryAvoidTarget = leftOffset;
-				std::cout << "[AI] WARNING: No good avoidance path found, trying left anyway" << std::endl;
+				//std::cout << "[AI] WARNING: No good avoidance path found, trying left anyway" << std::endl;
 			}
 			hasValidPath = false;  // mark as risky
 		}
@@ -1191,86 +1238,74 @@ void AiSystem::UpdateWaitingAtDangerZoneState(Entity entity, float deltaTime)
 	forward.y = 0.0f;
 	if (glm::length(forward) < 1e-6f) forward = glm::vec3(0, 0, 1);
 	forward = glm::normalize(forward);
-	
 
 	// Throttle logging to once per second
 	static float logTimer = 0.0f;
 	logTimer += deltaTime;
 	bool shouldLog = (logTimer >= 1.0f);
 	if (shouldLog) logTimer = 0.0f;
-	bool currentlyBlocked = false;
 
 	float speed = glm::length(glm::vec3(body.linearVelocity.x, 0.0f, body.linearVelocity.z));
 
-	// 1) Get distance to the danger zone (for switching states)
+	// 1) Get distance to the danger zone
 	float distToZone = GetDistanceToDangerZone(carPos);
 
 	// 2) Check if obstacle is blocking
 	bool isBlocked = IsArmBlocking(carPos);
 
-	// Likely need to be tweaked
 	float SLOW_DISTANCE = 30.0f;
 	float STOP_DISTANCE = 10.0f;
 
-	// 3) Behaviour checks
+	// 3) Calculate steering toward next waypoint
+	// EXCEPT in boxing glove zone - always drive straight there
+	float steer = 0.0f;
+	if (!IsInBoxingGloveZone(carPos) && ai.currentWaypointIndex < ai.navWaypoints.size())
+	{
+		glm::vec3 toWp = ai.navWaypoints[ai.currentWaypointIndex] - carPos;
+		toWp.y = 0.0f;
+		steer = CalculateSteeringAngle(forward, toWp);
+	}
 
-	// 3.1) Far away so we want normal driving
+	// 4) Speed control based on distance
 	if (distToZone > SLOW_DISTANCE)
 	{
-		// Not sure if you need anything else here?
+		// Far away - normal driving
 		vc.throttle = 1.0f;
 		vc.brake = 0.0f;
 	}
-	// 3.2) Approaching the danger, we should slow down
 	else if (distToZone > STOP_DISTANCE)
 	{
-		// Likely not correct, but hopefully the idea comes across
+		// Approaching - slow down
 		vc.throttle = 0.0f;
 		vc.brake = 0.5f;
 	}
 	else
-		// 4) AT THE BOUNDARY OF DANGER!
 	{
-		// 4.1) Are we blocked?
-		// yes
+		// AT THE BOUNDARY
 		if (isBlocked)
 		{
-			currentlyBlocked = true;
-			// STOP and HOLD
+			// STOP and HOLD (brake=0 to avoid reversing!)
 			vc.throttle = 0.0f;
-			vc.brake = 0.0f;
+			vc.brake = 0.0f;  // ← Keep this at 0 to prevent backing up
+			steer = 0.0f;     // ← Hold straight when stopped
 		}
-		// no
 		else
 		{
-			currentlyBlocked = false;
-			if (shouldLog) std::cout << "[AI] Danger zone clear, resuming path" << std::endl;
-			// GO
+			// Clear to go!
+			if (ShouldLog(m_waitingLogTimer, 1.0f, deltaTime)) {
+				std::cout << "[AI] Danger zone clear, resuming path" << std::endl;
+			}
 			vc.throttle = 1.0f;
 			vc.brake = 0.0f;
 
-			ai.passingThroughDangerZone = true; // flag to prevent re-entering this state immediately
+			ai.passingThroughDangerZone = true;
 			TransitionToState(entity, AiState::FollowPath);
 			return;
 		}
 	}
 
-	// Steer toward next waypoint ONLY if moving
-	// When stopped or nearly stopped (speed < 2.0), hold steering straight to prevent spinning
-	if (ai.currentWaypointIndex < ai.navWaypoints.size())
-	{
-		glm::vec3 toWp = ai.navWaypoints[ai.currentWaypointIndex] - carPos;
-		toWp.y = 0.0f;
-		vc.steer = CalculateSteeringAngle(forward, toWp);
-	}
-	else
-	{
-		// Hold straight when stopped/slow or no waypoint
-		vc.steer = 0.0f;
-	}
-
+	vc.steer = steer;
 	vc.isGrounded = true;
-	return; // stay in this state, keep approaching
 }
 
 float AiSystem::GetDistanceToDangerZone(glm::vec3 point)
@@ -1334,6 +1369,97 @@ bool AiSystem::IsArmBlocking(glm::vec3 carPos)
 	}
 
 	return false;
+}
+
+void AiSystem::UpdateBoxingGloveZoneState(Entity entity, float deltaTime)
+{
+	auto& vc = controller.GetComponent<VehicleCommands>(entity);
+	auto& transform = controller.GetComponent<Transform>(entity);
+
+	if(ShouldLog(m_stateMachineLogTimer, 1.0f, deltaTime)) {
+		std::cout << "Entering Boxing Glove zone" << std::endl;
+	}
+
+	// MANUAL CONTROL: Full throttle, steer straight
+	vc.throttle = 1.0f;
+	vc.brake = 0.0f;
+	vc.steer = 0.0f;
+	vc.isGrounded = true;
+
+	if(GetDistanceToDangerZone(transform.position) < 10.0f)
+	{
+		TransitionToState(entity, AiState::WaitingAtDangerZone);
+		return;
+	}
+
+	// Exit check: am I past the gap?
+	if (transform.position.x < -76.0f) { // afterGap X coordinate
+		TransitionToState(entity, AiState::FollowPath);
+	}
+}
+
+void AiSystem::UpdateGapZoneState(Entity entity, float deltaTime)
+{
+	auto& vc = controller.GetComponent<VehicleCommands>(entity);
+	auto& transform = controller.GetComponent<Transform>(entity);
+
+	// MANUAL CONTROL: Full throttle, steer straight
+	vc.throttle = 1.0f;
+	vc.brake = 0.0f;
+	vc.steer = 0.0f;
+	vc.isGrounded = true;
+
+	// Exit check: am I past the gap?
+	if (transform.position.x > 155.0f) { // afterGap X coordinate
+		TransitionToState(entity, AiState::FollowPath);
+	}
+}
+
+void AiSystem::UpdateTunnelZoneState(Entity entity, float deltaTime) {
+	auto& vc = controller.GetComponent<VehicleCommands>(entity);
+	auto& transform = controller.GetComponent<Transform>(entity);
+
+	// MANUAL CONTROL: Full throttle, steer straight
+	vc.throttle = 1.0f;
+	vc.brake = 0.0f;
+	vc.steer = 0.0f;
+	vc.isGrounded = true;
+
+	// Exit check: am I past the gap?
+	if (transform.position.x > 150.0f) { // afterGap X coordinate
+		TransitionToState(entity, AiState::FollowPath);
+	}
+}
+
+void AiSystem::UpdateFloorItState(Entity entity, float deltaTime)
+{
+	TransitionToState(entity, AiState::FollowPath);
+}
+
+// ===== ZONE DETECTION HELPERS =====
+
+bool AiSystem::IsInBoxingGloveZone(const glm::vec3& pos) const
+{
+	return (pos.x > -76.0f && pos.x < 48.0f &&
+		pos.z > -74.0f && pos.z < -41.0f &&
+		pos.y > -178.0f && pos.y < -168.0f);
+}
+
+bool AiSystem::IsInGapZone(const glm::vec3& pos) const
+{
+	// Gap area: X between -65 and +155, Z around 165-195, Y around -31
+	// Covers the entire gap section from approach to landing
+	return (pos.x > -65.0f && pos.x < 155.0f &&
+		pos.z > 138.0f && pos.z < 219.0f &&
+		pos.y > -25.0f && pos.y < -35.0f);
+}
+bool AiSystem::IsInTunnelZone(const glm::vec3& pos) const
+{
+	// Tunnel area: X between -140 and +155, Z between 240 and 400
+	// Covers entire tunnel from entrance (beforeTunnel) to exit (midTunnel curve)
+	return (pos.x > -145.0f && pos.x < 160.0f &&
+		pos.z > 235.0f && pos.z < 405.0f &&
+		pos.y > -35.0f && pos.y < -20.0f);
 }
 
 void AiSystem::UpdateSeekPowerupState(Entity entity, float deltaTime)
@@ -1494,19 +1620,87 @@ void AiSystem::TryUsePowerup(Entity entity)
 }
 
 
-void AiSystem::UpdateBoxingGloveZoneState(Entity entity, float deltaTime)
+void AiSystem::SpawnDebugZoneTriggers()
 {
-	TransitionToState(entity, AiState::FollowPath);
-}
+	std::cout << "[AiSystem] Spawning debug zone trigger boxes" << std::endl;
 
-void AiSystem::UpdateCrossingGap(Entity entity, float deltaTime)
-{
-	TransitionToState(entity, AiState::FollowPath);
-}
+	// BOXING GLOVE ZONE
+	{
+		glm::vec3 minBounds(-76.0f, -178.0f, -74.0f);
+		glm::vec3 maxBounds(48.0f, -173.0f, -41.0f);
 
-void AiSystem::UpdateFloorItState(Entity entity, float deltaTime)
-{
-	TransitionToState(entity, AiState::FollowPath);
+		glm::vec3 center = (minBounds + maxBounds) * 0.5f;
+		glm::vec3 dimensions = maxBounds - minBounds;
+
+		Entity gloveZone = controller.createEntity();
+		controller.AddComponent(gloveZone, PhysicsBody{});
+		controller.AddComponent(gloveZone, Transform{
+			center,
+			glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f)
+			});
+		controller.AddComponent(gloveZone, Trigger{
+			nullptr,
+			dimensions.x * 0.5f,
+			dimensions.y * 0.5f,
+			dimensions.z * 0.5f
+			});
+
+		std::cout << "  [BOXING GLOVE ZONE] Center: (" << center.x << ", " << center.y << ", " << center.z << ")" << std::endl;
+		std::cout << "                      Size: (" << dimensions.x << ", " << dimensions.y << ", " << dimensions.z << ")" << std::endl;
+	}
+
+	// GAP ZONE
+	{
+		glm::vec3 minBounds(-65.0f, -35.0f, 138.0f);
+		glm::vec3 maxBounds(155.0f, -25.0f, 219.0f);
+
+		glm::vec3 center = (minBounds + maxBounds) * 0.5f;
+		glm::vec3 dimensions = maxBounds - minBounds;
+
+		Entity gapZone = controller.createEntity();
+		controller.AddComponent(gapZone, PhysicsBody{});
+		controller.AddComponent(gapZone, Transform{
+			center,
+			glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f)
+			});
+		controller.AddComponent(gapZone, Trigger{
+			nullptr,
+			dimensions.x * 0.5f,
+			dimensions.y * 0.5f,
+			dimensions.z * 0.5f
+			});
+
+		std::cout << "  [GAP ZONE] Center: (" << center.x << ", " << center.y << ", " << center.z << ")" << std::endl;
+		std::cout << "             Size: (" << dimensions.x << ", " << dimensions.y << ", " << dimensions.z << ")" << std::endl;
+	}
+
+	// TUNNEL ZONE
+	//{
+	//	glm::vec3 minBounds(-145.0f, -35.0f, 235.0f);
+	//	glm::vec3 maxBounds(160.0f, -20.0f, 405.0f);
+
+	//	glm::vec3 center = (minBounds + maxBounds) * 0.5f;
+	//	glm::vec3 dimensions = maxBounds - minBounds;
+
+	//	Entity tunnelZone = controller.createEntity();
+	//	controller.AddComponent(tunnelZone, PhysicsBody{});
+	//	controller.AddComponent(tunnelZone, Transform{
+	//		center,
+	//		glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
+	//		glm::vec3(1.0f)
+	//		});
+	//	controller.AddComponent(tunnelZone, Trigger{
+	//		nullptr,
+	//		dimensions.x * 0.5f,
+	//		dimensions.y * 0.5f,
+	//		dimensions.z * 0.5f
+	//		});
+
+	//	std::cout << "  [TUNNEL ZONE] Center: (" << center.x << ", " << center.y << ", " << center.z << ")" << std::endl;
+	//	std::cout << "                Size: (" << dimensions.x << ", " << dimensions.y << ", " << dimensions.z << ")" << std::endl;
+	//}
 }
 
 void AiSystem::UpdateUsePowerupState(Entity entity, float deltaTime)

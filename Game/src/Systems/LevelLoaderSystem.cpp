@@ -190,7 +190,7 @@ void LevelLoaderSystem::LoadLevel()
 		aiSystemPtr->SetNavMesh(navMesh);
 
 		// Spawn random banana peels along the track
-		SpawnRandomBananaPeels(100, navMesh);  // Spawn 100 random banana peels
+		//SpawnRandomBananaPeels(100, navMesh);  // Spawn 100 random banana peels
 
 		// Spawn random powerups along the track
 		//SpawnRandomMixedPowerups(10, 10, navMesh);  // 10 speed boosts, 10 banana pickups
@@ -596,8 +596,12 @@ void LevelLoaderSystem::LoadLevel()
 		// AI Opponent vehicle
 		Entity vehicle = controller.createEntity();
 		loaded = LoadModel("assets/models/car_body_blue/car.gltf");
-		glm::mat4 aiRotation = glm::rotate(glm::mat4(1.0f), glm::radians(-30.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-		controller.AddComponent(vehicle, Transform{ glm::vec3(133.0f + i * 2.0f, -259.0f, -257.0f), glm::quat(aiRotation), glm::vec3(0.2f) });
+		glm::mat4 aiRotation = glm::rotate(glm::mat4(1.0f), glm::radians(50.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+
+		// Normal starting zone
+		//controller.AddComponent(vehicle, Transform{ glm::vec3(133.0f + i * 2.0f, -259.0f, -257.0f), glm::quat(aiRotation), glm::vec3(0.2f) });
+		controller.AddComponent(vehicle, Transform{ glm::vec3(70.0f + i * 2.0f, -210.5f, -100.0f), glm::quat(aiRotation), glm::vec3(0.2f) });	// Postion before boxing glove zone
+		//controller.AddComponent(vehicle, Transform{ glm::vec3(150.0f + i * 2.0f, -30.477f, 197.0f), glm::quat(aiRotation), glm::vec3(0.2f) });	// Position vehicle after the gap
 		controller.AddComponent(vehicle, VehicleBody{});
 		controller.AddComponent(vehicle, VehicleCommands{});
 		controller.AddComponent(vehicle, Render{ loaded.first, loaded.second });
@@ -679,15 +683,15 @@ void LevelLoaderSystem::LoadLevel()
 			});
 	}
 
-	 //test trigger box
-	entity = controller.createEntity();
-	controller.AddComponent(entity, PhysicsBody{});
-	controller.AddComponent(entity, Trigger{ nullptr, 1.0f, 4.0f, 1.0f });
-	controller.AddComponent(entity, Transform{
-		glm::vec3(-134.0f, 90.f, 323.0f),
-		glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
-		glm::vec3(1.0f)
-		});
+	// 
+	//entity = controller.createEntity();
+	//controller.AddComponent(entity, PhysicsBody{});
+	//controller.AddComponent(entity, Trigger{ nullptr, 110.0f, 10.0f, 81.0f });
+	//controller.AddComponent(entity, Transform{
+	//	glm::vec3(-134.0f, 90.f, 323.0f),
+	//	glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
+	//	glm::vec3(1.0f)
+	//	});
 
 	std::vector<glm::vec3> boost_powerup_positions = {
 		glm::vec3(81.0f, -259.5f, -214.0f), //starter
@@ -890,6 +894,7 @@ void LevelLoaderSystem::LoadLevel()
 	{
 		Entity aiVehicle = controller.GetEntityByTag("AIVehicle0");
 		aiSystemPtr->SpawnDebugWaypoints(aiVehicle);
+		//aiSystemPtr->SpawnDebugZoneTriggers();
 	}
 
 }

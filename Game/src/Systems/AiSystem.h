@@ -21,16 +21,29 @@ public:
 	void SetGoalPosition(const glm::vec3& goal) { goalPosition = goal; }
 
 	void SpawnDebugWaypoints(Entity entity);
+	void SpawnDebugZoneTriggers();
 	// Spawns a 1x1 trigger box at every navmesh triangle centroid (node)
 	void SpawnDebugNodes();
 
 	// Check if a position is in a danger zone (returns closest danger distance, or -1 if safe)
 	float CheckDangerZone(const glm::vec3& position) const;
 
+	bool IsInGapZone(const glm::vec3& pos) const;
+	bool IsInTunnelZone(const glm::vec3& pos) const;
+	bool IsInBoxingGloveZone(const glm::vec3& pos) const;
+
 private:
 	Game* gameInstance = nullptr;
 	NavMesh navMesh;
 	glm::vec3 goalPosition = glm::vec3(-70.000f, 56.000f, 326.000f);
+
+	// Logging throttle timers
+	float m_stateMachineLogTimer = 0.0f;
+	float m_followPathLogTimer = 0.0f;
+	float m_waitingLogTimer = 0.0f;
+
+	// Logging helper: returns true when interval has elapsed, auto-resets timer
+	bool ShouldLog(float& timer, float interval, float deltaTime);
 
 	// Computes A* path from the entity's current position to the goal
 	void ComputeNavPath(Entity entity);
@@ -49,9 +62,13 @@ private:
 	void UpdateSeekPowerupState(Entity entity, float deltaTime);
 	void UpdateUsePowerupState(Entity entity, float deltaTime);
 	void UpdateOvertakingState(Entity entity, float deltaTime);
+	void UpdateBoxingGloveZoneState(Entity entity, float deltaTime);
+	void UpdateGapZoneState(Entity entity, float deltaTime);
+	void UpdateTunnelZoneState(Entity entity, float deltaTime);
 	void UpdateWaitingAtDangerZoneState(Entity entity, float deltaTime);
 	bool IsObstacleInDangerZone(const glm::vec3& point) const;
 	void AdvanceThroughBoxingGlove(Entity entity);
+	void UpdateFloorItState(Entity entity, float deltaTime);
 
 	// Checks if conditions are right to use a held powerup. Called during FollowPath.
 	void TryUsePowerup(Entity entity);
