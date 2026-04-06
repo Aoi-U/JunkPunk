@@ -134,6 +134,13 @@ void LevelLoaderSystem::LoadLevel()
 	controller.AddComponent(entity, Render{ loaded.first, loaded.second });
 	controller.AddComponent(entity, PhysicsBody{});
 
+	//create signs
+	entity = controller.createEntity();
+	rotation = glm::rotate(glm::mat4(1.0f), glm::pi<float>(), glm::vec3(0.0f, 1.0f, 0.0f));
+	loaded = LoadModel("assets/models/signs/signs.gltf");
+	controller.AddComponent(entity, Transform{ glm::vec3(0.0f, -100.0f, 50.0f), glm::quat_cast(rotation), glm::vec3(200.0f) });
+	controller.AddComponent(entity, Render{ loaded.first, loaded.second });
+
 	// Update this when moving to new map
 	if (aiSystemPtr && numAi > 0)
 	{
