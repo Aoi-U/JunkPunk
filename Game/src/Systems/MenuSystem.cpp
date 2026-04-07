@@ -283,24 +283,14 @@ void MenuSystem::RenderWinText() {
 	if (!playerWon && !aiWon)
 		return;
 	if (playerWon) {
-		std::string text = "YOU WIN";
-		RenderText(
-			text,
-			GetCenteredX(text, scale),
-			ScaledY(600.0f),
-			scale,
-			glm::vec3(0.2f, 1.0f, 0.2f)
-		);
+		std::string text = numPlayers > 1
+			? "PLAYER " + std::to_string(winningPlayerNum) + " WINS!"
+			: "YOU WIN!";
+		RenderText(text, GetCenteredX(text, scale), ScaledY(600.0f), scale, glm::vec3(0.2f, 1.0f, 0.2f));
 	}
 	else {
 		std::string text = "OPPONENT WINS!";
-		RenderText(
-			text,
-			GetCenteredX(text, scale),
-			ScaledY(600.0f),
-			scale,
-			glm::vec3(1.0f, 0.2f, 0.2f)
-		);
+		RenderText(text, GetCenteredX(text, scale), ScaledY(600.0f), scale, glm::vec3(1.0f, 0.2f, 0.2f));
 	}
 }
 
@@ -340,7 +330,9 @@ void MenuSystem::RenderEndScreen() {
 		);
 	}
 	else if (playerWon){
-		std::string text = "YOU WIN!";
+		std::string text = numPlayers > 1
+			? "PLAYER " + std::to_string(winningPlayerNum) + " WINS!"
+			: "YOU WIN!";
 		RenderText(
 			text,
 			GetCenteredX(text, titleScale),

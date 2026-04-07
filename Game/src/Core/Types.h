@@ -222,6 +222,7 @@ namespace Events::Checkpoint::Reached
 
 extern bool playerWon;
 extern bool aiWon;
+extern int winningPlayerNum;
 
 extern int numPlayers;
 extern int numAi;

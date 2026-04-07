@@ -681,3 +681,10 @@ void RenderSystem::ChangeGameStateListener(Event& e)
 		tintColor = glm::vec3(1.0f, 1.0f, 1.0f);
 	}
 }
+
+void RenderSystem::RenderDistanceToFinish(float distance)
+{
+	int d = static_cast<int>(distance);
+	std::string text = "Distance to finish: " + std::to_string(d) + "m";
+	RenderText(text, 20.0f, screenHeight - 40.0f, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f));
+}

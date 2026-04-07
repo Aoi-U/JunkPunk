@@ -144,7 +144,7 @@ void PhysicsSystem::Update(float deltaTime)
 		command.steer = vehicleCommands.steer;
 		vehicle->setCommand(command);
 
-		if (spinning)
+		if (spinningEntity == entity)
 		{
 			spinTimer += deltaTime;
 
@@ -156,7 +156,7 @@ void PhysicsSystem::Update(float deltaTime)
 
 			if (spinTimer > 1.5f)
 			{
-				spinning = false;
+				spinningEntity = MAX_ENTITIES;
 				spinTimer = 0.0f;
 			}
 		}
@@ -678,8 +678,8 @@ void PhysicsSystem::ReleaseTriggerCallback(Entity entity, Trigger& trig)
 
 void PhysicsSystem::SpinOutListener(Event& e) {
 	Entity entity = e.GetParam<Entity>(Events::Player::Spin_Out::Entity);
-	
-	spinning = true;
+
+	spinningEntity = entity;
 	spinTimer = 0.0f;
 }
 

@@ -41,6 +41,8 @@ public:
 
 	//void UpdateMenu(float fps); // update function for rendering menus
 
+	void RenderDistanceToFinish(float distance);
+
 private:
 	void DrawShadowPass(const Frustum& frust);
 

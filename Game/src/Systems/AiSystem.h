@@ -30,6 +30,7 @@ public:
 	bool IsInTunnelZone(const glm::vec3& pos) const;
 	bool IsInBoxingGloveZone(const glm::vec3& pos) const;
 
+	float CalculateDistanceToFinish(const glm::vec3& position) const;
 private:
 	Game* gameInstance = nullptr;
 	NavMesh navMesh;

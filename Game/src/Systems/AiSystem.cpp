@@ -32,7 +32,7 @@ void AiSystem::ComputeNavPath(Entity entity)
 {
 	auto& ai = controller.GetComponent<AiDriver>(entity);
 	auto& transform = controller.GetComponent<Transform>(entity);
-	
+
 	glm::vec3 startPos = transform.position;
 	glm::vec3 beforeGap(-60.0f, -31.0f, 170.0f);
 	glm::vec3 afterGap(150.0f, -28.0f, 185.0f);
@@ -212,7 +212,7 @@ void AiSystem::Update(float deltaTime)
 
 		if (AiSystemHelperFunctions::ShouldLog(m_followPathLogTimer, 1.0f, deltaTime))
 		{
-			std::cout << "[AiSystem::Update] Entity=" << entity 
+			std::cout << "[AiSystem::Update] Entity=" << entity
 				<< " | State=" << static_cast<int>(ai.currentState)
 				<< " | Waypoints=" << ai.navWaypoints.size()
 				<< " | CurrentWP=" << ai.currentWaypointIndex
@@ -386,7 +386,7 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 				ai.passingThroughDangerZone = false;
 				ai.dangerDetectionCooldown = ai.dangerDetectionCooldownDuration;
 				if (AiSystemHelperFunctions::ShouldLog(m_followPathLogTimer, 0.1f, deltaTime)) {
-				std::cout << "[AI] Exited danger zone, starting cooldown (" 
+				std::cout << "[AI] Exited danger zone, starting cooldown ("
 					<< ai.dangerDetectionCooldownDuration << "s)" << std::endl;
 			}
 		}
@@ -590,7 +590,7 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 	//////////////////////////////////
 	// --- Waypoint advancement --- //
 	// ///////////////////////////////
-	
+
 	// Advance past waypoints that are either:
 	// 1. Within arrival radius (normal case)
 	// 2. Behind the car (overshoot -- car blew past at high speed)
@@ -747,7 +747,7 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 	/////////////////////////////
 	// --- Detect if stuck --- //
 	/////////////////////////////
-	
+
 	// Use desiredSpeed > 0 as intent, not throttle output (which gets scaled down)
 	bool wantsToMove = (ai.currentWaypointIndex < static_cast<uint32_t>(ai.navWaypoints.size()));
 	if (speed < ai.stuckSpeedThreshold && wantsToMove)
@@ -1315,6 +1315,10 @@ void AiSystem::UpdateSeekPowerupState(Entity entity, float deltaTime)
 		ai.hasPowerup = true;
 		ai.heldPowerupType = pickup.type;
 		std::cout << "[AI] Collected powerup type " << pickup.type << std::endl;
+
+		if (gameInstance)
+			gameInstance->SchedulePowerupRespawn(ai.targetPowerupEntity);
+
 		controller.DestroyEntity(ai.targetPowerupEntity);
 		ai.targetPowerupEntity = 0;
 
@@ -1382,6 +1386,52 @@ void AiSystem::UpdateOvertakingState(Entity entity, float deltaTime)
 	// - Once past the player (player is now behind), transition back to FollowPath
 
 	TransitionToState(entity, AiState::FollowPath);
+}
+
+float AiSystem::CalculateDistanceToFinish(const glm::vec3& position) const
+{
+	if (entities.empty())
+		return 0.0f;
+
+	Entity aiEntity = *entities.begin();
+	if (!controller.HasComponent<AiDriver>(aiEntity))
+		return 0.0f;
+
+	const auto& navWaypoints = controller.GetComponent<AiDriver>(aiEntity).navWaypoints;
+
+	if (navWaypoints.empty())
+		return 0.0f;
+
+	int closestIndex = 0;
+	float closestDist = (std::numeric_limits<float>::max)();
+	for (int i = 0; i < static_cast<int>(navWaypoints.size()); i++)
+	{
+		float d = glm::length(navWaypoints[i] - position);
+		if (d < closestDist)
+		{
+			closestDist = d;
+			closestIndex = i;
+		}
+	}
+
+	float total = 0.0f;
+
+	if (closestIndex < static_cast<int>(navWaypoints.size()) - 1)
+	{
+		glm::vec3 segDir = glm::normalize(navWaypoints[closestIndex + 1] - navWaypoints[closestIndex]);
+		glm::vec3 toPlayer = position - navWaypoints[closestIndex];
+		float projectedAlong = glm::dot(toPlayer, segDir);
+
+		total = glm::length(navWaypoints[closestIndex + 1] - navWaypoints[closestIndex]) - projectedAlong;
+		closestIndex++;
+	}
+
+	for (int i = closestIndex; i < static_cast<int>(navWaypoints.size()) - 1; i++)
+	{
+		total += glm::length(navWaypoints[i + 1] - navWaypoints[i]);
+	}
+
+	return total > 0.0f ? total : 0.0f;
 }
 
 void AiSystem::UpdateBrakingState(Entity entity, float deltaTime)

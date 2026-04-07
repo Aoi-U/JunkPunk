@@ -25,6 +25,7 @@ public:
 
 	void Run();
 	void SpawnBananaPeel(Entity vehicle);
+	void SchedulePowerupRespawn(Entity entity);
 
 private:
 	//std::shared_ptr<Gamepad> gamepad;
