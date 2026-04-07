@@ -1,4 +1,5 @@
 #include "AiSystem.h"
+#include "AiSystemHelperFunctions.h"
 #include "../Game.h"
 #include "../Components/Render.h"
 #include "../Components/Transform.h"
@@ -207,6 +208,17 @@ void AiSystem::Update(float deltaTime)
 	for (auto entity : entities)
 	{
 		auto& ai = controller.GetComponent<AiDriver>(entity);
+		auto& transform = controller.GetComponent<Transform>(entity);
+
+		if (AiSystemHelperFunctions::ShouldLog(m_followPathLogTimer, 1.0f, deltaTime))
+		{
+			std::cout << "[AiSystem::Update] Entity=" << entity 
+				<< " | State=" << static_cast<int>(ai.currentState)
+				<< " | Waypoints=" << ai.navWaypoints.size()
+				<< " | CurrentWP=" << ai.currentWaypointIndex
+				<< " | Pos=(" << transform.position.x << ", " << transform.position.y << ", " << transform.position.z << ")"
+				<< std::endl;
+		}
 
 		if (ai.navWaypoints.empty() && !navMesh.IsEmpty())
 		{
@@ -216,158 +228,90 @@ void AiSystem::Update(float deltaTime)
 		if (ai.navWaypoints.empty())
 			continue;
 
-		TransitionToState(entity, AiState::FollowPath, deltaTime);
+		switch (ai.currentState)
+		{
+		case AiState::FollowPath:
+			UpdateFollowPathState(entity, deltaTime);
+			break;
+		case AiState::BackingUp:
+			UpdateBackingUpState(entity, deltaTime);
+			break;
+		case AiState::IsStuck:
+			UpdateIsStuckState(entity, deltaTime);
+			break;
+		case AiState::IsFlipped:
+			UpdateIsFlippedState(entity, deltaTime);
+			break;
+		case AiState::RecoveringFromOffTrack:
+			UpdateRecoveringFromOffTrackState(entity, deltaTime);
+			break;
+		case AiState::WaitingAtDangerZone:
+			UpdateWaitingAtDangerZoneState(entity, deltaTime);
+			break;
+		case AiState::BoxingGloveZone:
+			UpdateBoxingGloveZoneState(entity, deltaTime);
+			break;
+		case AiState::GapZone:
+			UpdateGapZoneState(entity, deltaTime);
+			break;
+		case AiState::TunnelZone:
+			UpdateTunnelZoneState(entity, deltaTime);
+			break;
+		case AiState::AvoidObstacle:
+			UpdateAvoidObstacleState(entity, deltaTime);
+			break;
+		case AiState::SeekPowerup:
+			UpdateSeekPowerupState(entity, deltaTime);
+			break;
+		case AiState::UsePowerup:
+			UpdateUsePowerupState(entity, deltaTime);
+			break;
+		case AiState::Overtaking:
+			UpdateOvertakingState(entity, deltaTime);
+			break;
+		case AiState::Braking:
+			UpdateBrakingState(entity, deltaTime);
+			break;
+		default:
+			break;
+		}
 	}
 }
 
-void AiSystem::TransitionToState(Entity entity, AiState newState, float deltaTime)
+void AiSystem::TransitionToState(Entity entity, AiState newState)
 {
 	auto& ai = controller.GetComponent<AiDriver>(entity);
+
+	// Early exit if already in this state
+	if (ai.currentState == newState)
+		return;
+
 	ai.previousState = ai.currentState;
 	ai.currentState = newState;
 
+	// Reset timers when entering specific states
 	switch (newState)
 	{
 	case AiState::FollowPath:
 		ai.stuckTimer = 0.0f;
-		UpdateFollowPathState(entity, deltaTime);
 		break;
 	case AiState::BackingUp:
 		ai.backupTimer = 0.0f;
-		UpdateBackingUpState(entity, deltaTime);
 		break;
 	case AiState::RecoveringFromOffTrack:
 		ai.recoveryTimer = 0.0f;
-		UpdateRecoveringFromOffTrackState(entity, deltaTime);
-		break;
-	case AiState::AvoidObstacle:
-		UpdateAvoidObstacleState(entity, deltaTime);
-		break;
-	case AiState::Braking:
-		UpdateBrakingState(entity, deltaTime);
-		break;
-	case AiState::SeekPowerup:
-		UpdateSeekPowerupState(entity, deltaTime);
-		break;
-	case AiState::UsePowerup:
-		UpdateUsePowerupState(entity, deltaTime);
-		break;
-	case AiState::Overtaking:
-		UpdateOvertakingState(entity, deltaTime);
-		break;
-	case AiState::WaitingAtDangerZone:
-		UpdateWaitingAtDangerZoneState(entity, deltaTime);
-		break;
-	case AiState::BoxingGloveZone:
-		UpdateBoxingGloveZoneState(entity, deltaTime);
-		break;
-	case AiState::GapZone:
-		UpdateGapZoneState(entity, deltaTime);
-		break;
-	case AiState::TunnelZone:
-		UpdateTunnelZoneState(entity, deltaTime);
-		break;
-	case AiState::IsFlipped:
-		UpdateIsFlippedState(entity, deltaTime);
 		break;
 	case AiState::IsStuck:
-		UpdateIsStuckState(entity, deltaTime);
+		ai.stuckTimer = 0.0f;
+		break;
+	case AiState::IsFlipped:
+		ai.flippedTimer = 0.0f;
 		break;
 	default:
 		break;
 	}
+	// NO update function calls here - prevents recursion!
 }
-
-bool AiSystem::ShouldLog(float& timer, float interval, float deltaTime)
-{
-	timer += deltaTime;
-	if (timer >= interval)
-	{
-		timer = 0.0f;
-		return true;
-	}
-	return false;
-}
-
-//void AiSystem::UpdateStateMachine(Entity entity, float deltaTime)
-//{
-//	auto& ai = controller.GetComponent<AiDriver>(entity);
-//	auto& transform = controller.GetComponent<Transform>(entity);
-//
-//	// Tick re-path cooldown in all states
-//	if (ai.repathCooldown > 0.0f)
-//		ai.repathCooldown -= deltaTime;
-//
-//	//// --- Flip detection ---
-//	//// Check if the vehicle's local up vector is pointing downward (flipped over)
-//	//glm::vec3 vehicleUp = transform.quatRotation * glm::vec3(0.0f, 1.0f, 0.0f);
-//	//if (vehicleUp.y < 0.1f) // up vector pointing sideways or downward
-//	//{
-//	//	//ai.flippedTimer += deltaTime;
-//	//	//if (ai.flippedTimer > ai.flippedTimeThreshold)
-//	//	//{
-//	//	//	std::cout << "[AI] Flipped over, resetting vehicle" << std::endl;
-//	//	//	ai.flippedTimer = 0.0f;
-//
-//	//	//	Event resetEvent(Events::Player::RESET_VEHICLE);
-//	//	//	resetEvent.SetParam<Entity>(Events::Player::Reset_Vehicle::ENTITY, entity);
-//	//	//	controller.SendEvent(resetEvent);
-//
-//	//	//	RecomputeNavPath(entity);
-//	//	//	TransitionToState(entity, AiState::FollowPath, deltaTime);
-//	//	//	return;
-//	//	//}
-//	//	TransitionToState(entity, AiState::IsFlipped, deltaTime);
-//	//	return;
-//	//}
-//	//else
-//	//{
-//	//	ai.flippedTimer = 0.0f;
-//	//}
-//
-//	switch (ai.currentState)
-//	{
-//	case AiState::FollowPath:
-//	{
-//
-//		UpdateFollowPathState(entity, deltaTime);
-//		break;
-//	}
-//	case AiState::BackingUp:
-//		UpdateBackingUpState(entity, deltaTime);
-//		break;
-//	case AiState::RecoveringFromOffTrack:
-//		UpdateRecoveringFromOffTrackState(entity, deltaTime);
-//		break;
-//	case AiState::AvoidObstacle:
-//		UpdateAvoidObstacleState(entity, deltaTime);
-//		break;
-//	case AiState::Braking:
-//		UpdateBrakingState(entity, deltaTime);
-//		break;
-//	case AiState::SeekPowerup:
-//		UpdateSeekPowerupState(entity, deltaTime);
-//		break;
-//	case AiState::UsePowerup:
-//		UpdateUsePowerupState(entity, deltaTime);
-//		break;
-//	case AiState::Overtaking:
-//		UpdateOvertakingState(entity, deltaTime);
-//		break;
-//	case AiState::WaitingAtDangerZone:
-//		UpdateWaitingAtDangerZoneState(entity, deltaTime);
-//		break;
-//	case AiState::BoxingGloveZone:
-//		UpdateBoxingGloveZoneState(entity, deltaTime);
-//		break;
-//	case AiState::GapZone:
-//		UpdateGapZoneState(entity, deltaTime);
-//		break;
-//	case AiState::TunnelZone:
-//		UpdateTunnelZoneState(entity, deltaTime);
-//		break;
-//	}
-//}
 
 void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 {
@@ -382,14 +326,20 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 	glm::vec3 toWpXZ = glm::vec3(waypointPosition.x - carPos.x, 0.0f, waypointPosition.z - carPos.z);
 	float distXZ = glm::length(toWpXZ);
 
+	//if (ShouldLog(m_followPathLogTimer, 1.0f, deltaTime)) {
+	//	std::cout << "[FollowPath] Target WP[" << ai.currentWaypointIndex << "]=("
+	//		<< waypointPosition.x << ", " << waypointPosition.y << ", " << waypointPosition.z
+	//		<< ") | Dist=" << distXZ << std::endl;
+	//}
+
 	////////////////////////////////////////////////////////////////////////
 	// --- Check if we've reached the end of the path, eg Finish line --- //
 	////////////////////////////////////////////////////////////////////////
 	if (ai.currentWaypointIndex >= static_cast<uint32_t>(ai.navWaypoints.size()))
 	{
-		if (ShouldLog(m_followPathLogTimer, 0.1f, deltaTime)) {
-			std::cout << "[AI] Reached end of path, stopping." << std::endl;
-		}
+		if (AiSystemHelperFunctions::ShouldLog(m_followPathLogTimer, 0.1f, deltaTime)) {
+				std::cout << "[AI] Reached end of path, stopping." << std::endl;
+			}
 		vc.throttle = 0.0f;
 		vc.brake = 1.0f;
 		vc.steer = 0.0f;
@@ -420,7 +370,7 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 		//	TransitionToState(entity, AiState::FollowPath, deltaTime);
 		//	return;
 		//}
-		TransitionToState(entity, AiState::IsFlipped, deltaTime);
+		TransitionToState(entity, AiState::IsFlipped);
 		return;
 	}
 	else
@@ -431,11 +381,11 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 	// Clear passing flag the moment we exit the danger zone
 	if (ai.passingThroughDangerZone)
 	{
-		if (!IsPointInDangerZone(transform.position))
-		{
-			ai.passingThroughDangerZone = false;
-			ai.dangerDetectionCooldown = ai.dangerDetectionCooldownDuration;
-			if (ShouldLog(m_followPathLogTimer, 0.1f, deltaTime)) {
+		if (!AiSystemHelperFunctions::IsPointInDangerZone(transform.position))
+			{
+				ai.passingThroughDangerZone = false;
+				ai.dangerDetectionCooldown = ai.dangerDetectionCooldownDuration;
+				if (AiSystemHelperFunctions::ShouldLog(m_followPathLogTimer, 0.1f, deltaTime)) {
 				std::cout << "[AI] Exited danger zone, starting cooldown (" 
 					<< ai.dangerDetectionCooldownDuration << "s)" << std::endl;
 			}
@@ -465,7 +415,7 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 
 	if (offTrack && ai.repathCooldown <= 0.0f)
 	{
-		TransitionToState(entity, AiState::RecoveringFromOffTrack, deltaTime);
+		TransitionToState(entity, AiState::RecoveringFromOffTrack);
 		return;
 	}
 
@@ -481,23 +431,23 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 		const glm::vec3& waypoint = ai.navWaypoints[i];
 
 		// Boxing Glove Zone Check
-		if (IsInBoxingGloveZone(waypoint)) {
-			if (ShouldLog(m_stateMachineLogTimer, 0.5f, deltaTime)) {
+		if (AiSystemHelperFunctions::IsInBoxingGloveZone(waypoint)) {
+			if (AiSystemHelperFunctions::ShouldLog(m_stateMachineLogTimer, 0.5f, deltaTime)) {
 				std::cout << "[AI] Boxing glove zone detected ahead, transitioning" << std::endl;
 			}
-			TransitionToState(entity, AiState::BoxingGloveZone, deltaTime);
+			TransitionToState(entity, AiState::BoxingGloveZone);
 			return;
 		}
 
 		// Gap zone check
-		if (IsInGapZone(waypoint)) {
-			TransitionToState(entity, AiState::GapZone, deltaTime);
+		if (AiSystemHelperFunctions::IsInGapZone(waypoint)) {
+			TransitionToState(entity, AiState::GapZone);
 			return;
 		}
 
 		// Tunnel zone check
-		if (IsInTunnelZone(waypoint)) {
-			TransitionToState(entity, AiState::TunnelZone, deltaTime);
+		if (AiSystemHelperFunctions::IsInTunnelZone(waypoint)) {
+			TransitionToState(entity, AiState::TunnelZone);
 			return;
 		}
 	}
@@ -518,7 +468,7 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 
 		for (uint32_t i = ai.currentWaypointIndex; i < lookAheadForDanger && i < static_cast<uint32_t>(ai.navWaypoints.size()); ++i)
 		{
-			if (IsPointInDangerZone(ai.navWaypoints[i]))
+			if (AiSystemHelperFunctions::IsPointInDangerZone(ai.navWaypoints[i]))
 			{
 				pathEntersDanger = true;
 				break;
@@ -527,10 +477,10 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 
 		if (pathEntersDanger)
 		{
-			if (ShouldLog(m_stateMachineLogTimer, 0.5f, deltaTime)) {
+			if (AiSystemHelperFunctions::ShouldLog(m_stateMachineLogTimer, 0.5f, deltaTime)) {
 				std::cout << "[AI] Danger ahead, entering waiting state" << std::endl;
 			}
-			TransitionToState(entity, AiState::WaitingAtDangerZone, deltaTime);
+			TransitionToState(entity, AiState::WaitingAtDangerZone);
 			return;
 		}
 	}
@@ -577,7 +527,7 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 
 			std::cout << "[AI] Banana detected at distance " << closestDist << ", avoiding..." << std::endl;
 
-			TransitionToState(entity, AiState::AvoidObstacle, deltaTime);
+			TransitionToState(entity, AiState::AvoidObstacle);
 			return;
 		}
 	}
@@ -626,7 +576,7 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 			ai.targetPowerupEntity = bestPowerup;
 			ai.seekTimer = 0.0f;
 			//std::cout << "[AI] Spotted powerup, detouring to collect" << std::endl;
-			TransitionToState(entity, AiState::SeekPowerup, deltaTime);
+			TransitionToState(entity, AiState::SeekPowerup);
 			return;
 		}
 	}
@@ -634,7 +584,7 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 	// Try to use a held powerup (checked inline -- does NOT interrupt driving)
 	if (ai.hasPowerup)
 	{
-		TryUsePowerup(entity);
+		AiSystemHelperFunctions::TryUsePowerup(entity, gameInstance);
 	}
 
 	//////////////////////////////////
@@ -768,7 +718,7 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 	}
 	else
 	{
-		steer = CalculateSteeringAngle(forward, toSteerXZ);
+		steer = AiSystemHelperFunctions::CalculateSteeringAngle(forward, toSteerXZ);
 	}
 
 	/////////////////////////////
@@ -802,7 +752,10 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 	bool wantsToMove = (ai.currentWaypointIndex < static_cast<uint32_t>(ai.navWaypoints.size()));
 	if (speed < ai.stuckSpeedThreshold && wantsToMove)
 	{
-		TransitionToState(entity, AiState::IsStuck, deltaTime);
+		if (AiSystemHelperFunctions::ShouldLog(m_stateMachineLogTimer, 0.5f, deltaTime)) {
+			std::cout << "[AI] Potentially stuck: speed=" << speed << " < threshold=" << ai.stuckSpeedThreshold << std::endl;
+		}
+		TransitionToState(entity, AiState::IsStuck);
 		return;
 	}
 	else
@@ -822,11 +775,15 @@ void AiSystem::UpdateBackingUpState(Entity entity, float deltaTime)
 	auto& transform = controller.GetComponent<Transform>(entity);
 	auto& vc = controller.GetComponent<VehicleCommands>(entity);
 
+	if (AiSystemHelperFunctions::ShouldLog(m_stateMachineLogTimer, 0.5f, deltaTime)) {
+		std::cout << "[AI] Backing up... timer=" << ai.backupTimer << "s" << std::endl;
+	}
+
 	ai.backupTimer += deltaTime;
 
 	if (ai.backupTimer >= ai.backupDuration)
 	{
-		TransitionToState(entity, AiState::FollowPath, deltaTime);
+		TransitionToState(entity, AiState::FollowPath);
 		return;
 	}
 
@@ -884,7 +841,7 @@ void AiSystem::UpdateRecoveringFromOffTrackState(Entity entity, float deltaTime)
 	if (ai.navWaypoints.empty())
 	{
 		std::cout << "[AI] Recovery: no path found, returning to FollowPath" << std::endl;
-		TransitionToState(entity, AiState::FollowPath, deltaTime);
+		TransitionToState(entity, AiState::FollowPath);
 		return;
 	}
 
@@ -907,7 +864,7 @@ void AiSystem::UpdateRecoveringFromOffTrackState(Entity entity, float deltaTime)
 		{
 			std::cout << "[AI] Recovery complete, back on navmesh" << std::endl;
 			ai.repathCooldown = ai.repathCooldownDuration;
-			TransitionToState(entity, AiState::FollowPath, deltaTime);
+			TransitionToState(entity, AiState::FollowPath);
 			return;
 		}
 	}
@@ -927,29 +884,12 @@ void AiSystem::UpdateRecoveringFromOffTrackState(Entity entity, float deltaTime)
 	if (glm::length(forward) < 1e-6f) forward = glm::vec3(0, 0, 1);
 	forward = glm::normalize(forward);
 
-	float steer = CalculateSteeringAngle(forward, toWpXZ);
+	float steer = AiSystemHelperFunctions::CalculateSteeringAngle(forward, toWpXZ);
 
 	vc.steer = steer;
 	vc.throttle = ai.maxThrottle * 0.5f;
 	vc.brake = 0.0f;
 	vc.isGrounded = true;
-}
-
-float AiSystem::CalculateSteeringAngle(const glm::vec3& forward, const glm::vec3& toTarget)
-{
-	glm::vec2 fwd2D(forward.x, forward.z);
-	glm::vec2 target2D(toTarget.x, toTarget.z);
-
-	if (glm::length(target2D) < 1e-5f)
-		return 0.0f;
-
-	target2D = glm::normalize(target2D);
-
-	float cross = fwd2D.x * target2D.y - fwd2D.y * target2D.x;
-	float dot = glm::clamp(fwd2D.x * target2D.x + fwd2D.y * target2D.y, -1.0f, 1.0f);
-	float angle = std::atan2(cross, dot);
-
-	return glm::clamp(-angle * 1.0f, -1.0f, 1.0f);
 }
 
 //void AiSystem::TryUsePowerup(Entity entity)
@@ -979,7 +919,7 @@ void AiSystem::UpdateIsStuckState(Entity entity, float deltaTime)
 	if (ai.stuckTimer > ai.stuckTimeThreshold)
 	{
 		//std::cout << "[AI] STUCK - backing up" << std::endl;
-		TransitionToState(entity, AiState::BackingUp, deltaTime);
+		TransitionToState(entity, AiState::BackingUp);
 		return;
 	}
 }
@@ -1119,7 +1059,7 @@ void AiSystem::UpdateAvoidObstacleState(Entity entity, float deltaTime)
 		toAvoidTarget.y = 0.0f;  // flatten to horizontal plane
 
 		// Calculate steering angle using your existing function
-		steer = CalculateSteeringAngle(forward, toAvoidTarget);
+		steer = AiSystemHelperFunctions::CalculateSteeringAngle(forward, toAvoidTarget);
 
 		// Reduce speed for safer maneuvering
 		//float targetAvoidSpeed = ai.desiredSpeed * 0.75f;  // 75% of normal speed
@@ -1152,7 +1092,7 @@ void AiSystem::UpdateAvoidObstacleState(Entity entity, float deltaTime)
 		ai.temporaryAvoidTarget = glm::vec3(0.0f);  // clear the avoidance target
 		ai.detectedObstacleEntity = 0;
 		RecomputeNavPath(entity);  // get back on track
-		TransitionToState(entity, AiState::FollowPath, deltaTime);
+		TransitionToState(entity, AiState::FollowPath);
 		return;
 
 		// Alternative exit condition: if we have a valid path and are close to the temporary target, exit avoidance
@@ -1171,111 +1111,6 @@ void AiSystem::UpdateAvoidObstacleState(Entity entity, float deltaTime)
 	vc.throttle = throttle;
 	vc.brake = brake;
 	vc.isGrounded = true;
-}
-
-bool AiSystem::HasDangerZone(Entity obstacleEntity) const
-{
-	auto dangerArray = controller.GetComponentArray<DangerZone>();
-	if (!dangerArray)
-		return false;
-
-	for (auto& [dzEntity, idx] : dangerArray->GetEntityToIndexMap())
-	{
-		auto& dz = controller.GetComponent<DangerZone>(dzEntity);
-		if (dz.obstacleEntity == obstacleEntity)
-			return true;
-	}
-	return false;
-}
-
-bool AiSystem::IsPointInActiveDangerZone(const glm::vec3& point) const
-{
-	auto dangerArray = controller.GetComponentArray<DangerZone>();
-	for (auto& [dzEntity, idx] : dangerArray->GetEntityToIndexMap())
-	{
-		auto& dz = controller.GetComponent<DangerZone>(dzEntity);
-
-		// Check if the linked obstacle is currently extended (dangerous)
-		if (dz.obstacleEntity != 0 && controller.HasComponent<MovingObstacle>(dz.obstacleEntity))
-		{
-			auto& obstacle = controller.GetComponent<MovingObstacle>(dz.obstacleEntity);
-
-			// Path indices 0->1 = extending, 1->2 = holding extended
-			// Path indices 2->3 = retracting
-			// Only dangerous when extending or holding (indices 0 or 1)
-			bool gloveIsOut = (obstacle.currentPathIndex <= 1);
-			if (!gloveIsOut)
-				continue; // glove is retracting, safe to pass
-		}
-
-		// Simple AABB point-in-box test (ignoring Y for a flat arena)
-		glm::vec3 diff = glm::abs(point - dz.center);
-		if (diff.x <= dz.halfExtents.x &&
-			diff.y <= dz.halfExtents.y &&
-			diff.z <= dz.halfExtents.z)
-		{
-			return true;
-		}
-	}
-	return false;
-}
-
-bool AiSystem::IsPointInDangerZone(const glm::vec3& point) const
-{
-	auto dangerArray = controller.GetComponentArray<DangerZone>();
-	if (!dangerArray)
-		return false;
-
-	for (auto& [dzEntity, idx] : dangerArray->GetEntityToIndexMap())
-	{
-		auto& dz = controller.GetComponent<DangerZone>(dzEntity);
-
-		// Simple AABB point-in-box test (no obstacle position check)
-		glm::vec3 diff = glm::abs(point - dz.center);
-		if (diff.x <= dz.halfExtents.x &&
-			diff.y <= dz.halfExtents.y &&
-			diff.z <= dz.halfExtents.z)
-		{
-			return true; // point is in A danger zone
-		}
-	}
-	return false;
-}
-
-bool AiSystem::IsObstacleInDangerZone(const glm::vec3& point) const
-{
-	auto dangerArray = controller.GetComponentArray<DangerZone>();
-	if (!dangerArray)
-		return false;
-
-	for (auto& [dzEntity, idx] : dangerArray->GetEntityToIndexMap())
-	{
-		auto& dz = controller.GetComponent<DangerZone>(dzEntity);
-
-		// First check if the POINT is in this danger zone (AABB test)
-		glm::vec3 diff = glm::abs(point - dz.center);
-		if (!(diff.x <= dz.halfExtents.x && diff.z <= dz.halfExtents.z))
-			continue; // point not in this zone, skip it
-
-		// Point IS in the zone, now check if the obstacle is physically present
-		if (dz.obstacleEntity != 0 && controller.HasComponent<MovingObstacle>(dz.obstacleEntity))
-		{
-			auto& obstacle = controller.GetComponent<MovingObstacle>(dz.obstacleEntity);
-
-			// Is the glove currently extended (blocking the zone)?
-			// Path indices 0->1 = extending/extended (GLOVE IS THERE)
-			// Path indices 2->3 = retracting/retracted (GLOVE IS GONE)
-			bool gloveIsPhysicallyPresent = (obstacle.currentPathIndex <= 1);
-
-			if (gloveIsPhysicallyPresent)
-			{
-				// Glove is blocking - return true without logging (caller will log if needed)
-				return true; // YES, glove is blocking the zone!
-			}
-		}
-	}
-
-	return false; // either no zone found, or glove is retracted
 }
 
 void AiSystem::UpdateWaitingAtDangerZoneState(Entity entity, float deltaTime)
@@ -1300,10 +1135,10 @@ void AiSystem::UpdateWaitingAtDangerZoneState(Entity entity, float deltaTime)
 	float speed = glm::length(glm::vec3(body.linearVelocity.x, 0.0f, body.linearVelocity.z));
 
 	// 1) Get distance to the danger zone
-	float distToZone = GetDistanceToDangerZone(carPos);
+	float distToZone = AiSystemHelperFunctions::GetDistanceToDangerZone(carPos);
 
 	// 2) Check if obstacle is blocking
-	bool isBlocked = IsArmBlocking(carPos);
+	bool isBlocked = AiSystemHelperFunctions::IsArmBlocking(carPos);
 
 	float SLOW_DISTANCE = 30.0f;
 	float STOP_DISTANCE = 10.0f;
@@ -1311,11 +1146,11 @@ void AiSystem::UpdateWaitingAtDangerZoneState(Entity entity, float deltaTime)
 	// 3) Calculate steering toward next waypoint
 	// EXCEPT in boxing glove zone - always drive straight there
 	float steer = 0.0f;
-	if (!IsInBoxingGloveZone(carPos) && ai.currentWaypointIndex < ai.navWaypoints.size())
+	if (!AiSystemHelperFunctions::IsInBoxingGloveZone(carPos) && ai.currentWaypointIndex < ai.navWaypoints.size())
 	{
 		glm::vec3 toWp = ai.navWaypoints[ai.currentWaypointIndex] - carPos;
 		toWp.y = 0.0f;
-		steer = CalculateSteeringAngle(forward, toWp);
+		steer = AiSystemHelperFunctions::CalculateSteeringAngle(forward, toWp);
 	}
 
 	// 4) Speed control based on distance
@@ -1344,14 +1179,14 @@ void AiSystem::UpdateWaitingAtDangerZoneState(Entity entity, float deltaTime)
 		else
 		{
 			// Clear to go!
-			if (ShouldLog(m_waitingLogTimer, 1.0f, deltaTime)) {
+			if (AiSystemHelperFunctions::ShouldLog(m_waitingLogTimer, 1.0f, deltaTime)) {
 				std::cout << "[AI] Danger zone clear, resuming path" << std::endl;
 			}
 			vc.throttle = 1.0f;
 			vc.brake = 0.0f;
 
 			ai.passingThroughDangerZone = true;
-			TransitionToState(entity, AiState::FollowPath, deltaTime);
+			TransitionToState(entity, AiState::FollowPath);
 			return;
 		}
 	}
@@ -1360,75 +1195,12 @@ void AiSystem::UpdateWaitingAtDangerZoneState(Entity entity, float deltaTime)
 	vc.isGrounded = true;
 }
 
-float AiSystem::GetDistanceToDangerZone(glm::vec3 point)
-{
-	auto dangerArray = controller.GetComponentArray<DangerZone>();
-	if (!dangerArray)
-		return 999.0f; // no danger zones exist
-
-	float minDist = 999.0f;
-
-	for (auto& [dzEntity, idx] : dangerArray->GetEntityToIndexMap())
-	{
-		auto& dz = controller.GetComponent<DangerZone>(dzEntity);
-
-		// Calculate AABB bounds
-		glm::vec3 minBounds = dz.center - dz.halfExtents;
-		glm::vec3 maxBounds = dz.center + dz.halfExtents;
-
-		// Find closest point on AABB to the given point
-		glm::vec3 closestPoint;
-		closestPoint.x = glm::clamp(point.x, minBounds.x, maxBounds.x);
-		closestPoint.y = glm::clamp(point.y, minBounds.y, maxBounds.y);
-		closestPoint.z = glm::clamp(point.z, minBounds.z, maxBounds.z);
-
-		// Calculate distance (ignoring Y for flat distance)
-		glm::vec3 diff = point - closestPoint;
-		//diff.y = 0.0f;
-		float dist = glm::length(diff);
-
-		if (dist < minDist)
-			minDist = dist;
-	}
-
-	return minDist;
-}
-
-bool AiSystem::IsArmBlocking(glm::vec3 carPos)
-{
-	auto dangerArray = controller.GetComponentArray<DangerZone>();
-	if (!dangerArray)
-		return false;
-
-	for (auto& [dzEntity, idx] : dangerArray->GetEntityToIndexMap())
-	{
-		auto& dz = controller.GetComponent<DangerZone>(dzEntity);
-
-		// Check if car is near this danger zone
-		glm::vec3 diff = glm::abs(carPos - dz.center);
-		if (diff.x > dz.halfExtents.x + 15.0f || diff.z > dz.halfExtents.z + 15.0f)
-			continue; // too far from this zone
-
-		// Check if the glove is physically extended
-		if (dz.obstacleEntity != 0 && controller.HasComponent<MovingObstacle>(dz.obstacleEntity))
-		{
-			auto& obstacle = controller.GetComponent<MovingObstacle>(dz.obstacleEntity);
-			if (obstacle.currentPathIndex < 3) // glove not fully retracted
-			{
-				return true;
-			}
-		}
-	}
-
-	return false;
-}
-
 void AiSystem::UpdateBoxingGloveZoneState(Entity entity, float deltaTime)
 {
 	auto& vc = controller.GetComponent<VehicleCommands>(entity);
 	auto& transform = controller.GetComponent<Transform>(entity);
 
-	if(ShouldLog(m_stateMachineLogTimer, 1.0f, deltaTime)) {
+	if(AiSystemHelperFunctions::ShouldLog(m_stateMachineLogTimer, 1.0f, deltaTime)) {
 		std::cout << "Entering Boxing Glove zone" << std::endl;
 	}
 
@@ -1438,15 +1210,15 @@ void AiSystem::UpdateBoxingGloveZoneState(Entity entity, float deltaTime)
 	vc.steer = 0.0f;
 	vc.isGrounded = true;
 
-	if(GetDistanceToDangerZone(transform.position) < 10.0f)
+	if(AiSystemHelperFunctions::GetDistanceToDangerZone(transform.position) < 10.0f)
 	{
-		TransitionToState(entity, AiState::WaitingAtDangerZone, deltaTime);
+		TransitionToState(entity, AiState::WaitingAtDangerZone);
 		return;
 	}
 
 	// Exit check: am I past the gap?
 	if (transform.position.x < -76.0f) { // afterGap X coordinate
-		TransitionToState(entity, AiState::FollowPath, deltaTime);
+		TransitionToState(entity, AiState::FollowPath);
 	}
 }
 
@@ -1463,7 +1235,7 @@ void AiSystem::UpdateGapZoneState(Entity entity, float deltaTime)
 
 	// Exit check: am I past the gap?
 	if (transform.position.x > 155.0f) { // afterGap X coordinate
-		TransitionToState(entity, AiState::FollowPath, deltaTime);
+		TransitionToState(entity, AiState::FollowPath);
 	}
 }
 
@@ -1479,39 +1251,13 @@ void AiSystem::UpdateTunnelZoneState(Entity entity, float deltaTime) {
 
 	// Exit check: am I past the gap?
 	if (transform.position.x > 150.0f) { // afterGap X coordinate
-		TransitionToState(entity, AiState::FollowPath, deltaTime);
+		TransitionToState(entity, AiState::FollowPath);
 	}
 }
 
 void AiSystem::UpdateFloorItState(Entity entity, float deltaTime)
 {
-	TransitionToState(entity, AiState::FollowPath, deltaTime);
-}
-
-// ===== ZONE DETECTION HELPERS =====
-
-bool AiSystem::IsInBoxingGloveZone(const glm::vec3& pos) const
-{
-	return (pos.x > -76.0f && pos.x < 48.0f &&
-		pos.z > -74.0f && pos.z < -41.0f &&
-		pos.y > -178.0f && pos.y < -168.0f);
-}
-
-bool AiSystem::IsInGapZone(const glm::vec3& pos) const
-{
-	// Gap area: X between -65 and +155, Z around 165-195, Y around -31
-	// Covers the entire gap section from approach to landing
-	return (pos.x > -65.0f && pos.x < 155.0f &&
-		pos.z > 138.0f && pos.z < 219.0f &&
-		pos.y > -25.0f && pos.y < -35.0f);
-}
-bool AiSystem::IsInTunnelZone(const glm::vec3& pos) const
-{
-	// Tunnel area: X between -140 and +155, Z between 240 and 400
-	// Covers entire tunnel from entrance (beforeTunnel) to exit (midTunnel curve)
-	return (pos.x > -145.0f && pos.x < 160.0f &&
-		pos.z > 235.0f && pos.z < 405.0f &&
-		pos.y > -35.0f && pos.y < -20.0f);
+	TransitionToState(entity, AiState::FollowPath);
 }
 
 void AiSystem::UpdateSeekPowerupState(Entity entity, float deltaTime)
@@ -1529,7 +1275,7 @@ void AiSystem::UpdateSeekPowerupState(Entity entity, float deltaTime)
 		std::cout << "[AI] Powerup seek timed out, resuming path" << std::endl;
 		ai.targetPowerupEntity = 0;
 		RecomputeNavPath(entity);
-		TransitionToState(entity, AiState::FollowPath, deltaTime);
+		TransitionToState(entity, AiState::FollowPath);
 		return;
 	}
 
@@ -1540,7 +1286,7 @@ void AiSystem::UpdateSeekPowerupState(Entity entity, float deltaTime)
 		std::cout << "[AI] Powerup gone, resuming path" << std::endl;
 		ai.targetPowerupEntity = 0;
 		RecomputeNavPath(entity);
-		TransitionToState(entity, AiState::FollowPath, deltaTime);
+		TransitionToState(entity, AiState::FollowPath);
 		return;
 	}
 
@@ -1557,7 +1303,7 @@ void AiSystem::UpdateSeekPowerupState(Entity entity, float deltaTime)
 		std::cout << "[AI] Powerup too far, resuming path" << std::endl;
 		ai.targetPowerupEntity = 0;
 		RecomputeNavPath(entity);
-		TransitionToState(entity, AiState::FollowPath, deltaTime);
+		TransitionToState(entity, AiState::FollowPath);
 		return;
 	}
 
@@ -1574,7 +1320,7 @@ void AiSystem::UpdateSeekPowerupState(Entity entity, float deltaTime)
 
 		// Re-path from current position since we detoured off the original path
 		RecomputeNavPath(entity);
-		TransitionToState(entity, AiState::FollowPath, deltaTime);
+		TransitionToState(entity, AiState::FollowPath);
 		return;
 	}
 
@@ -1584,7 +1330,7 @@ void AiSystem::UpdateSeekPowerupState(Entity entity, float deltaTime)
 	if (glm::length(forward) < 1e-6f) forward = glm::vec3(0, 0, 1);
 	forward = glm::normalize(forward);
 
-	float steer = CalculateSteeringAngle(forward, toPowerupXZ);
+	float steer = AiSystemHelperFunctions::CalculateSteeringAngle(forward, toPowerupXZ);
 
 	float speed = glm::length(glm::vec3(body.linearVelocity.x, 0.0f, body.linearVelocity.z));
 	float throttle = glm::clamp((ai.desiredSpeed * 0.7f - speed) * ai.throttleKp, 0.0f, ai.maxThrottle);
@@ -1593,82 +1339,6 @@ void AiSystem::UpdateSeekPowerupState(Entity entity, float deltaTime)
 	vc.throttle = throttle;
 	vc.brake = 0.0f;
 	vc.isGrounded = true;
-}
-
-void AiSystem::TryUsePowerup(Entity entity)
-{
-	auto& ai = controller.GetComponent<AiDriver>(entity);
-	auto& transform = controller.GetComponent<Transform>(entity);
-
-	if (!ai.hasPowerup)
-		return;
-
-	glm::vec3 forward = transform.quatRotation * glm::vec3(0.0f, 0.0f, 1.0f);
-	forward.y = 0.0f;
-	if (glm::length(forward) < 1e-6f) forward = glm::vec3(0, 0, 1);
-	forward = glm::normalize(forward);
-
-	if (ai.heldPowerupType == 1)
-	{
-		// Speed boost: use on straightaways
-		if (ai.currentWaypointIndex < static_cast<uint32_t>(ai.navWaypoints.size()))
-		{
-			glm::vec3 toWp = ai.navWaypoints[ai.currentWaypointIndex] - transform.position;
-			toWp.y = 0.0f;
-			float dist = glm::length(toWp);
-
-			if (dist > 1e-5f)
-			{
-				float dot = glm::dot(forward, glm::normalize(toWp));
-
-				if (dot > ai.useBoostDot)
-				{
-					controller.AddComponent(entity, Powerup{ 1, true, 5.0f, 0.0f });
-					ai.hasPowerup = false;
-					ai.heldPowerupType = 0;
-					std::cout << "[AI] Using speed boost on straightaway" << std::endl;
-				}
-			}
-		}
-	}
-	else if (ai.heldPowerupType == 2)
-	{
-		// Banana peel: drop when the player is close behind
-		Entity playerEntity = 0;
-		auto playerArray = controller.GetComponentArray<PlayerController>();
-		for (auto& [pEntity, idx] : playerArray->GetEntityToIndexMap())
-		{
-			if (controller.HasComponent<Transform>(pEntity))
-			{
-				playerEntity = pEntity;
-				break;
-			}
-		}
-
-		if (playerEntity != 0)
-		{
-			auto& playerTransform = controller.GetComponent<Transform>(playerEntity);
-			glm::vec3 toPlayer = playerTransform.position - transform.position;
-			toPlayer.y = 0.0f;
-			float dist = glm::length(toPlayer);
-
-			if (dist > 1e-5f && dist < ai.dropBananaPlayerRange)
-			{
-				float dot = glm::dot(forward, glm::normalize(toPlayer));
-
-				if (dot < -0.3f)
-				{
-					if (gameInstance)
-					{
-						gameInstance->SpawnBananaPeel(entity);
-						ai.hasPowerup = false;
-						ai.heldPowerupType = 0;
-						std::cout << "[AI] Dropped banana peel behind" << std::endl;
-					}
-				}
-			}
-		}
-	}
 }
 
 void AiSystem::UpdateIsFlippedState(Entity entity, float deltaTime)
@@ -1689,7 +1359,7 @@ void AiSystem::UpdateIsFlippedState(Entity entity, float deltaTime)
 		controller.SendEvent(resetEvent);
 
 		RecomputeNavPath(entity);
-		TransitionToState(entity, AiState::FollowPath, deltaTime);
+		TransitionToState(entity, AiState::FollowPath);
 		return;
 	}
 }
@@ -1698,7 +1368,7 @@ void AiSystem::UpdateUsePowerupState(Entity entity, float deltaTime)
 {
 	// Powerup usage is now handled inline in FollowPath via TryUsePowerup.
 	// If we somehow end up here, just go back to FollowPath.
-	TransitionToState(entity, AiState::FollowPath, deltaTime);
+	TransitionToState(entity, AiState::FollowPath);
 }
 
 void AiSystem::UpdateOvertakingState(Entity entity, float deltaTime)
@@ -1711,7 +1381,7 @@ void AiSystem::UpdateOvertakingState(Entity entity, float deltaTime)
 	//   using overtakeSteerOffset
 	// - Once past the player (player is now behind), transition back to FollowPath
 
-	TransitionToState(entity, AiState::FollowPath, deltaTime);
+	TransitionToState(entity, AiState::FollowPath);
 }
 
 void AiSystem::UpdateBrakingState(Entity entity, float deltaTime)
@@ -1725,5 +1395,28 @@ void AiSystem::UpdateBrakingState(Entity entity, float deltaTime)
 	//   and reduce speed to brakingSpeed
 	// - Once speed is low enough or the turn is passed, transition to FollowPath
 
-	TransitionToState(entity, AiState::FollowPath, deltaTime);
+	TransitionToState(entity, AiState::FollowPath);
+}
+
+// ===== PUBLIC WRAPPER FUNCTIONS =====
+// These delegate to AiSystemHelperFunctions for backward compatibility
+
+float AiSystem::CheckDangerZone(const glm::vec3& position) const
+{
+	return AiSystemHelperFunctions::CheckDangerZone(position);
+}
+
+bool AiSystem::IsInGapZone(const glm::vec3& pos) const
+{
+	return AiSystemHelperFunctions::IsInGapZone(pos);
+}
+
+bool AiSystem::IsInTunnelZone(const glm::vec3& pos) const
+{
+	return AiSystemHelperFunctions::IsInTunnelZone(pos);
+}
+
+bool AiSystem::IsInBoxingGloveZone(const glm::vec3& pos) const
+{
+	return AiSystemHelperFunctions::IsInBoxingGloveZone(pos);
 }
