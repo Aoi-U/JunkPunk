@@ -22,6 +22,8 @@ public:
 	const NavMesh& GetNavMesh() const { return navMesh; }
 
 	void SetGoalPosition(const glm::vec3& goal) { goalPosition = goal; }
+	void SetBoxingGloveDangerZones(const std::vector<Entity>& zones) { boxingGloveDangerZones = zones; }
+	const std::vector<Entity>& GetBoxingGloveDangerZones() const { return boxingGloveDangerZones; }
 
 	// Zone detection helpers (delegated to AiSystemHelperFunctions)
 	// These are kept as public convenience wrappers
@@ -36,6 +38,9 @@ private:
 	NavMesh navMesh;
 	glm::vec3 goalPosition = glm::vec3(-70.000f, 56.000f, 326.000f);
 
+	// Ordered list of danger zone entities for the boxing glove section (indices 0,1,2)
+	std::vector<Entity> boxingGloveDangerZones;
+
 	// Logging throttle timers
 	float m_stateMachineLogTimer = 0.0f;
 	float m_followPathLogTimer = 0.0f;
@@ -47,7 +52,7 @@ private:
 	// Re-paths from the entity's current position (used after getting knocked off track)
 	void RecomputeNavPath(Entity entity);
 
-	void TransitionToState(Entity entity, AiState newState);
+	void TransitionToState(Entity entity, AiState newState, float deltaTime);
 
 	// State update functions
 	void UpdateFollowPathState(Entity entity, float deltaTime);

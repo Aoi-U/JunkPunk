@@ -63,11 +63,25 @@ public:
 	 * @brief Get distance from a point to the nearest danger zone
 	 */
 	static float GetDistanceToDangerZone(const glm::vec3& point);
+	static glm::vec3 GetBoxingGloveZoneExitPoint();
 
 	/**
 	 * @brief Check if a boxing glove arm is currently blocking at this position
 	 */
 	static bool IsArmBlocking(const glm::vec3& carPos);
+	static bool IsBoxingGloveArmExtending(const glm::vec3& carPos, float checkDistance);
+
+	/**
+	 * @brief Scan for danger zones in a forward cone
+	 * @param carPos Current position of the car
+	 * @param forward Normalized forward direction vector
+	 * @param detectionRange Maximum distance to scan
+	 * @param detectionCone Dot product threshold for cone (e.g., 0.7 = ~45° cone)
+	 * @param outClosestDangerEntity Optional output parameter for closest danger zone entity
+	 * @return Distance to closest danger zone in cone, or -1 if none found
+	 */
+	static float ScanForDangerZoneInCone(const glm::vec3& carPos, const glm::vec3& forward, 
+		float detectionRange, float detectionCone, Entity* outClosestDangerEntity = nullptr);
 
 	// ===== ZONE DETECTION HELPERS =====
 
@@ -77,14 +91,35 @@ public:
 	static bool IsInBoxingGloveZone(const glm::vec3& pos);
 
 	/**
+	 * @brief Scan for boxing glove zone in forward cone
+	 * @return Distance to boxing glove zone, or -1 if not in cone
+	 */
+	static float ScanForBoxingGloveZoneInCone(const glm::vec3& carPos, const glm::vec3& forward,
+		float detectionRange, float detectionCone);
+
+	/**
 	 * @brief Check if position is in the gap zone
 	 */
 	static bool IsInGapZone(const glm::vec3& pos);
 
 	/**
+	 * @brief Scan for gap zone in forward cone
+	 * @return Distance to gap zone, or -1 if not in cone
+	 */
+	static float ScanForGapZoneInCone(const glm::vec3& carPos, const glm::vec3& forward,
+		float detectionRange, float detectionCone);
+
+	/**
 	 * @brief Check if position is in the tunnel zone
 	 */
 	static bool IsInTunnelZone(const glm::vec3& pos);
+
+	/**
+	 * @brief Scan for tunnel zone in forward cone
+	 * @return Distance to tunnel zone, or -1 if not in cone
+	 */
+	static float ScanForTunnelZoneInCone(const glm::vec3& carPos, const glm::vec3& forward,
+		float detectionRange, float detectionCone);
 
 	// ===== UTILITY FUNCTIONS =====
 
@@ -110,4 +145,6 @@ public:
 	 * @param gameInstance Pointer to Game instance (for spawning bananas)
 	 */
 	static void TryUsePowerup(Entity entity, class Game* gameInstance);
+
+	static float GetCurrentSpeed(Entity entity);
 };

@@ -26,6 +26,7 @@ enum class AiState
 	TunnelZone,
 	IsFlipped,
 	IsStuck,
+	FloorIt
 };
 
 struct AiDriver
@@ -48,6 +49,7 @@ struct AiDriver
 
 	// Speed -- constant for now
 	float desiredSpeed = 30.0f;
+	float currentSpeed = 0.0f;
 
 	// Throttle
 	float throttleKp = 1.5f;
@@ -80,6 +82,17 @@ struct AiDriver
 	float advanceDistance = 0.0f;          // how far to advance after waiting
 	bool isAdvancingThroughDanger = false; // flag for controlled advance
 	glm::vec3 advanceStartPos = glm::vec3(0.0f); // where we started advancing from
+
+	// Danger zone detection (cone-based)
+	float dangerZoneDetectionRange = 40.0f;  // how far ahead to scan for danger zones
+	float dangerZoneDetectionCone = 0.7f;    // dot product threshold (0.7 = ~45° forward cone)
+	bool isApproachingDangerZone = false;
+	// Detection cone values (dot product thresholds)
+	//	0.95  // ~18° — very narrow, straight ahead only
+	//	0.7   // ~45° — forward cone (default for danger zones)
+	//	0.5   // ~60° — wider cone  
+	//	0.0   // ~90° — front hemisphere
+	//	- 0.3  // ~107° — most directions except behind
 
 	// Off-track recovery
 	float offTrackHeightThreshold = 8.0f;
@@ -138,4 +151,11 @@ struct AiDriver
 	bool passingThroughDangerZone = false; // Flag to indicate if we're currently passing through a danger zone
 	float dangerDetectionCooldown = 0.0f;  // Cooldown after exiting a danger zone before detecting another
 	float dangerDetectionCooldownDuration = 1.45f; // Duration of cooldown in seconds
+
+	AiState activeZoneState = AiState::FollowPath;  // Tracks which special zone we're in
+
+	// Boxing glove zone: index-based tracking
+	// Tracks which glove in the ordered list the AI is currently navigating toward
+	uint32_t currentBoxingGloveIndex = 0;
+
 };

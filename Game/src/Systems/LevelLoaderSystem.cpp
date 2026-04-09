@@ -220,6 +220,9 @@ void LevelLoaderSystem::LoadLevel()
 		2.f
 	};
 
+	// Collect danger zone entities for the boxing glove section (first 3 gloves)
+	std::vector<Entity> boxingGloveDangerZoneEntities;
+
 	for (int i = 0; i < glove_positions.size(); i++) {
 		//punching glove
 		entity = controller.createEntity();
@@ -282,13 +285,25 @@ void LevelLoaderSystem::LoadLevel()
 			controller.AddComponent(dangerEntity, DangerZone{ center, finalHalfExtents, gloveEntity, SIDE_PADDING });
 			controller.AddComponent(dangerEntity, PhysicsBody{});
 			controller.AddComponent(dangerEntity, Transform{ center, glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(1.0f) });
-			controller.AddComponent(dangerEntity, Trigger{ nullptr, finalHalfExtents.x, finalHalfExtents.y, finalHalfExtents.z });
+			//controller.AddComponent(dangerEntity, Trigger{ nullptr, finalHalfExtents.x, finalHalfExtents.y, finalHalfExtents.z });
 
 			std::cout << "[LevelLoader] Danger zone for glove " << i
 				<< " spans from (" << minPt.x << ", " << minPt.y << ", " << minPt.z << ")"
 				<< " to (" << maxPt.x << ", " << maxPt.y << ", " << maxPt.z << ")" << std::endl;
+
+			// First 3 gloves are the boxing glove section
+			if (i < 3)
+				boxingGloveDangerZoneEntities.push_back(dangerEntity);
 		}
 
+	}
+
+	// Pass the ordered boxing glove danger zones to the AI system
+	if (aiSystemPtr && !boxingGloveDangerZoneEntities.empty())
+	{
+		aiSystemPtr->SetBoxingGloveDangerZones(boxingGloveDangerZoneEntities);
+		std::cout << "[LevelLoader] Registered " << boxingGloveDangerZoneEntities.size()
+			<< " boxing glove danger zones with AiSystem" << std::endl;
 	}
 
 	//diagonal glove

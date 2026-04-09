@@ -172,6 +172,12 @@ float AiSystemHelperFunctions::GetDistanceToDangerZone(const glm::vec3& point)
 	return minDist;
 }
 
+glm::vec3 AiSystemHelperFunctions::GetBoxingGloveZoneExitPoint()
+{
+    // Target exit point at the end of the boxing glove zone
+    return glm::vec3(-76.0f, -185.0f, -58.0f);
+}
+
 bool AiSystemHelperFunctions::IsArmBlocking(const glm::vec3& carPos)
 {
 	auto dangerArray = controller.GetComponentArray<DangerZone>();
@@ -201,13 +207,118 @@ bool AiSystemHelperFunctions::IsArmBlocking(const glm::vec3& carPos)
 	return false;
 }
 
+bool AiSystemHelperFunctions::IsBoxingGloveArmExtending(const glm::vec3& carPos, float checkDistance)
+{
+	auto dangerArray = controller.GetComponentArray<DangerZone>();
+	if (!dangerArray)
+		return false;
+
+	for (auto& [dzEntity, idx] : dangerArray->GetEntityToIndexMap())
+	{
+		auto& dz = controller.GetComponent<DangerZone>(dzEntity);
+
+		// Check if danger zone is within checkDistance
+		glm::vec3 diff = carPos - dz.center;
+		diff.y = 0.0f; // ignore vertical
+		float dist = glm::length(diff);
+
+		if (dist > checkDistance)
+			continue; // too far
+
+		// Check arm state
+		if (dz.obstacleEntity != 0 && controller.HasComponent<MovingObstacle>(dz.obstacleEntity))
+		{
+			auto& obstacle = controller.GetComponent<MovingObstacle>(dz.obstacleEntity);
+
+			// Check if arm is extending or extended (dangerous)
+			if (obstacle.currentPathIndex == 0 || obstacle.currentPathIndex == 1)
+			{
+				return true; // ARM IS EXTENDING/EXTENDED - WAIT!
+			}
+		}
+	}
+
+	return false; // No extending arms nearby
+}
+
+float AiSystemHelperFunctions::ScanForDangerZoneInCone(const glm::vec3& carPos, const glm::vec3& forward,
+	float detectionRange, float detectionCone, Entity* outClosestDangerEntity)
+{
+	auto dangerArray = controller.GetComponentArray<DangerZone>();
+	if (!dangerArray)
+		return -1.0f; // no danger zones exist
+
+	float closestDist = detectionRange;
+	Entity closestDangerEntity = 0;
+
+	for (auto& [dzEntity, idx] : dangerArray->GetEntityToIndexMap())
+	{
+		auto& dz = controller.GetComponent<DangerZone>(dzEntity);
+
+		// Calculate vector from car to danger zone center
+		glm::vec3 toDanger = dz.center - carPos;
+		toDanger.y = 0.0f; // flatten to horizontal plane
+
+		float dist = glm::length(toDanger);
+
+		// Skip if too far or too close
+		if (dist < 1e-5f || dist > closestDist)
+			continue;
+
+		// Check if danger zone is in the forward cone
+		glm::vec3 dirToDanger = glm::normalize(toDanger);
+		float dot = glm::dot(forward, dirToDanger);
+
+		if (dot < detectionCone)
+			continue; // outside detection cone
+
+		// This danger zone is in range and in the cone
+		closestDist = dist;
+		closestDangerEntity = dzEntity;
+	}
+
+	// Output the closest entity if requested
+	if (outClosestDangerEntity != nullptr)
+		*outClosestDangerEntity = closestDangerEntity;
+
+	// Return distance to closest danger zone, or -1 if none found
+	return (closestDangerEntity != 0) ? closestDist : -1.0f;
+}
+
 // ===== ZONE DETECTION HELPERS =====
 
 bool AiSystemHelperFunctions::IsInBoxingGloveZone(const glm::vec3& pos)
 {
 	return (pos.x > -76.0f && pos.x < 48.0f &&
 		pos.z > -74.0f && pos.z < -41.0f &&
-		pos.y > -178.0f && pos.y < -168.0f);
+		pos.y > -185.0f && pos.y < -168.0f);
+}
+
+float AiSystemHelperFunctions::ScanForBoxingGloveZoneInCone(const glm::vec3& carPos, const glm::vec3& forward,
+	float detectionRange, float detectionCone)
+{
+	// Boxing glove zone center and bounds
+	glm::vec3 zoneBegin(48.0f, -168.0f, -41.0f);
+	glm::vec3 zoneEnd(-76.0f, -185.0f, -74.0f);
+
+	// Vector from car to zone center
+	glm::vec3 toZone = zoneBegin - carPos;
+	toZone.y = 0.0f; // flatten to horizontal plane
+
+	float dist = glm::length(toZone);
+
+	// Check range
+	if (dist < 1e-5f || dist > detectionRange)
+		return -1.0f;
+
+	// Check cone
+	glm::vec3 dirToZone = glm::normalize(toZone);
+	float dot = glm::dot(forward, dirToZone);
+
+	if (dot < detectionCone)
+		return -1.0f; // outside cone
+
+	return dist; // zone detected in cone
 }
 
 bool AiSystemHelperFunctions::IsInGapZone(const glm::vec3& pos)
@@ -219,6 +330,29 @@ bool AiSystemHelperFunctions::IsInGapZone(const glm::vec3& pos)
 		pos.y > -25.0f && pos.y < -35.0f);
 }
 
+float AiSystemHelperFunctions::ScanForGapZoneInCone(const glm::vec3& carPos, const glm::vec3& forward,
+	float detectionRange, float detectionCone)
+{
+	// Gap zone center
+	glm::vec3 zoneCenter(45.0f, -30.0f, 178.5f); // approximate center
+
+	glm::vec3 toZone = zoneCenter - carPos;
+	toZone.y = 0.0f;
+
+	float dist = glm::length(toZone);
+
+	if (dist < 1e-5f || dist > detectionRange)
+		return -1.0f;
+
+	glm::vec3 dirToZone = glm::normalize(toZone);
+	float dot = glm::dot(forward, dirToZone);
+
+	if (dot < detectionCone)
+		return -1.0f;
+
+	return dist;
+}
+
 bool AiSystemHelperFunctions::IsInTunnelZone(const glm::vec3& pos)
 {
 	// Tunnel area: X between -140 and +155, Z between 240 and 400
@@ -226,6 +360,29 @@ bool AiSystemHelperFunctions::IsInTunnelZone(const glm::vec3& pos)
 	return (pos.x > -145.0f && pos.x < 160.0f &&
 		pos.z > 235.0f && pos.z < 405.0f &&
 		pos.y > -35.0f && pos.y < -20.0f);
+}
+
+float AiSystemHelperFunctions::ScanForTunnelZoneInCone(const glm::vec3& carPos, const glm::vec3& forward,
+	float detectionRange, float detectionCone)
+{
+	// Tunnel zone center
+	glm::vec3 zoneCenter(7.5f, -27.5f, 320.0f); // approximate center
+
+	glm::vec3 toZone = zoneCenter - carPos;
+	toZone.y = 0.0f;
+
+	float dist = glm::length(toZone);
+
+	if (dist < 1e-5f || dist > detectionRange)
+		return -1.0f;
+
+	glm::vec3 dirToZone = glm::normalize(toZone);
+	float dot = glm::dot(forward, dirToZone);
+
+	if (dot < detectionCone)
+		return -1.0f;
+
+	return dist;
 }
 
 // ===== UTILITY FUNCTIONS =====
@@ -329,4 +486,14 @@ void AiSystemHelperFunctions::TryUsePowerup(Entity entity, Game* gameInstance)
 			}
 		}
 	}
+}
+
+
+float AiSystemHelperFunctions::GetCurrentSpeed(Entity entity)
+{
+	if (!controller.HasComponent<VehicleBody>(entity))
+		return 0.0f;
+
+	auto& body = controller.GetComponent<VehicleBody>(entity);
+	return glm::length(glm::vec3(body.linearVelocity.x, 0.0f, body.linearVelocity.z));
 }
