@@ -209,6 +209,7 @@
     <ClInclude Include="src\Components\Particles.h" />
     <ClInclude Include="src\Components\Physics.h" />
     <ClInclude Include="src\Components\Player.h" />
+    <ClInclude Include="src\Components\Powerup.h" />
     <ClInclude Include="src\Components\Render.h" />
     <ClInclude Include="src\Components\Transform.h" />
     <ClInclude Include="src\Core\AudioEngine.h" />
