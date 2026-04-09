@@ -23,6 +23,7 @@ static bool split_camera = false;
 static bool first_time_held_right_click = false;
 bool playerWon = false;
 bool aiWon = false;
+int winningPlayerNum = 0;
 // -------------------------
 // For logging player position
 // position logging
@@ -30,7 +31,7 @@ float posLogTimer = 0.0f;
 const float POS_LOG_INTERVAL = 1.0f; // 500 ms
 // -------------------------
 float winTimer = 0.0f;
-const float WIN_DELAY = 5.0f;
+const float WIN_DELAY = 3.0f;
 float fadeAlpha = 0.0f;
 Entity playerEntity;
 Entity aiEntity;
@@ -326,6 +327,12 @@ void Game::Run()
 			particleSystem->Update(time->frameTime); // update particles
 
 			renderSystem->Update(time->fps(), physicsSystem->GetRenderBuffer()); // render physics debug data
+			if (controller.HasComponent<Transform>(playerEntity))
+			{
+				auto& t = controller.GetComponent<Transform>(playerEntity);
+				float dist = aiSystem->CalculateDistanceToFinish(t.position);
+				renderSystem->RenderDistanceToFinish(dist);
+			}
 			menuSystem->RenderWinText();
 			//camera_debug_panel->render(); // render debug panel
 			aiSystem->Update(time->frameTime); // update ai drivers
@@ -393,10 +400,20 @@ void Game::Run()
 						event.SetParam<Entity>(Events::Player::Blast::ENTITY, vehicle);
 						controller.SendEvent(event);
 						controller.RemoveComponent<Powerup>(vehicle);
+						Event soundEvent(Events::Audio::PLAY_SOUND);
+						soundEvent.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/explosion.wav");
+						soundEvent.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
+						soundEvent.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, -10.0f);
+						controller.SendEvent(soundEvent);
 					}
 					else {
 						p.active = true;
 						p.elapsed = 0.0f;
+						Event soundEvent(Events::Audio::PLAY_SOUND);
+						soundEvent.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/boost.wav");
+						soundEvent.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
+						soundEvent.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, -10.0f);
+						controller.SendEvent(soundEvent);
 					}
 					std::cout << "Powerup Used by player " << playerCtrl.playerNum << std::endl;
 				}
@@ -477,6 +494,7 @@ void Game::ChangeGameStateListener(Event& e)
 		currentStateGlobal = state;
 		playerWon = false;
 		aiWon = false;
+		winningPlayerNum = 0;
 		winTimer = 0.0f;
 		fadeAlpha = 0.0f;
 		break;
@@ -602,6 +620,7 @@ void Game::ChangeGameStateListener(Event& e)
 		fadeAlpha = 0.0f;
 		playerWon = false;
 		aiWon = false;
+		winningPlayerNum = 0;
 
 		audioSystem->ResetMusicState();
 
@@ -649,10 +668,20 @@ void Game::KeyboardInputListener(Event& e)
 				event.SetParam<Entity>(Events::Player::Blast::ENTITY, player);
 				controller.SendEvent(event);
 				controller.RemoveComponent<Powerup>(player);
+				Event soundEvent(Events::Audio::PLAY_SOUND);
+				soundEvent.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/explosion.wav");
+				soundEvent.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
+				soundEvent.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, -10.0f);
+				controller.SendEvent(soundEvent);
 				}
 				else {
 					p.active = true;
 					p.elapsed = 0.0f;
+					Event soundEvent(Events::Audio::PLAY_SOUND);
+					soundEvent.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/boost.wav");
+					soundEvent.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
+					soundEvent.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, -10.0f);
+					controller.SendEvent(soundEvent);
 				}
 				std::cout << "Powerup Used" << std::endl;
 			}
@@ -671,19 +700,27 @@ void Game::TriggerEnterListener(Event& e)
 			playerWon = true;
 			fadeAlpha = 0.0f;
 			winTimer = 0.0f;
-			std::cout << "you win!" << std::endl;
+			//std::cout << "you win!" << std::endl;
+			for (int i = 0; i < static_cast<int>(playerEntities.size()); i++) {
+				if (playerEntities[i] == otherEntity) {
+					winningPlayerNum = i + 1;
+					break;
+				}
+			}
+			std::cout << "Player " << winningPlayerNum << " wins!" << std::endl;
 		}
 		else if (!playerWon && !aiWon && controller.HasComponent<AiDriver>(otherEntity)) {
 			aiWon = true;
 			fadeAlpha = 0.0f;
 			winTimer = 0.0f;
+			winningPlayerNum = -1;
 			std::cout << "AI wins!" << std::endl;
 		}
 		return;
 	}
 	else if (controller.HasComponent<Powerup>(triggerEntity) &&
-		controller.HasComponent<PlayerController>(otherEntity) &&
-		!controller.HasComponent<Powerup>(otherEntity)) {
+		!controller.HasComponent<Powerup>(otherEntity) &&
+		(controller.HasComponent<PlayerController>(otherEntity) || controller.HasComponent<AiDriver>(otherEntity))) {
 		auto pickup = controller.GetComponent<Powerup>(triggerEntity);
 		auto& t = controller.GetComponent<Transform>(triggerEntity);
 		auto& trig = controller.GetComponent<Trigger>(triggerEntity);
@@ -696,13 +733,18 @@ void Game::TriggerEnterListener(Event& e)
 		data.powerup = pickup;
 		data.trigger = trig;
 		data.timer = 5.0f;
-		if (pickup.type == 1) data.modelPath = "assets/models/lightning_capsule/scene.gltf";
-		else if (pickup.type == 2) data.modelPath = "assets/models/banana/scene.gltf";
-		else if (pickup.type == 3) data.modelPath = "assets/models/bomb/scene.gltf";
+		if (pickup.type == 1) data.modelPath = "assets/models/batterybox/battery_powerup.gltf";
+		else if (pickup.type == 2) data.modelPath = "assets/models/bananabox/banana_powerup.gltf";
+		else if (pickup.type == 3) data.modelPath = "assets/models/bombbox/bomb_powerup.gltf";
 		pendingRespawns.push_back(data);
 
 		controller.AddComponent(otherEntity, pickup);
 		std::cout << "Powerup collected!" << std::endl;
+		Event soundEvent(Events::Audio::PLAY_SOUND);
+		soundEvent.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/powerup.ogg");
+		soundEvent.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
+		soundEvent.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, -10.0f);
+		controller.SendEvent(soundEvent);
 		controller.DestroyEntity(triggerEntity);
 	}
 	else if (controller.HasComponent<CheckPoint>(triggerEntity))
@@ -720,6 +762,11 @@ void Game::TriggerEnterListener(Event& e)
 		Event spinEvent(Events::Player::SPIN_OUT);
 		spinEvent.SetParam<Entity>(Events::Player::Spin_Out::Entity, otherEntity);
 		controller.SendEvent(spinEvent);
+		Event soundEvent(Events::Audio::PLAY_SOUND);
+		soundEvent.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/slip.wav");
+		soundEvent.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
+		soundEvent.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, -10.0f);
+		controller.SendEvent(soundEvent);
 		controller.DestroyEntity(triggerEntity);
 	}
 	else if (controller.HasComponent<Sludge>(triggerEntity) && controller.HasComponent<VehicleCommands>(otherEntity)) {
@@ -764,10 +811,11 @@ void Game::SpawnBananaPeel(Entity vehicle) {
 	//spawnPos = glm::vec3(-60.0f, -94.0f, -7.0f);
 	Entity banana = controller.createEntity();
 	auto loaded = loaderSystem->LoadModel("assets/models/banana_peel/banana.gltf");
+	spawnPos.y += 0.5f;
 	controller.AddComponent(banana, Transform{
 		spawnPos,
 		glm::quat(1.0f,0.0f,0.0f,0.0f),
-		glm::vec3(0.5f)
+		glm::vec3(1.0f)
 		});
 	controller.AddComponent(banana, Trigger{ nullptr, 1.0f, 1.0f, 1.0f });
 	controller.AddComponent(banana, Render{ loaded.first, loaded.second, true });
@@ -782,6 +830,11 @@ void Game::SpawnBananaPeel(Entity vehicle) {
 	Event createEvent(Events::Physics::CREATE_ACTOR);
 	createEvent.SetParam<Entity>(Events::Physics::Create_Actor::ENTITY, banana);
 	controller.SendEvent(createEvent);
+	Event soundEvent(Events::Audio::PLAY_SOUND);
+	soundEvent.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/banana.wav");
+	soundEvent.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
+	soundEvent.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, -10.0f);
+	controller.SendEvent(soundEvent);
 }
 
 void Game::UpdatePowerupRespawns(float deltaTime)
@@ -811,4 +864,29 @@ void Game::UpdatePowerupRespawns(float deltaTime)
 			}),
 		pendingRespawns.end()
 	);
+}
+
+void Game::SchedulePowerupRespawn(Entity entity)
+{
+	if (!controller.HasComponent<Transform>(entity) ||
+		!controller.HasComponent<Powerup>(entity) ||
+		!controller.HasComponent<Trigger>(entity))
+		return;
+
+	auto& t = controller.GetComponent<Transform>(entity);
+	auto& p = controller.GetComponent<Powerup>(entity);
+	auto& trig = controller.GetComponent<Trigger>(entity);
+
+	PowerupRespawnData data;
+	data.position = t.position;
+	data.rotation = t.quatRotation;
+	data.scale = t.scale;
+	data.powerup = p;
+	data.trigger = trig;
+	data.timer = 5.0f;
+	if (p.type == 1) data.modelPath = "assets/models/batterybox/battery_powerup.gltf";
+	else if (p.type == 2) data.modelPath = "assets/models/bananabox/banana_powerup.gltf";
+	else if (p.type == 3) data.modelPath = "assets/models/bombbox/bomb_powerup.gltf";
+
+	pendingRespawns.push_back(data);
 }

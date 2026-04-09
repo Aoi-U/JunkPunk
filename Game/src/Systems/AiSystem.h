@@ -27,6 +27,7 @@ public:
 	// Check if a position is in a danger zone (returns closest danger distance, or -1 if safe)
 	float CheckDangerZone(const glm::vec3& position) const;
 
+	float CalculateDistanceToFinish(const glm::vec3& position) const;
 private:
 	Game* gameInstance = nullptr;
 	NavMesh navMesh;

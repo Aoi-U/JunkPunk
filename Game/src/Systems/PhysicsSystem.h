@@ -28,7 +28,7 @@ public:
 	const PxRenderBuffer& GetRenderBuffer() { return gPhysicsScene->getRenderBuffer(); }
 
 	bool usedBoost = false;
-	bool spinning = false;
+	Entity spinningEntity = MAX_ENTITIES;
 	float spinTimer;
 
 private:
