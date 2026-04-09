@@ -417,6 +417,10 @@ for (uint32_t i = ai.currentWaypointIndex; i < lookAheadForDanger && i < static_
 				if (!controller.HasComponent<Transform>(powerupEntity))
 					continue;
 
+				// only seek actual pickup triggers, never vehicle-held powerups
+				if (!controller.HasComponent<Trigger>(powerupEntity))
+					continue;
+
 				auto& pickup = controller.GetComponent<Powerup>(powerupEntity);
 				if (pickup.active)
 					continue;
@@ -1267,6 +1271,20 @@ void AiSystem::UpdateSeekPowerupState(Entity entity, float deltaTime)
 
 	ai.seekTimer += deltaTime;
 
+	// If trigger pickup already gave us a held powerup, stop seeking immediately.
+	if (controller.HasComponent<Powerup>(entity))
+	{
+		auto& held = controller.GetComponent<Powerup>(entity);
+		if (!held.active)
+		{
+			ai.hasPowerup = true;
+			ai.heldPowerupType = held.type;
+			ai.targetPowerupEntity = 0;
+			TransitionToState(entity, AiState::FollowPath);
+			return;
+		}
+	}
+
 	// Give up if taking too long
 	if (ai.seekTimer > ai.seekTimeout)
 	{
@@ -1277,11 +1295,12 @@ void AiSystem::UpdateSeekPowerupState(Entity entity, float deltaTime)
 		return;
 	}
 
-	// Check if the powerup entity still exists
+	// Target must be an actual pickup trigger, not another vehicle/entity with Powerup.
 	if (!controller.HasComponent<Powerup>(ai.targetPowerupEntity) ||
-		!controller.HasComponent<Transform>(ai.targetPowerupEntity))
+		!controller.HasComponent<Transform>(ai.targetPowerupEntity) ||
+		!controller.HasComponent<Trigger>(ai.targetPowerupEntity))
 	{
-		std::cout << "[AI] Powerup gone, resuming path" << std::endl;
+		std::cout << "[AI] Powerup gone/invalid, resuming path" << std::endl;
 		ai.targetPowerupEntity = 0;
 		RecomputeNavPath(entity);
 		TransitionToState(entity, AiState::FollowPath);
@@ -1305,11 +1324,17 @@ void AiSystem::UpdateSeekPowerupState(Entity entity, float deltaTime)
 		return;
 	}
 
-	// Close enough to "collect" -- the trigger system handles the actual pickup
-	// but we also handle it here in case trigger doesn't fire for AI
+	// Fallback pickup if trigger did not fire
 	if (distXZ < ai.arrivalRadius)
 	{
-		auto& pickup = controller.GetComponent<Powerup>(ai.targetPowerupEntity);
+		auto pickup = controller.GetComponent<Powerup>(ai.targetPowerupEntity);
+
+		// Ensure AI holds a powerup in ECS too
+		if (!controller.HasComponent<Powerup>(entity))
+		{
+			controller.AddComponent(entity, Powerup{ pickup.type, false, pickup.duration, 0.0f });
+		}
+
 		ai.hasPowerup = true;
 		ai.heldPowerupType = pickup.type;
 		std::cout << "[AI] Collected powerup type " << pickup.type << std::endl;
@@ -1318,6 +1343,7 @@ void AiSystem::UpdateSeekPowerupState(Entity entity, float deltaTime)
 			gameInstance->SchedulePowerupRespawn(ai.targetPowerupEntity);
 
 		controller.DestroyEntity(ai.targetPowerupEntity);
+
 		ai.targetPowerupEntity = 0;
 
 		// Re-path from current position since we detoured off the original path
@@ -1371,7 +1397,19 @@ void AiSystem::TryUsePowerup(Entity entity)
 
 				if (dot > ai.useBoostDot)
 				{
-					controller.AddComponent(entity, Powerup{ 1, true, 5.0f, 0.0f });
+					if (controller.HasComponent<Powerup>(entity))
+					{
+						auto& p = controller.GetComponent<Powerup>(entity);
+						p.type = 1;
+						p.active = true;
+						p.duration = 5.0f;
+						p.elapsed = 0.0f;
+					}
+					else
+					{
+						controller.AddComponent(entity, Powerup{ 1, true, 5.0f, 0.0f });
+					}
+
 					ai.hasPowerup = false;
 					ai.heldPowerupType = 0;
 					std::cout << "[AI] Using speed boost on straightaway" << std::endl;
@@ -1409,6 +1447,11 @@ void AiSystem::TryUsePowerup(Entity entity)
 					if (gameInstance)
 					{
 						gameInstance->SpawnBananaPeel(entity);
+
+						// Consume held item in ECS and AI state
+						if (controller.HasComponent<Powerup>(entity))
+							controller.RemoveComponent<Powerup>(entity);
+
 						ai.hasPowerup = false;
 						ai.heldPowerupType = 0;
 						std::cout << "[AI] Dropped banana peel behind" << std::endl;

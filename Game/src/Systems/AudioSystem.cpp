@@ -110,18 +110,23 @@ void AudioSystem::Update() {
 
 	if (currentStateGlobal == GameState::GAME)
 	{
-		Entity player = controller.GetEntityByTag("Player1");
-		auto& vehicleVelocity = controller.GetComponent<VehicleBody>(player);
-		float speed = glm::length(vehicleVelocity.linearVelocity);
-
-		if (engineSoundChannelId == -1)
+		if (playerEntities.empty())
+			return;
+		Entity player = playerEntities[0];
+		if (controller.HasComponent<VehicleBody>(player))
 		{
-			engineSoundChannelId = aEngine.PlaySounds("assets/audio/carAudio/carEngineIdle.mp3", Vector3{ 0, 0, 0 }, -20.0f);
-		}
+			auto& vehicleVelocity = controller.GetComponent<VehicleBody>(player);
+			float speed = glm::length(vehicleVelocity.linearVelocity);
 
-		// Adjust pitch based on speed
-		float pitchValue = 0.5f + speed * 0.05f;
-		aEngine.SetChannelPitch(engineSoundChannelId, pitchValue);
+			if (engineSoundChannelId == -1)
+			{
+				engineSoundChannelId = aEngine.PlaySounds("assets/audio/carAudio/carEngineIdle.mp3", Vector3{ 0, 0, 0 }, -20.0f);
+			}
+
+			// Adjust pitch based on speed
+			float pitchValue = 0.5f + speed * 0.05f;
+			aEngine.SetChannelPitch(engineSoundChannelId, pitchValue);
+		}
 
 	}
 	else

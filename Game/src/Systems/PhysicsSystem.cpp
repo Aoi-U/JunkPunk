@@ -120,26 +120,59 @@ void PhysicsSystem::Update(float deltaTime)
 	command.brake = vehicleCommands.brake;
 	command.steer = vehicleCommands.steer;
 	gVehicle->setCommand(command);*/
-
-	for (auto& [entity, vehicle] : vehicles)
+	
+	std::cout << vehicles.size() << std::endl;
+	for (auto it = vehicles.begin(); it != vehicles.end(); ++it)
 	{
+		std::cout << "Vehicle entity: " << it->first << std::endl;
+	}
+
+	for (auto it = vehicles.begin(); it != vehicles.end();)
+	{
+		Entity entity = it->first;
+		MainVehicle* vehicle = it->second.get();
+
+		if (!vehicle ||
+			!controller.HasComponent<VehicleBody>(entity) ||
+			!controller.HasComponent<VehicleCommands>(entity) ||
+			!controller.HasComponent<Transform>(entity))
+		{
+			if (vehicle)
+			{
+				vehicle->cleanup();
+			}
+
+			if (spinningEntity == entity)
+			{
+				spinningEntity = MAX_ENTITIES;
+				spinTimer = 0.0f;
+			}
+
+			it = vehicles.erase(it);
+			continue;
+		}
+
 		auto& vehicleCommands = controller.GetComponent<VehicleCommands>(entity);
 		vehicleCommands.isGrounded = vehicle->IsGrounded(gPhysicsScene);
 
 		Command command;
 		command.throttle = vehicleCommands.throttle;
 
-		if (controller.HasComponent<Powerup>(entity)) {
+		if (controller.HasComponent<Powerup>(entity))
+		{
 			auto& p = controller.GetComponent<Powerup>(entity);
-			if (p.active && p.type == 1) {
+			if (p.active && p.type == 1)
+			{
 				vehicle->ApplyBoost(2.0f);
 				usedBoost = true;
 			}
 		}
-		else if (usedBoost) {
+		else if (usedBoost)
+		{
 			vehicle->ClearBoost();
 			usedBoost = false;
 		}
+
 		command.brake = vehicleCommands.brake;
 		command.steer = vehicleCommands.steer;
 		vehicle->setCommand(command);
@@ -162,13 +195,16 @@ void PhysicsSystem::Update(float deltaTime)
 		}
 
 
-		if (vehicleCommands.inSludge > 0) {
+		if (vehicleCommands.inSludge > 0)
+		{
 			float drag = vehicleCommands.sludgeFactor;
 			float factor = 1.0f - drag * deltaTime;
 			factor = PxMax(factor, 0.0f);
 
 			vehicle->ApplySludgeDrag(factor);
 		}
+
+		++it;
 	}
 
 	Simulate(deltaTime); // run physics simulation
@@ -253,23 +289,29 @@ void PhysicsSystem::Update(float deltaTime)
 		else if (controller.HasComponent<VehicleBody>(entity))
 		{
 			auto& vehicleBody = controller.GetComponent<VehicleBody>(entity);
-			PxTransform pxTransform = vehicles[entity]->getTransform();
-			transform.position = glm::vec3(pxTransform.p.x, pxTransform.p.y - 0.3, pxTransform.p.z);
+			
+			auto vehicleIt = vehicles.find(entity);
+			if (vehicleIt == vehicles.end() || !vehicleIt->second)
+			{
+				continue;
+			}
+
+			MainVehicle* vehicle = vehicleIt->second.get();
+			PxTransform pxTransform = vehicle->getTransform();
+			transform.position = glm::vec3(pxTransform.p.x, pxTransform.p.y - 0.3f, pxTransform.p.z);
 			transform.quatRotation = glm::quat(pxTransform.q.w, pxTransform.q.x, pxTransform.q.y, pxTransform.q.z);
 
-			PxVec3 linearVel = vehicles[entity]->getLinearVelocity();
-			PxVec3 angularVel = vehicles[entity]->getAngularVelocity();
+			PxVec3 linearVel = vehicle->getLinearVelocity();
+			PxVec3 angularVel = vehicle->getAngularVelocity();
 			vehicleBody.linearVelocity = glm::vec3(linearVel.x, linearVel.y, linearVel.z);
 			vehicleBody.angularVelocity = glm::vec3(angularVel.x, angularVel.y, angularVel.z);
 
-			// update wheel transforms
 			for (size_t i = 0; i < vehicleBody.wheelEntities.size(); i++)
 			{
 				Entity wheelEntity = vehicleBody.wheelEntities[i];
 				auto& wheelTransform = controller.GetComponent<Transform>(wheelEntity);
-				auto [wheelPos, wheelRot] = vehicles[entity]->getWheelTransform(i);
 
-				PxTransform t = vehicles[entity]->getWheelTransform(i);
+				PxTransform t = vehicle->getWheelTransform(static_cast<int>(i));
 				wheelTransform.position = glm::vec3(t.p.x, t.p.y, t.p.z);
 				wheelTransform.quatRotation = glm::quat(t.q.w, t.q.x, t.q.y, t.q.z);
 			}
@@ -636,15 +678,17 @@ void PhysicsSystem::CreateActorListener(Event& e)
 void PhysicsSystem::JumpEventListener(Event& e)
 {
 	Entity entity = e.GetParam<Entity>(Events::Player::Player_Jumped::ENTITY);
-	
-	vehicles[entity]->jump();
+	auto it = vehicles.find(entity);
+	if (it != vehicles.end() && it->second)
+		it->second->jump();
 }
 
 void PhysicsSystem::ResetVehicleEventListener(Event& e)
 {
 	Entity entity = e.GetParam<Entity>(Events::Player::Reset_Vehicle::ENTITY);
-	
-	vehicles[entity]->respawnAtCheckpoint();
+	auto it = vehicles.find(entity);
+	if (it != vehicles.end() && it->second)
+		it->second->respawnAtCheckpoint();
 }
 
 void PhysicsSystem::CheckpointReachedListener(Event& e)
@@ -652,12 +696,13 @@ void PhysicsSystem::CheckpointReachedListener(Event& e)
 	Entity playerEntity = e.GetParam<Entity>(Events::Checkpoint::Reached::PLAYER_ENTITY);
 	Entity checkpointEntity = e.GetParam<Entity>(Events::Checkpoint::Reached::CHECKPOINT_ENTITY);
 
+	auto it = vehicles.find(playerEntity);
+	if (it == vehicles.end() || !it->second)
+		return;
+
 	auto& transform = controller.GetComponent<Transform>(checkpointEntity);
 	auto& checkpoint = controller.GetComponent<CheckPoint>(checkpointEntity);
-	glm::vec3 position = transform.position;
-	glm::quat rotation = checkpoint.orientation;
-	
-	vehicles[playerEntity]->setCheckpoint(position, rotation);
+	it->second->setCheckpoint(transform.position, checkpoint.orientation);
 }
 
 void PhysicsSystem::ReleaseActorCallback(Entity entity, RigidBody& rb)

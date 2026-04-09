@@ -138,6 +138,11 @@ public:
 		return entityManager->GetEntityByTag(tag);
 	}
 
+	bool HasTag(const std::string& tag)
+	{
+		return entityManager->HasTag(tag);
+	}
+
 	void Reset()
 	{
 		entityManager->Reset();
