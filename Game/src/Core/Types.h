@@ -68,9 +68,37 @@ enum Keys
 	KEY_LEFT = 'A',
 	KEY_RIGHT = 'D',
 	KEY_JUMP = ' ',
-	KEY_RESET = 'R',
-	KEY_PAUSE = 'Q',
-	KEY_USE = 'E'
+	KEY_RESET = 'Q',
+	KEY_PAUSE = 256, //escape
+	KEY_USE = 'E',
+
+	//other player controls
+	KEY_2_FORWARD = 'T',
+	KEY_2_BACKWARD = 'G',
+	KEY_2_LEFT = 'F',
+	KEY_2_RIGHT = 'H',
+	KEY_2_JUMP = 'N',
+	KEY_2_RESET = 'R',
+	//KEY_2_PAUSE = ?,
+	KEY_2_USE = 'Y',
+
+	KEY_3_FORWARD = 'I',
+	KEY_3_BACKWARD = 'K',
+	KEY_3_LEFT = 'J',
+	KEY_3_RIGHT = 'L',
+	KEY_3_JUMP = '.',
+	KEY_3_RESET = 'U',
+	//KEY_3_PAUSE = ?,
+	KEY_3_USE = 'O',
+
+	KEY_4_FORWARD = 265, //Up arrow
+	KEY_4_BACKWARD = 264, //Down arrow
+	KEY_4_LEFT = 263, //Left arrow
+	KEY_4_RIGHT = 262, //Right arrow
+	KEY_4_JUMP = 320, //Numpad 0
+	KEY_4_RESET = 321, //Numpad period
+	//KEY_3_PAUSE = ?
+	KEY_4_USE = 330, //Numpad 1
 };
 
 enum GameState

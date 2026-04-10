@@ -79,46 +79,164 @@ void VehicleControlSystem::KeyboardInputListener(Event& e)
 	for (auto& entity : entities)
 	{
 		auto& playerController = controller.GetComponent<PlayerController>(entity);
-		if (playerController.playerNum != 1) continue; 
 
 		VehicleCommands& playerCommands = controller.GetComponent<VehicleCommands>(entity);
+		if (playerController.playerNum == 1) {
+			if (key == Keys::KEY_FORWARD)
+			{
+				playerCommands.throttle = action ? 1.0f : 0.0f;
+			}
+			if (key == Keys::KEY_BACKWARD)
+			{
+				playerCommands.brake = action ? 1.0f : 0.0f;
+			}
+			if (key == Keys::KEY_LEFT)
+			{
+				playerCommands.steer = action ? 1.0f : 0.0f;
+			}
+			if (key == Keys::KEY_RIGHT)
+			{
+				playerCommands.steer = action ? -1.0f : 0.0f;
+			}
+			if (key == Keys::KEY_JUMP)
+			{
+				if (playerCommands.isGrounded && action)
+				{
+					//std::cout << "Jump key pressed" << std::endl;
+					// send jump event to physics and audio (can add more)
+					Event event(Events::Player::PLAYER_JUMPED);
+					event.SetParam<Entity>(Events::Player::Player_Jumped::ENTITY, entity);
+					controller.SendEvent(event);
+				}
+			}
+			if (key == Keys::KEY_RESET)
+			{
+				if (action)
+				{
+					// send event to physics system
+					Event event(Events::Player::RESET_VEHICLE);
+					event.SetParam<Entity>(Events::Player::Reset_Vehicle::ENTITY, entity);
+					controller.SendEvent(event);
+				}
+			}
+		}
+		if (playerController.playerNum == 2) {
+			if (key == Keys::KEY_2_FORWARD)
+			{
+				playerCommands.throttle = action ? 1.0f : 0.0f;
+			}
+			if (key == Keys::KEY_2_BACKWARD)
+			{
+				playerCommands.brake = action ? 1.0f : 0.0f;
+			}
+			if (key == Keys::KEY_2_LEFT)
+			{
+				playerCommands.steer = action ? 1.0f : 0.0f;
+			}
+			if (key == Keys::KEY_2_RIGHT)
+			{
+				playerCommands.steer = action ? -1.0f : 0.0f;
+			}
+			if (key == Keys::KEY_2_JUMP)
+			{
+				if (playerCommands.isGrounded && action)
+				{
+					//std::cout << "Jump key pressed" << std::endl;
+					// send jump event to physics and audio (can add more)
+					Event event(Events::Player::PLAYER_JUMPED);
+					event.SetParam<Entity>(Events::Player::Player_Jumped::ENTITY, entity);
+					controller.SendEvent(event);
+				}
+			}
+			if (key == Keys::KEY_2_RESET)
+			{
+				if (action)
+				{
+					// send event to physics system
+					Event event(Events::Player::RESET_VEHICLE);
+					event.SetParam<Entity>(Events::Player::Reset_Vehicle::ENTITY, entity);
+					controller.SendEvent(event);
+				}
+			}
+		}
+		if (playerController.playerNum == 3) {
+			if (key == Keys::KEY_3_FORWARD)
+			{
+				playerCommands.throttle = action ? 1.0f : 0.0f;
+			}
+			if (key == Keys::KEY_3_BACKWARD)
+			{
+				playerCommands.brake = action ? 1.0f : 0.0f;
+			}
+			if (key == Keys::KEY_3_LEFT)
+			{
+				playerCommands.steer = action ? 1.0f : 0.0f;
+			}
+			if (key == Keys::KEY_3_RIGHT)
+			{
+				playerCommands.steer = action ? -1.0f : 0.0f;
+			}
+			if (key == Keys::KEY_3_JUMP)
+			{
+				if (playerCommands.isGrounded && action)
+				{
+					//std::cout << "Jump key pressed" << std::endl;
+					// send jump event to physics and audio (can add more)
+					Event event(Events::Player::PLAYER_JUMPED);
+					event.SetParam<Entity>(Events::Player::Player_Jumped::ENTITY, entity);
+					controller.SendEvent(event);
+				}
+			}
+			if (key == Keys::KEY_3_RESET)
+			{
+				if (action)
+				{
+					// send event to physics system
+					Event event(Events::Player::RESET_VEHICLE);
+					event.SetParam<Entity>(Events::Player::Reset_Vehicle::ENTITY, entity);
+					controller.SendEvent(event);
+				}
+			}
+		}
+		if (playerController.playerNum == 4) {
+			if (keyRecieve == Keys::KEY_4_FORWARD)
+			{
+				playerCommands.throttle = action ? 1.0f : 0.0f;
+			}
+			if (keyRecieve == Keys::KEY_4_BACKWARD)
+			{
+				playerCommands.brake = action ? 1.0f : 0.0f;
+			}
+			if (keyRecieve == Keys::KEY_4_LEFT)
+			{
+				playerCommands.steer = action ? 1.0f : 0.0f;
+			}
+			if (keyRecieve == Keys::KEY_4_RIGHT)
+			{
+				playerCommands.steer = action ? -1.0f : 0.0f;
+			}
+			if (keyRecieve == Keys::KEY_4_JUMP)
+			{
+				if (playerCommands.isGrounded && action)
+				{
+					//std::cout << "Jump key pressed" << std::endl;
+					// send jump event to physics and audio (can add more)
+					Event event(Events::Player::PLAYER_JUMPED);
+					event.SetParam<Entity>(Events::Player::Player_Jumped::ENTITY, entity);
+					controller.SendEvent(event);
+				}
+			}
+			if (keyRecieve == Keys::KEY_4_RESET)
+			{
+				if (action)
+				{
+					// send event to physics system
+					Event event(Events::Player::RESET_VEHICLE);
+					event.SetParam<Entity>(Events::Player::Reset_Vehicle::ENTITY, entity);
+					controller.SendEvent(event);
+				}
+			}
+		}
 		
-		if (key == Keys::KEY_FORWARD)
-		{
-			playerCommands.throttle = action ? 1.0f : 0.0f;
-		}
-		if (key == Keys::KEY_BACKWARD)
-		{
-			playerCommands.brake = action ? 1.0f : 0.0f;
-		}
-		if (key == Keys::KEY_LEFT)
-		{
-			playerCommands.steer = action ? 1.0f : 0.0f;
-		}
-		if (key == Keys::KEY_RIGHT)
-		{
-			playerCommands.steer = action ? -1.0f : 0.0f;
-		}
-		if (key == Keys::KEY_JUMP)
-		{
-			if (playerCommands.isGrounded && action)
-			{
-				std::cout << "Jump key pressed" << std::endl;
-				// send jump event to physics and audio (can add more)
-				Event event(Events::Player::PLAYER_JUMPED);
-				event.SetParam<Entity>(Events::Player::Player_Jumped::ENTITY, entity);
-				controller.SendEvent(event);
-			}
-		}
-		if (key == Keys::KEY_RESET)
-		{
-			if (action)
-			{
-				// send event to physics system
-				Event event(Events::Player::RESET_VEHICLE);
-				event.SetParam<Entity>(Events::Player::Reset_Vehicle::ENTITY, entity);
-				controller.SendEvent(event);
-			}
-		}
 	}
 }

@@ -732,6 +732,114 @@ void MenuSystem::KeyboardInputListener(Event& e)
 			canNavigate = false;
 		}
 	}
+	else if (canNavigate && currentStateGlobal == GameState::SETTINGS)
+	{
+		if (key == Keys::KEY_FORWARD && action == true)
+		{
+			if (currentHover > 0)
+			{
+				Event event(Events::Audio::PLAY_SOUND);
+				event.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/MenuNavigation.wav");
+				event.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3 { 0.0f, 0.0f, 0.0f });
+				event.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, 0.0f);
+				controller.SendEvent(event);
+
+				currentHover--;
+			}
+			canNavigate = false;
+		}
+		if (key == Keys::KEY_BACKWARD && action == true)
+		{
+			if (currentHover < 1)
+			{
+				Event event(Events::Audio::PLAY_SOUND);
+				event.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/MenuNavigation.wav");
+				event.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3 { 0.0f, 0.0f, 0.0f });
+				event.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, 0.0f);
+				controller.SendEvent(event);
+
+				currentHover++;
+			}
+			canNavigate = false;
+		}
+		// return to main menu when B is pressed on settings screen
+		if (key == Keys::KEY_USE && action == true)
+		{
+			currentHover = 0;
+			maxVerticalHover = 2;
+
+			Event event(Events::GameState::NEW_STATE);
+			event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::STARTMENU);
+			controller.SendEvent(event);
+		}
+	}
+
+
+	if (canNavigate && currentStateGlobal == GameState::SETTINGS) {
+		switch (currentHover)
+		{
+		case SettingsMenu::PLAYER_COUNT:
+			// horizontal navigation for player count
+			if (key == Keys::KEY_RIGHT && action == true) // increase player count
+			{
+				if (numPlayers < maxPlayerCount) // assuming max 4 players
+				{
+					Event event(Events::Audio::PLAY_SOUND);
+					event.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/MenuNavigation.wav");
+					event.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3 { 0.0f, 0.0f, 0.0f });
+					event.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, 0.0f);
+					controller.SendEvent(event);
+					numPlayers++;
+				}
+				canNavigate = false;
+			}
+			else if (key == Keys::KEY_LEFT && action == true) // decrease player count
+			{
+				if (numPlayers > 1) // minimum 1 player
+				{
+					Event event(Events::Audio::PLAY_SOUND);
+					event.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/MenuNavigation.wav");
+					event.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3 { 0.0f, 0.0f, 0.0f });
+					event.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, 0.0f);
+					controller.SendEvent(event);
+					numPlayers--;
+				}
+				canNavigate = false;
+			}
+
+			break;
+
+		case SettingsMenu::AI_COUNT:
+			// horizontal navigation for AI count
+			if (key == Keys::KEY_RIGHT && action == true) // increase AI count
+			{
+				if (numAi < maxAICount)
+				{
+					Event event(Events::Audio::PLAY_SOUND);
+					event.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/MenuNavigation.wav");
+					event.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3 { 0.0f, 0.0f, 0.0f });
+					event.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, 0.0f);
+					controller.SendEvent(event);
+					numAi++;
+				}
+				canNavigate = false;
+			}
+			else if (key == Keys::KEY_LEFT && action == true) // decrease AI count
+			{
+				if (numAi > 0)
+				{
+					Event event(Events::Audio::PLAY_SOUND);
+					event.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/MenuNavigation.wav");
+					event.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3 { 0.0f, 0.0f, 0.0f });
+					event.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, 0.0f);
+					controller.SendEvent(event);
+					numAi--;
+				}
+				canNavigate = false;
+			}
+		}
+	}
+	
 
 	if (key == Keys::KEY_JUMP && action == true && currentStateGlobal == GameState::STARTMENU)
 	{
@@ -750,6 +858,7 @@ void MenuSystem::KeyboardInputListener(Event& e)
 			Event event(Events::GameState::NEW_STATE);
 			event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::SETTINGS);
 			controller.SendEvent(event);
+			currentHover = 0;
 			break;
 		}
 		case Menus::QUIT:

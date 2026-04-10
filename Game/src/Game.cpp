@@ -645,7 +645,6 @@ void Game::KeyboardInputListener(Event& e)
 	int action = e.GetParam<bool>(Events::Window::Input::ACTION);
 	char key = static_cast<char>(keyRecieve);
 
-	Entity player = playerEntity;
 
 	if (currentState == GameState::GAME)
 	{
@@ -655,37 +654,55 @@ void Game::KeyboardInputListener(Event& e)
 			event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::PAUSED);
 			controller.SendEvent(event);
 		}
-		if (controller.HasComponent<Powerup>(player)) {
-			auto& p = controller.GetComponent<Powerup>(player);
-			if (key == Keys::KEY_USE && action == true && !p.active) {
-				if (p.type == 2) {
-					SpawnBananaPeel(player);
-					controller.RemoveComponent<Powerup>(player);
+		for (auto& entity : playerEntities) {
+			if (controller.HasComponent<Powerup>(entity)) {
+				auto& playerController = controller.GetComponent<PlayerController>(entity);
+				auto& p = controller.GetComponent<Powerup>(entity);
+				bool used_powerup = false;
+				if (playerController.playerNum == 1 && key == Keys::KEY_USE && action == true && !p.active){
+					used_powerup = true;
 				}
-				else if (p.type == 3) {
-				std::cout << "Blast used\n";
-				Event event(Events::Player::BLAST);
-				event.SetParam<Entity>(Events::Player::Blast::ENTITY, player);
-				controller.SendEvent(event);
-				controller.RemoveComponent<Powerup>(player);
-				Event soundEvent(Events::Audio::PLAY_SOUND);
-				soundEvent.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/explosion.wav");
-				soundEvent.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
-				soundEvent.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, -10.0f);
-				controller.SendEvent(soundEvent);
+				else if (playerController.playerNum == 2 && key == Keys::KEY_2_USE && action == true && !p.active) {
+					used_powerup = true;
 				}
-				else {
-					p.active = true;
-					p.elapsed = 0.0f;
-					Event soundEvent(Events::Audio::PLAY_SOUND);
-					soundEvent.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/boost.wav");
-					soundEvent.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
-					soundEvent.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, -10.0f);
-					controller.SendEvent(soundEvent);
+				else if (playerController.playerNum == 3 && key == Keys::KEY_3_USE && action == true && !p.active) {
+					used_powerup = true;
 				}
-				std::cout << "Powerup Used" << std::endl;
+				else if (playerController.playerNum == 4 && keyRecieve == Keys::KEY_4_USE && action == true && !p.active) {
+					used_powerup = true;
+				}
+
+				if (used_powerup) {
+					if (p.type == 2) {
+						SpawnBananaPeel(entity);
+						controller.RemoveComponent<Powerup>(entity);
+					}
+					else if (p.type == 3) {
+						std::cout << "Blast used\n";
+						Event event(Events::Player::BLAST);
+						event.SetParam<Entity>(Events::Player::Blast::ENTITY, entity);
+						controller.SendEvent(event);
+						controller.RemoveComponent<Powerup>(entity);
+						Event soundEvent(Events::Audio::PLAY_SOUND);
+						soundEvent.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/explosion.wav");
+						soundEvent.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
+						soundEvent.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, -10.0f);
+						controller.SendEvent(soundEvent);
+					}
+					else {
+						p.active = true;
+						p.elapsed = 0.0f;
+						Event soundEvent(Events::Audio::PLAY_SOUND);
+						soundEvent.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/boost.wav");
+						soundEvent.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3{ 0.0f, 0.0f, 0.0f });
+						soundEvent.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, -10.0f);
+						controller.SendEvent(soundEvent);
+					}
+					std::cout << "Powerup Used" << std::endl;
+				}
 			}
 		}
+		
 	}
 }
 
