@@ -774,7 +774,7 @@ void LevelLoaderSystem::LoadLevel()
 	controller.AddComponent(entity, PhysicsBody{});
 	controller.AddComponent(entity, Transform{ glm::vec3(-60.0f, -93.0f, 19.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.25f) });
 	controller.AddComponent(entity, CheckPoint{ glm::quat(1.0f, 0.0f, 0.0f, 0.0f) });
-	controller.AddComponent(entity, Trigger{ nullptr, 5.0f, 2.0f, 5.0f });
+	controller.AddComponent(entity, Trigger{ nullptr, 5.0f, 20.0f, 5.0f });
 
 	// Used strictly for testing AI waypoints, can be removed later
 	//std::vector<Waypoint> waypoints;
