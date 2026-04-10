@@ -16,7 +16,7 @@ public:
 
 private:
 	CAudioEngine aEngine;
-	int engineSoundChannelId = -1;
+	std::vector<int> engineSoundChannelIds = {-1,-1,-1,-1};
 	int musicChannelId = -1;
 	bool firstUpdate = true;
 

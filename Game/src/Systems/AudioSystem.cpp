@@ -4,6 +4,7 @@
 #include "../Components/Transform.h"
 #include "../ECSController.h"
 #include "../Components/Physics.h"
+#include "../Components/Player.h"
 
 
 
@@ -112,20 +113,26 @@ void AudioSystem::Update() {
 	{
 		if (playerEntities.empty())
 			return;
-		Entity player = playerEntities[0];
-		if (controller.HasComponent<VehicleBody>(player))
+
+		for (auto& entity : playerEntities)
 		{
-			auto& vehicleVelocity = controller.GetComponent<VehicleBody>(player);
-			float speed = glm::length(vehicleVelocity.linearVelocity);
+			auto& playerController = controller.GetComponent<PlayerController>(entity);
+			int player_id = playerController.playerNum - 1;
 
-			if (engineSoundChannelId == -1)
+			if (controller.HasComponent<VehicleBody>(entity))
 			{
-				engineSoundChannelId = aEngine.PlaySounds("assets/audio/carAudio/carEngineIdle.mp3", Vector3{ 0, 0, 0 }, -20.0f);
-			}
+				auto& vehicleVelocity = controller.GetComponent<VehicleBody>(entity);
+				float speed = glm::length(vehicleVelocity.linearVelocity);
 
-			// Adjust pitch based on speed
-			float pitchValue = 0.5f + speed * 0.05f;
-			aEngine.SetChannelPitch(engineSoundChannelId, pitchValue);
+				if (engineSoundChannelIds[player_id] == -1)
+				{
+					engineSoundChannelIds[player_id] = aEngine.PlaySounds("assets/audio/carAudio/carEngineIdle.mp3", Vector3{0, 0, 0}, -20.0f);
+				}
+
+				// Adjust pitch based on speed
+				float pitchValue = 0.5f + speed * 0.05f;
+				aEngine.SetChannelPitch(engineSoundChannelIds[player_id], pitchValue);
+			}
 		}
 
 	}
@@ -133,11 +140,14 @@ void AudioSystem::Update() {
 	{
 		// Stop engine sound when not in game (menu, pause, etc.)
 		// Reset channel ID when exiting game state
-		if (engineSoundChannelId != -1)  // Only stop if valid channel exists
-		{
-			aEngine.StopChannel(engineSoundChannelId);
-			engineSoundChannelId = -1;
+		for (auto& engineSoundChannelId : engineSoundChannelIds) {
+			if (engineSoundChannelId != -1)  // Only stop if valid channel exists
+			{
+				aEngine.StopChannel(engineSoundChannelId);
+				engineSoundChannelId = -1;
+			}
 		}
+		
 	}
 }
 

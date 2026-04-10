@@ -648,7 +648,7 @@ void Game::KeyboardInputListener(Event& e)
 
 	if (currentState == GameState::GAME)
 	{
-		if (key == Keys::KEY_PAUSE && action == true)
+		if (keyRecieve == Keys::KEY_PAUSE && action == true)
 		{
 			Event event(Events::GameState::NEW_STATE);
 			event.SetParam<GameState>(Events::GameState::New_State::STATE, GameState::PAUSED);
