@@ -158,4 +158,10 @@ struct AiDriver
 	// Tracks which glove in the ordered list the AI is currently navigating toward
 	uint32_t currentBoxingGloveIndex = 0;
 
+	// Deferred repath: set to true when vehicle is reset/teleported so the path
+	// is recomputed next frame after PhysicsSystem syncs the new Transform
+	bool needsRepath = false;
+
+	glm::vec3 lastGroundedPosition = glm::vec3(0.0f);
+
 };

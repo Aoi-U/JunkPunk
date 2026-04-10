@@ -43,6 +43,29 @@ static const char* AiStateToString(AiState state)
 
 void AiSystem::Init()
 {
+	// { glm::vec3(point to pathfind to), bottom of segement, top of segment }
+	courseSegments = {
+		// Segment 0: Start area / bottom level
+		{ glm::vec3(55.0f, -178.0f, -58.0f),   -260.0f, -178.0f, true  },  // beforeBoxingGloves
+
+		// Segment 2: Gap area
+		{ glm::vec3(-60.0f, -31.0f, 170.0f),    -178.0f,  -29.0f, false },  // beforeGap
+
+		// Segment 3: After gap, pre-tunnel
+		{ glm::vec3(150.0f, -31.0f, 244.0f),    -29.0f,  54.011f, false },  // beforeTunnel
+
+		// Segment 4: Mid tunnel
+		{ glm::vec3(-135.6f, -28.0f, 392.5f),   -29.0f,  54.011f, false },  // midTunnel
+
+		// Segment 5: Inside tunnel
+		{ glm::vec3(-62.0f, -26.0f, 314.0f),    -29.0f,  54.011f, false },  // inTunnel
+
+		// Segment 6: Upper track
+		{ glm::vec3(107.854f, 54.011f, 318.24f),  54.011f,  100.0f, false },  // uppertrack
+
+		// Segment 7: Goal area
+		{ glm::vec3(-70.0f, 56.0f, 326.0f),      54.011f,  100.0f, false },  // goal
+	};
 }
 
 void AiSystem::SetNavMesh(const NavMesh& mesh)
@@ -244,6 +267,30 @@ void AiSystem::RecomputeNavPath(Entity entity)
 	//	<< " waypoints, starting at wp[" << ai.currentWaypointIndex << "]" << std::endl;
 }
 
+int AiSystem::FindCurrentSegment(const glm::vec3& pos) const {
+	if (courseSegments.empty()) return 0;
+
+	int lastIndex = static_cast<int>(courseSegments.size()) - 1;
+
+	// Height checks for unambiguous levels
+	if (pos.y < -178.0f) return 0;   // Bottom level
+	if (pos.y > 45.0f)   return lastIndex;  // Upper level
+
+	// Mid level: find closest entry point using XZ distance
+	int best = 1;
+	float bestDist = FLT_MAX;
+	for (int i = 1; i < static_cast<int>(courseSegments.size()); i++) {
+		glm::vec3 diff = pos - courseSegments[i].entryPoint;
+		diff.y = 0.0f;
+		float d = glm::length(diff);
+		if (d < bestDist) {
+			bestDist = d;
+			best = i;
+		}
+	}
+	return best;
+}
+
 void AiSystem::Update(float deltaTime)
 {
 	for (auto entity : entities)
@@ -251,9 +298,27 @@ void AiSystem::Update(float deltaTime)
 		auto& ai = controller.GetComponent<AiDriver>(entity);
 		auto& transform = controller.GetComponent<Transform>(entity);
 		auto& body = controller.GetComponent<VehicleBody>(entity);
+		auto& vc = controller.GetComponent<VehicleCommands>(entity);
 
 		// Calculate speed ONCE per frame
 		ai.currentSpeed = glm::length(glm::vec3(body.linearVelocity.x, 0.0f, body.linearVelocity.z));
+
+		// Deferred repath: vehicle was teleported last frame, Transform is now up to date
+		if (ai.needsRepath)
+		{
+			ai.needsRepath = false;
+			int seg = FindCurrentSegment(transform.position);
+			if (courseSegments[seg].resetBoxingGloves)
+			{
+				ai.currentBoxingGloveIndex = 0;
+				ComputeNavPath(entity);
+			}
+			else
+			{
+				RecomputeNavPath(entity);
+			}
+			std::cout << "[AI] Deferred repath complete (segment " << seg << ")" << std::endl;
+		}
 
 		//if (AiSystemHelperFunctions::ShouldLog(m_followPathLogTimer, 1.0f, deltaTime))
 		//{
@@ -264,6 +329,13 @@ void AiSystem::Update(float deltaTime)
 		//		<< " | Pos=(" << transform.position.x << ", " << transform.position.y << ", " << transform.position.z << ")"
 		//		<< std::endl;
 		//}
+
+		if (vc.isGrounded)
+		{
+			glm::vec3 vehicleUp = transform.quatRotation * glm::vec3(0.0f, 1.0f, 0.0f);
+			if (vehicleUp.y > 0.5f)  // only record upright positions
+				ai.lastGroundedPosition = transform.position;
+		}
 
 		if (ai.navWaypoints.empty() && !navMesh.IsEmpty())
 		{
@@ -422,7 +494,7 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 	
 	// Check if the vehicle's local up vector is pointing downward (flipped over)
 	glm::vec3 vehicleUp = transform.quatRotation * glm::vec3(0.0f, 1.0f, 0.0f);
-	if (vehicleUp.y < 0.1f) // up vector pointing sideways or downward
+	if (vehicleUp.y < 0.1f && vc.isGrounded) // up vector pointing sideways or downward
 	{
 		TransitionToState(entity, AiState::IsFlipped, deltaTime);
 		return;
@@ -432,20 +504,11 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 		ai.flippedTimer = 0.0f;
 	}
 
-	// Clear passing flag the moment we exit the danger zone
-	if (ai.passingThroughDangerZone)
-	{
-		if (!AiSystemHelperFunctions::IsPointInDangerZone(transform.position))
-			{
-				ai.passingThroughDangerZone = false;
-				ai.dangerDetectionCooldown = ai.dangerDetectionCooldownDuration;
-				if (AiSystemHelperFunctions::ShouldLog(m_followPathLogTimer, 0.1f, deltaTime)) {
-				std::cout << "[AI] Exited danger zone, starting cooldown ("
-					<< ai.dangerDetectionCooldownDuration << "s)" << std::endl;
-			}
-		}
-	}
-	// Off-track: check if car is far below the nearest navmesh surface
+	/////////////////////////
+	// Off-track detection //
+	// //////////////////////
+	
+	// check if car is far below the nearest navmesh surface
 	int32_t nearestTri = navMesh.FindTriangleAtHeight(transform.position);
 	if (nearestTri < 0)
 		nearestTri = navMesh.FindClosestTriangleAtHeight(transform.position, 5.0f);
@@ -489,7 +552,7 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 	{
 		glm::vec3 currentWp = ai.navWaypoints[ai.currentWaypointIndex];
 		float distToBeforeBoxingGloves = glm::length(currentWp - beforeBoxingGloves);
-
+		if (ai.currentBoxingGloveIndex < boxingGloveDangerZones.size()) {
 			if (distToBeforeBoxingGloves < 10.0f) // Slow down zone
 			{
 				if (ai.currentSpeed < 0.5f || distToBeforeBoxingGloves < 3.0f) // Nearly stopped
@@ -507,6 +570,7 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 				vc.isGrounded = true;
 				return;
 			}
+		}
 	}
 
 	// Gap zone check
@@ -923,8 +987,18 @@ void AiSystem::UpdateRecoveringFromOffTrackState(Entity entity, float deltaTime)
 	{
 		std::cout << "[AI] Recovery timeout, re-pathing..." << std::endl;
 		ai.recoveryTimer = 0.0f;
-		RecomputeNavPath(entity);
-		return;
+		int seg = FindCurrentSegment(transform.position);
+		if (courseSegments[seg].resetBoxingGloves)
+		{
+			// Fell back to bottom level — rebuild full segmented path
+			ai.currentBoxingGloveIndex = 0;
+			ComputeNavPath(entity);
+		}
+		else
+		{
+			RecomputeNavPath(entity);
+			return;
+		}
 	}
 
 	// Drive toward the waypoint
@@ -1232,26 +1306,85 @@ void AiSystem::UpdateBoxingGloveZoneState(Entity entity, float deltaTime)
 			<< " of " << boxingGloveDangerZones.size() << std::endl;
 	}
 
-	// Exit check: am I past the entire zone?
-	if (transform.position.x < -76.0f) {
-		if (AiSystemHelperFunctions::ShouldLog(m_stateMachineLogTimer, 0.1f, deltaTime)) {
-			std::cout << "[AI] Passed through Boxing Glove zone, resuming path" << std::endl;
-		}
-		ai.currentBoxingGloveIndex = 0;  // Reset for next lap
-		TransitionToState(entity, AiState::FollowPath, deltaTime);
-		return;
-	}
-
 	// Calculate forward direction and steering toward exit point
 	glm::vec3 forward = transform.quatRotation * glm::vec3(0.0f, 0.0f, 1.0f);
 	forward.y = 0.0f;
 	if (glm::length(forward) < 1e-6f) forward = glm::vec3(0, 0, 1);
 	forward = glm::normalize(forward);
 
+	// Exit check: am I past the entire zone?
+	if (transform.position.x < -76.0f) {
+		if (AiSystemHelperFunctions::ShouldLog(m_stateMachineLogTimer, 0.1f, deltaTime)) {
+			std::cout << "[AI] Passed through Boxing Glove zone, resuming path" << std::endl;
+		}
+
+		// Advance waypoint index past the boxing glove waypoints (both are behind the car now)
+		while (ai.currentWaypointIndex + 1 < static_cast<uint32_t>(ai.navWaypoints.size()))
+		{
+			glm::vec3 toWp = ai.navWaypoints[ai.currentWaypointIndex] - transform.position;
+			toWp.y = 0.0f;
+			float dist = glm::length(toWp);
+			if (dist > 1e-5f)
+			{
+				float dot = glm::dot(forward, glm::normalize(toWp));
+				if (dot > 0.0f && dist > ai.arrivalRadius)
+					break;  // Found a waypoint ahead of us (segment 2+)
+			}
+			ai.currentWaypointIndex++;
+		}
+
+		std::cout << "[AI] Resuming at waypoint " << ai.currentWaypointIndex << std::endl;
+		TransitionToState(entity, AiState::FollowPath, deltaTime);
+		return;
+	}
+
 	glm::vec3 exitTarget = AiSystemHelperFunctions::GetBoxingGloveZoneExitPoint();
 	glm::vec3 toExit = exitTarget - transform.position;
 	toExit.y = 0.0f;
 	float steer = AiSystemHelperFunctions::CalculateSteeringAngle(forward, toExit);
+
+	if (ai.repathCooldown > 0.0f)
+		ai.repathCooldown -= deltaTime;
+
+	// Check if the vehicle's local up vector is pointing downward (flipped over)
+	glm::vec3 vehicleUp = transform.quatRotation * glm::vec3(0.0f, 1.0f, 0.0f);
+	if (vehicleUp.y < 0.1f) // up vector pointing sideways or downward
+	{
+		TransitionToState(entity, AiState::IsFlipped, deltaTime);
+		return;
+	}
+	else
+	{
+		ai.flippedTimer = 0.0f;
+	}
+
+	// check if car is far below the nearest navmesh surface
+	int32_t nearestTri = navMesh.FindTriangleAtHeight(transform.position);
+	if (nearestTri < 0)
+		nearestTri = navMesh.FindClosestTriangleAtHeight(transform.position, 5.0f);
+
+	bool offTrack = false;
+	if (nearestTri >= 0)
+	{
+		float surfaceY = navMesh.GetTriangles()[nearestTri].centroid.y;
+		float heightBelow = surfaceY - transform.position.y;
+		if (heightBelow > ai.offTrackHeightThreshold)
+		{
+			std::cout << "[AI] Off-track (below navmesh surface)! heightBelow=" << heightBelow << std::endl;
+			offTrack = true;
+		}
+	}
+	else
+	{
+		offTrack = true;
+		std::cout << "[AI] Off-track (no navmesh found nearby)" << std::endl;
+	}
+
+	if (offTrack && ai.repathCooldown <= 0.0f)
+	{
+		TransitionToState(entity, AiState::RecoveringFromOffTrack, deltaTime);
+		return;
+	}
 
 	// If we've passed all indexed gloves, just drive toward the exit
 	if (ai.currentBoxingGloveIndex >= static_cast<uint32_t>(boxingGloveDangerZones.size()))
@@ -1470,7 +1603,20 @@ void AiSystem::UpdateIsFlippedState(Entity entity, float deltaTime)
 	auto& body = controller.GetComponent<VehicleBody>(entity);
 	auto& vc = controller.GetComponent<VehicleCommands>(entity);
 
-	ai.flippedTimer += deltaTime;
+	// If we've landed upright, cancel the flip — no reset needed
+		glm::vec3 vehicleUp = transform.quatRotation * glm::vec3(0.0f, 1.0f, 0.0f);
+	if (vehicleUp.y > 0.5f && vc.isGrounded)
+	{
+		ai.flippedTimer = 0.0f;
+		TransitionToState(entity, AiState::FollowPath, deltaTime);
+		return;
+	}
+
+	if (vc.isGrounded)
+		ai.flippedTimer += deltaTime;
+	else
+		ai.flippedTimer = 0.0f;  // Reset timer while airborne
+
 	if (ai.flippedTimer > ai.flippedTimeThreshold)
 	{
 		std::cout << "[AI] Flipped over, resetting vehicle" << std::endl;
@@ -1480,7 +1626,12 @@ void AiSystem::UpdateIsFlippedState(Entity entity, float deltaTime)
 		resetEvent.SetParam<Entity>(Events::Player::Reset_Vehicle::ENTITY, entity);
 		controller.SendEvent(resetEvent);
 
-		RecomputeNavPath(entity);
+		ai.targetPowerupEntity = 0;
+		ai.seekTimer = 0.0f;
+
+		// Defer repath to next frame — Transform won't be synced from PhysX until
+		// PhysicsSystem::Update runs, so repathing now would use the old position
+		ai.needsRepath = true;
 		TransitionToState(entity, AiState::FollowPath, deltaTime);
 		return;
 	}

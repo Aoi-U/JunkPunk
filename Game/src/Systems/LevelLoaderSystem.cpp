@@ -291,19 +291,11 @@ void LevelLoaderSystem::LoadLevel()
 				<< " spans from (" << minPt.x << ", " << minPt.y << ", " << minPt.z << ")"
 				<< " to (" << maxPt.x << ", " << maxPt.y << ", " << maxPt.z << ")" << std::endl;
 
-			// First 3 gloves are the boxing glove section
-			if (i < 3)
+			// First 4 gloves are the boxing glove section
+			if (i < 4)
 				boxingGloveDangerZoneEntities.push_back(dangerEntity);
 		}
 
-	}
-
-	// Pass the ordered boxing glove danger zones to the AI system
-	if (aiSystemPtr && !boxingGloveDangerZoneEntities.empty())
-	{
-		aiSystemPtr->SetBoxingGloveDangerZones(boxingGloveDangerZoneEntities);
-		std::cout << "[LevelLoader] Registered " << boxingGloveDangerZoneEntities.size()
-			<< " boxing glove danger zones with AiSystem" << std::endl;
 	}
 
 	//diagonal glove
@@ -330,6 +322,56 @@ void LevelLoaderSystem::LoadLevel()
 		0,
 		false
 		});
+
+	Entity diagonalDangerEntity = entity;
+	glm::vec3 retractedPos = glm::vec3(-4.0f, -232.0f, 1.0f);
+	glm::vec3 extendedPos = glm::vec3(-4.0f, -150.0f, 11.0f);
+
+	glm::vec3 extensionVector = extendedPos - retractedPos;
+	float extensionLength = glm::length(extensionVector);
+	glm::vec3 extensionDirection = glm::normalize(extensionVector);
+
+	float SIDE_PADDING = 12.0f;      // width of the glove (X/Y perpendicular to extension)
+	float EXTENSION_PADDING = 30.0f; // extra reach beyond extended position (for glove physical size + safety)
+	float REAR_PADDING = 5.0f;       // small buffer behind retracted position
+
+	glm::vec3 fullyExtendedPos = extendedPos + (extensionDirection * EXTENSION_PADDING);
+	glm::vec3 paddedRetractedPos = retractedPos - (extensionDirection * REAR_PADDING);
+
+	// Calculate AABB covering the full sweep
+	glm::vec3 minPt = glm::min(paddedRetractedPos, fullyExtendedPos);
+	glm::vec3 maxPt = glm::max(paddedRetractedPos, fullyExtendedPos);
+
+	// Widen the danger zone in the +Z direction
+	maxPt.z += 50.0f;  // extend 30 units further in +Z
+	glm::vec3 center = (minPt + maxPt) * 0.5f;
+	glm::vec3 halfExtents = (maxPt - minPt) * 0.5f;
+
+
+	// Add side padding to X and Y dimensions only
+	glm::vec3 finalHalfExtents = halfExtents;
+	finalHalfExtents.x += SIDE_PADDING;
+	finalHalfExtents.y += SIDE_PADDING;
+
+	// Create the danger zone entity
+	Entity dangerEntity = controller.createEntity();
+	controller.AddComponent(dangerEntity, DangerZone{ center, finalHalfExtents, diagonalDangerEntity, SIDE_PADDING });
+	controller.AddComponent(dangerEntity, PhysicsBody{});
+	controller.AddComponent(dangerEntity, Transform{ center, glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(1.0f) });
+	controller.AddComponent(dangerEntity, Trigger{ nullptr, finalHalfExtents.x, finalHalfExtents.y, finalHalfExtents.z });
+
+	boxingGloveDangerZoneEntities.insert(
+		boxingGloveDangerZoneEntities.begin() + 3,
+		dangerEntity
+	);
+
+	// Pass the ordered boxing glove danger zones to the AI system
+	if (aiSystemPtr && !boxingGloveDangerZoneEntities.empty())
+	{
+		aiSystemPtr->SetBoxingGloveDangerZones(boxingGloveDangerZoneEntities);
+		std::cout << "[LevelLoader] Registered " << boxingGloveDangerZoneEntities.size()
+			<< " boxing glove danger zones with AiSystem" << std::endl;
+	}
 
 
 

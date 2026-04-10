@@ -11,6 +11,13 @@ class Game;
 
 class AiSystemDebug; // forward declaration
 
+struct CourseSegment {
+	glm::vec3 entryPoint;       // Where to repath TO if AI lands in this segment
+	float heightFloor;           // Min Y to be "in" this segment
+	float heightCeiling;         // Max Y to be "in" this segment
+	bool resetBoxingGloves;      // Need to redo boxing gloves?
+};
+
 class AiSystem : public System
 {
 	friend class AiSystemDebug; // Allow access to private members
@@ -33,6 +40,10 @@ public:
 	bool IsInBoxingGloveZone(const glm::vec3& pos) const;
 
 	float CalculateDistanceToFinish(const glm::vec3& position) const;
+
+	std::vector<CourseSegment> courseSegments;
+
+	int FindCurrentSegment(const glm::vec3& position) const;
 private:
 	Game* gameInstance = nullptr;
 	NavMesh navMesh;
