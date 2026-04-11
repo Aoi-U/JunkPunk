@@ -784,7 +784,7 @@ void LevelLoaderSystem::LoadLevel()
 		glm::vec3(-71.0f, -178.0f, -58.0f),         // afterBoxingGloves
 		glm::vec3(-60.0f, -31.0f, 170.0f),          // beforeGap
 		glm::vec3(150.0f, -28.0f, 185.0f),          // afterGap
-		glm::vec3(150.0f, -31.0f, 244.0f),          // beforeTunnel
+		glm::vec3(150.0f, -31.0f - 1.0f, 244.0f),   // beforeTunnel
 		glm::vec3(-135.600f, -28.000f, 392.500f),   // midTunnel
 		glm::vec3(-62.000f, -26.000f, 314.000f),    // inTunnel
 		glm::vec3(107.854f, 54.011f, 318.240f)      // uppertrack
@@ -921,6 +921,17 @@ void LevelLoaderSystem::LoadLevel()
 		Entity aiVehicle = controller.GetEntityByTag("AIVehicle1");
 		aiSystemPtr->SpawnDebugWaypoints(aiVehicle);
 	}
+
+	// out of bounds trigger boxes
+	entity = controller.createEntity();
+	controller.AddComponent(entity, Transform{
+		glm::vec3(0.0f, -30.0f, 50.0f),
+		glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
+		glm::vec3(250.0f, 250.0f, 250.0f)
+		});
+	controller.AddComponent(entity, Trigger{ nullptr, 250.0f, 300.0f, 500.0f });
+	controller.AddComponent(entity, PhysicsBody{});
+	controller.AddComponent(entity, OutOfBounds{});
 
 }
 

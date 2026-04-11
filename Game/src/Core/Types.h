@@ -186,6 +186,7 @@ namespace Events::Physics
 	const EventId TRIGGER_ENTER = "Events::Physics::TRIGGER_ENTER"_hash; // trigger enter event
 	const EventId TRIGGER_EXIT = "Events::Physics::TRIGGER_EXIT"_hash; // trigger exit event
 	const EventId CREATE_ACTOR = "Events::Physics::CREATE_ACTOR"_hash;
+	const EventId OUT_OF_BOUNDS = "Events::Physics::OUT_OF_BOUNDS"_hash;
 }
 
 namespace Events::Physics::Trigger_Enter // parameters for trigger enter event
@@ -203,6 +204,11 @@ namespace Events::Physics::Trigger_Exit // parameters for trigger exit event
 namespace Events::Physics::Create_Actor
 {
 	const ParamId ENTITY = "Events::Physics::Create_Actor::ENTITY"_hash;
+}
+
+namespace Events::Physics::Out_Of_Bounds
+{
+	const ParamId PLAYER_ENTITY = "Events::Physics::Out_Of_Bounds::ENTITY"_hash;
 }
 // end physics events
 

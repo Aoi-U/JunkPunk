@@ -162,6 +162,7 @@ Game::Game()
 	controller.RegisterComponent<Banana>();
 	controller.RegisterComponent<Sludge>();
 	controller.RegisterComponent<DangerZone>();
+	controller.RegisterComponent<OutOfBounds>();
 
 	// register systems (you must register systems before setting component signatures)
 	loaderSystem = controller.RegisterSystem<LevelLoaderSystem>();
@@ -326,7 +327,7 @@ void Game::Run()
 
 			particleSystem->Update(time->frameTime); // update particles
 
-			renderSystem->Update(time->fps(), physicsSystem->GetRenderBuffer()); // render physics debug data
+			renderSystem->Update(time->fps()); // render physics debug data
 			if (controller.HasComponent<Transform>(playerEntity))
 			{
 				auto& t = controller.GetComponent<Transform>(playerEntity);
@@ -423,7 +424,7 @@ void Game::Run()
 			break;
 		}
 		case PAUSED:
-			renderSystem->Update(time->fps(), physicsSystem->GetRenderBuffer());
+			renderSystem->Update(time->fps());
 			pauseSystem->Update();
 			//camera_debug_panel->render();
 			audioSystem->Update();
@@ -445,7 +446,7 @@ void Game::Run()
 			break;
 
 		case ENDMENU:
-			renderSystem->Update(time->fps(), physicsSystem->GetRenderBuffer());
+			renderSystem->Update(time->fps());
 			menuSystem->Update();
 			break;
 		}
@@ -809,6 +810,12 @@ void Game::TriggerExitListener(Event& e)
 			commands.sludgeFactor = 1.0f;
 
 		std::cout << "Exited sludge\n";
+	}
+	else if (controller.HasComponent<OutOfBounds>(triggerEntity) && controller.HasComponent<VehicleCommands>(otherEntity))
+	{
+		Event resetEvent(Events::Physics::OUT_OF_BOUNDS);
+		resetEvent.SetParam<Entity>(Events::Physics::Out_Of_Bounds::PLAYER_ENTITY, otherEntity);
+		controller.SendEvent(resetEvent);
 	}
 }
 

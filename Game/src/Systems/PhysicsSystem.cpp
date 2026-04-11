@@ -19,7 +19,8 @@ PhysicsSystem::PhysicsSystem()
 	controller.AddEventListener(Events::Checkpoint::REACHED, [this](Event& e) {this->CheckpointReachedListener(e); });
 	controller.AddEventListener(Events::Player::SPIN_OUT, [this](Event& e) {this->SpinOutListener(e); });
 	controller.AddEventListener(Events::Player::BLAST, [this](Event& e) {this->BlastEventListener(e); });
-	
+	controller.AddEventListener(Events::Physics::OUT_OF_BOUNDS, [this](Event& e) {this->PlayerOutOfBoundsListener(e); });
+
 	auto rigidBodyArray = controller.GetComponentArray<RigidBody>();
 	rigidBodyArray->BindOnRemoveCallback([this](Entity entity, RigidBody& rb) { this->ReleaseActorCallback(entity, rb); });
 
@@ -204,6 +205,18 @@ void PhysicsSystem::Update(float deltaTime)
 	Simulate(deltaTime); // run physics simulation
 
 	DeleteActorsQueue();
+	
+	// reset vehicle to checkpoint if out of bounds
+	for (auto [e, oob] : playerOutOfBounds)
+	{
+		if (oob)
+		{
+			Event event(Events::Player::RESET_VEHICLE);
+			event.SetParam<Entity>(Events::Player::Reset_Vehicle::ENTITY, e);
+			controller.SendEvent(event);
+			playerOutOfBounds[e] = false; // reset out of bounds status after respawn
+		}
+	}
 
 	// Update dynamic actor transforms in ECS
 	for (auto& entity : entities)
@@ -523,7 +536,7 @@ void PhysicsSystem::CreateMap()
 			
 			PxRigidStatic* staticActor = gPhysics->createRigidStatic(boxTransform);
 			staticActor->attachShape(*shape);
-			staticActor->setActorFlag(PxActorFlag::eVISUALIZATION, true);
+			//staticActor->setActorFlag(PxActorFlag::eVISUALIZATION, true);
 			staticActor->userData = reinterpret_cast<void*>(entity);
 
 			trigger.actor = staticActor;
@@ -764,3 +777,12 @@ void PhysicsSystem::BlastEventListener(Event& e) {
 		vehicle->ApplyImpulse(impulse);
 	}
 	}
+
+void PhysicsSystem::PlayerOutOfBoundsListener(Event& e)
+{
+	if (!playerWon && !aiWon)
+	{
+		Entity entity = e.GetParam<Entity>(Events::Physics::Out_Of_Bounds::PLAYER_ENTITY);
+		playerOutOfBounds[entity] = true;
+	}
+}

@@ -115,32 +115,8 @@ void RenderSystem::Clear(float r, float g, float b, float a)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-void RenderSystem::Update(float fps, const PxRenderBuffer& buffer)
+void RenderSystem::Update(float fps)
 {
-	//auto& tpp = controller.GetComponent<ThirdPersonCamera>(camera);
-	//glm::vec3 forward = glm::normalize(glm::vec3(glm::inverse(tpp.viewMatrix)[2]));
-	//glm::vec3 right = glm::normalize(glm::vec3(glm::inverse(tpp.viewMatrix)[0]));
-	//glm::vec3 up = glm::normalize(glm::vec3(glm::inverse(tpp.viewMatrix)[1]));
-	//glm::vec3 pos = glm::vec3(glm::inverse(tpp.viewMatrix)[3]);
-	//Frustum frust = CreateFrustum(tpp.zFar, tpp.zNear, glm::radians(tpp.fov), tpp.screenWidth / (float)tpp.screenHeight, -forward, right, up, glm::vec3(glm::inverse(tpp.viewMatrix)[3]));
-
-	//shadowMapper->Update(tpp.screenWidth / (float)tpp.screenHeight, tpp.zNear, tpp.zFar, glm::radians(tpp.fov), tpp.viewMatrix);
-
-	//DrawShadowPass(frust);
-
-	//DrawLightingPass(frust, tpp, pos);
-
-	//DrawSkybox();
-
-	//particleRenderSystem->Update(tpp);
-
-	//// draw physics colliders
-	//DrawCollisionDebug(buffer);
-
-	//DrawPostProcessingPass();
-	//
-	//RenderPowerupUI();
-
 	// Clear the default screen buffer ONCE at the start of the frame
 	Clear(0.0f, 0.0f, 0.0f, 1.0f);
 
@@ -511,64 +487,6 @@ void RenderSystem::DrawSkybox(const ThirdPersonCamera& cameraComp)
 	skybox->Unbind();
 
 	glDepthFunc(GL_LESS); // reset depth function
-}
-
-void RenderSystem::DrawCollisionDebug(const PxRenderBuffer& renderBuffer, const ThirdPersonCamera& tpp)
-{
-	glm::mat4 projView = tpp.getProjectionMatrix() * tpp.viewMatrix;
-
-	physicsDebugShader->use();
-	physicsDebugShader->setMat4("u_projView", projView);
-	
-	PxU32 nbLines = renderBuffer.getNbLines();
-	const PxDebugLine* lines = renderBuffer.getLines();
-
-	if (nbLines == 0)
-		return;
-
-	if (nbLines > maxDebugLines)
-	{
-		std::cout << "Too many debug lines. Some lines will not be rendered" << std::endl;
-		std::cout << "	Attemping to render " << nbLines << " lines." << std::endl;
-		nbLines = maxDebugLines;
-	}
-
-	glBindBuffer(GL_ARRAY_BUFFER, debugVbo);
-	GLfloat* vertexData = (GLfloat*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
-
-	for (PxU32 i = 0; i < nbLines; i++)
-	{
-		const PxDebugLine& line = lines[i];
-		glm::vec3 col0 = glm::vec3(
-			((line.color0 >> 16) & 0xFF) / 255.0f,
-			((line.color0 >> 8) & 0xFF) / 255.0f,
-			(line.color0 & 0xFF) / 255.0f
-		);
-		glm::vec3 col1 = glm::vec3(
-			((line.color1 >> 16) & 0xFF) / 255.0f,
-			((line.color1 >> 8) & 0xFF) / 255.0f,
-			(line.color1 & 0xFF) / 255.0f
-		);
-		// first vertex
-		vertexData[i * 12 + 0] = line.pos0.x;
-		vertexData[i * 12 + 1] = line.pos0.y;
-		vertexData[i * 12 + 2] = line.pos0.z;
-		vertexData[i * 12 + 3] = col0.x;
-		vertexData[i * 12 + 4] = col0.y;
-		vertexData[i * 12 + 5] = col0.z;
-
-		// second vertex
-		vertexData[i * 12 + 6] = line.pos1.x;
-		vertexData[i * 12 + 7] = line.pos1.y;
-		vertexData[i * 12 + 8] = line.pos1.z;
-		vertexData[i * 12 + 9] = col1.x;
-		vertexData[i * 12 + 10] = col1.y;
-		vertexData[i * 12 + 11] = col1.z;
-	}
-	glUnmapBuffer(GL_ARRAY_BUFFER);
-	glBindVertexArray(debugVao);
-	glDrawArrays(GL_LINES, 0, nbLines * 2);
-	glBindVertexArray(0);
 }
 
 void RenderSystem::BindTextures(Mesh& mesh)
