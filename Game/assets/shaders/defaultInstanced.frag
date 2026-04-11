@@ -40,6 +40,8 @@ uniform bool hasDiffuseTex;
 uniform bool hasSpecularTex;
 uniform bool hasNormalTex;
 uniform bool hasHeightTex;
+uniform bool u_useFlatColor;
+uniform vec3 u_flatColor;
 
 float ShadowCalculation(vec3 fragPosWorldSpace, vec3 norm)
 {
@@ -91,7 +93,7 @@ float ShadowCalculation(vec3 fragPosWorldSpace, vec3 norm)
 
 void main()
 {
-	vec3 sampledColor = texture(texture_diffuse1, texCoord).rgb;
+	vec3 sampledColor = hasDiffuseTex ? texture(texture_diffuse1, texCoord).rgb : (u_useFlatColor ? u_flatColor : vec3(1.0));
 	vec3 norm = normalize(normal);
 
 	// ambient

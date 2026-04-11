@@ -27,4 +27,5 @@ struct PlayerController
 struct CheckPoint
 {
 	glm::quat orientation; // the direction the player should face when player resets their vehicle to checkpoint
+	int index;
 };

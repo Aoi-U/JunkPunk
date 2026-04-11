@@ -246,10 +246,11 @@ void MainVehicle::setTransform(const glm::vec3& position, const glm::quat& rotat
 	}
 }
 
-void MainVehicle::setCheckpoint(const glm::vec3& position, const glm::quat& rotation)
+void MainVehicle::setCheckpoint(const glm::vec3& position, const glm::quat& rotation, int checkpointIndex)
 {
 	checkpointPosition = position;
 	checkpointRotation = rotation;
+	currentCheckpointIndex = checkpointIndex;
 	//std::cout << "checkpoint reached at: " << checkpointPosition.x << " " << checkpointPosition.y << " " << checkpointPosition.z << std::endl;
 }
 

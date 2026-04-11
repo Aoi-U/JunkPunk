@@ -296,17 +296,14 @@ void RenderSystem::DrawLightingPass(const Frustum& frust, const ThirdPersonCamer
 	{
 		auto& renderComp = controller.GetComponent<Render>(entity);
 		auto& transformComp = controller.GetComponent<Transform>(entity);
-		
-		/*glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), transformComp.position);
-		modelMatrix = modelMatrix * glm::mat4_cast(transformComp.quatRotation);
-		modelMatrix = glm::scale(modelMatrix, transformComp.scale);*/
+
 		glm::mat3 rot = glm::mat3_cast(transformComp.quatRotation);
 		rot[0] *= transformComp.scale.x;
 		rot[1] *= transformComp.scale.y;
 		rot[2] *= transformComp.scale.z;
 		glm::mat4 modelMatrix(rot);
 		modelMatrix[3] = glm::vec4(transformComp.position, 1.0f);
-		
+
 		bool isVisible = renderComp.boundingVolume->isOnFrustum(frust, modelMatrix);
 
 		if (isVisible)
@@ -316,6 +313,10 @@ void RenderSystem::DrawLightingPass(const Frustum& frust, const ThirdPersonCamer
 				instancedModels[renderComp.model.get()].push_back(modelMatrix);
 				continue;
 			}
+
+			
+			defaultInstanceShader->setBool("u_useFlatColor", renderComp.useFlatColor);
+			defaultInstanceShader->setVec3("u_flatColor", &renderComp.flatColor.x);
 
 			// render non-instanced entities normally
 			defaultInstanceShader->setMat4("u_model", modelMatrix);
@@ -334,6 +335,7 @@ void RenderSystem::DrawLightingPass(const Frustum& frust, const ThirdPersonCamer
 
 	// draw instanced entities
 	defaultInstanceShader->setBool("u_isInstanced", true);
+	defaultInstanceShader->setBool("u_useFlatColor", false); // instanced path uses normal material flow
 
 	Mesh* previousMesh = nullptr;
 	for (auto& [model, matrices] : instancedModels)
@@ -643,6 +645,10 @@ void RenderSystem::ShaderSetupDefaults()
 	defaultInstanceShader->setVec3("u_light.diffuse", &light.getDiffuse().r);
 	defaultInstanceShader->setVec3("u_light.specular", &light.getSpecular().r);
 	defaultInstanceShader->setInt("depthMaps", 6);
+
+	glm::vec3 white(1.0f, 1.0f, 1.0f);
+	defaultInstanceShader->setBool("u_useFlatColor", false);
+	defaultInstanceShader->setVec3("u_flatColor", &white.x);
 
 	// setup light shader
 	lightShader->use();

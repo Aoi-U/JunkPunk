@@ -61,9 +61,11 @@ public:
 
 	void resetTransform(); // use when vehicle is stuck (maybe dont need because of checkpoints)
 	
-	void setCheckpoint(const glm::vec3& position, const glm::quat& rotation); // sets a new checkpoint position
+	void setCheckpoint(const glm::vec3& position, const glm::quat& rotation, int checkpointIndex); // sets a new checkpoint position
 
 	void respawnAtCheckpoint(); // respawns the vehicle at the last checkpoint position
+
+	int getCurrentCheckpointIndex() const { return currentCheckpointIndex; } // returns the current checkpoint index
 
 	const PxVec3 getLinearVelocity() const;
 
@@ -109,6 +111,8 @@ private:
 	glm::quat checkpointRotation = glm::vec3(0.0f);
 
 	PxVec3 jumpForce = PxVec3(0.0f, 25000.0f, 0.0f);
+
+	int currentCheckpointIndex = 0;
 
 	void setTransform(const glm::vec3& position, const glm::quat& rotation); // set the position and rotation of the vehicle (use for checkpoints/respawning)
 	

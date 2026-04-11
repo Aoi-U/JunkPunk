@@ -753,8 +753,6 @@ void Game::TriggerEnterListener(Event& e)
 		checkpointEvent.SetParam<Entity>(Events::Checkpoint::Reached::PLAYER_ENTITY, otherEntity);
 		checkpointEvent.SetParam<Entity>(Events::Checkpoint::Reached::CHECKPOINT_ENTITY, triggerEntity);
 		controller.SendEvent(checkpointEvent);
-
-		controller.DestroyEntity(triggerEntity);
 	}
 	else if (controller.HasComponent<Banana>(triggerEntity) &&
 		controller.HasComponent<PlayerController>(otherEntity)) {

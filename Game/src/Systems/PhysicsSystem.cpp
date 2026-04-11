@@ -120,12 +120,6 @@ void PhysicsSystem::Update(float deltaTime)
 	command.brake = vehicleCommands.brake;
 	command.steer = vehicleCommands.steer;
 	gVehicle->setCommand(command);*/
-	
-	std::cout << vehicles.size() << std::endl;
-	for (auto it = vehicles.begin(); it != vehicles.end(); ++it)
-	{
-		std::cout << "Vehicle entity: " << it->first << std::endl;
-	}
 
 	for (auto it = vehicles.begin(); it != vehicles.end();)
 	{
@@ -702,7 +696,14 @@ void PhysicsSystem::CheckpointReachedListener(Event& e)
 
 	auto& transform = controller.GetComponent<Transform>(checkpointEntity);
 	auto& checkpoint = controller.GetComponent<CheckPoint>(checkpointEntity);
-	it->second->setCheckpoint(transform.position, checkpoint.orientation);
+
+	const int currentIndex = it->second->getCurrentCheckpointIndex();
+
+	// only update checkpoint if it's further along the track
+	if (checkpoint.index > currentIndex)
+	{
+		it->second->setCheckpoint(transform.position, checkpoint.orientation, checkpoint.index);
+	}
 }
 
 void PhysicsSystem::ReleaseActorCallback(Entity entity, RigidBody& rb)
