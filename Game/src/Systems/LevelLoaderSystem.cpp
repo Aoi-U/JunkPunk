@@ -485,13 +485,15 @@ void LevelLoaderSystem::LoadLevel()
 		controller.AddComponent(entity, PhysicsBody{});
 	}
 
+	const glm::vec3 baseSpawnPos = glm::vec3(133.0f, -259.0f, -257.0f);
+
 	for (int i = 0; i < numPlayers; i++)
 	{
 		Entity vehicle = controller.createEntity();
 		glm::mat4 player_rotation = glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 		loaded = LoadModel("assets/models/car_body_orange/car.gltf");
 		glm::mat4 playerRotation = glm::rotate(glm::mat4(1.0f), glm::radians(38.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-		Transform vehicleTransform{ glm::vec3(133.0f - i * 2.0f, -259.0f, -257.0f), glm::quat(playerRotation), glm::vec3(0.2f) };
+		Transform vehicleTransform{ baseSpawnPos + glm::vec3(-i * 2.0f, 0.0f, 0.0f), glm::quat(playerRotation), glm::vec3(0.2f) };
 		controller.AddComponent(vehicle, vehicleTransform);
 		// controller.AddComponent(vehicle, Transform{ glm::vec3(148.0f, -26.f, 400.f), glm::quat(player_rotation), glm::vec3(0.2f) }); //testing tunnel
 		// controller.AddComponent(vehicle, Transform{ glm::vec3(137.0f, -255.0f, -233.f), glm::quat(player_rotation), glm::vec3(0.2f) }); //beginning
@@ -770,11 +772,47 @@ void LevelLoaderSystem::LoadLevel()
 		});
 	controller.AssignTag(entity, "FinishLine");
 
-	entity = controller.createEntity();
-	controller.AddComponent(entity, PhysicsBody{});
-	controller.AddComponent(entity, Transform{ glm::vec3(-60.0f, -93.0f, 19.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.25f) });
-	controller.AddComponent(entity, CheckPoint{ glm::quat(1.0f, 0.0f, 0.0f, 0.0f) });
-	controller.AddComponent(entity, Trigger{ nullptr, 5.0f, 2.0f, 5.0f });
+	//entity = controller.createEntity();
+	//controller.AddComponent(entity, PhysicsBody{});
+	//controller.AddComponent(entity, Transform{ glm::vec3(-60.0f, -93.0f, 19.0f), glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.25f) });
+	//controller.AddComponent(entity, CheckPoint{ glm::quat(1.0f, 0.0f, 0.0f, 0.0f) });
+	//controller.AddComponent(entity, Trigger{ nullptr, 5.0f, 2.0f, 5.0f });
+
+	std::vector<glm::vec3> checkpointPositions = {
+		baseSpawnPos,																// startPos (player spawn)
+		glm::vec3(55.0f, -178.0f, -58.0f),          // beforeBoxingGloves
+		glm::vec3(-71.0f, -178.0f, -58.0f),         // afterBoxingGloves
+		glm::vec3(-60.0f, -31.0f, 170.0f),          // beforeGap
+		glm::vec3(150.0f, -28.0f, 185.0f),          // afterGap
+		glm::vec3(150.0f, -31.0f, 244.0f),          // beforeTunnel
+		glm::vec3(-135.600f, -28.000f, 392.500f),   // midTunnel
+		glm::vec3(-62.000f, -26.000f, 314.000f),    // inTunnel
+		glm::vec3(107.854f, 54.011f, 318.240f)      // uppertrack
+	};
+
+	loaded = LoadModel("assets/models/checkpointFlag/scene.gltf");
+
+	for (int i = 0; i < checkpointPositions.size(); i++)
+	{
+		entity = controller.createEntity();
+		controller.AddComponent(entity, PhysicsBody{});
+		controller.AddComponent(entity, Transform{
+			checkpointPositions[i],
+			glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f)
+			});
+		//controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
+		controller.AddComponent(entity, CheckPoint{ glm::quat(1.0f, 0.0f, 0.0f, 0.0f), i + 1 });
+		controller.AddComponent(entity, Trigger{ nullptr, 5.0f, 2.0f, 5.0f });
+
+		entity = controller.createEntity();
+		controller.AddComponent(entity, Transform{
+			checkpointPositions[i],
+			glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f)
+			});
+		controller.AddComponent(entity, Render{ loaded.first, loaded.second, true });
+	}
 
 	// Used strictly for testing AI waypoints, can be removed later
 	//std::vector<Waypoint> waypoints;
@@ -878,7 +916,7 @@ void LevelLoaderSystem::LoadLevel()
 		controller.AddComponent(entity, PhysicsBody{});
 	}
 
-		if (aiSystemPtr)
+	if (aiSystemPtr)
 	{
 		Entity aiVehicle = controller.GetEntityByTag("AIVehicle1");
 		aiSystemPtr->SpawnDebugWaypoints(aiVehicle);
