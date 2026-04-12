@@ -682,9 +682,28 @@ void RenderSystem::ChangeGameStateListener(Event& e)
 	}
 }
 
-void RenderSystem::RenderDistanceToFinish(float distance)
+void RenderSystem::RenderDistanceToFinish(float distance, int playerIndex, int numPlayers)
 {
 	int d = static_cast<int>(distance);
-	std::string text = "Distance to finish: " + std::to_string(d) + "m";
-	RenderText(text, 20.0f, screenHeight - 40.0f, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f));
+	std::string text = "Distance to Top: " + std::to_string(d) + "m";
+
+	// calculate the viewport for this player matching the split screen layout in Update()
+	int vx = 0, vy = 0, vw = screenWidth, vh = screenHeight;
+	if (numPlayers == 2) {
+		vw = screenWidth;
+		vh = screenHeight / 2;
+		vy = (playerIndex == 0) ? vh : 0;
+	}
+	else if (numPlayers > 2) {
+		vw = screenWidth / 2;
+		vh = screenHeight / 2;
+		vx = (playerIndex % 2) * vw;
+		vy = (playerIndex < 2) ? vh : 0;
+	}
+
+	// position text near top-left of this player's viewport
+	float textX = vx + 10.0f;
+	float textY = vy + vh - 40.0f;
+
+	RenderText(text, textX, textY, 0.8f, glm::vec3(1.0f, 1.0f, 1.0f));
 }
