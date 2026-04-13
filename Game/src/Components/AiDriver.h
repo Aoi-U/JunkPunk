@@ -71,7 +71,7 @@ struct AiDriver
 
 	// Re-path cooldown
 	float repathCooldown = 0.0f;
-	float repathCooldownDuration = 3.0f;
+	float repathCooldownDuration = 1.0f;
 
 	// Obstacle avoidance
 	//float obstacleDetectionRange = 10.0f;

@@ -191,7 +191,7 @@ void LevelLoaderSystem::LoadLevel()
 		aiSystemPtr->SetNavMesh(navMesh);
 
 		// Spawn random banana peels along the track
-		//SpawnRandomBananaPeels(100, navMesh);  // Spawn 100 random banana peels
+		SpawnRandomBananaPeels(100, navMesh);  // Spawn 100 random banana peels
 
 		// Spawn random powerups along the track
 		//SpawnRandomMixedPowerups(10, 10, navMesh);  // 10 speed boosts, 10 banana pickups
@@ -591,7 +591,7 @@ void LevelLoaderSystem::LoadLevel()
 		controller.AddComponent(entity, PhysicsBody{});
 	}
 
-	const glm::vec3 baseSpawnPos = glm::vec3(133.0f, -259.0f, -257.0f);
+	const glm::vec3 baseSpawnPos = glm::vec3(133.0f, -259.0f, -277.0f);
 
 	for (int i = 0; i < numPlayers; i++)
 	{
@@ -1029,12 +1029,12 @@ void LevelLoaderSystem::LoadLevel()
 	}
 
 	// Used for testing A* pathfinding and debug rendering of AI waypoints
-	if (aiSystemPtr)
-	{
-		Entity aiVehicle = controller.GetEntityByTag("AIVehicle0");
-		AiSystemDebug::SpawnDebugWaypoints(*aiSystemPtr, aiVehicle);
-		//AiSystemDebug::SpawnDebugZoneTriggers(*aiSystemPtr);
-	}
+	//if (aiSystemPtr)
+	//{
+	//	Entity aiVehicle = controller.GetEntityByTag("AIVehicle0");
+	//	AiSystemDebug::SpawnDebugWaypoints(*aiSystemPtr, aiVehicle);
+	//	//AiSystemDebug::SpawnDebugZoneTriggers(*aiSystemPtr);
+	//}
 
 	// out of bounds trigger boxes
 	entity = controller.createEntity();
