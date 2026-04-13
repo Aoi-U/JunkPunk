@@ -31,8 +31,8 @@ void AiSystemDebug::SpawnDebugWaypoints(AiSystem& aiSystem, Entity aiEntity)
 		controller.AddComponent(marker, CheckPoint{ glm::quat(1.0f, 0.0f, 0.0f, 0.0f) });
 		controller.AddComponent(marker, Trigger{ nullptr, 1.0f, 4.0f, 1.0f });
 
-		std::cout << "  marker[" << i << "]: (" << ai.navWaypoints[i].x << ", "
-			<< ai.navWaypoints[i].y << ", " << ai.navWaypoints[i].z << ")" << std::endl;
+		//std::cout << "  marker[" << i << "]: (" << ai.navWaypoints[i].x << ", "
+		//	<< ai.navWaypoints[i].y << ", " << ai.navWaypoints[i].z << ")" << std::endl;
 	}
 }
 

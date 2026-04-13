@@ -167,7 +167,7 @@ void NavMesh::Subdivide()
 
 	triangles = std::move(newTriangles);
 
-	std::cout << "[NavMesh] Subdivided: " << oldCount << " -> " << triangles.size() << " triangles" << std::endl;
+	//std::cout << "[NavMesh] Subdivided: " << oldCount << " -> " << triangles.size() << " triangles" << std::endl;
 }
 
 // ---- Adjacency ----
@@ -253,8 +253,8 @@ void NavMesh::BuildAdjacency()
 			if (t.neighbours[e] >= 0)
 				++adjacentPairs;
 
-	std::cout << "[NavMesh] Built adjacency: " << triangles.size()
-		<< " triangles, " << (adjacentPairs / 2) << " shared edges" << std::endl;
+	//std::cout << "[NavMesh] Built adjacency: " << triangles.size()
+	//	<< " triangles, " << (adjacentPairs / 2) << " shared edges" << std::endl;
 }
 
 void NavMesh::StitchDisconnectedIslands(float maxGapDistance, float maxHeightDiff)
@@ -295,8 +295,8 @@ void NavMesh::StitchDisconnectedIslands(float maxGapDistance, float maxHeightDif
 		++componentId;
 	}
 
-	std::cout << "[NavMesh] StitchDisconnectedIslands: Found " << componentId
-		<< " disconnected components before stitching" << std::endl;
+	//std::cout << "[NavMesh] StitchDisconnectedIslands: Found " << componentId
+	//	<< " disconnected components before stitching" << std::endl;
 
 	if (componentId <= 1)
 	{
@@ -379,9 +379,9 @@ void NavMesh::StitchDisconnectedIslands(float maxGapDistance, float maxHeightDif
 		}
 	}
 
-	std::cout << "[NavMesh] StitchDisconnectedIslands: Created " << bridgeCount
-		<< " bridge connections (maxGapDistance=" << maxGapDistance 
-		<< ", maxHeightDiff=" << maxHeightDiff << ")" << std::endl;
+	//std::cout << "[NavMesh] StitchDisconnectedIslands: Created " << bridgeCount
+	//	<< " bridge connections (maxGapDistance=" << maxGapDistance 
+	//	<< ", maxHeightDiff=" << maxHeightDiff << ")" << std::endl;
 }
 
 int32_t NavMesh::CountConnectedComponents() const

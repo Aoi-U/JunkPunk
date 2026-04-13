@@ -486,6 +486,44 @@ void AiSystemHelperFunctions::TryUsePowerup(Entity entity, Game* gameInstance)
 			}
 		}
 	}
+	else if (ai.heldPowerupType == 3) {
+		// Bomb/Blast: use when the player is close (area-of-effect explosion)
+		Entity playerEntity = 0;
+		auto playerArray = controller.GetComponentArray<PlayerController>();
+		for (auto& [pEntity, idx] : playerArray->GetEntityToIndexMap())
+		{
+			if (controller.HasComponent<Transform>(pEntity))
+			{
+				playerEntity = pEntity;
+				break;
+			}
+		}
+
+		if (playerEntity != 0)
+		{
+			auto& playerTransform = controller.GetComponent<Transform>(playerEntity);
+			glm::vec3 toPlayer = playerTransform.position - transform.position;
+			toPlayer.y = 0.0f;
+			float dist = glm::length(toPlayer);
+
+			if (dist > 1e-5f && dist < ai.dropBananaPlayerRange)
+			{
+				Event blastEvent(Events::Player::BLAST);
+				blastEvent.SetParam<Entity>(Events::Player::Blast::ENTITY, entity);
+				controller.SendEvent(blastEvent);
+
+				Event soundEvent(Events::Audio::PLAY_SOUND);
+				soundEvent.SetParam<std::string>(Events::Audio::Play_Sound::SOUND_NAME, "assets/audio/explosion.wav");
+				soundEvent.SetParam<glm::vec3>(Events::Audio::Play_Sound::POSITION, glm::vec3(0.0f, 0.0f, 0.0f));
+				soundEvent.SetParam<float>(Events::Audio::Play_Sound::VOLUME_DB, -10.0f);
+				controller.SendEvent(soundEvent);
+
+				ai.hasPowerup = false;
+				ai.heldPowerupType = 0;
+				std::cout << "[AI] Used bomb blast on nearby player" << std::endl;
+			}
+		}
+	}
 }
 
 

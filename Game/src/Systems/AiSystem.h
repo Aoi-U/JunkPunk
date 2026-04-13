@@ -18,6 +18,13 @@ struct CourseSegment {
 	bool resetBoxingGloves;      // Need to redo boxing gloves?
 };
 
+struct SpinnerInfo
+{
+	glm::vec3 position;
+	float radius;        // spinner_size * arm_length_scale
+	bool isClockwise;    // derived from spinner_rotation
+};
+
 class AiSystem : public System
 {
 	friend class AiSystemDebug; // Allow access to private members
@@ -44,6 +51,10 @@ public:
 	std::vector<CourseSegment> courseSegments;
 
 	int FindCurrentSegment(const glm::vec3& position) const;
+
+	std::vector<SpinnerInfo> spinnerInfos;
+	void SetSpinnerInfos(const std::vector<SpinnerInfo>& infos);
+
 private:
 	Game* gameInstance = nullptr;
 	NavMesh navMesh;

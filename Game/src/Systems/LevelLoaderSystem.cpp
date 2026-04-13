@@ -202,7 +202,7 @@ void LevelLoaderSystem::LoadLevel()
 		{glm::vec3(20.0f, -169.f, 40.f), glm::vec3(20.0f, -169.f, -45.f), glm::vec3(20.0f, -169.f, -45.f), glm::vec3(20.0f, -169.f, 40.f)},
 		{glm::vec3(-15.0f, -169.f, 40.f), glm::vec3(-15.0f, -169.f, -45.f), glm::vec3(-15.0f, -169.f, -45.f), glm::vec3(-15.0f, -169.f, 40.f)},
 		{glm::vec3(-50.0f, -169.f, 40.f), glm::vec3(-50.0f, -169.f, -45.f), glm::vec3(-50.0f, -169.f, -45.f), glm::vec3(-50.0f, -169.f, 40.f)},
-		{glm::vec3(45.0f, -70.f, 440.f), glm::vec3(45.0f, -67.f, 301.f), glm::vec3(45.0f, -67.f, 301.f), glm::vec3(45.0f, -70.f, 440.f)},
+		{glm::vec3(45.0f, -70.f, 440.f), glm::vec3(45.0f, -70.f, 301.f), glm::vec3(45.0f, -70.f, 301.f), glm::vec3(45.0f, -70.f, 440.f)},
 		{glm::vec3(-74.0f, 59.f, 500.f), glm::vec3(-74.0f, 64.f, 363.f), glm::vec3(-74.0f, 64.f, 363.f), glm::vec3(-74.0f, 59.f, 500.f)}, //top area
 	};
 	std::vector<float> glove_size = {
@@ -473,6 +473,21 @@ void LevelLoaderSystem::LoadLevel()
 			false
 			});
 	}
+
+	std::vector<SpinnerInfo> spinnerInfos;
+	for (int i = 0; i < spinner_positions.size(); i++)
+	{
+		SpinnerInfo info;
+		info.position = spinner_positions[i];
+		info.radius = spinner_size[i] * 5.0f; // scale factor for the arm's physical reach
+		info.isClockwise = (spinner_rotation[i] < 0.0f);
+		//std::cout << "Spinner locations: (" << info.position.x << ", " << info.position.y << ", " << info.position.z << ")" << std::endl;
+		spinnerInfos.push_back(info);
+	}
+
+	if (aiSystemPtr)
+		aiSystemPtr->SetSpinnerInfos(spinnerInfos);
+
 	//90 degree offset
 	entity = controller.createEntity();
 	loaded = LoadModel("assets/models/spinner/spinner.gltf");
@@ -654,11 +669,13 @@ void LevelLoaderSystem::LoadLevel()
 		// AI Opponent vehicle
 		Entity vehicle = controller.createEntity();
 		loaded = LoadModel("assets/models/car_body_blue/car.gltf");
-		glm::mat4 aiRotation = glm::rotate(glm::mat4(1.0f), glm::radians(50.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		glm::mat4 aiRotation = glm::rotate(glm::mat4(1.0f), glm::radians(30.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
 		// Normal starting zone
 		//controller.AddComponent(vehicle, Transform{ glm::vec3(133.0f + i * 2.0f, -259.0f, -257.0f), glm::quat(aiRotation), glm::vec3(0.2f) });
-		controller.AddComponent(vehicle, Transform{ glm::vec3(70.0f + i * 2.0f, -210.5f, -100.0f), glm::quat(aiRotation), glm::vec3(0.2f) });	// Postion before boxing glove zone
+		//controller.AddComponent(vehicle, Transform{ glm::vec3(70.0f + i * 2.0f, -210.5f, -100.0f), glm::quat(aiRotation), glm::vec3(0.2f) });	// Postion before boxing glove zone
+		//controller.AddComponent(vehicle, Transform{ glm::vec3(29.012f + i * 2.0f, -138.156f, 55.213f), glm::quat(aiRotation), glm::vec3(0.2f) });	// Before Spinners
+		controller.AddComponent(vehicle, Transform{ glm::vec3(-96.633f + i * 2.0f, -77.468f, 89.897f), glm::quat(aiRotation), glm::vec3(0.2f) });	// Before gap
 		//controller.AddComponent(vehicle, Transform{ glm::vec3(150.0f + i * 2.0f, -30.477f, 197.0f), glm::quat(aiRotation), glm::vec3(0.2f) });	// Position vehicle after the gap
 		controller.AddComponent(vehicle, VehicleBody{});
 		controller.AddComponent(vehicle, VehicleCommands{});

@@ -14,6 +14,7 @@
 #include <iostream>
 #include "../NavMesh.h"
 #include "../Components/DangerZone.h"
+#include <algorithm>
 
 extern ECSController controller;
 
@@ -66,6 +67,11 @@ void AiSystem::Init()
 		// Segment 7: Goal area
 		{ glm::vec3(-70.0f, 56.0f, 326.0f),      54.011f,  100.0f, false },  // goal
 	};
+}
+
+void AiSystem::SetSpinnerInfos(const std::vector<SpinnerInfo>& infos)
+{
+	spinnerInfos = infos;
 }
 
 void AiSystem::SetNavMesh(const NavMesh& mesh)
@@ -261,6 +267,8 @@ void AiSystem::RecomputeNavPath(Entity entity)
 	ai.progressTimer = 0.0f;
 	ai.lastDistToWaypoint = 999999.0f;
 	ai.repathCooldown = ai.repathCooldownDuration;
+	ai.stuckTimer = 0.0f;
+	ai.isBypassingSpinner = false;
 
 	//std::cout << "[AiSystem] Re-pathed: " << path.triangleIndices.size()
 	//	<< " corridor tris -> " << ai.navWaypoints.size()
@@ -339,7 +347,11 @@ void AiSystem::Update(float deltaTime)
 
 		if (ai.navWaypoints.empty() && !navMesh.IsEmpty())
 		{
-			ComputeNavPath(entity);
+			int seg = FindCurrentSegment(transform.position);
+			if (seg > 0)
+				RecomputeNavPath(entity);   // Mid-track spawn: simple A* to goal
+			else
+				ComputeNavPath(entity);     // Normal start: full segmented path
 		}
 
 		if (ai.navWaypoints.empty())
@@ -420,6 +432,7 @@ void AiSystem::TransitionToState(Entity entity, AiState newState, float deltaTim
 	{
 	case AiState::FollowPath:
 		ai.stuckTimer = 0.0f;
+		ai.isBypassingSpinner = false;
 		break;
 	case AiState::BackingUp:
 		ai.backupTimer = 0.0f;
@@ -433,7 +446,7 @@ void AiSystem::TransitionToState(Entity entity, AiState newState, float deltaTim
 	case AiState::IsFlipped:
 		ai.flippedTimer = 0.0f;
 		break;
-
+	
 	default:
 		break;
 	}
@@ -457,6 +470,9 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 	forward.y = 0.0f;
 	if (glm::length(forward) < 1e-6f) forward = glm::vec3(0, 0, 1);
 	forward = glm::normalize(forward);
+
+	glm::vec3 spinnerBypassTarget = glm::vec3(0.0f);
+	bool hasSpinnerOverride = false;
 
 	float speed = glm::length(glm::vec3(body.linearVelocity.x, 0.0f, body.linearVelocity.z));
 
@@ -565,7 +581,7 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 
 				// Apply braking
 				vc.throttle = 0.0f;
-				vc.brake = 0.3f;
+				vc.brake = 0.2f;
 				vc.steer = 0.0f;
 				vc.isGrounded = true;
 				return;
@@ -601,11 +617,6 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 	// --- Obstacle detection: scan for Bananas ahead --- //
 	////////////////////////////////////////////////////////
 	{
-		glm::vec3 carPos = transform.position;
-		glm::vec3 forward = transform.quatRotation * glm::vec3(0.0f, 0.0f, 1.0f);
-		forward.y = 0.0f;
-		if (glm::length(forward) > 1e-6f) forward = glm::normalize(forward);
-
 		Entity closestObstacle = 0;
 		float closestDist = ai.obstacleDetectionRange;
 
@@ -644,6 +655,75 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 		}
 	}
 
+	/////////////////////////////////////////////////////////
+	// --- Obstacle detection: scan for spinners ahead --- //
+	/////////////////////////////////////////////////////////
+	if (!ai.isBypassingSpinner)
+	{
+		float closestSpinnerDist = FLT_MAX;
+		glm::vec3 bestBypassTarget = glm::vec3(0.0f);
+		bool foundSpinner = false;
+
+		for (const auto& spinner : spinnerInfos)
+		{
+			glm::vec3 toSpinner = spinner.position - carPos;
+			toSpinner.y = 0.0f;
+			float dist = glm::length(toSpinner);
+
+			if (dist < 1e-5f || dist > spinner.radius + ai.lookaheadDistance)
+				continue;
+
+			float dot = glm::dot(forward, glm::normalize(toSpinner));
+			if (dot < 0.3f)
+				continue;
+
+			glm::vec3 toSpinnerN = glm::normalize(toSpinner);
+			glm::vec3 rightOfApproach = glm::vec3(toSpinnerN.z, 0.0f, -toSpinnerN.x);
+			glm::vec3 leftOfApproach = glm::vec3(-toSpinnerN.z, 0.0f, toSpinnerN.x);
+
+			float bypassDist = (std::min)(spinner.radius + 6.0f, 18.0f);
+
+			glm::vec3 bypassTarget;
+			if (spinner.isClockwise)
+				bypassTarget = spinner.position + leftOfApproach * bypassDist;
+			else
+				bypassTarget = spinner.position + rightOfApproach * bypassDist;
+
+			int32_t bypassTri = navMesh.FindTriangleAtHeight(bypassTarget, 5.0f);
+			if (bypassTri < 0)
+			{
+				if (spinner.isClockwise)
+					bypassTarget = spinner.position + rightOfApproach * bypassDist;
+				else
+					bypassTarget = spinner.position + leftOfApproach * bypassDist;
+
+				bypassTri = navMesh.FindTriangleAtHeight(bypassTarget, 5.0f);
+				if (bypassTri < 0)
+					continue;
+			}
+
+			if (dist < closestSpinnerDist)
+			{
+				closestSpinnerDist = dist;
+				bestBypassTarget = bypassTarget;
+				foundSpinner = true;
+			}
+		}
+
+		if (foundSpinner)
+		{
+			ai.isBypassingSpinner = true;
+			ai.lockedBypassTarget = bestBypassTarget;
+			ai.spinnerBypassTimer = 0.0f;
+		}
+	}
+
+	if (ai.isBypassingSpinner)
+	{
+		spinnerBypassTarget = ai.lockedBypassTarget;
+		hasSpinnerOverride = true;
+	}
+
 	///////////////////////////////////////////////////////////////////
 	// Check for nearby powerups (only if we don't already have one) //
 	///////////////////////////////////////////////////////////////////
@@ -669,6 +749,12 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 
 			auto& powerupTransform = controller.GetComponent<Transform>(powerupEntity);
 			glm::vec3 toPowerup = powerupTransform.position - carPos;
+
+			// Skip powerups on different vertical levels
+			float heightDiff = std::abs(toPowerup.y);
+			if (heightDiff > 10.0f)
+				continue;
+
 			toPowerup.y = 0.0f;
 
 			float dist = glm::length(toPowerup);
@@ -693,7 +779,7 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 		}
 	}
 
-	// Try to use a held powerup (checked inline -- does NOT interrupt driving)
+	// Try to use a held powerup
 	if (ai.hasPowerup)
 	{
 		AiSystemHelperFunctions::TryUsePowerup(entity, gameInstance);
@@ -770,7 +856,7 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 	if (ai.progressTimer > ai.progressTimeThreshold && ai.repathCooldown <= 0.0f)
 	{
 		std::cout << "[AI] No progress toward wp[" << ai.currentWaypointIndex
-			<< "], re-pathing from current position" << std::endl;
+			<< "] (" << ai.navWaypoints[ai.currentWaypointIndex].x << ", " << ai.navWaypoints[ai.currentWaypointIndex].y << ", " << ai.navWaypoints[ai.currentWaypointIndex].z << "), re-pathing from current position" << std::endl;
 		RecomputeNavPath(entity);
 		ai.repathCooldown = ai.repathCooldownDuration;
 		return;
@@ -824,6 +910,32 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 	else
 	{
 		steer = AiSystemHelperFunctions::CalculateSteeringAngle(forward, toSteerXZ);
+	}
+
+	// Override steering if spinner avoidance is active
+	if (hasSpinnerOverride)
+	{
+		ai.spinnerBypassTimer += deltaTime;
+
+		glm::vec3 toBypass = ai.lockedBypassTarget - carPos;
+		toBypass.y = 0.0f;
+		float distToBypass = glm::length(toBypass);
+
+		if (distToBypass < ai.arrivalRadius)
+		{
+			ai.isBypassingSpinner = false;
+		}
+		else if (ai.spinnerBypassTimer > ai.spinnerBypassTimeout)
+		{
+			ai.isBypassingSpinner = false;
+			std::cout << "[AI] Spinner bypass timeout, re-pathing" << std::endl;
+			RecomputeNavPath(entity);
+			return;
+		}
+		else
+		{
+			steer = AiSystemHelperFunctions::CalculateSteeringAngle(forward, toBypass);
+		}
 	}
 
 	/////////////////////////////
@@ -1631,6 +1743,8 @@ void AiSystem::UpdateIsFlippedState(Entity entity, float deltaTime)
 
 		// Defer repath to next frame — Transform won't be synced from PhysX until
 		// PhysicsSystem::Update runs, so repathing now would use the old position
+		ai.needsRepath = true;
+		ai.isBypassingSpinner = false;
 		ai.needsRepath = true;
 		TransitionToState(entity, AiState::FollowPath, deltaTime);
 		return;

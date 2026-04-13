@@ -26,7 +26,8 @@ enum class AiState
 	TunnelZone,
 	IsFlipped,
 	IsStuck,
-	FloorIt
+	FloorIt,
+	AvoidSpinner
 };
 
 struct AiDriver
@@ -164,4 +165,9 @@ struct AiDriver
 
 	glm::vec3 lastGroundedPosition = glm::vec3(0.0f);
 
+	// Spinner avoidance
+	bool isBypassingSpinner = false;
+	glm::vec3 lockedBypassTarget = glm::vec3(0.0f);
+	float spinnerBypassTimer = 0.0f;
+	float spinnerBypassTimeout = 4.0f;
 };
