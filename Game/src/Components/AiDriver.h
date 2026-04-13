@@ -170,4 +170,14 @@ struct AiDriver
 	glm::vec3 lockedBypassTarget = glm::vec3(0.0f);
 	float spinnerBypassTimer = 0.0f;
 	float spinnerBypassTimeout = 4.0f;
+
+	// Spinner jumping (for small spinners)
+	bool shouldJumpSpinner = false;
+	glm::vec3 jumpSpinnerPosition = glm::vec3(0.0f);
+	float jumpSpinnerRadius = 0.0f;
+	float spinnerJumpRadiusThreshold = 10.0f;  // max radius to attempt jumping (covers scale 1-2)
+	float spinnerJumpTriggerDistance = 12.0f;   // base distance from spinner center to fire jump
+	bool hasJumpedCurrentSpinner = false;       // prevents double-jumping same spinner
+	float spinnerJumpCooldown = 0.0f;
+	float spinnerJumpCooldownDuration = 2.0f;   // seconds between jump attempts
 };

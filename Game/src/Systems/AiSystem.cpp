@@ -269,6 +269,8 @@ void AiSystem::RecomputeNavPath(Entity entity)
 	ai.repathCooldown = ai.repathCooldownDuration;
 	ai.stuckTimer = 0.0f;
 	ai.isBypassingSpinner = false;
+	ai.shouldJumpSpinner = false;
+	ai.hasJumpedCurrentSpinner = false;
 
 	//std::cout << "[AiSystem] Re-pathed: " << path.triangleIndices.size()
 	//	<< " corridor tris -> " << ai.navWaypoints.size()
@@ -432,6 +434,8 @@ void AiSystem::TransitionToState(Entity entity, AiState newState, float deltaTim
 	{
 	case AiState::FollowPath:
 		ai.stuckTimer = 0.0f;
+		ai.shouldJumpSpinner = false;
+		ai.hasJumpedCurrentSpinner = false;
 		ai.isBypassingSpinner = false;
 		break;
 	case AiState::BackingUp:
@@ -658,11 +662,13 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 	/////////////////////////////////////////////////////////
 	// --- Obstacle detection: scan for spinners ahead --- //
 	/////////////////////////////////////////////////////////
-	if (!ai.isBypassingSpinner)
+	if (!ai.isBypassingSpinner && !ai.shouldJumpSpinner && ai.spinnerJumpCooldown <= 0.0f)
 	{
 		float closestSpinnerDist = FLT_MAX;
 		glm::vec3 bestBypassTarget = glm::vec3(0.0f);
 		bool foundSpinner = false;
+		float closestSpinnerRadius = 0.0f;
+		glm::vec3 closestSpinnerPos = glm::vec3(0.0f);
 
 		for (const auto& spinner : spinnerInfos)
 		{
@@ -706,15 +712,29 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 			{
 				closestSpinnerDist = dist;
 				bestBypassTarget = bypassTarget;
+				closestSpinnerRadius = spinner.radius;
+				closestSpinnerPos = spinner.position;
 				foundSpinner = true;
 			}
 		}
 
 		if (foundSpinner)
 		{
-			ai.isBypassingSpinner = true;
-			ai.lockedBypassTarget = bestBypassTarget;
-			ai.spinnerBypassTimer = 0.0f;
+			if (closestSpinnerRadius <= ai.spinnerJumpRadiusThreshold)
+			{
+				// Small spinner — jump over it
+				ai.shouldJumpSpinner = true;
+				ai.jumpSpinnerPosition = closestSpinnerPos;
+				ai.jumpSpinnerRadius = closestSpinnerRadius;
+				ai.hasJumpedCurrentSpinner = false;
+			}
+			else
+			{
+				// Large spinner — steer around it (existing behavior)
+				ai.isBypassingSpinner = true;
+				ai.lockedBypassTarget = bestBypassTarget;
+				ai.spinnerBypassTimer = 0.0f;
+			}
 		}
 	}
 
@@ -910,6 +930,47 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 	else
 	{
 		steer = AiSystemHelperFunctions::CalculateSteeringAngle(forward, toSteerXZ);
+	}
+
+	// Handle spinner jump (small spinners)
+	if (ai.shouldJumpSpinner)
+	{
+		glm::vec3 toSpinner = ai.jumpSpinnerPosition - carPos;
+		toSpinner.y = 0.0f;
+		float distToSpinner = glm::length(toSpinner);
+
+		if (distToSpinner > 1e-5f)
+		{
+			float dotToSpinner = glm::dot(forward, glm::normalize(toSpinner));
+
+			// Spinner is behind us — clear the flag
+			if (dotToSpinner < 0.0f)
+			{
+				ai.shouldJumpSpinner = false;
+				ai.hasJumpedCurrentSpinner = false;
+				ai.spinnerJumpCooldown = ai.spinnerJumpCooldownDuration;
+			}
+			// Close enough to jump and grounded
+			else if (!ai.hasJumpedCurrentSpinner && vc.isGrounded)
+			{
+				// Dynamic trigger: jump earlier at higher speeds
+				float dynamicTrigger = ai.spinnerJumpTriggerDistance + speed * 0.2f;
+				if (distToSpinner < dynamicTrigger)
+				{
+					Event jumpEvent(Events::Player::PLAYER_JUMPED);
+					jumpEvent.SetParam<Entity>(Events::Player::Player_Jumped::ENTITY, entity);
+					controller.SendEvent(jumpEvent);
+					ai.hasJumpedCurrentSpinner = true;
+					std::cout << "[AI] Jumping over spinner (radius=" << ai.jumpSpinnerRadius
+						<< ", dist=" << distToSpinner << ")" << std::endl;
+				}
+			}
+		}
+		else
+		{
+			ai.shouldJumpSpinner = false;
+			ai.hasJumpedCurrentSpinner = false;
+		}
 	}
 
 	// Override steering if spinner avoidance is active
@@ -1457,6 +1518,9 @@ void AiSystem::UpdateBoxingGloveZoneState(Entity entity, float deltaTime)
 
 	if (ai.repathCooldown > 0.0f)
 		ai.repathCooldown -= deltaTime;
+
+	if (ai.spinnerJumpCooldown > 0.0f)
+		ai.spinnerJumpCooldown -= deltaTime;
 
 	// Check if the vehicle's local up vector is pointing downward (flipped over)
 	glm::vec3 vehicleUp = transform.quatRotation * glm::vec3(0.0f, 1.0f, 0.0f);
