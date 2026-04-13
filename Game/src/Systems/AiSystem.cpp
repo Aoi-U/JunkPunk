@@ -229,7 +229,7 @@ void AiSystem::RecomputeNavPath(Entity entity)
 
 	if (path.waypoints.empty())
 	{
-		//std::cout << "[AiSystem] Re-path failed! No path from current position to goal." << std::endl;
+		std::cout << "[AiSystem] Re-path failed! No path from current position to goal." << std::endl;
 		return;
 	}
 
@@ -495,8 +495,8 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 	if (ai.currentWaypointIndex >= static_cast<uint32_t>(ai.navWaypoints.size()))
 	{
 		if (AiSystemHelperFunctions::ShouldLog(m_followPathLogTimer, 0.1f, deltaTime)) {
-				std::cout << "[AI] Reached end of path, stopping." << std::endl;
-			}
+			std::cout << "[AI] Reached end of path, stopping." << std::endl;
+		}
 		vc.throttle = 0.0f;
 		vc.brake = 1.0f;
 		vc.steer = 0.0f;
@@ -1120,7 +1120,7 @@ void AiSystem::UpdateRecoveringFromOffTrackState(Entity entity, float deltaTime)
 	// On entry: re-path once
 	if (ai.recoveryTimer < deltaTime * 1.5f)
 	{
-		//std::cout << "[AI] Recovery: finding nearest node and re-pathing to goal..." << std::endl;
+		std::cout << "[AI] Recovery: finding nearest node and re-pathing to goal..." << std::endl;
 		RecomputeNavPath(entity);
 	}
 
@@ -1148,7 +1148,7 @@ void AiSystem::UpdateRecoveringFromOffTrackState(Entity entity, float deltaTime)
 		int32_t triCheck = navMesh.FindTriangleAtHeight(carPos, 5.0f);
 		if (triCheck >= 0)
 		{
-			//std::cout << "[AI] Recovery complete, back on navmesh" << std::endl;
+			std::cout << "[AI] Recovery complete, back on navmesh" << std::endl;
 			ai.repathCooldown = ai.repathCooldownDuration;
 			TransitionToState(entity, AiState::FollowPath, deltaTime);
 			return;
@@ -1158,7 +1158,7 @@ void AiSystem::UpdateRecoveringFromOffTrackState(Entity entity, float deltaTime)
 	// Re-path if stuck for too long, but respect cooldown
 	if (ai.recoveryTimer > 5.0f && ai.repathCooldown <= 0.0f)
 	{
-		//std::cout << "[AI] Recovery timeout, re-pathing..." << std::endl;
+		std::cout << "[AI] Recovery timeout, re-pathing..." << std::endl;
 		ai.recoveryTimer = 0.0f;
 		int seg = FindCurrentSegment(transform.position);
 		if (courseSegments[seg].resetBoxingGloves)
@@ -1474,7 +1474,7 @@ void AiSystem::UpdateBoxingGloveZoneState(Entity entity, float deltaTime)
 	auto& vc = controller.GetComponent<VehicleCommands>(entity);
 	auto& transform = controller.GetComponent<Transform>(entity);
 
-	if(AiSystemHelperFunctions::ShouldLog(m_stateMachineLogTimer, 1.0f, deltaTime)) {
+	if (AiSystemHelperFunctions::ShouldLog(m_stateMachineLogTimer, 1.0f, deltaTime)) {
 		std::cout << "[AI] In Boxing Glove zone, targeting glove " << ai.currentBoxingGloveIndex
 			<< " of " << boxingGloveDangerZones.size() << std::endl;
 	}
@@ -1600,7 +1600,7 @@ void AiSystem::UpdateBoxingGloveZoneState(Entity entity, float deltaTime)
 
 	if (distToDangerZone > APPROACH_DISTANCE) {
 		// Far from targeted glove - drive toward exit with steering
-		if(AiSystemHelperFunctions::ShouldLog(m_stateMachineLogTimer, 0.3f, deltaTime)) {
+		if (AiSystemHelperFunctions::ShouldLog(m_stateMachineLogTimer, 0.3f, deltaTime)) {
 			std::cout << "[AI] Driving toward glove " << ai.currentBoxingGloveIndex
 				<< " (dist=" << distToDangerZone << ")" << std::endl;
 		}
@@ -1696,36 +1696,21 @@ void AiSystem::UpdateSeekPowerupState(Entity entity, float deltaTime)
 
 	ai.seekTimer += deltaTime;
 
-	// If trigger pickup already gave us a held powerup, stop seeking immediately.
-	if (controller.HasComponent<Powerup>(entity))
-	{
-		auto& held = controller.GetComponent<Powerup>(entity);
-		if (!held.active)
-		{
-			ai.hasPowerup = true;
-			ai.heldPowerupType = held.type;
-			ai.targetPowerupEntity = 0;
-			TransitionToState(entity, AiState::FollowPath);
-			return;
-		}
-	}
-
 	// Give up if taking too long
 	if (ai.seekTimer > ai.seekTimeout)
 	{
-		//std::cout << "[AI] Powerup seek timed out, resuming path" << std::endl;
+		std::cout << "[AI] Powerup seek timed out, resuming path" << std::endl;
 		ai.targetPowerupEntity = 0;
 		RecomputeNavPath(entity);
 		TransitionToState(entity, AiState::FollowPath, deltaTime);
 		return;
 	}
 
-	// Target must be an actual pickup trigger, not another vehicle/entity with Powerup.
+	// Check if the powerup entity still exists
 	if (!controller.HasComponent<Powerup>(ai.targetPowerupEntity) ||
-		!controller.HasComponent<Transform>(ai.targetPowerupEntity) ||
-		!controller.HasComponent<Trigger>(ai.targetPowerupEntity))
+		!controller.HasComponent<Transform>(ai.targetPowerupEntity))
 	{
-		//std::cout << "[AI] Powerup gone/invalid, resuming path" << std::endl;
+		std::cout << "[AI] Powerup gone, resuming path" << std::endl;
 		ai.targetPowerupEntity = 0;
 		RecomputeNavPath(entity);
 		TransitionToState(entity, AiState::FollowPath, deltaTime);
@@ -1742,33 +1727,26 @@ void AiSystem::UpdateSeekPowerupState(Entity entity, float deltaTime)
 	// Check if we're out of range (went past it or it moved)
 	if (distXZ > ai.powerupSeekRange * 1.5f)
 	{
-		//std::cout << "[AI] Powerup too far, resuming path" << std::endl;
+		std::cout << "[AI] Powerup too far, resuming path" << std::endl;
 		ai.targetPowerupEntity = 0;
 		RecomputeNavPath(entity);
 		TransitionToState(entity, AiState::FollowPath, deltaTime);
 		return;
 	}
 
-	// Fallback pickup if trigger did not fire
+	// Close enough to "collect" -- the trigger system handles the actual pickup
+	// but we also handle it here in case trigger doesn't fire for AI
 	if (distXZ < ai.arrivalRadius)
 	{
-		auto pickup = controller.GetComponent<Powerup>(ai.targetPowerupEntity);
-
-		// Ensure AI holds a powerup in ECS too
-		if (!controller.HasComponent<Powerup>(entity))
-		{
-			controller.AddComponent(entity, Powerup{ pickup.type, false, pickup.duration, 0.0f });
-		}
-
+		auto& pickup = controller.GetComponent<Powerup>(ai.targetPowerupEntity);
 		ai.hasPowerup = true;
 		ai.heldPowerupType = pickup.type;
-		//std::cout << "[AI] Collected powerup type " << pickup.type << std::endl;
+		std::cout << "[AI] Collected powerup type " << pickup.type << std::endl;
 
 		if (gameInstance)
 			gameInstance->SchedulePowerupRespawn(ai.targetPowerupEntity);
 
 		controller.DestroyEntity(ai.targetPowerupEntity);
-
 		ai.targetPowerupEntity = 0;
 
 		// Re-path from current position since we detoured off the original path
@@ -1802,7 +1780,7 @@ void AiSystem::UpdateIsFlippedState(Entity entity, float deltaTime)
 	auto& vc = controller.GetComponent<VehicleCommands>(entity);
 
 	// If we've landed upright, cancel the flip — no reset needed
-		glm::vec3 vehicleUp = transform.quatRotation * glm::vec3(0.0f, 1.0f, 0.0f);
+	glm::vec3 vehicleUp = transform.quatRotation * glm::vec3(0.0f, 1.0f, 0.0f);
 	if (vehicleUp.y > 0.5f && vc.isGrounded)
 	{
 		ai.flippedTimer = 0.0f;
