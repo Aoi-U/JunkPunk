@@ -161,9 +161,10 @@ void RenderSystem::Update(float fps)
 		DrawSkybox(tpp);
 		particleRenderSystem->Update(tpp);
 
+
+		RenderPowerupUI(tpp.playerEntity, vx, vy, vw, vh);
 		// Draw the finished FBO to the current player's quadrant on the screen
 		DrawPostProcessingPass(vx, vy, vw, vh);
-		RenderPowerupUI(tpp.playerEntity, vx, vy, vw, vh);
 	}
 
 	// Reset back to full viewport for debug text, UI overlays, etc.
@@ -448,7 +449,6 @@ void RenderSystem::RenderPowerupUI(Entity player, int vx, int vy, int vw, int vh
 	auto& p = controller.GetComponent<Powerup>(player);
 
 	Texture* tex = nullptr;
-
 	if (p.type == 1)
 		tex = boostIconTexture.get();
 	else if (p.type == 2)
@@ -459,15 +459,29 @@ void RenderSystem::RenderPowerupUI(Entity player, int vx, int vy, int vw, int vh
 	if (tex == nullptr)
 		return;
 
-	float iconSize = 96.0f;
-	float margin = 20.0f;
+	const float REF_HEIGHT = 720.0f;
+	const float BASE_ICON_SIZE = 144.0f;
+	const float BASE_MARGIN = 20.0f;
 
-	float x0 = (screenWidth * 0.5f) - (iconSize * 0.5f);
-	float y0 = screenHeight - margin - iconSize;
+	float scale = static_cast<float>(vh) / REF_HEIGHT;
+	float iconSize = BASE_ICON_SIZE * scale;
+	float margin = BASE_MARGIN * scale;
+
+	float x0 = (vw * 0.5f) - (iconSize * 0.5f);
+	float y0 = vh - margin - iconSize;
 	float x1 = x0 + iconSize;
 	float y1 = y0 + iconSize;
 
+	glm::mat4 oldProj = fonts.projMat;
+
+	fonts.projMat = glm::ortho(0.0f, static_cast<float>(vw), 0.0f, static_cast<float>(vh));
+	uiShader->use();
+	uiShader->setMat4("u_projection", fonts.projMat);
+
 	DrawUI(tex, x0, y0, x1, y1, 5);
+
+	fonts.projMat = oldProj;
+	uiShader->setMat4("u_projection", fonts.projMat);
 }
 
 void RenderSystem::DrawSkybox(const ThirdPersonCamera& cameraComp)
@@ -606,9 +620,28 @@ void RenderSystem::ChangeGameStateListener(Event& e)
 	}
 }
 
-void RenderSystem::RenderDistanceToFinish(float distance)
+void RenderSystem::RenderDistanceToFinish(float distance, int playerIndex, int numPlayers)
 {
 	int d = static_cast<int>(distance);
-	std::string text = "Distance to finish: " + std::to_string(d) + "m";
-	RenderText(text, 20.0f, screenHeight - 40.0f, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f));
+	std::string text = "Distance to Top: " + std::to_string(d) + "m";
+
+	// calculate the viewport for this player matching the split screen layout in Update()
+	int vx = 0, vy = 0, vw = screenWidth, vh = screenHeight;
+	if (numPlayers == 2) {
+		vw = screenWidth;
+		vh = screenHeight / 2;
+		vy = (playerIndex == 0) ? vh : 0;
+	}
+	else if (numPlayers > 2) {
+		vw = screenWidth / 2;
+		vh = screenHeight / 2;
+		vx = (playerIndex % 2) * vw;
+		vy = (playerIndex < 2) ? vh : 0;
+	}
+
+	// position text near top-left of this player's viewport
+	float textX = vx + 10.0f;
+	float textY = vy + vh - 40.0f;
+
+	RenderText(text, textX, textY, 0.8f, glm::vec3(1.0f, 1.0f, 1.0f));
 }

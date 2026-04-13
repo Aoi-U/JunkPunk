@@ -327,12 +327,15 @@ void Game::Run()
 
 			particleSystem->Update(time->frameTime); // update particles
 
-			renderSystem->Update(time->fps()); // render physics debug data
-			if (controller.HasComponent<Transform>(playerEntity))
+			renderSystem->Update(time->fps(), physicsSystem->GetRenderBuffer()); // render physics debug data
+			for (int i = 0; i < static_cast<int>(playerEntities.size()); i++)
 			{
-				auto& t = controller.GetComponent<Transform>(playerEntity);
+				if (!controller.HasComponent<Transform>(playerEntities[i]))
+					continue;
+
+				auto& t = controller.GetComponent<Transform>(playerEntities[i]);
 				float dist = aiSystem->CalculateDistanceToFinish(t.position);
-				renderSystem->RenderDistanceToFinish(dist);
+				renderSystem->RenderDistanceToFinish(dist, i, static_cast<int>(playerEntities.size()));
 			}
 			menuSystem->RenderWinText();
 			//camera_debug_panel->render(); // render debug panel
