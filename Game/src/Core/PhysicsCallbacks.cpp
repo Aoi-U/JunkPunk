@@ -29,7 +29,7 @@ void PhysicsCallbacks::onTrigger(PxTriggerPair* pairs, PxU32 count)
 			e.SetParam<Entity>(Events::Physics::Trigger_Enter::ENTITY_ONE, triggerEntity);
 			e.SetParam<Entity>(Events::Physics::Trigger_Enter::ENTITY_TWO, otherEntity);
 			controller.SendEvent(e);
-			std::cout << "trigger event was called" << std::endl;
+			//std::cout << "trigger event was called" << std::endl;
 		}
 
 		if (pair.status & PxPairFlag::eNOTIFY_TOUCH_LOST) {
@@ -37,7 +37,7 @@ void PhysicsCallbacks::onTrigger(PxTriggerPair* pairs, PxU32 count)
 			e.SetParam<Entity>(Events::Physics::Trigger_Enter::ENTITY_ONE, triggerEntity);
 			e.SetParam<Entity>(Events::Physics::Trigger_Enter::ENTITY_TWO, otherEntity);
 			controller.SendEvent(e);
-			std::cout << "exited trigger" << std::endl;
+			//std::cout << "exited trigger" << std::endl;
 		}
 	}
 }

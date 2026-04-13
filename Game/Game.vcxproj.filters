@@ -246,6 +246,12 @@
     <ClCompile Include="src\NavMesh.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\AiSystemDebug.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Systems\AiSystemHelperFunctions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Game.h">
@@ -450,6 +456,12 @@
       <Filter>Header Files\Components</Filter>
     </ClInclude>
     <ClInclude Include="src\Components\DangerZone.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\AiSystemDebug.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Systems\AiSystemHelperFunctions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Components\Powerup.h">

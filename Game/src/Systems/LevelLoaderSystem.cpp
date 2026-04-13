@@ -9,7 +9,8 @@
 #include "../Components/Powerup.h"
 #include "../Components/AiDriver.h"
 #include "AiSystem.h"
-#include"../Components/Banana.h"
+#include "../AiSystemDebug.h"
+#include "../Components/Banana.h"
 #include "../NavMesh.h"
 #include "../Components/DangerZone.h"
 #include "../Components/Sludge.h"
@@ -152,10 +153,43 @@ void LevelLoaderSystem::LoadLevel()
 			glm::vec3(200.0f),                            // same scale
 			35.0f                                        // max slope angle – tweak if too many/few triangles
 		);
+		// Manually add bridge triangles across the gap
+		// Replace your single AddTriangle call with this full bridge:
+
+		// Left edge of bridge
+		glm::vec3 p1(-60.0f, -31.0f, 155.0f);  // back-left
+		glm::vec3 p2(-60.0f, -31.0f, 200.0f);  // front-left
+
+		// Quarter point
+		glm::vec3 p3(10.0f, -31.0f, 155.0f);   // mid-back-left
+		glm::vec3 p4(10.0f, -31.0f, 200.0f);   // mid-front-left
+
+		// Halfway point
+		glm::vec3 p5(80.0f, -31.0f, 155.0f);   // mid-back-right
+		glm::vec3 p6(80.0f, -31.0f, 200.0f);   // mid-front-right
+
+		// Right edge of bridge
+		glm::vec3 p7(150.0f, -31.0f, 155.0f);  // end-back-right
+		glm::vec3 p8(150.0f, -31.0f, 200.0f);  // end-front-right
+
+		// First quad (2 triangles)
+		navMesh.AddTriangle(p1, p2, p3);
+		navMesh.AddTriangle(p2, p4, p3);
+
+		// Second quad (2 triangles)
+		navMesh.AddTriangle(p3, p4, p5);
+		navMesh.AddTriangle(p4, p6, p5);
+
+		// Third quad (2 triangles)
+		navMesh.AddTriangle(p5, p6, p7);
+		navMesh.AddTriangle(p6, p8, p7);
+
+
+		// Add more triangles as needed to cover the gap..
 		navMesh.Subdivide();    // 1023 -> 4092 triangles (4x denser)
 		//navMesh.Subdivide(); // uncomment for 16368 triangles (16x denser) if needed
 		navMesh.BuildAdjacency();
-		navMesh.StitchDisconnectedIslands(30.0f, 3.0f);  // bridge gaps: 30 units horizontal, 15 units vertical max
+		navMesh.StitchDisconnectedIslands(400.0f, 3.0f);
 		navMesh.ComputeEdgeDanger(3);  // spread danger 3 triangles inward from edges
 
 		int32_t componentCount = navMesh.CountConnectedComponents();
@@ -164,7 +198,7 @@ void LevelLoaderSystem::LoadLevel()
 		aiSystemPtr->SetNavMesh(navMesh);
 
 		// Spawn random banana peels along the track
-		//SpawnRandomBananaPeels(30, navMesh);  // Spawn 30 random banana peels
+		//SpawnRandomBananaPeels(100, navMesh);  // Spawn 100 random banana peels
 
 		// Spawn random powerups along the track
 		//SpawnRandomMixedPowerups(10, 10, navMesh);  // 10 speed boosts, 10 banana pickups
@@ -175,7 +209,7 @@ void LevelLoaderSystem::LoadLevel()
 		{glm::vec3(20.0f, -169.f, 40.f), glm::vec3(20.0f, -169.f, -45.f), glm::vec3(20.0f, -169.f, -45.f), glm::vec3(20.0f, -169.f, 40.f)},
 		{glm::vec3(-15.0f, -169.f, 40.f), glm::vec3(-15.0f, -169.f, -45.f), glm::vec3(-15.0f, -169.f, -45.f), glm::vec3(-15.0f, -169.f, 40.f)},
 		{glm::vec3(-50.0f, -169.f, 40.f), glm::vec3(-50.0f, -169.f, -45.f), glm::vec3(-50.0f, -169.f, -45.f), glm::vec3(-50.0f, -169.f, 40.f)},
-		{glm::vec3(45.0f, -70.f, 440.f), glm::vec3(45.0f, -67.f, 301.f), glm::vec3(45.0f, -67.f, 301.f), glm::vec3(45.0f, -70.f, 440.f)},
+		{glm::vec3(45.0f, -70.f, 440.f), glm::vec3(45.0f, -70.f, 301.f), glm::vec3(45.0f, -70.f, 301.f), glm::vec3(45.0f, -70.f, 440.f)},
 		{glm::vec3(-74.0f, 59.f, 500.f), glm::vec3(-74.0f, 64.f, 363.f), glm::vec3(-74.0f, 64.f, 363.f), glm::vec3(-74.0f, 59.f, 500.f)}, //top area
 	};
 	std::vector<float> glove_size = {
@@ -192,6 +226,9 @@ void LevelLoaderSystem::LoadLevel()
 		1.5f,
 		2.f
 	};
+
+	// Collect danger zone entities for the boxing glove section (first 3 gloves)
+	std::vector<Entity> boxingGloveDangerZoneEntities;
 
 	for (int i = 0; i < glove_positions.size(); i++) {
 		//punching glove
@@ -255,11 +292,15 @@ void LevelLoaderSystem::LoadLevel()
 			controller.AddComponent(dangerEntity, DangerZone{ center, finalHalfExtents, gloveEntity, SIDE_PADDING });
 			controller.AddComponent(dangerEntity, PhysicsBody{});
 			controller.AddComponent(dangerEntity, Transform{ center, glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(1.0f) });
-			controller.AddComponent(dangerEntity, Trigger{ nullptr, finalHalfExtents.x, finalHalfExtents.y, finalHalfExtents.z });
+			//controller.AddComponent(dangerEntity, Trigger{ nullptr, finalHalfExtents.x, finalHalfExtents.y, finalHalfExtents.z });
 
 			std::cout << "[LevelLoader] Danger zone for glove " << i
 				<< " spans from (" << minPt.x << ", " << minPt.y << ", " << minPt.z << ")"
 				<< " to (" << maxPt.x << ", " << maxPt.y << ", " << maxPt.z << ")" << std::endl;
+
+			// First 4 gloves are the boxing glove section
+			if (i < 4)
+				boxingGloveDangerZoneEntities.push_back(dangerEntity);
 		}
 
 	}
@@ -288,6 +329,56 @@ void LevelLoaderSystem::LoadLevel()
 		0,
 		false
 		});
+
+	Entity diagonalDangerEntity = entity;
+	glm::vec3 retractedPos = glm::vec3(-4.0f, -232.0f, 1.0f);
+	glm::vec3 extendedPos = glm::vec3(-4.0f, -150.0f, 11.0f);
+
+	glm::vec3 extensionVector = extendedPos - retractedPos;
+	float extensionLength = glm::length(extensionVector);
+	glm::vec3 extensionDirection = glm::normalize(extensionVector);
+
+	float SIDE_PADDING = 12.0f;      // width of the glove (X/Y perpendicular to extension)
+	float EXTENSION_PADDING = 30.0f; // extra reach beyond extended position (for glove physical size + safety)
+	float REAR_PADDING = 5.0f;       // small buffer behind retracted position
+
+	glm::vec3 fullyExtendedPos = extendedPos + (extensionDirection * EXTENSION_PADDING);
+	glm::vec3 paddedRetractedPos = retractedPos - (extensionDirection * REAR_PADDING);
+
+	// Calculate AABB covering the full sweep
+	glm::vec3 minPt = glm::min(paddedRetractedPos, fullyExtendedPos);
+	glm::vec3 maxPt = glm::max(paddedRetractedPos, fullyExtendedPos);
+
+	// Widen the danger zone in the +Z direction
+	maxPt.z += 50.0f;  // extend 30 units further in +Z
+	glm::vec3 center = (minPt + maxPt) * 0.5f;
+	glm::vec3 halfExtents = (maxPt - minPt) * 0.5f;
+
+
+	// Add side padding to X and Y dimensions only
+	glm::vec3 finalHalfExtents = halfExtents;
+	finalHalfExtents.x += SIDE_PADDING;
+	finalHalfExtents.y += SIDE_PADDING;
+
+	// Create the danger zone entity
+	Entity dangerEntity = controller.createEntity();
+	controller.AddComponent(dangerEntity, DangerZone{ center, finalHalfExtents, diagonalDangerEntity, SIDE_PADDING });
+	controller.AddComponent(dangerEntity, PhysicsBody{});
+	controller.AddComponent(dangerEntity, Transform{ center, glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(1.0f) });
+	controller.AddComponent(dangerEntity, Trigger{ nullptr, finalHalfExtents.x, finalHalfExtents.y, finalHalfExtents.z });
+
+	boxingGloveDangerZoneEntities.insert(
+		boxingGloveDangerZoneEntities.begin() + 3,
+		dangerEntity
+	);
+
+	// Pass the ordered boxing glove danger zones to the AI system
+	if (aiSystemPtr && !boxingGloveDangerZoneEntities.empty())
+	{
+		aiSystemPtr->SetBoxingGloveDangerZones(boxingGloveDangerZoneEntities);
+		std::cout << "[LevelLoader] Registered " << boxingGloveDangerZoneEntities.size()
+			<< " boxing glove danger zones with AiSystem" << std::endl;
+	}
 
 
 
@@ -389,6 +480,21 @@ void LevelLoaderSystem::LoadLevel()
 			false
 			});
 	}
+
+	std::vector<SpinnerInfo> spinnerInfos;
+	for (int i = 0; i < spinner_positions.size(); i++)
+	{
+		SpinnerInfo info;
+		info.position = spinner_positions[i];
+		info.radius = spinner_size[i] * 5.0f; // scale factor for the arm's physical reach
+		info.isClockwise = (spinner_rotation[i] < 0.0f);
+		//std::cout << "Spinner locations: (" << info.position.x << ", " << info.position.y << ", " << info.position.z << ")" << std::endl;
+		spinnerInfos.push_back(info);
+	}
+
+	if (aiSystemPtr)
+		aiSystemPtr->SetSpinnerInfos(spinnerInfos);
+
 	//90 degree offset
 	entity = controller.createEntity();
 	loaded = LoadModel("assets/models/spinner/spinner.gltf");
@@ -572,8 +678,14 @@ void LevelLoaderSystem::LoadLevel()
 		// AI Opponent vehicle
 		Entity vehicle = controller.createEntity();
 		loaded = LoadModel("assets/models/car_body_blue/car.gltf");
-		glm::mat4 aiRotation = glm::rotate(glm::mat4(1.0f), glm::radians(-30.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		glm::mat4 aiRotation = glm::rotate(glm::mat4(1.0f), glm::radians(30.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+
+		// Normal starting zone
 		controller.AddComponent(vehicle, Transform{ glm::vec3(133.0f + i * 2.0f, -259.0f, -257.0f), glm::quat(aiRotation), glm::vec3(0.2f) });
+		//controller.AddComponent(vehicle, Transform{ glm::vec3(70.0f + i * 2.0f, -210.5f, -100.0f), glm::quat(aiRotation), glm::vec3(0.2f) });	// Before boxing glove zone
+		//controller.AddComponent(vehicle, Transform{ glm::vec3(29.012f + i * 2.0f, -138.156f, 55.213f), glm::quat(aiRotation), glm::vec3(0.2f) });	// Before Spinners
+		//controller.AddComponent(vehicle, Transform{ glm::vec3(-96.633f + i * 2.0f, -77.468f, 89.897f), glm::quat(aiRotation), glm::vec3(0.2f) });	// Before gap
+		//controller.AddComponent(vehicle, Transform{ glm::vec3(150.0f + i * 2.0f, -30.477f, 197.0f), glm::quat(aiRotation), glm::vec3(0.2f) });	// After the gap
 		controller.AddComponent(vehicle, VehicleBody{});
 		controller.AddComponent(vehicle, VehicleCommands{});
 		controller.AddComponent(vehicle, Render{ loaded.first, loaded.second });
@@ -655,12 +767,12 @@ void LevelLoaderSystem::LoadLevel()
 			});
 	}
 
-	// test trigger box
+	//
 	//entity = controller.createEntity();
 	//controller.AddComponent(entity, PhysicsBody{});
-	//controller.AddComponent(entity, Trigger{ nullptr, 10.0f, 2.0f, 10.0f });
+	//controller.AddComponent(entity, Trigger{ nullptr, 110.0f, 10.0f, 81.0f });
 	//controller.AddComponent(entity, Transform{
-	//	glm::vec3(25.0f, 35.0f, 120.0f),
+	//	glm::vec3(-134.0f, 90.f, 323.0f),
 	//	glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
 	//	glm::vec3(1.0f)
 	//	});
@@ -916,10 +1028,12 @@ void LevelLoaderSystem::LoadLevel()
 		controller.AddComponent(entity, PhysicsBody{});
 	}
 
+	// Used for testing A* pathfinding and debug rendering of AI waypoints
 	if (aiSystemPtr)
 	{
-		Entity aiVehicle = controller.GetEntityByTag("AIVehicle1");
-		aiSystemPtr->SpawnDebugWaypoints(aiVehicle);
+		Entity aiVehicle = controller.GetEntityByTag("AIVehicle0");
+		AiSystemDebug::SpawnDebugWaypoints(*aiSystemPtr, aiVehicle);
+		//AiSystemDebug::SpawnDebugZoneTriggers(*aiSystemPtr);
 	}
 
 	// out of bounds trigger boxes
@@ -958,7 +1072,7 @@ void LevelLoaderSystem::SpawnRandomBananaPeels(int count, const NavMesh& navMesh
 
 	auto loaded = LoadModel("assets/models/banana_peel/banana.gltf");
 
-	std::cout << "[LevelLoader] Spawning " << count << " random banana peels..." << std::endl;
+	//std::cout << "[LevelLoader] Spawning " << count << " random banana peels..." << std::endl;
 
 	for (int i = 0; i < count; ++i)
 	{
@@ -977,8 +1091,8 @@ void LevelLoaderSystem::SpawnRandomBananaPeels(int count, const NavMesh& navMesh
 		controller.AddComponent(entity, PhysicsBody{});
 		controller.AddComponent(entity, Banana{});
 
-		std::cout << "  Banana peel " << (i + 1) << "/" << count
-			<< " at (" << spawnPos.x << ", " << spawnPos.y << ", " << spawnPos.z << ")" << std::endl;
+		//std::cout << "  Banana peel " << (i + 1) << "/" << count
+		//	<< " at (" << spawnPos.x << ", " << spawnPos.y << ", " << spawnPos.z << ")" << std::endl;
 	}
 }
 

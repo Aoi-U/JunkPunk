@@ -19,7 +19,15 @@ enum class AiState
 	RecoveringFromOffTrack,
 	SeekPowerup,
 	UsePowerup,
-	Braking
+	Braking,
+	NextDangerZone,
+	BoxingGloveZone,
+	GapZone,
+	TunnelZone,
+	IsFlipped,
+	IsStuck,
+	FloorIt,
+	AvoidSpinner
 };
 
 struct AiDriver
@@ -42,6 +50,7 @@ struct AiDriver
 
 	// Speed -- constant for now
 	float desiredSpeed = 30.0f;
+	float currentSpeed = 0.0f;
 
 	// Throttle
 	float throttleKp = 1.5f;
@@ -75,13 +84,24 @@ struct AiDriver
 	bool isAdvancingThroughDanger = false; // flag for controlled advance
 	glm::vec3 advanceStartPos = glm::vec3(0.0f); // where we started advancing from
 
+	// Danger zone detection (cone-based)
+	float dangerZoneDetectionRange = 40.0f;  // how far ahead to scan for danger zones
+	float dangerZoneDetectionCone = 0.7f;    // dot product threshold (0.7 = ~45° forward cone)
+	bool isApproachingDangerZone = false;
+	// Detection cone values (dot product thresholds)
+	//	0.95  // ~18° — very narrow, straight ahead only
+	//	0.7   // ~45° — forward cone (default for danger zones)
+	//	0.5   // ~60° — wider cone  
+	//	0.0   // ~90° — front hemisphere
+	//	- 0.3  // ~107° — most directions except behind
+
 	// Off-track recovery
 	float offTrackHeightThreshold = 8.0f;
 	float recoveryTimer = 0.0f;
 
 	// Powerup seeking
-	float powerupSeekRange = 50.0f;        // max distance to detour for a powerup
-	float powerupSeekMaxAngle = -0.3f;      // dot product threshold -- -0.3 = nearly full 360, excludes directly behind
+	float powerupSeekRange = 30.0f;        // max distance to detour for a powerup
+	float powerupSeekMaxAngle = -0.1f;      // dot product threshold -- -0.3 = nearly full 360, excludes directly behind
 	//### Reference for `powerupSeekMaxAngle`
 
 	//	| Value | Detection cone |
@@ -114,10 +134,12 @@ struct AiDriver
 	float obstacleDetectionCone = 0.5f;     // dot product threshold -- 0.5 = ~60 degree forward cone. Lower to detect obstacles further to the side.
 	float avoidanceSteerDirection = 0.0f;   // -1.0 = steer left, 1.0 = steer right (set on detection)
 	Entity detectedObstacleEntity = 0;      // entity we're currently avoiding
-	float avoidTimer = 0.0f;                // how long we've been avoiding
-	float avoidDuration = 6.0f;             // how long to steer away. Increase for larger obstacles like spinning pushers.
 	float avoidSteerStrength = 1.0f;        // how hard to steer while avoiding. `1.0` = full lock. Lower for gentler swerves.
 	float avoidThrottleScale = 0.3f;        // slow down while avoiding (0.3 = 30% throttle). speed reduction during avoidance. Lower for more cautious dodging.
+	glm::vec3 temporaryAvoidTarget;
+	float avoidTimer = 0.0f;
+	bool isAvoidingStaticObstacle;
+	float avoidOffsetDistance = 6.0f; // how far to offset (e.g., 6.0f units)
 
 	// Sequential obstacle passing (for synchronized obstacles like gloves)
 	Entity currentObstacleTarget = 0;       // the obstacle we're currently waiting to pass
@@ -130,4 +152,32 @@ struct AiDriver
 	bool passingThroughDangerZone = false; // Flag to indicate if we're currently passing through a danger zone
 	float dangerDetectionCooldown = 0.0f;  // Cooldown after exiting a danger zone before detecting another
 	float dangerDetectionCooldownDuration = 1.45f; // Duration of cooldown in seconds
+
+	AiState activeZoneState = AiState::FollowPath;  // Tracks which special zone we're in
+
+	// Boxing glove zone: index-based tracking
+	// Tracks which glove in the ordered list the AI is currently navigating toward
+	uint32_t currentBoxingGloveIndex = 0;
+
+	// Deferred repath: set to true when vehicle is reset/teleported so the path
+	// is recomputed next frame after PhysicsSystem syncs the new Transform
+	bool needsRepath = false;
+
+	glm::vec3 lastGroundedPosition = glm::vec3(0.0f);
+
+	// Spinner avoidance
+	bool isBypassingSpinner = false;
+	glm::vec3 lockedBypassTarget = glm::vec3(0.0f);
+	float spinnerBypassTimer = 0.0f;
+	float spinnerBypassTimeout = 4.0f;
+
+	// Spinner jumping (for small spinners)
+	bool shouldJumpSpinner = false;
+	glm::vec3 jumpSpinnerPosition = glm::vec3(0.0f);
+	float jumpSpinnerRadius = 0.0f;
+	float spinnerJumpRadiusThreshold = 10.0f;  // max radius to attempt jumping (covers scale 1-2)
+	float spinnerJumpTriggerDistance = 12.0f;   // base distance from spinner center to fire jump
+	bool hasJumpedCurrentSpinner = false;       // prevents double-jumping same spinner
+	float spinnerJumpCooldown = 0.0f;
+	float spinnerJumpCooldownDuration = 2.0f;   // seconds between jump attempts
 };

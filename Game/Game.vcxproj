@@ -144,6 +144,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Gamepad.cpp" />
+    <ClCompile Include="src\AiSystemDebug.cpp" />
     <ClCompile Include="src\Core\AudioEngine.cpp" />
     <ClCompile Include="src\Core\EBO.cpp" />
     <ClCompile Include="src\Core\Light.cpp" />
@@ -178,6 +179,7 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\NavMesh.cpp" />
     <ClCompile Include="src\Systems\AiSystem.cpp" />
+    <ClCompile Include="src\Systems\AiSystemHelperFunctions.cpp" />
     <ClCompile Include="src\Systems\AudioSystem.cpp" />
     <ClCompile Include="src\Systems\CameraControlSystem.cpp" />
     <ClCompile Include="src\Systems\LevelLoaderSystem.cpp" />
@@ -200,6 +202,7 @@
   <ItemGroup>
     <ClInclude Include="assets\shaders\colliders.vert" />
     <ClInclude Include="Gamepad.h" />
+    <ClInclude Include="src\AiSystemDebug.h" />
     <ClInclude Include="src\Components\AiDriver.h" />
     <ClInclude Include="src\Components\Camera.h" />
     <ClInclude Include="src\Components\ComponentArray.h" />
@@ -248,6 +251,7 @@
     <ClInclude Include="src\ImGuiTest.h" />
     <ClInclude Include="src\InputManager.h" />
     <ClInclude Include="src\Systems\AiSystem.h" />
+    <ClInclude Include="src\Systems\AiSystemHelperFunctions.h" />
     <ClInclude Include="src\Systems\AudioSystem.h" />
     <ClInclude Include="src\Systems\CameraControlSystem.h" />
     <ClInclude Include="src\Systems\LevelLoaderSystem.h" />

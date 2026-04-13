@@ -37,7 +37,7 @@ Entity playerEntity;
 Entity aiEntity;
 
 int numPlayers = 1;
-int numAi = 4;
+int numAi = 1;
 std::vector<Entity> playerEntities(numPlayers);
 std::vector<Entity> cameraEntities(numPlayers);
 

@@ -167,7 +167,7 @@ void NavMesh::Subdivide()
 
 	triangles = std::move(newTriangles);
 
-	std::cout << "[NavMesh] Subdivided: " << oldCount << " -> " << triangles.size() << " triangles" << std::endl;
+	//std::cout << "[NavMesh] Subdivided: " << oldCount << " -> " << triangles.size() << " triangles" << std::endl;
 }
 
 // ---- Adjacency ----
@@ -197,7 +197,7 @@ struct EdgeKeyHash
 
 static int64_t Quantise(float f)
 {
-	return static_cast<int64_t>(std::round(f * 1000.0));
+	return static_cast<int64_t>(std::round(f * 100.0));
 }
 
 static EdgeKey MakeEdgeKey(const glm::vec3& a, const glm::vec3& b)
@@ -253,8 +253,8 @@ void NavMesh::BuildAdjacency()
 			if (t.neighbours[e] >= 0)
 				++adjacentPairs;
 
-	std::cout << "[NavMesh] Built adjacency: " << triangles.size()
-		<< " triangles, " << (adjacentPairs / 2) << " shared edges" << std::endl;
+	//std::cout << "[NavMesh] Built adjacency: " << triangles.size()
+	//	<< " triangles, " << (adjacentPairs / 2) << " shared edges" << std::endl;
 }
 
 void NavMesh::StitchDisconnectedIslands(float maxGapDistance, float maxHeightDiff)
@@ -295,8 +295,8 @@ void NavMesh::StitchDisconnectedIslands(float maxGapDistance, float maxHeightDif
 		++componentId;
 	}
 
-	std::cout << "[NavMesh] StitchDisconnectedIslands: Found " << componentId
-		<< " disconnected components before stitching" << std::endl;
+	//std::cout << "[NavMesh] StitchDisconnectedIslands: Found " << componentId
+	//	<< " disconnected components before stitching" << std::endl;
 
 	if (componentId <= 1)
 	{
@@ -379,9 +379,9 @@ void NavMesh::StitchDisconnectedIslands(float maxGapDistance, float maxHeightDif
 		}
 	}
 
-	std::cout << "[NavMesh] StitchDisconnectedIslands: Created " << bridgeCount
-		<< " bridge connections (maxGapDistance=" << maxGapDistance 
-		<< ", maxHeightDiff=" << maxHeightDiff << ")" << std::endl;
+	//std::cout << "[NavMesh] StitchDisconnectedIslands: Created " << bridgeCount
+	//	<< " bridge connections (maxGapDistance=" << maxGapDistance 
+	//	<< ", maxHeightDiff=" << maxHeightDiff << ")" << std::endl;
 }
 
 int32_t NavMesh::CountConnectedComponents() const
@@ -423,7 +423,7 @@ int32_t NavMesh::CountConnectedComponents() const
 
 		++componentCount;
 
-		std::cout << "[NavMesh] Component " << componentCount << ": " << componentSize << " triangles" << std::endl;
+		//std::cout << "[NavMesh] Component " << componentCount << ": " << componentSize << " triangles" << std::endl;
 	}
 
 	return componentCount;
@@ -502,8 +502,9 @@ int32_t NavMesh::FindTriangle(const glm::vec3& point) const
 	for (int32_t i = 0; i < static_cast<int32_t>(triangles.size()); ++i)
 	{
 		const auto& tri = triangles[i];
-		if (PointInTriangle3D(point, tri.vertices[0], tri.vertices[1], tri.vertices[2], tri.normal))
+		if (PointInTriangle3D(point, tri.vertices[0], tri.vertices[1], tri.vertices[2], tri.normal)) {
 			return i;
+		}
 	}
 	return -1;
 }
@@ -704,91 +705,6 @@ NavPath NavMesh::FindPath(int32_t startTri, int32_t goalTri,
 
 	if (glm::length(result.waypoints.back() - goalPos) > 0.01f)
 		result.waypoints.push_back(goalPos);
-
-	// Step 1.5: Replace sharp corners with arcs based on turning radius
-	if (result.waypoints.size() > 2)
-	{
-		const float minTurnRadius = 12.0f; // TUNE THIS
-
-		std::vector<glm::vec3> smoothed;
-		smoothed.push_back(result.waypoints.front());
-
-		for (size_t i = 1; i < result.waypoints.size() - 1; ++i)
-		{
-			glm::vec3 prev = result.waypoints[i - 1];
-			glm::vec3 curr = result.waypoints[i];
-			glm::vec3 next = result.waypoints[i + 1];
-
-			glm::vec3 inDir = glm::normalize(curr - prev);
-			glm::vec3 outDir = glm::normalize(next - curr);
-
-			float dot = glm::clamp(glm::dot(inDir, outDir), -1.0f, 1.0f);
-			float theta = acos(dot);
-
-			// Skip nearly straight lines
-			if (theta < 0.1f)
-			{
-				smoothed.push_back(curr);
-				continue;
-			}
-
-			// Distance from corner to entry/exit points
-			float d = minTurnRadius * tan(theta * 0.5f);
-
-			// Clamp so we don’t overshoot segments
-			float lenIn = glm::length(curr - prev);
-			float lenOut = glm::length(next - curr);
-			d = std::min(d, lenIn * 0.5f);
-			d = std::min(d, lenOut * 0.5f);
-
-			glm::vec3 entry = curr - inDir * d;
-			glm::vec3 exit = curr + outDir * d;
-
-			// Add entry point
-			smoothed.push_back(entry);
-
-			// --- Generate arc between entry and exit ---
-			// Compute turn direction (left/right)
-			glm::vec3 cross = glm::cross(inDir, outDir);
-			float turnSign = (cross.y >= 0.0f) ? 1.0f : -1.0f;
-
-			// Compute perpendicular to inDir (XZ plane)
-			glm::vec3 perp = glm::normalize(glm::vec3(-inDir.z, 0.0f, inDir.x)) * turnSign;
-
-			// Arc center
-			glm::vec3 center = entry + perp * minTurnRadius;
-
-			// Angles for arc interpolation
-			glm::vec3 startVec = entry - center;
-			glm::vec3 endVec = exit - center;
-
-			float startAngle = atan2(startVec.z, startVec.x);
-			float endAngle = atan2(endVec.z, endVec.x);
-
-			// Ensure correct winding
-			if (turnSign > 0.0f && endAngle < startAngle)
-				endAngle += glm::two_pi<float>();
-			else if (turnSign < 0.0f && endAngle > startAngle)
-				endAngle -= glm::two_pi<float>();
-
-			// Subdivide arc
-			const int arcSegments = 4;
-			for (int s = 1; s < arcSegments; ++s)
-			{
-				float t = (float)s / (float)arcSegments;
-				float angle = glm::mix(startAngle, endAngle, t);
-
-				glm::vec3 p = center + glm::vec3(cos(angle), 0.0f, sin(angle)) * minTurnRadius;
-				smoothed.push_back(p);
-			}
-
-			// Add exit point
-			smoothed.push_back(exit);
-		}
-
-		smoothed.push_back(result.waypoints.back());
-		result.waypoints = smoothed;
-	}
 
 	// Step 3: Cull the spline output to a reasonable density for the AI to follow
 	{

@@ -9,8 +9,25 @@ enum class AiState;
 
 class Game;
 
+class AiSystemDebug; // forward declaration
+
+struct CourseSegment {
+	glm::vec3 entryPoint;       // Where to repath TO if AI lands in this segment
+	float heightFloor;           // Min Y to be "in" this segment
+	float heightCeiling;         // Max Y to be "in" this segment
+	bool resetBoxingGloves;      // Need to redo boxing gloves?
+};
+
+struct SpinnerInfo
+{
+	glm::vec3 position;
+	float radius;        // spinner_size * arm_length_scale
+	bool isClockwise;    // derived from spinner_rotation
+};
+
 class AiSystem : public System
 {
+	friend class AiSystemDebug; // Allow access to private members
 public:
 	void Init();
 	void Update(float deltaTime);
@@ -19,19 +36,37 @@ public:
 	const NavMesh& GetNavMesh() const { return navMesh; }
 
 	void SetGoalPosition(const glm::vec3& goal) { goalPosition = goal; }
+	void SetBoxingGloveDangerZones(const std::vector<Entity>& zones) { boxingGloveDangerZones = zones; }
+	const std::vector<Entity>& GetBoxingGloveDangerZones() const { return boxingGloveDangerZones; }
 
-	void SpawnDebugWaypoints(Entity entity);
-	// Spawns a 1x1 trigger box at every navmesh triangle centroid (node)
-	void SpawnDebugNodes();
-
-	// Check if a position is in a danger zone (returns closest danger distance, or -1 if safe)
+	// Zone detection helpers (delegated to AiSystemHelperFunctions)
+	// These are kept as public convenience wrappers
 	float CheckDangerZone(const glm::vec3& position) const;
+	bool IsInGapZone(const glm::vec3& pos) const;
+	bool IsInTunnelZone(const glm::vec3& pos) const;
+	bool IsInBoxingGloveZone(const glm::vec3& pos) const;
 
 	float CalculateDistanceToFinish(const glm::vec3& position) const;
+
+	std::vector<CourseSegment> courseSegments;
+
+	int FindCurrentSegment(const glm::vec3& position) const;
+
+	std::vector<SpinnerInfo> spinnerInfos;
+	void SetSpinnerInfos(const std::vector<SpinnerInfo>& infos);
+
 private:
 	Game* gameInstance = nullptr;
 	NavMesh navMesh;
-	glm::vec3 goalPosition = glm::vec3(25.0f, -3.5f, 120.0f);
+	glm::vec3 goalPosition = glm::vec3(-70.000f, 56.000f, 326.000f);
+
+	// Ordered list of danger zone entities for the boxing glove section (indices 0,1,2)
+	std::vector<Entity> boxingGloveDangerZones;
+
+	// Logging throttle timers
+	float m_stateMachineLogTimer = 0.0f;
+	float m_followPathLogTimer = 0.0f;
+	float m_waitingLogTimer = 0.0f;
 
 	// Computes A* path from the entity's current position to the goal
 	void ComputeNavPath(Entity entity);
@@ -39,9 +74,9 @@ private:
 	// Re-paths from the entity's current position (used after getting knocked off track)
 	void RecomputeNavPath(Entity entity);
 
-	void UpdateStateMachine(Entity entity, float deltaTime);
-	void TransitionToState(Entity entity, AiState newState);
+	void TransitionToState(Entity entity, AiState newState, float deltaTime);
 
+	// State update functions
 	void UpdateFollowPathState(Entity entity, float deltaTime);
 	void UpdateBackingUpState(Entity entity, float deltaTime);
 	void UpdateRecoveringFromOffTrackState(Entity entity, float deltaTime);
@@ -50,22 +85,11 @@ private:
 	void UpdateSeekPowerupState(Entity entity, float deltaTime);
 	void UpdateUsePowerupState(Entity entity, float deltaTime);
 	void UpdateOvertakingState(Entity entity, float deltaTime);
+	void UpdateBoxingGloveZoneState(Entity entity, float deltaTime);
+	void UpdateGapZoneState(Entity entity, float deltaTime);
+	void UpdateTunnelZoneState(Entity entity, float deltaTime);
 	void UpdateWaitingAtDangerZoneState(Entity entity, float deltaTime);
-	bool IsObstacleInDangerZone(const glm::vec3& point) const;
-	void AdvanceThroughBoxingGlove(Entity entity);
-
-	// Checks if conditions are right to use a held powerup. Called during FollowPath.
-	void TryUsePowerup(Entity entity);
-
-	// Returns true if the point is inside any DangerZone whose glove is currently extended
-	bool IsPointInActiveDangerZone(const glm::vec3& point) const;
-	bool IsPointInDangerZone(const glm::vec3& point) const;
-
-	bool HasDangerZone(Entity obstacleEntity) const;
-
-	float GetDistanceToDangerZone(glm::vec3 carPos);
-
-	bool IsArmBlocking(glm::vec3 carPos);
-
-	float CalculateSteeringAngle(const glm::vec3& forward, const glm::vec3& toTarget);
+	void UpdateIsFlippedState(Entity entity, float deltaTime);
+	void UpdateIsStuckState(Entity entity, float deltaTime);
+	void UpdateFloorItState(Entity entity, float deltaTime);
 };
