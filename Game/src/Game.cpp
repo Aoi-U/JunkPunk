@@ -327,7 +327,7 @@ void Game::Run()
 
 			particleSystem->Update(time->frameTime); // update particles
 
-			renderSystem->Update(time->fps(), physicsSystem->GetRenderBuffer()); // render physics debug data
+			renderSystem->Update(time->fps()); // render physics debug data
 			for (int i = 0; i < static_cast<int>(playerEntities.size()); i++)
 			{
 				if (!controller.HasComponent<Transform>(playerEntities[i]))
