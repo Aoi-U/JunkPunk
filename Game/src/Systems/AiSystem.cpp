@@ -23,8 +23,7 @@ void AiSystem::Init()
 void AiSystem::SetNavMesh(const NavMesh& mesh)
 {
 	navMesh = mesh;
-	std::cout << "[AiSystem] NavMesh set: " << navMesh.TriangleCount() << " triangles ("
-		<< navMesh.TriangleCount() << " nodes available for pathfinding)" << std::endl;
+	//std::cout << "[AiSystem] NavMesh set: " << navMesh.TriangleCount() << " triangles (" << navMesh.TriangleCount() << " nodes available for pathfinding)" << std::endl;
 }
 
 void AiSystem::ComputeNavPath(Entity entity)
@@ -38,8 +37,7 @@ void AiSystem::ComputeNavPath(Entity entity)
 	glm::vec3 beforeGap(-60.0f, -31.0f, 170.0f);
 	glm::vec3 afterGap(135.0f, -31.0f, 185.0f);
 
-	std::cout << "[AiSystem] Computing path from (" << startPos.x << ", " << startPos.y << ", " << startPos.z << ")" 
-		<< " to waypoint before gap (" << beforeGap.x << ", " << beforeGap.y << ", " << beforeGap.z << ")" << std::endl;
+	//std::cout << "[AiSystem] Computing path from (" << startPos.x << ", " << startPos.y << ", " << startPos.z << ")" << " to waypoint before gap (" << beforeGap.x << ", " << beforeGap.y << ", " << beforeGap.z << ")" << std::endl;
 
 	// For now: just path to the waypoint before the gap
 	int32_t startTri = navMesh.FindTriangle(startPos);
@@ -48,7 +46,7 @@ void AiSystem::ComputeNavPath(Entity entity)
 	int32_t goalTri = navMesh.FindTriangle(beforeGap);
 	if (goalTri < 0) goalTri = navMesh.FindClosestTriangle(beforeGap);
 
-	std::cout << "[AiSystem] Start triangle: " << startTri << ", Goal triangle: " << goalTri << std::endl;
+	//std::cout << "[AiSystem] Start triangle: " << startTri << ", Goal triangle: " << goalTri << std::endl;
 
 	NavPath path = navMesh.FindPath(startTri, goalTri, startPos, beforeGap);
 
@@ -58,12 +56,11 @@ void AiSystem::ComputeNavPath(Entity entity)
 	if (ai.navWaypoints.size() > 1)
 		ai.currentWaypointIndex = 1;
 
-	std::cout << "[AiSystem] Path computed: " << path.triangleIndices.size()
-		<< " corridor triangles -> " << ai.navWaypoints.size() << " waypoints" << std::endl;
+	//std::cout << "[AiSystem] Path computed: " << path.triangleIndices.size() << " corridor triangles -> " << ai.navWaypoints.size() << " waypoints" << std::endl;
 
 	if (path.waypoints.empty())
 	{
-		std::cout << "[AiSystem] WARNING: Path computation returned 0 waypoints!" << std::endl;
+		//std::cout << "[AiSystem] WARNING: Path computation returned 0 waypoints!" << std::endl;
 	}
 }
 
@@ -84,7 +81,7 @@ void AiSystem::RecomputeNavPath(Entity entity)
 
 	if (path.waypoints.empty())
 	{
-		std::cout << "[AiSystem] Re-path failed! No path from current position to goal." << std::endl;
+		//std::cout << "[AiSystem] Re-path failed! No path from current position to goal." << std::endl;
 		return;
 	}
 
@@ -123,9 +120,7 @@ void AiSystem::RecomputeNavPath(Entity entity)
 	ai.lastDistToWaypoint = 999999.0f;
 	ai.repathCooldown = ai.repathCooldownDuration;
 
-	std::cout << "[AiSystem] Re-pathed: " << path.triangleIndices.size()
-		<< " corridor tris -> " << ai.navWaypoints.size()
-		<< " waypoints, starting at wp[" << ai.currentWaypointIndex << "]" << std::endl;
+	//std::cout << "[AiSystem] Re-pathed: " << path.triangleIndices.size() << " corridor tris -> " << ai.navWaypoints.size() << " waypoints, starting at wp[" << ai.currentWaypointIndex << "]" << std::endl;
 }
 
 void AiSystem::SpawnDebugWaypoints(Entity aiEntity)
@@ -134,7 +129,7 @@ void AiSystem::SpawnDebugWaypoints(Entity aiEntity)
 
 	auto& ai = controller.GetComponent<AiDriver>(aiEntity);
 
-	std::cout << "[AiSystem] Spawning " << ai.navWaypoints.size() << " debug waypoint markers" << std::endl;
+	//std::cout << "[AiSystem] Spawning " << ai.navWaypoints.size() << " debug waypoint markers" << std::endl;
 
 	for (size_t i = 0; i < ai.navWaypoints.size(); ++i)
 	{
@@ -148,8 +143,7 @@ void AiSystem::SpawnDebugWaypoints(Entity aiEntity)
 		controller.AddComponent(marker, CheckPoint{ glm::quat(1.0f, 0.0f, 0.0f, 0.0f) });
 		controller.AddComponent(marker, Trigger{ nullptr, 1.0f, 4.0f, 1.0f });
 
-		std::cout << "  marker[" << i << "]: (" << ai.navWaypoints[i].x << ", "
-			<< ai.navWaypoints[i].y << ", " << ai.navWaypoints[i].z << ")" << std::endl;
+		//std::cout << "  marker[" << i << "]: (" << ai.navWaypoints[i].x << ", " << ai.navWaypoints[i].y << ", " << ai.navWaypoints[i].z << ")" << std::endl;
 	}
 }
 
@@ -215,7 +209,7 @@ void AiSystem::UpdateStateMachine(Entity entity, float deltaTime)
 		ai.flippedTimer += deltaTime;
 		if (ai.flippedTimer > ai.flippedTimeThreshold)
 		{
-			std::cout << "[AI] Flipped over, resetting vehicle" << std::endl;
+			// std::cout << "[AI] Flipped over, resetting vehicle" << std::endl;
 			ai.flippedTimer = 0.0f;
 
 			Event resetEvent(Events::Player::RESET_VEHICLE);
@@ -248,14 +242,14 @@ void AiSystem::UpdateStateMachine(Entity entity, float deltaTime)
 			float heightBelow = surfaceY - transform.position.y;
 			if (heightBelow > ai.offTrackHeightThreshold)
 			{
-				std::cout << "[AI] Off-track (below navmesh surface)! heightBelow=" << heightBelow << std::endl;
+				//std::cout << "[AI] Off-track (below navmesh surface)! heightBelow=" << heightBelow << std::endl;
 				offTrack = true;
 			}
 		}
 		else
 		{
 			offTrack = true;
-			std::cout << "[AI] Off-track (no navmesh found nearby)" << std::endl;
+			//std::cout << "[AI] Off-track (no navmesh found nearby)" << std::endl;
 		}
 
 		if (offTrack && ai.repathCooldown <= 0.0f)
@@ -287,7 +281,7 @@ for (uint32_t i = ai.currentWaypointIndex; i < lookAheadForDanger && i < static_
 			if (pathEntersDanger)
 			{
 				if (shouldLog) {
-					std::cout << "[AI] Danger ahead, entering waiting state" << std::endl;
+					//std::cout << "[AI] Danger ahead, entering waiting state" << std::endl;
 				}
 				TransitionToState(entity, AiState::WaitingAtDangerZone);
 				break;
@@ -390,9 +384,7 @@ for (uint32_t i = ai.currentWaypointIndex; i < lookAheadForDanger && i < static_
 				ai.detectedObstacleEntity = closestObstacle;
 				ai.avoidTimer = 0.0f;
 
-				std::cout << "[AI] Obstacle detected, dodging "
-					<< (ai.avoidanceSteerDirection < 0.0f ? "left" : "right")
-					<< " (dist=" << closestDist << ")" << std::endl;
+				//std::cout << "[AI] Obstacle detected, dodging " << (ai.avoidanceSteerDirection < 0.0f ? "left" : "right") << " (dist=" << closestDist << ")" << std::endl;
 
 				TransitionToState(entity, AiState::AvoidObstacle);
 				break;
@@ -445,7 +437,7 @@ for (uint32_t i = ai.currentWaypointIndex; i < lookAheadForDanger && i < static_
 			{
 				ai.targetPowerupEntity = bestPowerup;
 				ai.seekTimer = 0.0f;
-				std::cout << "[AI] Spotted powerup, detouring to collect" << std::endl;
+				//std::cout << "[AI] Spotted powerup, detouring to collect" << std::endl;
 				TransitionToState(entity, AiState::SeekPowerup);
 				break;
 			}
@@ -510,14 +502,17 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 		{
 			ai.passingThroughDangerZone = false;
 			ai.dangerDetectionCooldown = ai.dangerDetectionCooldownDuration;
-			if (shouldLog) std::cout << "[AI] Exited danger zone, starting cooldown (" 
-				<< ai.dangerDetectionCooldownDuration << "s)" << std::endl;
+			if (shouldLog) {
+				//std::cout << "[AI] Exited danger zone, starting cooldown (" << ai.dangerDetectionCooldownDuration << "s)" << std::endl;}
+			}
 		}
 	}
 
-	if (ai.currentWaypointIndex >= static_cast<uint32_t>(ai.navWaypoints.size()))
-	{
-		if (shouldLog) std::cout << "[AI] Reached end of path, stopping." << std::endl;
+		if (ai.currentWaypointIndex >= static_cast<uint32_t>(ai.navWaypoints.size()))
+		{
+			if (shouldLog) {
+				//std::cout << "[AI] Reached end of path, stopping." << std::endl;
+			}
 		vc.throttle = 0.0f;
 		vc.brake = 1.0f;
 		vc.steer = 0.0f;
@@ -599,8 +594,7 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 	// If no progress for too long, re-path (with cooldown)
 	if (ai.progressTimer > ai.progressTimeThreshold && ai.repathCooldown <= 0.0f)
 	{
-		std::cout << "[AI] No progress toward wp[" << ai.currentWaypointIndex
-			<< "], re-pathing from current position" << std::endl;
+		//std::cout << "[AI] No progress toward wp[" << ai.currentWaypointIndex << "], re-pathing from current position" << std::endl;
 		RecomputeNavPath(entity);
 		ai.repathCooldown = ai.repathCooldownDuration;
 		return;
@@ -687,7 +681,7 @@ void AiSystem::UpdateFollowPathState(Entity entity, float deltaTime)
 		ai.stuckTimer += deltaTime;
 		if (ai.stuckTimer > ai.stuckTimeThreshold)
 		{
-			std::cout << "[AI] STUCK - backing up" << std::endl;
+			//std::cout << "[AI] STUCK - backing up" << std::endl;
 			TransitionToState(entity, AiState::BackingUp);
 			return;
 		}
@@ -745,7 +739,7 @@ void AiSystem::UpdateBackingUpState(Entity entity, float deltaTime)
 
 	float steer = glm::clamp(-angle * 1.0f, -1.0f, 1.0f);
 
-	std::cout << "[AI] Backing up... steer=" << steer << std::endl;
+	//std::cout << "[AI] Backing up... steer=" << steer << std::endl;
 
 	vc.steer = -steer;
 	vc.throttle = 0.0f;
@@ -764,13 +758,13 @@ void AiSystem::UpdateRecoveringFromOffTrackState(Entity entity, float deltaTime)
 	// On entry: re-path once
 	if (ai.recoveryTimer < deltaTime * 1.5f)
 	{
-		std::cout << "[AI] Recovery: finding nearest node and re-pathing to goal..." << std::endl;
+		//std::cout << "[AI] Recovery: finding nearest node and re-pathing to goal..." << std::endl;
 		RecomputeNavPath(entity);
 	}
 
 	if (ai.navWaypoints.empty())
 	{
-		std::cout << "[AI] Recovery: no path found, returning to FollowPath" << std::endl;
+		//std::cout << "[AI] Recovery: no path found, returning to FollowPath" << std::endl;
 		TransitionToState(entity, AiState::FollowPath);
 		return;
 	}
@@ -792,7 +786,7 @@ void AiSystem::UpdateRecoveringFromOffTrackState(Entity entity, float deltaTime)
 		int32_t triCheck = navMesh.FindTriangleAtHeight(carPos, 5.0f);
 		if (triCheck >= 0)
 		{
-			std::cout << "[AI] Recovery complete, back on navmesh" << std::endl;
+			//std::cout << "[AI] Recovery complete, back on navmesh" << std::endl;
 			ai.repathCooldown = ai.repathCooldownDuration;
 			TransitionToState(entity, AiState::FollowPath);
 			return;
@@ -802,7 +796,7 @@ void AiSystem::UpdateRecoveringFromOffTrackState(Entity entity, float deltaTime)
 	// Re-path if stuck for too long, but respect cooldown
 	if (ai.recoveryTimer > 5.0f && ai.repathCooldown <= 0.0f)
 	{
-		std::cout << "[AI] Recovery timeout, re-pathing..." << std::endl;
+		//std::cout << "[AI] Recovery timeout, re-pathing..." << std::endl;
 		ai.recoveryTimer = 0.0f;
 		RecomputeNavPath(entity);
 		return;
@@ -851,7 +845,7 @@ void AiSystem::UpdateAvoidObstacleState(Entity entity, float deltaTime)
 	// Done avoiding -- return to path
 	if (ai.avoidTimer > ai.avoidDuration)
 	{
-		std::cout << "[AI] Obstacle avoidance complete, resuming path" << std::endl;
+		//std::cout << "[AI] Obstacle avoidance complete, resuming path" << std::endl;
 		ai.detectedObstacleEntity = 0;
 		RecomputeNavPath(entity);
 		TransitionToState(entity, AiState::FollowPath);
@@ -862,7 +856,7 @@ void AiSystem::UpdateAvoidObstacleState(Entity entity, float deltaTime)
 	float distToObstacle = 999.0f;
 	bool obstacleStillThreat = false;
 
-	std::cout << "[AI] Avoiding obstacle: timer=" << ai.avoidTimer << "s, entity=" << ai.detectedObstacleEntity << std::endl;
+	//std::cout << "[AI] Avoiding obstacle: timer=" << ai.avoidTimer << "s, entity=" << ai.detectedObstacleEntity << std::endl;
 
 	if (ai.detectedObstacleEntity != 0 && controller.HasComponent<Transform>(ai.detectedObstacleEntity))
 	{
@@ -875,7 +869,7 @@ void AiSystem::UpdateAvoidObstacleState(Entity entity, float deltaTime)
 		toObs.y = 0.0f;
 		distToObstacle = glm::length(toObs);
 
-		std::cout << "[AI] Checking obstacle: dist=" << distToObstacle << std::endl;
+		//std::cout << "[AI] Checking obstacle: dist=" << distToObstacle << std::endl;
 
 		if (distToObstacle > 1e-5f)
 		{
@@ -883,8 +877,7 @@ void AiSystem::UpdateAvoidObstacleState(Entity entity, float deltaTime)
 			// Obstacle is still ahead and in range
 			if (dot > 0.0f && distToObstacle < ai.obstacleDetectionRange * 1.5f) {
 				obstacleStillThreat = true;
-				std::cout << "[AI] Obstacle check: dist=" << distToObstacle << ", dot=" << dot
-					<< ", still threat=" << obstacleStillThreat << std::endl;
+				//std::cout << "[AI] Obstacle check: dist=" << distToObstacle << ", dot=" << dot", still threat=" << obstacleStillThreat << std::endl;
 			}
 		}
 	}
@@ -892,7 +885,7 @@ void AiSystem::UpdateAvoidObstacleState(Entity entity, float deltaTime)
 	// If obstacle cleared or passed, resume path
 	if (!obstacleStillThreat && ai.avoidTimer > 0.5f)
 	{
-		std::cout << "[AI] Obstacle cleared, resuming path" << std::endl;
+		//std::cout << "[AI] Obstacle cleared, resuming path" << std::endl;
 		ai.detectedObstacleEntity = 0;
 		RecomputeNavPath(entity);
 		TransitionToState(entity, AiState::FollowPath);
@@ -1156,7 +1149,7 @@ void AiSystem::UpdateWaitingAtDangerZoneState(Entity entity, float deltaTime)
 		else
 		{
 			currentlyBlocked = false;
-			if (shouldLog) std::cout << "[AI] Danger zone clear, resuming path" << std::endl;
+			//if (shouldLog) std::cout << "[AI] Danger zone clear, resuming path" << std::endl;
 			// GO
 			vc.throttle = 1.0f;
 			vc.brake = 0.0f;
@@ -1288,7 +1281,7 @@ void AiSystem::UpdateSeekPowerupState(Entity entity, float deltaTime)
 	// Give up if taking too long
 	if (ai.seekTimer > ai.seekTimeout)
 	{
-		std::cout << "[AI] Powerup seek timed out, resuming path" << std::endl;
+		//std::cout << "[AI] Powerup seek timed out, resuming path" << std::endl;
 		ai.targetPowerupEntity = 0;
 		RecomputeNavPath(entity);
 		TransitionToState(entity, AiState::FollowPath);
@@ -1300,7 +1293,7 @@ void AiSystem::UpdateSeekPowerupState(Entity entity, float deltaTime)
 		!controller.HasComponent<Transform>(ai.targetPowerupEntity) ||
 		!controller.HasComponent<Trigger>(ai.targetPowerupEntity))
 	{
-		std::cout << "[AI] Powerup gone/invalid, resuming path" << std::endl;
+		//std::cout << "[AI] Powerup gone/invalid, resuming path" << std::endl;
 		ai.targetPowerupEntity = 0;
 		RecomputeNavPath(entity);
 		TransitionToState(entity, AiState::FollowPath);
@@ -1317,7 +1310,7 @@ void AiSystem::UpdateSeekPowerupState(Entity entity, float deltaTime)
 	// Check if we're out of range (went past it or it moved)
 	if (distXZ > ai.powerupSeekRange * 1.5f)
 	{
-		std::cout << "[AI] Powerup too far, resuming path" << std::endl;
+		//std::cout << "[AI] Powerup too far, resuming path" << std::endl;
 		ai.targetPowerupEntity = 0;
 		RecomputeNavPath(entity);
 		TransitionToState(entity, AiState::FollowPath);
@@ -1337,7 +1330,7 @@ void AiSystem::UpdateSeekPowerupState(Entity entity, float deltaTime)
 
 		ai.hasPowerup = true;
 		ai.heldPowerupType = pickup.type;
-		std::cout << "[AI] Collected powerup type " << pickup.type << std::endl;
+		//std::cout << "[AI] Collected powerup type " << pickup.type << std::endl;
 
 		if (gameInstance)
 			gameInstance->SchedulePowerupRespawn(ai.targetPowerupEntity);
@@ -1412,7 +1405,7 @@ void AiSystem::TryUsePowerup(Entity entity)
 
 					ai.hasPowerup = false;
 					ai.heldPowerupType = 0;
-					std::cout << "[AI] Using speed boost on straightaway" << std::endl;
+					//std::cout << "[AI] Using speed boost on straightaway" << std::endl;
 				}
 			}
 		}
@@ -1454,7 +1447,7 @@ void AiSystem::TryUsePowerup(Entity entity)
 
 						ai.hasPowerup = false;
 						ai.heldPowerupType = 0;
-						std::cout << "[AI] Dropped banana peel behind" << std::endl;
+						//std::cout << "[AI] Dropped banana peel behind" << std::endl;
 					}
 				}
 			}

@@ -25,11 +25,9 @@ public:
 
 	void Cleanup();
 
-	const PxRenderBuffer& GetRenderBuffer() { return gPhysicsScene->getRenderBuffer(); }
-
 	bool usedBoost = false;
 	Entity spinningEntity = MAX_ENTITIES;
-	float spinTimer;
+	float spinTimer = 0.0f;
 
 private:
 	PxDefaultAllocator gAllocator;
@@ -51,6 +49,8 @@ private:
 	std::unordered_map<std::string, PxMaterial*> materialMap; // holds different physics materials
 
 	std::vector<PxActor*> actorsToDelete; // list of actors to delete 
+
+	std::unordered_map<Entity, bool> playerOutOfBounds; // tracks whether each player is out of bounds for respawn purposes
 
 	//bool usedBoost = false;
 	//bool spinning = false;
@@ -78,6 +78,8 @@ private:
 	void SpinOutListener(Event& e);
 
 	void BlastEventListener(Event& e);
+
+	void PlayerOutOfBoundsListener(Event& e);
 
 	// callbacks
 

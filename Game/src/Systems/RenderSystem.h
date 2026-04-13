@@ -37,7 +37,7 @@ public:
 
 	void Reset();
 
-	void Update(float fps, const PxRenderBuffer& buffer);
+	void Update(float fps);
 
 	//void UpdateMenu(float fps); // update function for rendering menus
 
@@ -49,8 +49,6 @@ private:
 	void DrawLightingPass(const Frustum& frust, const ThirdPersonCamera& tpp, glm::vec3 pos);
 	
 	void DrawSkybox(const ThirdPersonCamera& cameraComp); // draw function for rendering skybox
-
-	void DrawCollisionDebug(const PxRenderBuffer& renderBuffer, const ThirdPersonCamera& tpp);
 
 	void DrawPostProcessingPass(int vx, int vy, int vw, int vh);
 	
