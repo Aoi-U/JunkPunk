@@ -191,7 +191,7 @@ void LevelLoaderSystem::LoadLevel()
 		aiSystemPtr->SetNavMesh(navMesh);
 
 		// Spawn random banana peels along the track
-		SpawnRandomBananaPeels(100, navMesh);  // Spawn 100 random banana peels
+		//SpawnRandomBananaPeels(100, navMesh);  // Spawn 100 random banana peels
 
 		// Spawn random powerups along the track
 		//SpawnRandomMixedPowerups(10, 10, navMesh);  // 10 speed boosts, 10 banana pickups
