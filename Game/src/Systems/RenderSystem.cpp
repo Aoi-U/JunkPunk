@@ -185,9 +185,10 @@ void RenderSystem::Update(float fps, const PxRenderBuffer& buffer)
 		DrawSkybox(tpp);
 		particleRenderSystem->Update(tpp);
 
+
+		RenderPowerupUI(tpp.playerEntity, vx, vy, vw, vh);
 		// Draw the finished FBO to the current player's quadrant on the screen
 		DrawPostProcessingPass(vx, vy, vw, vh);
-		RenderPowerupUI(tpp.playerEntity, vx, vy, vw, vh);
 	}
 
 	// Reset back to full viewport for debug text, UI overlays, etc.
@@ -481,7 +482,7 @@ void RenderSystem::RenderPowerupUI(Entity player, int vx, int vy, int vw, int vh
 	if (tex == nullptr)
 		return;
 
-	float iconSize = 96.0f;
+	float iconSize = 96.0f * 2.0f;
 	float margin = 20.0f;
 
 	float x0 = (screenWidth * 0.5f) - (iconSize * 0.5f);
