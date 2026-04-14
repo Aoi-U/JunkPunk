@@ -527,13 +527,13 @@ void LevelLoaderSystem::LoadLevel()
 
 	//dice
 	std::vector<std::vector<glm::vec3>> dice_positions = {
-		{glm::vec3(40.0f, -46.f, 200.f), glm::vec3(140.0f, -41.f, 200.f), glm::vec3(140.0f, -41.f, 200.f), glm::vec3(40.0f, -46.f, 200.f)},
-		{glm::vec3(40.0f, -46.f, 175.f), glm::vec3(140.0f, -41.f, 175.f), glm::vec3(140.0f, -41.f, 175.f), glm::vec3(40.0f, -46.f, 175.f)},
-		{glm::vec3(40.0f, -46.f, 150.f), glm::vec3(140.0f, -41.f, 150.f), glm::vec3(140.0f, -41.f, 150.f), glm::vec3(40.0f, -46.f, 150.f)},
+		{glm::vec3(40.0f, -41.f, 200.f), glm::vec3(140.0f, -41.f, 200.f), glm::vec3(140.0f, -41.f, 200.f), glm::vec3(40.0f, -41.f, 200.f)},
+		{glm::vec3(40.0f, -41.f, 175.f), glm::vec3(140.0f, -41.f, 175.f), glm::vec3(140.0f, -41.f, 175.f), glm::vec3(40.0f, -41.f, 175.f)},
+		{glm::vec3(40.0f, -41.f, 150.f), glm::vec3(140.0f, -41.f, 150.f), glm::vec3(140.0f, -41.f, 150.f), glm::vec3(40.0f, -41.f, 150.f)},
 
-		{glm::vec3(20.0f, -46.f, 200.f), glm::vec3(-40.0f, -46.f, 200.f), glm::vec3(-40.0f, -46.f, 200.f), glm::vec3(20.0f, -46.f, 200.f)},
-		{glm::vec3(20.0f, -46.f, 175.f), glm::vec3(-40.0f, -46.f, 175.f), glm::vec3(-40.0f, -46.f, 175.f), glm::vec3(20.0f, -46.f, 175.f)},
-		{glm::vec3(20.0f, -46.f, 150.f), glm::vec3(-40.0f, -46.f, 150.f), glm::vec3(-40.0f, -46.f, 150.f), glm::vec3(20.0f, -46.f, 150.f)},
+		{glm::vec3(20.0f, -41.f, 200.f), glm::vec3(-40.0f, -41.f, 200.f), glm::vec3(-40.0f, -41.f, 200.f), glm::vec3(20.0f, -41.f, 200.f)},
+		{glm::vec3(20.0f, -41.f, 175.f), glm::vec3(-40.0f, -41.f, 175.f), glm::vec3(-40.0f, -41.f, 175.f), glm::vec3(20.0f, -41.f, 175.f)},
+		{glm::vec3(20.0f, -41.f, 150.f), glm::vec3(-40.0f, -41.f, 150.f), glm::vec3(-40.0f, -41.f, 150.f), glm::vec3(20.0f, -41.f, 150.f)},
 
 		//{glm::vec3(0.0f, 62.f, 325.f), glm::vec3(30.0f, 62.f, 355.f), glm::vec3(60.0f, 62.f, 325.f), glm::vec3(30.0f, 62.f, 295.f)},
 	};
@@ -894,11 +894,12 @@ void LevelLoaderSystem::LoadLevel()
 		baseSpawnPos,																// startPos (player spawn)
 		glm::vec3(55.0f, -178.0f, -58.0f),          // beforeBoxingGloves
 		glm::vec3(-71.0f, -178.0f, -58.0f),         // afterBoxingGloves
+		glm::vec3(108.f, -78.f, 164.f),				// before spinners
 		glm::vec3(-60.0f, -31.0f, 170.0f),          // beforeGap
-		glm::vec3(150.0f, -28.0f, 185.0f),          // afterGap
+		//glm::vec3(150.0f, -28.0f, 185.0f),          // afterGap
 		glm::vec3(150.0f, -31.0f - 1.0f, 244.0f),   // beforeTunnel
 		glm::vec3(-135.600f, -28.000f, 392.500f),   // midTunnel
-		glm::vec3(-62.000f, -26.000f, 314.000f),    // inTunnel
+		glm::vec3(-42.000f, -26.000f, 314.000f),    // inTunnel
 		glm::vec3(107.854f, 54.011f, 318.240f)      // uppertrack
 	};
 
