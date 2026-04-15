@@ -1,4 +1,9 @@
-Setup:
+# JunkPunk 
+A obstacle course racing game built from scratch using OpenGL and PhysX. 
+Built as a group for my university capstone project.
+Supports local multiplayer using Xinput controllers and/or against AI 
+
+# Setup:
 
 1. Download the Debug and Release folders from this drive
    https://drive.google.com/drive/folders/1Xi6scrCqUiQR3kno5-xt33z2yFq9ZRjy?usp=sharing
@@ -12,33 +17,4 @@ Setup:
 4. Add both folders into Game/thirdparty/physx
    <img width="581" height="278" alt="image" src="https://github.com/user-attachments/assets/535ef608-18ca-454f-b1d9-270e55118c18" />
 
-The visual studio configurations should all be set, but if you get errors let me know - Aoi
-
-Controls:
-   Controller:
-      In game:
-         A: Jump
-         B: Use Item
-         Joysticks: Turn/Look around
-         Triggers: Throttle/Brake
-         Start: Pause
-         Back: Reset vehicle
-      In UI:
-         Left joystick: Navigate UI   
-         A: Confirm
-   Keyboard:
-      In Game:
-         Space: Jump   
-         E: Use Item
-         W: Throttle
-         S: Brake
-         A: Steer Left
-         D: Steer Right
-         R: Reset vehicle
-         Q: Pause
-      In UI:
-         W: Navigate up
-         S: Navigate down
-         A: Navigate Left
-         D: Navigate Right
-         Space: Confirm
+5. Build and run with visual studio
